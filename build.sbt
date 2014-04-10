@@ -33,3 +33,6 @@ dependencyOverrides ++= Set(
 resolvers += "Sonatype SNAPSHOTS" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
 conflictManager := ConflictManager.strict
+
+mappings in Universal ++=
+  (baseDirectory.value / "public" ** "*" pair relativeTo(baseDirectory.value))
