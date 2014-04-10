@@ -2,6 +2,12 @@ angular.module('nlpviz', ['ui.bootstrap']);
 var NlpvizCtrl = function($scope, $http) {
   $scope.model = { }
 
+  $scope.showExample = function() {
+    $scope.model.dependencies = "nsubj(ran-2, Michael-1)\nroot(ROOT-0, ran-2)\n" +
+        "prt(ran-2, down-3)\ndet(hill-5, the-4)\ndobj(ran-2, hill-5)";
+    $scope.visualizeDependencies();
+  }
+
   $scope.visualizeDependencies = function() {
     $scope.working = true;
     $http.post("/viz/dependencies/nlptools/base64", $scope.model.dependencies)
