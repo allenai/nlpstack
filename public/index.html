@@ -1,0 +1,44 @@
+<html lang="en" ng-app='nlpviz'>
+  <head>
+    <title>Nlpviz</title>
+    <link rel="stylesheet" href="/css/main.css" type="text/css" />
+    <link rel="stylesheet" href="/css/bootstrap-3.1.1.min.css">
+
+    <script src="/js/jquery-2.0.1.min.js"></script>
+    <script src="/js/angular-1.2.13.min.js"></script>
+    <script src="/js/ui-bootstrap-tpls-0.10.0.min.js"></script>
+    <script src="/js/main.js"></script>
+
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <META HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body ng-controller='NlpvizCtrl'>
+    <div class="container">
+      <h1>
+        Nlpviz <small>a web service to visualize NLP</small>
+        <span ng-show='working' class="spinner">
+          <img src="/img/spinner.gif" />
+        </span>
+      </h1>
+
+      <tabset>
+        <tab heading="Dependencies">
+          <form>
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div>Enter dependencies to visualize:</div>
+                <div>
+                  <textarea ng-model="model.dependencies" rows="10" required></textarea>
+                </div>
+                <input ng-click="visualizeDependencies()" type="submit" value="Submit" class="btn btn-default">
+              </div>
+            </div>
+          </form>
+        </tab>
+      </tabset>
+
+      <div ng-show="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+      <img ng-show="response" ng-src="data:image/png;base64,{{ response.base64 }}"/>
+    </div>
+  </body>
+</html>
