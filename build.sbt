@@ -1,5 +1,7 @@
 Revolver.settings
 
+Deploy.settings
+
 name := "nlpviz"
 
 scalaVersion := "2.10.4"
