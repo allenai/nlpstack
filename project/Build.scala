@@ -64,7 +64,7 @@ object AitkBuild extends Build {
     settings = buildSettings)
 
   lazy val lemmatize = Project(
-    id = "lemmatize",
+    id = "tools-lemmatize",
     base = file("tools/lemmatize"),
     settings = buildSettings ++ Seq(
       name := "aitk-lemmatize",
@@ -76,7 +76,7 @@ object AitkBuild extends Build {
   ) dependsOn(toolsCore)
 
   lazy val tokenize = Project(
-    id = "tokenize",
+    id = "tools-tokenize",
     base = file("tools/tokenize"),
     settings = buildSettings ++ Seq(
       name := "aitk-tokenize",
@@ -85,7 +85,7 @@ object AitkBuild extends Build {
   ) dependsOn(toolsCore)
 
   lazy val postag = Project(
-    id = "postag",
+    id = "tools-postag",
     base = file("tools/postag"),
     settings = buildSettings ++ Seq(
       name := "aitk-postag",
@@ -94,7 +94,7 @@ object AitkBuild extends Build {
   ) dependsOn(tokenize)
 
   lazy val chunk = Project(
-    id = "chunk",
+    id = "tools-chunk",
     base = file("tools/chunk"),
     settings = buildSettings ++ Seq(
       name := "aitk-chunk",
