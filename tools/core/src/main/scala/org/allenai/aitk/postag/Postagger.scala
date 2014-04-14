@@ -10,15 +10,11 @@ import scala.collection.immutable
   * tag with each token.
   */
 abstract class Postagger {
-  def tokenizer: tokenize.Tokenizer
-
-  def apply(sentence: String) = postag(sentence)
-
   /* POS tag pre-tokenized text */
   def postagTokenized(tokens: Seq[tokenize.Token]): Seq[PostaggedToken]
 
   /* Tokenize and then POS tag text*/
-  def postag(sentence: String): Seq[PostaggedToken] = {
+  def postag(tokenizer: Tokenizer)(sentence: String): Seq[PostaggedToken] = {
     val tokens = tokenizer.tokenize(sentence)
     postagTokenized(tokens)
   }

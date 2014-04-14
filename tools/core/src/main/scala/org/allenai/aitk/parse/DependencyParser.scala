@@ -4,9 +4,10 @@ package parse
 
 import graph._
 
-import postag.PostaggedToken
-import postag.Postagger
-import tokenize.Token
+import org.allenai.aitk.postag.PostaggedToken
+import org.allenai.aitk.postag.Postagger
+import org.allenai.aitk.tokenize.Token
+import org.allenai.aitk.tokenize.Tokenizer
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -16,6 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 trait DependencyParser {
 
+  def tokenizer: Tokenizer
   def postagger: Postagger
 
   /**
@@ -31,7 +33,7 @@ trait DependencyParser {
     * will have the source text.
     */
   def dependencyGraph(string: String): (Seq[PostaggedToken], DependencyGraph) = {
-    val postaggedTokens = postagger.postag(string)
+    val postaggedTokens = postagger.postag(tokenizer)(string)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }
 

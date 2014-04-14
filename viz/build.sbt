@@ -1,3 +1,5 @@
+Deploy.settings
+
 name := "nlpviz"
 
 libraryDependencies ++= Seq(

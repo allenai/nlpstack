@@ -21,7 +21,10 @@ trait Chunks extends ChunksSupertrait {
 trait Chunker extends Chunks {
   this: Sentence =>
 
+  def tokenizer: org.allenai.aitk.tokenize.Tokenizer
+  def postagger: org.allenai.aitk.postag.Postagger
   def chunker: org.allenai.aitk.chunk.Chunker
+
   override lazy val tokens: Seq[ChunkedToken] =
-    chunker.chunk(this.text)
+    chunker.chunk(tokenizer, postagger)(this.text)
 }

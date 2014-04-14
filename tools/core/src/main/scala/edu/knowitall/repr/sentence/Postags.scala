@@ -18,9 +18,10 @@ trait Postags extends PostagsSupertrait {
 
 trait Postagger extends Postags {
   this: Sentence =>
+  def tokenizer: org.allenai.aitk.tokenize.Tokenizer
   def postagger: org.allenai.aitk.postag.Postagger
 
   override lazy val tokens: Seq[PostaggedToken] =
-    postagger.postag(this.text)
+    postagger.postag(tokenizer)(this.text)
 }
 

@@ -13,23 +13,19 @@ import org.allenai.aitk.tokenize._
   * whether a noun or verb phrase is starting or continuing.
   */
 abstract class Chunker {
-  def postagger: postag.Postagger
-
-  def apply(sentence: String) = chunk(sentence)
-
   /** chunk postagged text */
   def chunkPostagged(tokens: Seq[postag.PostaggedToken]): Seq[ChunkedToken]
 
   /** chunk tokenized text */
-  def chunkTokenized(tokens: Seq[tokenize.Token]): Seq[ChunkedToken] = {
+  def chunkTokenized(postagger: Postagger)(tokens: Seq[tokenize.Token]): Seq[ChunkedToken] = {
     val postags = postagger.postagTokenized(tokens)
     chunkPostagged(postags)
   }
 
   /** chunk raw text */
-  def chunk(sentence: String): Seq[ChunkedToken] = {
-    val postags = postagger.postag(sentence)
-    chunkPostagged(postags)
+  def chunk(tokenizer: Tokenizer, postagger: Postagger)(sentence: String): Seq[ChunkedToken] = {
+    val tokens = tokenizer(sentence)
+    chunkTokenized(postagger)(tokens)
   }
 }
 
