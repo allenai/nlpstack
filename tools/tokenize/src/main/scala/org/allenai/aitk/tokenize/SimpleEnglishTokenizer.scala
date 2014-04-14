@@ -2,7 +2,7 @@ package org.allenai.aitk
 package tokenize
 
 import scala.collection.JavaConversions._
-import breeze.text.tokenize.{ SimpleEnglishTokenizer => BreezeEnglishTokenizer }
+import chalk.text.tokenize.{ SimpleEnglishTokenizer => BreezeEnglishTokenizer }
 
 class SimpleEnglishTokenizer extends Tokenizer {
   val tokenizer = BreezeEnglishTokenizer()
