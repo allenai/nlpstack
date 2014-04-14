@@ -8,8 +8,8 @@ import org.allenai.aitk.graph.Graph._
 import org.allenai.aitk.graph.pattern._
 import scala.util.matching.Regex
 import java.util.regex.{ Pattern => JPattern }
-import aitk.stem.Stemmer
-import aitk.stem.IdentityStemmer
+import aitk.lemmatize.Stemmer
+import aitk.lemmatize.IdentityStemmer
 
 /**
   * A pattern over a graph of dependencies.

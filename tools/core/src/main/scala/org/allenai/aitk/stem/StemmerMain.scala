@@ -1,9 +1,8 @@
-package org.allenai
-package aitk
-package stem
+package org.allenai.aitk
+package lemmatize
 
 abstract class StemmerMain
     extends LineProcessor("stemmer") {
-  def stemmer: Stemmer
-  override def process(line: String) = line.split("\\s+").map(stemmer.stem(_)).mkString(" ")
+  def lemmatizer: Stemmer
+  override def process(line: String) = line.split("\\s+").map(lemmatizer.stem(_)).mkString(" ")
 }

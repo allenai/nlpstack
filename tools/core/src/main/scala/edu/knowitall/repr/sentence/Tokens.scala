@@ -3,7 +3,7 @@ package org.allenai.repr.sentence
 import org.allenai.aitk.tokenize._
 import org.allenai.aitk.postag._
 import org.allenai.aitk.chunk._
-import org.allenai.aitk.stem._
+import org.allenai.aitk.lemmatize._
 
 trait TokensSupertrait {
   this: Sentence =>

@@ -7,10 +7,10 @@ import org.allenai.aitk.graph.Graph
 import org.allenai.aitk.graph.Graph._
 import scala.collection.immutable.SortedSet
 import org.allenai.common.immutable.Interval
-import aitk.stem.{ Stemmer, IdentityStemmer }
+import aitk.lemmatize.{ Stemmer, IdentityStemmer }
 import aitk.postag.PostaggedToken
 import org.allenai.aitk.tokenize.Token
-import org.allenai.aitk.stem.Lemmatized
+import org.allenai.aitk.lemmatize.Lemmatized
 
 /**
   * A representation for a node in the graph of dependencies.  A node

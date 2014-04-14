@@ -15,11 +15,11 @@ import org.allenai.aitk.graph.Graph.Edge
 import org.allenai.aitk.graph.UpEdge
 import org.allenai.aitk.Format
 import org.allenai.aitk.tokenize.Tokenizer
-import org.allenai.aitk.stem.Stemmer
+import org.allenai.aitk.lemmatize.Stemmer
 import org.allenai.aitk.postag.Postagger
 import org.allenai.aitk.tokenize.Token
 import org.allenai.aitk.postag.PostaggedToken
-import org.allenai.aitk.stem.Lemmatized
+import org.allenai.aitk.lemmatize.Lemmatized
 
 /**
   * A representation of a graph over dependencies.

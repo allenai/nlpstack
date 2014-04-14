@@ -3,7 +3,7 @@ package aitk
 package tokenize
 
 import org.allenai.aitk.graph.Graph._
-import org.allenai.aitk.stem.Stemmer
+import org.allenai.aitk.lemmatize.Stemmer
 import org.allenai.common.testkit.UnitSpec
 
 class TokenizerSpecTest extends UnitSpec {

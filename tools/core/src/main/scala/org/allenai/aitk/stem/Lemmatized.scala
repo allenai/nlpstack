@@ -1,7 +1,5 @@
-package org.allenai
-package aitk
-package stem
+package org.allenai.aitk.lemmatize
 
-import aitk.tokenize.Token
+import org.allenai.aitk.tokenize.Token
 
 case class Lemmatized[+T <: Token](token: T, lemma: String)

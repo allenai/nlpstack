@@ -1,5 +1,5 @@
 package org.allenai.aitk
-package stem
+package lemmatize
 
 import scala.concurrent.ExecutionContext
 

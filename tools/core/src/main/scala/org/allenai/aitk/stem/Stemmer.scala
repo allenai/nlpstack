@@ -1,9 +1,7 @@
-package org.allenai
-package aitk
-package stem
+package org.allenai.aitk.lemmatize
 
-import tokenize.Token
-import postag.PostaggedToken
+import org.allenai.aitk.tokenize.Token
+import org.allenai.aitk.postag.PostaggedToken
 
 /** A stemmer takes a string token and produces a normalized form. */
 abstract class Stemmer {

@@ -1,5 +1,4 @@
-package org.allenai.aitk
-package lemmatize
+package org.allenai.aitk.lemmatize
 
 import edu.washington.cs.knowitall.morpha.{ MorphaStemmer => MorphaStem }
 import uk.ac.susx.informatics.Morpha
@@ -18,5 +17,5 @@ object MorphaStemmer extends MorphaStemmer
 
 object MorphaStemmerMain
     extends StemmerMain {
-  lazy val stemmer = new MorphaStemmer
+  lazy val lemmatizer = new MorphaStemmer
 }

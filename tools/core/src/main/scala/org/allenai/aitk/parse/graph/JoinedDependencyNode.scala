@@ -7,7 +7,7 @@ import org.allenai.aitk.graph.Graph
 import org.allenai.aitk.graph.Graph._
 import scala.collection.immutable.SortedSet
 import org.allenai.common.immutable.Interval
-import aitk.stem.{ Stemmer, IdentityStemmer }
+import aitk.lemmatize.{ Stemmer, IdentityStemmer }
 import aitk.postag.PostaggedToken
 
 /**
