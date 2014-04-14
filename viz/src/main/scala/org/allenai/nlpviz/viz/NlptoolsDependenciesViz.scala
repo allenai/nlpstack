@@ -3,7 +3,7 @@ package org.allenai.nlpviz.viz
 import org.allenai.nlpviz.Dependencies
 import org.allenai.nlpviz.Whatswrong._
 
-import edu.knowitall.tool.parse.graph.DependencyGraph
+import org.allenai.aitk.parse.graph.DependencyGraph
 
 import java.awt.image.BufferedImage
 

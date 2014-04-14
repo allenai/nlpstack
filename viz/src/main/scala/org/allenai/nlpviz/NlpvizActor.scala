@@ -6,13 +6,13 @@ import spray.routing.ExceptionHandler
 import spray.http.StatusCodes
 
 class NlpvizActor extends Actor with NlpvizService {
-  
+
   implicit def myExceptionHandler(implicit log: LoggingContext) =
   ExceptionHandler {
     case e: Exception =>
       requestUri { uri =>
         log.error(toString, e)
-        complete(StatusCodes.InternalServerError, e.getMessage)
+        complete(StatusCodes.InternalServerError -> e.getMessage)
       }
   }
 

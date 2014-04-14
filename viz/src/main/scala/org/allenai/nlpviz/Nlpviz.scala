@@ -10,22 +10,24 @@ import spray.can.Http
 
 import scala.concurrent.duration.DurationInt
 
-object Nlpviz extends App {
+object Nlpviz {
   lazy val config = ConfigFactory.load()
   val name = "nlpviz"
 
-  // ActorSystem to host the application in.
-  implicit val system = ActorSystem("ari-frontend")
+  def main(args: Array[String]): Unit = {
+    // ActorSystem to host the application in.
+    implicit val system = ActorSystem("ari-frontend")
 
-  // Create and start our service actor.
-  val service = system.actorOf(Props[NlpvizActor], "ui-actor")
+    // Create and start our service actor.
+    val service = system.actorOf(Props[NlpvizActor], "ui-actor")
 
-  // Start a new HTTP server with our service actor as the handler.
-  {
-    // Timeout for starting the spray Http server (below).
-    implicit val timeout = Timeout(30.seconds)
+    // Start a new HTTP server with our service actor as the handler.
+    {
+      // Timeout for starting the spray Http server (below).
+      implicit val timeout = Timeout(30.seconds)
 
-    // IO is a scala object with an apply method that returns an ActorRef.
-    IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = config.getInt("nlpviz.port"))
+      // IO is a scala object with an apply method that returns an ActorRef.
+      IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = config.getInt("nlpviz.port"))
+    }
   }
 }

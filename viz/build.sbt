@@ -1,6 +1,7 @@
 name := "nlpviz"
 
 libraryDependencies ++= Seq(
+  "commons-codec" % "commons-codec" % "1.9",
   // server
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "io.spray" % "spray-can" % sprayVersion,
@@ -8,9 +9,7 @@ libraryDependencies ++= Seq(
   // config
   "com.typesafe" % "config" % "1.2.0",
   // vizualization
-  "org.riedelcastro" % "whatswrong" % "0.2.4",
-  // nlp
-  "org.allenai.nlptools" %% "nlptools-core" % "2.5.0-SNAPSHOT") ++ loggingImplementations
+  "org.riedelcastro" % "whatswrong" % "0.2.4") ++ loggingImplementations
 
 dependencyOverrides ++= Set(
   "org.scala-lang" % "scala-library" % "2.10.4",

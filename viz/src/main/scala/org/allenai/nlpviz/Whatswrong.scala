@@ -1,12 +1,12 @@
 package org.allenai.nlpviz
 
-import edu.knowitall.common.Resource
-import edu.knowitall.tool.chunk.ChunkedToken
-import edu.knowitall.tool.parse.graph.DependencyGraph
-import edu.knowitall.tool.parse.graph.DependencyNode
-import edu.knowitall.tool.postag.PostaggedToken
-import edu.knowitall.tool.srl.Frame
-import edu.knowitall.tool.tokenize.Token
+import org.allenai.common.Resource
+import org.allenai.aitk.chunk.ChunkedToken
+import org.allenai.aitk.parse.graph.DependencyGraph
+import org.allenai.aitk.parse.graph.DependencyNode
+import org.allenai.aitk.postag.PostaggedToken
+import org.allenai.aitk.srl.Frame
+import org.allenai.aitk.tokenize.Token
 
 import com.googlecode.whatswrong.NLPInstance
 import com.googlecode.whatswrong.SingleSentenceRenderer
