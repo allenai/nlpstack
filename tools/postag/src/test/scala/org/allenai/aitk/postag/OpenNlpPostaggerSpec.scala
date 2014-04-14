@@ -4,7 +4,7 @@ package postag
 import org.allenai.aitk.tokenize._
 import org.allenai.common.testkit.UnitSpec
 
-object OpenNlpPostaggerTest extends UnitSpec {
+object OpenNlpPostaggerSpec extends UnitSpec {
   "OpenNLP pos-tagger" should "correctly postag an example sentence" in {
     val text = "This is a test of the OpenNlp postagger."
     val tokenizer = new SimpleEnglishTokenizer
