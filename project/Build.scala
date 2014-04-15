@@ -101,4 +101,17 @@ object AitkBuild extends Build {
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
   ) dependsOn(postag)
+
+  lazy val parse = Project(
+    id = "tools-parse",
+    base = file("tools/parse"),
+    settings = buildSettings ++ Seq(
+      name := "aitk-parse",
+      licenses := Seq(apache2),
+      libraryDependencies ++= Seq(
+        clear,
+        clearGroup % "clearnlp-dictionary" % "1.0",
+        clearGroup % "clearnlp-general-en-dep" % "1.1",
+        clearGroup % "clearnlp-general-en-pos" % "1.0"))
+  ) dependsOn(postag)
 }
