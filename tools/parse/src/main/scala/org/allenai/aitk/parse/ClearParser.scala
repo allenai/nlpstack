@@ -4,7 +4,7 @@ package parse
 import com.clearnlp.dependency.DEPNode
 import com.clearnlp.dependency.DEPTree
 import com.clearnlp.nlp.NLPGetter
-import com.clearnlp.nlp.NLPLib
+import com.clearnlp.nlp.NLPMode
 
 import org.allenai.aitk.parse.graph.Dependency
 import org.allenai.aitk.parse.graph.DependencyGraph
@@ -22,9 +22,9 @@ import scala.collection.JavaConverters._
 class ClearParser(
     val tokenizer: Tokenizer = new SimpleEnglishTokenizer,
     val postagger: Postagger = new OpenNlpPostagger()) extends DependencyParser {
-  val clearMorpha = NLPGetter.getComponent("general-en", "en", NLPLib.MODE_MORPH)
+  val clearMorpha = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_MORPH)
 
-  val clearDepParser = NLPGetter.getComponent("general-en", "en", NLPLib.MODE_DEP)
+  val clearDepParser = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_DEP)
 
   def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     val tree = new DEPTree()

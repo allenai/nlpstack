@@ -14,7 +14,7 @@ object AitkBuild extends Build {
   val allenAiTestkit = "org.allenai.common" %% "testkit" % "0.0.2-SNAPSHOT"
 
   val clearGroup = "com.clearnlp"
-  val clearVersion = "2.0.0"
+  val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
   val opennlp = "org.apache.opennlp" % "opennlp-tools" % "1.5.3" exclude("net.sf.jwordnet", "jwnl")
   val chalk = "org.scalanlp" % "chalk" % "1.3.0" exclude("com.typesafe.akka", "akka-actor_2.10") exclude("org.apache.logging.log4j", "log4j-api")
