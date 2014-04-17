@@ -1,5 +1,3 @@
-Deploy.settings
-
 name := "nlpweb"
 
 libraryDependencies ++= Seq(
