@@ -60,8 +60,13 @@ abstract class LineProcessor(name: String) {
 
   def run(config: Config) {
     init(config)
-    if (config.server) (new LineProcessorServer(this.getClass.getSimpleName(), config.port, process)).run()
-    else runCli(config)
+    if (config.server) {
+      val server = new LineProcessorServer(this.getClass.getSimpleName(), config.port, process)
+      server.run()
+    }
+    else {
+      runCli(config)
+    }
   }
 
   def handle(writer: PrintWriter, line: String): Unit = {
@@ -102,46 +107,12 @@ abstract class LineProcessor(name: String) {
 // This is a separate class so that optional dependencies are not loaded
 // unless a server instance is being create.
 class LineProcessorServer(name: String, port: Int, process: String => String) {
-  class ToolActor extends Actor with ToolService {
-    implicit def myExceptionHandler(implicit log: LoggingContext) =
-    ExceptionHandler {
-      case e: Exception =>
-        requestUri { uri =>
-          log.error(toString, e)
-          complete(StatusCodes.InternalServerError -> e.getMessage)
-        }
-    }
-
-    // The HttpService trait defines only one abstract member, which connects the
-    // services environment to the enclosing actor or test.
-    def actorRefFactory = context
-
-    // This actor only runs our route, but you could add other things here, like
-    // request stream processing or timeout handling
-    def receive = runRoute(route)
-  }
-
-  trait ToolService extends HttpService {
-    // format: OFF
-    val route =
-      path("") {
-        get {
-          complete("Post a line to process for: " + name)
-        } ~
-        post {
-          entity(as[String]) { body =>
-            complete(process(body))
-          }
-        }
-      }
-  }
-
   def run() {
     // ActorSystem to host the application in.
     implicit val system = ActorSystem("ari-frontend")
 
     // Create and start our service actor.
-    val service = system.actorOf(Props[ToolActor], s"aitk-$name-actor")
+    val service = system.actorOf(Props(classOf[ToolActor], name, process), s"aitk-$name-actor")
 
     // Start a new HTTP server with our service actor as the handler.
     {
@@ -152,4 +123,33 @@ class LineProcessorServer(name: String, port: Int, process: String => String) {
       IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = port)
     }
   }
+}
+
+class ToolActor(name: String, process: String=>String) extends HttpServiceActor {
+  implicit def myExceptionHandler(implicit log: LoggingContext) =
+  ExceptionHandler {
+    case e: Exception =>
+      requestUri { uri =>
+        log.error(toString, e)
+        complete(StatusCodes.InternalServerError -> e.getMessage)
+      }
+  }
+
+  // format: OFF
+  val route =
+    path("") {
+      get {
+        complete("Post a line to process for: " + name)
+      } ~
+      post {
+        entity(as[String]) { body =>
+          complete(process(body))
+        }
+      }
+    }
+
+  // This actor only runs our route, but you could add other things here, like
+  // request stream processing or timeout handling
+  def receive = runRoute(route)
+
 }
