@@ -3,7 +3,7 @@ package parse
 package graph
 
 import org.allenai.aitk.graph.Graph._
-import stem.Stemmer
+import lemmatize.Stemmer
 import scala.util.matching.Regex
 import scala.collection.immutable.SortedSet
 
