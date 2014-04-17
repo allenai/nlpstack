@@ -1,6 +1,6 @@
 Deploy.settings
 
-name := "nlpviz"
+name := "nlpweb"
 
 libraryDependencies ++= Seq(
   "commons-codec" % "commons-codec" % "1.9",

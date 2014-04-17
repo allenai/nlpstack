@@ -32,7 +32,7 @@ object AitkBuild extends Build {
     publish := { },
     publishTo := Some("bogus" at "http://nowhere.com"),
     publishLocal := { }
-  ).aggregate(tools, viz)
+  ).aggregate(tools, webapp)
 
   val buildSettings = Defaults.defaultSettings ++ Revolver.settings ++
     Seq(
@@ -53,9 +53,9 @@ object AitkBuild extends Build {
     id = "tools-root",
     base = file("tools")).aggregate(lemmatize, tokenize, postag, chunk)
 
-  lazy val viz = Project(
-    id = "viz",
-    base = file("viz"),
+  lazy val webapp = Project(
+    id = "webapp",
+    base = file("webapp"),
     settings = buildSettings) dependsOn(toolsCore)
 
   lazy val toolsCore = Project(
