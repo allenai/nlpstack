@@ -61,7 +61,7 @@ abstract class LineProcessor(name: String) {
   def run(config: Config) {
     init(config)
     if (config.server) {
-      val server = new LineProcessorServer(this.getClass.getSimpleName(), config.port, process)
+      val server = new LineProcessorServer(this.getClass.getSimpleName, config.port, process)
       server.run()
     }
     else {
@@ -109,7 +109,7 @@ abstract class LineProcessor(name: String) {
 class LineProcessorServer(name: String, port: Int, process: String => String) {
   def run() {
     // ActorSystem to host the application in.
-    implicit val system = ActorSystem("ari-frontend")
+    implicit val system = ActorSystem(s"$name-server")
 
     // Create and start our service actor.
     val service = system.actorOf(Props(classOf[ToolActor], name, process), s"aitk-$name-actor")
@@ -151,5 +151,4 @@ class ToolActor(name: String, process: String=>String) extends HttpServiceActor 
   // This actor only runs our route, but you could add other things here, like
   // request stream processing or timeout handling
   def receive = runRoute(route)
-
 }
