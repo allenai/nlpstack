@@ -6,7 +6,7 @@ import org.allenai.aitk.tokenize.Token
 
 import chalk.text.segment.JavaSentenceSegmenter
 
-class ChalkSentencer extends Segmenter {
+class ChalkSentenceSegmenter extends Segmenter {
   val sentencer = new JavaSentenceSegmenter()
 
   override def segmentTexts(document: String) = {
@@ -22,5 +22,5 @@ class ChalkSentencer extends Segmenter {
 
 object ChalkSentencerMain
     extends SegmenterMain {
-  lazy val sentencer = new ChalkSentencer
+  lazy val sentencer = new ChalkSentenceSegmenter
 }
