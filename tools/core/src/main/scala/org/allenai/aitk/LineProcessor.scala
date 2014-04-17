@@ -6,6 +6,7 @@ import akka.actor._
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import spray.can.Http
 import spray.http._
 import spray.routing._
@@ -19,9 +20,11 @@ import scala.io.Source
 import scala.io.Codec
 
 abstract class LineProcessor(name: String) {
+  val typesafeConfig = ConfigFactory.load()
+
   case class Config(
     server: Boolean = false,
-    port: Int = 8080,
+    port: Int = typesafeConfig.getInt(s"aitk.tools.$name.defaultPort"),
     outputFile: Option[File] = None,
     inputFile: Option[File] = None,
     parallel: Boolean = false)
@@ -61,7 +64,7 @@ abstract class LineProcessor(name: String) {
   def run(config: Config) {
     init(config)
     if (config.server) {
-      val server = new LineProcessorServer(this.getClass.getSimpleName, config.port, process)
+      val server = new LineProcessorServer(name, config.port, process)
       server.run()
     }
     else {
@@ -145,6 +148,13 @@ class ToolActor(name: String, process: String=>String) extends HttpServiceActor 
       post {
         entity(as[String]) { body =>
           complete(process(body))
+        }
+      }
+    } ~
+    get {
+      path("info") {
+        path("name") {
+          complete(name)
         }
       }
     }

@@ -7,6 +7,7 @@ libraryDependencies ++= Seq(
     slf4j,
     // standalone scope
     scopt,
+    typesafeConfig,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "io.spray" % "spray-can" % sprayVersion,
     "io.spray" % "spray-routing" % sprayVersion,

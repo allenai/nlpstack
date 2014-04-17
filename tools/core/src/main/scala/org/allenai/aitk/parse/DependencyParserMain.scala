@@ -4,7 +4,7 @@ package parse
 import org.allenai.aitk.parse.graph._
 import org.allenai.aitk.postag.Postagger
 
-abstract class DependencyParserMain extends LineProcessor("parser") {
+abstract class DependencyParserMain extends LineProcessor("dep-parser") {
   def dependencyParser: DependencyParser
 
   override def init(config: Config) {

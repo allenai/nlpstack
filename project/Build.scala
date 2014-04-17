@@ -22,6 +22,7 @@ object AitkBuild extends Build {
   val testingLibraries = Seq(allenAiTestkit % "test")
 
   val scopt = "com.github.scopt" %% "scopt" % "3.2.0"
+  val typesafeConfig = "com.typesafe" % "config" % "1.2.0"
 
   val sprayVersion = "1.3.1"
   val akkaVersion = "2.3.2"
