@@ -84,6 +84,15 @@ object AitkBuild extends Build {
       libraryDependencies ++= Seq(chalk))
   ) dependsOn(toolsCore)
 
+  lazy val segment = Project(
+    id = "tools-segment",
+    base = file("tools/segment"),
+    settings = buildSettings ++ Seq(
+      name := "aitk-segment",
+      licenses := Seq(apache2),
+      libraryDependencies ++= Seq(chalk))
+  ) dependsOn(toolsCore)
+
   lazy val postag = Project(
     id = "tools-postag",
     base = file("tools/postag"),
