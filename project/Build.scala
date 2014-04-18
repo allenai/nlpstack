@@ -52,12 +52,12 @@ object AitkBuild extends Build {
 
   lazy val tools = Project(
     id = "tools-root",
-    base = file("tools")).aggregate(lemmatize, tokenize, postag, chunk)
+    base = file("tools")).aggregate(lemmatize, tokenize, postag, chunk, parse, segment)
 
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings) dependsOn(toolsCore)
+    settings = buildSettings) dependsOn(toolsCore, tokenize, postag, chunk)
 
   lazy val toolsCore = Project(
     id = "tools-core",
