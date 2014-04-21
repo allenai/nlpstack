@@ -86,8 +86,8 @@ trait ToolService extends HttpService with SprayJsonSupport {
   
   // format: OFF
   val toolRoute =
-    pathPrefix("tool") {
-      path("list") {
+    pathPrefix("api" / "tools") {
+      pathEnd {
         get {
           val toolNames = tools map (_.name)
           val json = toolNames.toJson
@@ -110,7 +110,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
               }
             }
           case None =>
-            complete("TODO")
+            complete(StatusCodes.BadRequest -> s"Unknown tool: $segment")
         }
       }
     }
