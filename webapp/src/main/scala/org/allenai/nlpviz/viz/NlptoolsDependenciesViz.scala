@@ -1,5 +1,6 @@
 package org.allenai.nlpviz.viz
 
+import org.allenai.aitk.Writer
 import org.allenai.nlpviz.Dependencies
 import org.allenai.nlpviz.Whatswrong._
 

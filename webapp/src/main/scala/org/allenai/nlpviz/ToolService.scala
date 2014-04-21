@@ -18,6 +18,11 @@ import org.allenai.aitk.segment.Segment
 import org.allenai.aitk.parse.ClearParser
 import org.allenai.aitk.parse.DependencyParser
 import org.allenai.aitk.parse.graph.DependencyGraph
+import org.allenai.aitk.Writer
+import org.allenai.common.Resource
+import org.apache.commons.codec.binary.Base64OutputStream
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
 object Tools {
   /** A class for representing a tool.
@@ -38,9 +43,21 @@ object Tools {
     def visualize(output: Output): Seq[BufferedImage]
     def format(output: Output): Seq[String]
 
-    def results(section: String): (Seq[String], Seq[BufferedImage]) = {
+    def results(section: String): ToolResponse = {
       val processed = process(section)
-      (format(processed), visualize(processed))
+
+      val visualizations = visualize(processed)
+      val base64Visualizations = visualizations map { bufferedImage =>
+        Resource.using(new ByteArrayOutputStream()) { baos =>
+          Resource.using(new Base64OutputStream(baos)) { base64os =>
+            ImageIO.write(bufferedImage, "png", base64os)
+            baos.flush()
+            new String(baos.toByteArray())
+          }
+        }
+      }
+
+      ToolResponse(format(processed), base64Visualizations)
     }
   }
 
@@ -79,7 +96,12 @@ object Tools {
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = tokenizer(section)
-    override def visualize(output: Output) = Seq.empty
+    override def visualize(output: Output) = { 
+      import Whatswrong._
+      Seq(
+        implicitly[Writer[Output, BufferedImage]].write(output)
+      )
+    }
     override def format(output: Output) = Seq(Tokenizer.multilineStringFormat.write(output))
   }
 
@@ -108,7 +130,12 @@ object Tools {
       val tokens = tokenizer(section)
       postagger.postagTokenized(tokens)
     }
-    override def visualize(output: Output) = Seq.empty
+    override def visualize(output: Output) = { 
+      import Whatswrong._
+      Seq(
+        implicitly[Writer[Output, BufferedImage]].write(output)
+      )
+    }
     override def format(output: Output) = Seq(Postagger.multilineStringFormat.write(output))
   }
 
@@ -123,7 +150,12 @@ object Tools {
       val postags = postagger.postagTokenized(tokens)
       chunker.chunkPostagged(postags)
     }
-    override def visualize(output: Output) = Seq.empty
+    override def visualize(output: Output) = { 
+      import Whatswrong._
+      Seq(
+        implicitly[Writer[Output, BufferedImage]].write(output)
+      )
+    }
     override def format(output: Output) = Seq(Chunker.multilineStringFormat.write(output))
   }
 
@@ -138,9 +170,19 @@ object Tools {
       val postags = postagger.postagTokenized(tokens)
       dependencyParser.dependencyGraphPostagged(postags)
     }
-    override def visualize(output: Output) = Seq.empty
+    override def visualize(output: Output) = { 
+      import Whatswrong._
+      Seq(
+        implicitly[Writer[Output, BufferedImage]].write(output)
+      )
+    }
     override def format(output: Output) = Seq(DependencyGraph.multilineStringFormat.write(output))
   }
+}
+
+case class ToolResponse(texts: Seq[String], base64Images: Seq[String])
+object ToolResponse {
+  implicit val toolResponseJsonFormat = jsonFormat2(ToolResponse.apply)
 }
 
 trait ToolService extends HttpService with SprayJsonSupport {
@@ -171,9 +213,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
               entity(as[String]) { body =>
                 val sections: Seq[String] = tool.split(body)
                 val results = sections map tool.results
-
-                val formatted = results flatMap (_._1)
-                complete(formatted)
+                complete(results)
               }
             }
           case None =>

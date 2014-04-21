@@ -33,7 +33,12 @@
                   </div>
                   <input ng-click="runTool(tool)" type="submit" value="Submit" class="btn btn-default">
 
-                  <pre ng-repeat="response in response[tool]">{{ response }}</pre>
+                  <div ng-repeat="response in response[tool]">
+                    <pre ng-repeat="text in response.texts">{{ text }}</pre>
+                    <div ng-repeat="base64Image in response.base64Images">
+                      <img ng-src="data:image/png;base64,{{ base64Image }}" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </form>
