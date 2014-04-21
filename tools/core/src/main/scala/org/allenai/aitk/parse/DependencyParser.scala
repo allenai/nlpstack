@@ -17,22 +17,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 trait DependencyParser {
 
-  def tokenizer: Tokenizer
-  def postagger: Postagger
-
   /**
     * Create a graph of the dependencies from POS-tagged tokens.
     */
   def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph
-
-  def apply(string: String) = dependencyGraph(string)
 
   /**
     * Create a graph of the dependencies.  This has more information than
     * creating a DependencyGraph from an `Iterable[Dependency]` because it
     * will have the source text.
     */
-  def dependencyGraph(string: String): (Seq[PostaggedToken], DependencyGraph) = {
+  def dependencyGraph(tokenizer: Tokenizer, postagger: Postagger)(string: String): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postag(tokenizer)(string)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }
@@ -40,7 +35,7 @@ trait DependencyParser {
   /**
     * Create a graph of the dependencies from Tokens.
     */
-  def dependencyGraphTokenized(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
+  def dependencyGraphTokenized(postagger: Postagger)(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postagTokenized(tokens)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }

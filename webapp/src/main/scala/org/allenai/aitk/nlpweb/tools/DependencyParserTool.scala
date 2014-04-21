@@ -1,7 +1,7 @@
 package org.allenai.aitk.nlpweb.tools
 
 import org.allenai.aitk.parse.graph.DependencyGraph
-import org.allenai.aitk.aitk.nlpweb.Whatswrong._
+import org.allenai.aitk.nlpweb.Whatswrong._
 import org.allenai.aitk.Writer
 import java.awt.image.BufferedImage
 

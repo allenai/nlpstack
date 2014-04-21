@@ -64,5 +64,7 @@ object ClearParser {
 }
 
 object ClearDependencyParserMain extends DependencyParserMain {
-  lazy val dependencyParser = new ClearParser()
+  override lazy val tokenizer = new SimpleEnglishTokenizer()
+  override lazy val postagger = new OpenNlpPostagger()
+  override lazy val dependencyParser = new ClearParser()
 }

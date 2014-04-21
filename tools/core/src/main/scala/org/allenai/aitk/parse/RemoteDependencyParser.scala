@@ -8,27 +8,10 @@ import org.allenai.aitk.tokenize._
 
 import scala.concurrent.ExecutionContext
 
-class RemoteDependencyParser(val urlString: String)(implicit executionContext: ExecutionContext) extends DependencyParser with Remote {
-  override def tokenizer = throw new UnsupportedOperationException()
-  override def postagger = throw new UnsupportedOperationException()
-
-  override def dependencyGraph(sentence: String) = {
+class RemoteDependencyParser(val urlString: String)(implicit executionContext: ExecutionContext) extends Remote {
+  def dependencyGraph(sentence: String) = {
     val response = post(sentence)
 
     DependencyParser.multilineStringFormat.read(response)
-  }
-
-  /**
-    * Throws UnsupportedOperationException
-    */
-  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
-    throw new UnsupportedOperationException()
-  }
-
-  /**
-    * Throws UnsupportedOperationException
-    */
-  override def dependencyGraphTokenized(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
-    throw new UnsupportedOperationException()
   }
 }
