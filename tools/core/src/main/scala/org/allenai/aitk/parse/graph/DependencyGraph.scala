@@ -341,21 +341,24 @@ object DependencyGraph {
     def read(pickled: String) = {
       import Dependency.DependencyOrdering
 
-      // split dependencies
+      // Split dependencies (edges).
       val pickledDeps = pickled.split(seperator)
 
-      // deserialize
+      // Deserialize dependencies.
       val allDeps = pickledDeps map Dependency.stringFormat.read
 
-      // separate the root and decrement node ids
+      // Separate the root and decrement node ids so they are zero indexed.
       val rootDep = allDeps.find(_.label == "root")
-      val deps: immutable.SortedSet[Dependency] = (allDeps filterNot (dep => rootDep exists (_ == dep))).map(dep => dep.copy(
-        source = dep.source.copy(id = dep.source.id - 1),
-        dest = dep.dest.copy(id = dep.dest.id - 1)))(scala.collection.breakOut)
 
-      val root = rootDep.map(rootDep => rootDep.dest.copy(id = rootDep.dest.id - 1))
+      val deps: immutable.SortedSet[Dependency] =
+        (allDeps filterNot (dep => rootDep exists (_ == dep))).map(dep =>
+          dep.copy(
+            source = dep.source.copy(id = dep.source.id - 1),
+            dest = dep.dest.copy(id = dep.dest.id - 1)))(scala.collection.breakOut)
 
-      val vertices = deps.flatMap(_.vertices).toSet
+      val root = rootDep map (rootDep => rootDep.dest.copy(id = rootDep.dest.id - 1))
+
+      val vertices = (deps flatMap (_.vertices)).toSet
       DependencyGraph(root, vertices, deps)
     }
   }
