@@ -10,7 +10,7 @@ var VisualizeCtrl = function($scope, $http) {
 
   $scope.visualizeDependencies = function() {
     $scope.working = true;
-    $http.post("/viz/dependencies/base64", $scope.model.dependencies)
+    $http.post("/api/visualize/dependencies/base64", $scope.model.dependencies)
       .success(function(data, status, headers, config) {
         $scope.working = false;
         $scope.errorMessage = undefined;
