@@ -3,13 +3,14 @@ package org.allenai.nlpviz
 import org.allenai.aitk.tokenize._
 import org.allenai.aitk.postag._
 import org.allenai.aitk.chunk._
-
 import com.typesafe.config.ConfigRenderOptions
 import spray.http._
 import spray.http.MediaTypes._
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 import spray.routing._
-
 import java.awt.image.BufferedImage
+import spray.httpx.SprayJsonSupport
 
 object Tools {
   /** A class for representing a tool.
@@ -59,7 +60,7 @@ object Tools {
     override def format(output: Output) = Seq(output mkString " ")
   }
 
-  class Chunker extends Tool("tokenize") {
+  class Chunker extends Tool("chunk") {
     type Output = Seq[ChunkedToken]
 
     override def split(input: String) = input split "\n"
@@ -80,17 +81,19 @@ object Tools {
   */
 }
 
-trait ToolService extends HttpService {
+trait ToolService extends HttpService with SprayJsonSupport {
   val tools = Seq(new Tools.Tokenizer, new Tools.Postagger, new Tools.Chunker)
-
+  
   // format: OFF
   val toolRoute =
-    path("tool") {
-      get {
-        complete(tools.iterator map (_.name) mkString ("\n"))
-      }
-    } ~
     pathPrefix("tool") {
+      path("list") {
+        get {
+          val toolNames = tools map (_.name)
+          val json = toolNames.toJson
+          complete(tools map (_.name))
+        }
+      } ~
       path(Segment) { segment =>
         tools find (_.name == segment) match {
           case Some(tool) =>
@@ -102,7 +105,7 @@ trait ToolService extends HttpService {
                 val sections: Seq[String] = tool.split(body)
                 val results = sections map tool.results
 
-                val formatted = results flatMap (_._2)
+                val formatted = results flatMap (_._1)
                 complete(formatted mkString "\n")
               }
             }
