@@ -1,4 +1,4 @@
-package org.allenai.nlpviz
+package org.allenai.aitk.nlpweb
 
 import akka.actor.ActorSystem
 import akka.actor.Props

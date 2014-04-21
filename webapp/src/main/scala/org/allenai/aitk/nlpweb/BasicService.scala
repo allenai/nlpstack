@@ -1,4 +1,4 @@
-package org.allenai.nlpviz
+package org.allenai.aitk.nlpweb
 
 import com.typesafe.config.ConfigRenderOptions
 import spray.http._

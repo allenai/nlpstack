@@ -1,13 +1,12 @@
-package org.allenai.nlpviz.tools
+package org.allenai.aitk.nlpweb.tools
 
-import org.allenai.aitk.chunk.ChunkedToken
-import org.allenai.nlpviz.Whatswrong
+import org.allenai.aitk.parse.graph.DependencyGraph
+import org.allenai.aitk.aitk.nlpweb.Whatswrong._
 import org.allenai.aitk.Writer
-import org.allenai.aitk.chunk.Chunker
 import java.awt.image.BufferedImage
 
-  object ChunkerTool extends Tool("chunk") with StringFormat {
-    type Output = Seq[ChunkedToken]
+ object DependencyParserTool extends Tool("dependencies") with StringFormat {
+    type Output = DependencyGraph
 
     override def info = ToolInfo(Impl.obamaSentences)
 
@@ -15,13 +14,12 @@ import java.awt.image.BufferedImage
     override def process(section: String) = {
       val tokens = Impl.tokenizer(section)
       val postags = Impl.postagger.postagTokenized(tokens)
-      Impl.chunker.chunkPostagged(postags)
+      Impl.dependencyParser.dependencyGraphPostagged(postags)
     }
     override def visualize(output: Output) = { 
-      import Whatswrong._
       Seq(
         implicitly[Writer[Output, BufferedImage]].write(output)
       )
     }
-    override def stringFormat = Chunker.stringFormat
+    override def stringFormat = DependencyGraph.multilineStringFormat
   }

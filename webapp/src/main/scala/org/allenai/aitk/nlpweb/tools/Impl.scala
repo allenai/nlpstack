@@ -1,4 +1,4 @@
-package org.allenai.nlpviz.tools
+package org.allenai.aitk.nlpweb.tools
 
 import org.allenai.aitk.segment.ChalkSentenceSegmenter
 import org.allenai.aitk.tokenize.SimpleEnglishTokenizer

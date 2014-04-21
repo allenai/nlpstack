@@ -1,6 +1,5 @@
-package org.allenai.nlpviz.tools
+package org.allenai.aitk.nlpweb.tools
 
-import org.allenai.nlpviz.Whatswrong
 import org.allenai.aitk.Writer
 import java.awt.image.BufferedImage
 import org.allenai.aitk.lemmatize._

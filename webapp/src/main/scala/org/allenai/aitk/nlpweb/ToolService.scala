@@ -1,11 +1,6 @@
-package org.allenai.nlpviz
+package org.allenai.aitk.nlpweb
 
-import org.allenai.nlpviz.tools.ChunkerTool
-import org.allenai.nlpviz.tools.DependencyParserTool
-import org.allenai.nlpviz.tools.LemmatizerTool
-import org.allenai.nlpviz.tools.PostaggerTool
-import org.allenai.nlpviz.tools.SentenceSegmenterTool
-import org.allenai.nlpviz.tools.TokenizerTool
+import org.allenai.aitk.nlpweb.tools._
 
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport

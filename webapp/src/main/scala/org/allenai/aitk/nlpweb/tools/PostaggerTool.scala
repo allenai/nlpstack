@@ -1,6 +1,6 @@
-package org.allenai.nlpviz.tools
+package org.allenai.aitk.nlpweb.tools
 
-import org.allenai.nlpviz.Whatswrong
+import org.allenai.aitk.nlpweb.Whatswrong._
 import org.allenai.aitk.Writer
 import java.awt.image.BufferedImage
 import org.allenai.aitk.postag._
@@ -16,7 +16,6 @@ import org.allenai.aitk.postag._
       Impl.postagger.postagTokenized(tokens)
     }
     override def visualize(output: Output) = { 
-      import Whatswrong._
       Seq(
         implicitly[Writer[Output, BufferedImage]].write(output)
       )

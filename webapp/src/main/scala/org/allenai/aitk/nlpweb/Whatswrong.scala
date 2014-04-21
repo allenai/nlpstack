@@ -1,4 +1,4 @@
-package org.allenai.nlpviz
+package org.allenai.aitk.nlpweb
 
 import org.allenai.common.Resource
 import org.allenai.aitk.{ Reader, Writer, Format }

@@ -1,7 +1,7 @@
-package org.allenai.nlpviz
+package org.allenai.aitk.nlpweb
 
 import org.allenai.common.Resource
-import org.allenai.nlpviz.tools._
+import org.allenai.aitk.nlpweb.tools._
 
 import com.typesafe.config.ConfigRenderOptions
 import org.apache.commons.codec.binary.Base64OutputStream
