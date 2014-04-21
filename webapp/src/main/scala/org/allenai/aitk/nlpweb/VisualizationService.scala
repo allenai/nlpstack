@@ -21,7 +21,7 @@ trait VisualizationService extends HttpService {
 
   // format: OFF
   val visualizationRoute =
-    pathPrefix("viz") {
+    pathPrefix("api" / "visualize") {
       // Helpful routes for seeing what visualizations are available.
       get {
         pathEnd {

@@ -21,6 +21,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
   // format: OFF
   val toolRoute =
     pathPrefix("api" / "tools") {
+      // List available tools in JSON.
       pathEnd {
         get {
           val toolNames = tools map (_.name)
@@ -30,9 +31,11 @@ trait ToolService extends HttpService with SprayJsonSupport {
       path(Segment) { segment =>
         tools find (_.name == segment) match {
           case Some(tool) =>
+            // Give info about this tool.
             get {
               complete(tool.info)
             } ~
+            // Process text with this tool.
             post {
               entity(as[String]) { body =>
                 val sections: Seq[String] = tool.split(body)
@@ -41,6 +44,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
               }
             }
           case None =>
+            // Tool not found.
             complete(StatusCodes.BadRequest -> s"Unknown tool: $segment")
         }
       }
