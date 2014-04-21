@@ -1,6 +1,7 @@
 package org.allenai.nlpviz
 
 import org.allenai.common.Resource
+import org.allenai.aitk.{ Reader, Writer, Format }
 import org.allenai.aitk.chunk.ChunkedToken
 import org.allenai.aitk.parse.graph.DependencyGraph
 import org.allenai.aitk.parse.graph.DependencyNode
@@ -137,15 +138,4 @@ object Whatswrong {
   trait WhatswrongTokenizer[A] {
     def tokenize(source: A, dest: com.googlecode.whatswrong.Token)
   }
-
-  trait Reader[A, B] {
-    def read(input: A): Either[String, B]
-  }
-
-  trait Writer[A, B] {
-    def write(input: A): B
-  }
-
-  trait Format[A, B] extends Reader[A, B] with Writer[A, B]
-
 }
