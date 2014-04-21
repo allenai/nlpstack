@@ -5,7 +5,7 @@ import spray.util.LoggingContext
 import spray.routing._
 import spray.http._
 
-class NlpvizActor extends Actor with BasicService with VisualizationService with ToolService {
+class NlpwebActor extends Actor with BasicService with VisualizationService with ToolService {
 
   implicit def myExceptionHandler(implicit log: LoggingContext) =
   ExceptionHandler {

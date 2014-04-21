@@ -19,7 +19,7 @@ trait BasicService extends HttpService {
       // TODO: version route
       path("name") {
         get {
-          complete(Nlpviz.name)
+          complete(Nlpweb.name)
         }
       }
     } ~

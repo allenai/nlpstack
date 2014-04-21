@@ -1,5 +1,5 @@
-angular.module('nlpviz', ['ui.bootstrap']);
-var NlpvizCtrl = function($scope, $http) {
+angular.module('visualize', ['ui.bootstrap']);
+var VisualizeCtrl = function($scope, $http) {
   $scope.model = { }
 
   $scope.showExample = function() {

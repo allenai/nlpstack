@@ -18,11 +18,17 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
+/** Provides implicit readers and writers for the whatswrong format.
+  *  
+  * implicitly[Writer[DependencyGraph, BufferedImage]].write(dgraph)
+  */
 object Whatswrong {
   final val MAX_WIDTH = 2000
   final val MAX_HEIGHT = 400
 
   val renderer = new SingleSentenceRenderer()
+
+  // Set colors for different edges.
   renderer.setEdgeTypeColor("amod", Color.pink)
   renderer.setEdgeTypeColor("prt", Color.pink)
   renderer.setEdgeTypeColor("advmod", Color.pink)
@@ -34,30 +40,33 @@ object Whatswrong {
   renderer.setEdgeTypeColor("relation", Color.red)
   renderer.setEdgeTypeColor("empty", Color.white)
 
-  case class Base64String(string: String)
-
+  // Implicit tokenizers to convert NLP representations into whatswrong representations.
   implicit def tokenizeToken: WhatswrongTokenizer[Token] = new WhatswrongTokenizer[Token] {
     def tokenize(source: Token, target: com.googlecode.whatswrong.Token) = {
       target.addProperty(new TokenProperty("text", 0), source.string)
     }
   }
+
   implicit def tokenizePostag(implicit tokenizer: WhatswrongTokenizer[Token]): WhatswrongTokenizer[PostaggedToken] = new WhatswrongTokenizer[PostaggedToken] {
     def tokenize(source: PostaggedToken, target: com.googlecode.whatswrong.Token) {
       tokenizer.tokenize(source, target)
       target.addProperty(new TokenProperty("postag", 1), source.postag)
     }
   }
+  
   implicit def tokenizeChunk(implicit tokenizer: WhatswrongTokenizer[PostaggedToken]): WhatswrongTokenizer[ChunkedToken] = new WhatswrongTokenizer[ChunkedToken] {
     def tokenize(source: ChunkedToken, target: com.googlecode.whatswrong.Token) {
       tokenizer.tokenize(source, target)
       target.addProperty(new TokenProperty("chunk", 2), source.chunk)
     }
   }
+
   implicit def tokenizeNode: WhatswrongTokenizer[DependencyNode] = new WhatswrongTokenizer[DependencyNode] {
     def tokenize(source: DependencyNode, target: com.googlecode.whatswrong.Token) = {
       target.addProperty(new TokenProperty("text", 0), source.string)
     }
   }
+
   def seq2Instance[A](seq: Seq[A])(implicit tokenizer: WhatswrongTokenizer[A]) = {
     val inst = new NLPInstance()
     for (token <- seq) {
@@ -67,6 +76,7 @@ object Whatswrong {
 
     inst
   }
+
   def graph2Instance(graph: DependencyGraph) = {
     // get nodes
     val inst = seq2Instance[DependencyNode](graph.nodes.toSeq)
@@ -90,6 +100,7 @@ object Whatswrong {
 
     bi.getSubimage(0, 0, dimensions.width, dimensions.height)
   }
+
   def writeSeq2Graphic[A](implicit tokenizer: WhatswrongTokenizer[A]) = new Writer[Seq[A], BufferedImage] {
     override def write(tokens: Seq[A]): BufferedImage = {
       val inst = seq2Instance[A](tokens)
@@ -99,7 +110,6 @@ object Whatswrong {
   implicit def writeChunkSeq2Graphic[Token] = writeSeq2Graphic(tokenizeChunk)
   implicit def writePostagSeq2Graphic[PostaggedToken] = writeSeq2Graphic(tokenizePostag)
   implicit def writeTokenSeq2Graphic[ChunkedToken] = writeSeq2Graphic(tokenizeToken)
-
   implicit def writeGraph2Graphic = new Writer[DependencyGraph, BufferedImage] {
     val renderer = new SingleSentenceRenderer()
     override def write(graph: DependencyGraph): BufferedImage = {
@@ -124,18 +134,6 @@ object Whatswrong {
     }
   }
 
-  implicit def writeGraphic2Base64[A](implicit writer: Writer[A, BufferedImage]) = new Writer[A, Base64String] {
-    override def write(a: A) = {
-      val bi = writer.write(a)
-      Resource.using(new ByteArrayOutputStream()) { os =>
-        Resource.using(new Base64OutputStream(os)) { b64 =>
-          ImageIO.write(bi, "png", b64);
-          Base64String(os.toString("UTF-8"))
-        }
-      }
-    }
-  }
-
   trait WhatswrongTokenizer[A] {
     def tokenize(source: A, dest: com.googlecode.whatswrong.Token)
   }
@@ -143,9 +141,11 @@ object Whatswrong {
   trait Reader[A, B] {
     def read(input: A): Either[String, B]
   }
+
   trait Writer[A, B] {
     def write(input: A): B
   }
+
   trait Format[A, B] extends Reader[A, B] with Writer[A, B]
 
 }

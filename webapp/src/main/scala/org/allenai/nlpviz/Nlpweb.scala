@@ -10,7 +10,7 @@ import spray.can.Http
 
 import scala.concurrent.duration.DurationInt
 
-object Nlpviz {
+object Nlpweb {
   lazy val config = ConfigFactory.load()
   val name = "nlpviz"
 
@@ -19,7 +19,7 @@ object Nlpviz {
     implicit val system = ActorSystem("ari-frontend")
 
     // Create and start our service actor.
-    val service = system.actorOf(Props[NlpvizActor], "ui-actor")
+    val service = system.actorOf(Props[NlpwebActor], "ui-actor")
 
     // Start a new HTTP server with our service actor as the handler.
     {
