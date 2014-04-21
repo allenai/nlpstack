@@ -23,7 +23,8 @@
 
       <tabset>
         <tab ng-repeat="tool in model.tools" heading="{{ tool }}">
-            Try <a href="#" ng-click="showExample()">an example</a>.
+            Try <a href="#" ng-click="showExample(tool)">an example</a>.
+            Tool implementation is {{ model.toolInfo[tool].impl }}.
             <form>
               <div class="panel panel-default">
                 <div class="panel-body">
