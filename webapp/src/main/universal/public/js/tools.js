@@ -22,8 +22,6 @@ var NlpToolsCtrl = function($scope, $http) {
 
         $scope.response = {};
         $scope.response[name] = data;
-
-        alert(data);
       })
       .error(function(data, status, headers, config) {
         $scope.working = false;
