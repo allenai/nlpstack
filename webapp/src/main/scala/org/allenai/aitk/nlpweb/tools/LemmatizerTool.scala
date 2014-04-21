@@ -8,7 +8,7 @@ import org.allenai.aitk.tokenize._
 object LemmatizerTool extends Tool("lemmatize") {
   type Output = Seq[Lemmatized[Token]]
 
-  override def info = ToolInfo(Impl.obamaSentences)
+  override def info = ToolInfo(Impl.lemmatizer.getClass.getSimpleName, Impl.obamaSentences)
 
   override def split(input: String) = input split "\n"
   override def process(section: String) = {

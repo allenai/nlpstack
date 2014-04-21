@@ -8,7 +8,7 @@ import org.allenai.aitk.segment._
 object SentenceSegmenterTool extends Tool("segment") {
   type Output = Seq[Segment]
 
-  override def info = ToolInfo(Impl.obamaText)
+  override def info = ToolInfo(Impl.sentenceSegmenter.getClass.getSimpleName, Impl.obamaText)
 
   override def split(input: String) = Seq(input)
   override def process(section: String) = Impl.sentenceSegmenter(section).toSeq

@@ -8,7 +8,7 @@ import org.allenai.aitk.postag._
  object PostaggerTool extends Tool("postag") with StringFormat {
     type Output = Seq[PostaggedToken]
 
-    override def info = ToolInfo(Impl.obamaSentences)
+    override def info = ToolInfo(Impl.postagger.getClass.getSimpleName, Impl.obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {

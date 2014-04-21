@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage
  object DependencyParserTool extends Tool("dependencies") with StringFormat {
     type Output = DependencyGraph
 
-    override def info = ToolInfo(Impl.obamaSentences)
+    override def info = ToolInfo(Impl.dependencyParser.getClass.getSimpleName, Impl.obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {

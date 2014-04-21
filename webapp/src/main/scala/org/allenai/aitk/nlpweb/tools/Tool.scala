@@ -63,9 +63,9 @@ trait StringFormat { this: Tool =>
   def format(output: Output): Seq[String] = Seq(stringFormat.write(output))
 }
 
-case class ToolInfo(example: String)
+case class ToolInfo(impl: String, example: String)
 object ToolInfo {
-  implicit val toolInfoFormat = jsonFormat1(ToolInfo.apply)
+  implicit val toolInfoFormat = jsonFormat2(ToolInfo.apply)
 }
 
 case class ToolResponse(texts: Seq[String], base64Images: Seq[String])

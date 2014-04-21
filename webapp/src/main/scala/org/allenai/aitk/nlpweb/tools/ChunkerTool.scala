@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage
   object ChunkerTool extends Tool("chunk") with StringFormat {
     type Output = Seq[ChunkedToken]
 
-    override def info = ToolInfo(Impl.obamaSentences)
+    override def info = ToolInfo(Impl.chunker.getClass.getSimpleName, Impl.obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {
