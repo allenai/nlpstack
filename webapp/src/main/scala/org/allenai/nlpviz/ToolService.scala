@@ -128,16 +128,18 @@ object Tools {
   }
 
   object DependencyParserTool extends Tool("dependencies") {
-    type Output = (Seq[PostaggedToken], DependencyGraph)
+    type Output = DependencyGraph
 
     override def info = ToolInfo(obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {
-      dependencyParser.dependencyGraph(section)
+      val tokens = tokenizer(section)
+      val postags = postagger.postagTokenized(tokens)
+      dependencyParser.dependencyGraphPostagged(postags)
     }
     override def visualize(output: Output) = Seq.empty
-    override def format(output: Output) = Seq(DependencyParser.multilineStringFormat.write(output))
+    override def format(output: Output) = Seq(DependencyGraph.multilineStringFormat.write(output))
   }
 }
 
