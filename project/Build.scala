@@ -57,7 +57,7 @@ object AitkBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings) dependsOn(toolsCore, tokenize, postag, chunk)
+    settings = buildSettings) dependsOn(toolsCore, lemmatize, tokenize, postag, chunk, parse, segment)
 
   lazy val toolsCore = Project(
     id = "tools-core",

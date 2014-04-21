@@ -11,6 +11,13 @@ import spray.json.DefaultJsonProtocol._
 import spray.routing._
 import java.awt.image.BufferedImage
 import spray.httpx.SprayJsonSupport
+import org.allenai.aitk.lemmatize.Lemmatized
+import org.allenai.aitk.segment.ChalkSentenceSegmenter
+import org.allenai.aitk.lemmatize.MorphaStemmer
+import org.allenai.aitk.segment.Segment
+import org.allenai.aitk.parse.ClearParser
+import org.allenai.aitk.parse.DependencyParser
+import org.allenai.aitk.parse.graph.DependencyGraph
 
 object Tools {
   /** A class for representing a tool.
@@ -24,6 +31,8 @@ object Tools {
   abstract class Tool(val name: String) {
     type Output
 
+    def info: ToolInfo
+
     def split(input: String): Seq[String]
     def process(section: String): Output
     def visualize(output: Output): Seq[BufferedImage]
@@ -35,21 +44,64 @@ object Tools {
     }
   }
 
+  case class ToolInfo(example: String)
+  object ToolInfo {
+    implicit val toolInfoFormat = jsonFormat1(ToolInfo.apply)
+  }
+
+  private val sentenceSegmenter = new ChalkSentenceSegmenter()
+
   private val tokenizer = new SimpleEnglishTokenizer()
+  private val lemmatizer = new MorphaStemmer()
   private val postagger = new OpenNlpPostagger()
   private val chunker = new OpenNlpChunker()
 
-  class Tokenizer extends Tool("tokenize") {
+  private lazy val dependencyParser = new ClearParser()
+
+  val obamaText = "Barack Hussein Obama II is the 44th and current President of the United States, and the first African American to hold the office. Born in Honolulu, Hawaii, Obama is a graduate of Columbia University and Harvard Law School, where he served as president of the Harvard Law Review. He was a community organizer in Chicago before earning his law degree. He worked as a civil rights attorney and taught constitutional law at the University of Chicago Law School from 1992 to 2004. He served three terms representing the 13th District in the Illinois Senate from 1997 to 2004, running unsuccessfully for the United States House of Representatives in 2000."
+  val obamaSentences = sentenceSegmenter(obamaText) map (_.text) mkString "\n"
+
+  object SentenceSegmenterTool extends Tool("segment") {
+    type Output = Seq[Segment]
+
+    override def info = ToolInfo(obamaText)
+
+    override def split(input: String) = Seq(input)
+    override def process(section: String) = sentenceSegmenter(section).toSeq
+    override def visualize(output: Output) = Seq.empty
+    override def format(output: Output) = Seq(output mkString "\n")
+  }
+
+  object TokenizerTool extends Tool("tokenize") {
     type Output = Seq[Token]
+
+    override def info = ToolInfo(obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = tokenizer(section)
     override def visualize(output: Output) = Seq.empty
+    override def format(output: Output) = Seq(Tokenizer.multilineStringFormat.write(output))
+  }
+
+  object LemmatizerTool extends Tool("lemmatize") {
+    type Output = Seq[Lemmatized[Token]]
+
+    override def info = ToolInfo(obamaSentences)
+
+    override def split(input: String) = input split "\n"
+    override def process(section: String) = {
+      val tokens = tokenizer.tokenize(section)
+      val postagged = postagger.postagTokenized(tokens)
+      postagged map lemmatizer.lemmatizePostaggedToken
+    }
+    override def visualize(output: Output) = Seq.empty
     override def format(output: Output) = Seq(output mkString " ")
   }
 
-  class Postagger extends Tool("postag") {
+  object PostaggerTool extends Tool("postag") {
     type Output = Seq[PostaggedToken]
+
+    override def info = ToolInfo(obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {
@@ -57,11 +109,13 @@ object Tools {
       postagger.postagTokenized(tokens)
     }
     override def visualize(output: Output) = Seq.empty
-    override def format(output: Output) = Seq(output mkString " ")
+    override def format(output: Output) = Seq(Postagger.multilineStringFormat.write(output))
   }
 
-  class Chunker extends Tool("chunk") {
+  object ChunkerTool extends Tool("chunk") {
     type Output = Seq[ChunkedToken]
+
+    override def info = ToolInfo(obamaSentences)
 
     override def split(input: String) = input split "\n"
     override def process(section: String) = {
@@ -70,27 +124,38 @@ object Tools {
       chunker.chunkPostagged(postags)
     }
     override def visualize(output: Output) = Seq.empty
-    override def format(output: Output) = Seq(output mkString " ")
+    override def format(output: Output) = Seq(Chunker.multilineStringFormat.write(output))
   }
 
-/*
-  class DependencyParser("Dependency Parser") {
+  object DependencyParserTool extends Tool("dependencies") {
+    type Output = (Seq[PostaggedToken], DependencyGraph)
+
+    override def info = ToolInfo(obamaSentences)
+
     override def split(input: String) = input split "\n"
-    override def process(section: String) =
+    override def process(section: String) = {
+      dependencyParser.dependencyGraph(section)
+    }
+    override def visualize(output: Output) = Seq.empty
+    override def format(output: Output) = Seq(DependencyParser.multilineStringFormat.write(output))
   }
-  */
 }
 
 trait ToolService extends HttpService with SprayJsonSupport {
-  val tools = Seq(new Tools.Tokenizer, new Tools.Postagger, new Tools.Chunker)
-  
+  val tools = Seq(
+      Tools.SentenceSegmenterTool,
+      Tools.LemmatizerTool,
+      Tools.TokenizerTool,
+      Tools.PostaggerTool,
+      Tools.ChunkerTool,
+      Tools.DependencyParserTool)
+
   // format: OFF
   val toolRoute =
     pathPrefix("api" / "tools") {
       pathEnd {
         get {
           val toolNames = tools map (_.name)
-          val json = toolNames.toJson
           complete(tools map (_.name))
         }
       } ~
@@ -98,7 +163,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
         tools find (_.name == segment) match {
           case Some(tool) =>
             get {
-              complete(s"Post data for: ${tool.name}")
+              complete(tool.info)
             } ~
             post {
               entity(as[String]) { body =>
@@ -106,7 +171,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
                 val results = sections map tool.results
 
                 val formatted = results flatMap (_._1)
-                complete(formatted mkString "\n")
+                complete(formatted)
               }
             }
           case None =>
