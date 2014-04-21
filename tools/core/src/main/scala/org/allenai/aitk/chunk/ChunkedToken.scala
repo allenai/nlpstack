@@ -1,7 +1,7 @@
 package org.allenai
 package aitk.chunk
 
-import org.allenai.common.HashCodeHelper
+import org.allenai.aitk.HashCodeHelper
 import org.allenai.aitk.postag.PostaggedToken
 import org.allenai.aitk.Format
 

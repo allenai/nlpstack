@@ -2,7 +2,7 @@ package org.allenai
 package aitk
 package tokenize
 
-import org.allenai.common.HashCodeHelper
+import org.allenai.aitk.HashCodeHelper
 import org.allenai.common.immutable.Interval
 
 /**

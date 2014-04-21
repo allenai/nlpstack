@@ -1,4 +1,4 @@
-package org.allenai.repr.document
+package org.allenai.aitk.repr.document
 
 class Document(val text: String) {
   override def toString = {

@@ -1,4 +1,4 @@
-package org.allenai.repr.document
+package org.allenai.aitk.repr.document
 
 import org.allenai.aitk.segment._
 import org.allenai.repr.sentence._

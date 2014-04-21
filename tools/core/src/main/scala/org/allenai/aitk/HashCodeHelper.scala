@@ -1,4 +1,4 @@
-package org.allenai.common
+package org.allenai.aitk
 
 /**
  * This object provides a function to generate a hash code

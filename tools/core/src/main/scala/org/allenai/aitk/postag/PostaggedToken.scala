@@ -1,7 +1,7 @@
 package org.allenai.aitk
 package postag
 
-import org.allenai.common.HashCodeHelper
+import org.allenai.aitk.HashCodeHelper
 import org.allenai.aitk.tokenize.Token
 
 /**
