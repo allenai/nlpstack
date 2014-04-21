@@ -1,5 +1,6 @@
 package org.allenai.nlpviz
 
+import org.allenai.aitk.Format
 import org.allenai.aitk.tokenize._
 import org.allenai.aitk.postag._
 import org.allenai.aitk.chunk._
@@ -36,14 +37,21 @@ object Tools {
   abstract class Tool(val name: String) {
     type Output
 
+    /** This information is presented on /tools/name. */
     def info: ToolInfo
 
+    /** The input to all tools is a single text box.  It may be split up
+      * as the tool sees fit.  For example, a sentence segmenter may not
+      * want to split the text, but a tokenizer might want to split the
+      * input by newline.
+      */
     def split(input: String): Seq[String]
     def process(section: String): Output
     def visualize(output: Output): Seq[BufferedImage]
     def format(output: Output): Seq[String]
 
-    def results(section: String): ToolResponse = {
+    /** Process, visualize, format, and then bundle the results. */
+    def apply(section: String): ToolResponse = {
       val processed = process(section)
 
       val visualizations = visualize(processed)
@@ -59,6 +67,11 @@ object Tools {
 
       ToolResponse(format(processed), base64Visualizations)
     }
+  }
+  
+  trait StringFormat { this: Tool =>
+    def stringFormat: Format[Output, String]
+    def format(output: Output): Seq[String] = Seq(stringFormat.write(output))
   }
 
   case class ToolInfo(example: String)
@@ -89,7 +102,7 @@ object Tools {
     override def format(output: Output) = Seq(output mkString "\n")
   }
 
-  object TokenizerTool extends Tool("tokenize") {
+  object TokenizerTool extends Tool("tokenize") with StringFormat {
     type Output = Seq[Token]
 
     override def info = ToolInfo(obamaSentences)
@@ -102,7 +115,7 @@ object Tools {
         implicitly[Writer[Output, BufferedImage]].write(output)
       )
     }
-    override def format(output: Output) = Seq(Tokenizer.multilineStringFormat.write(output))
+    override def stringFormat = Tokenizer.multilineStringFormat
   }
 
   object LemmatizerTool extends Tool("lemmatize") {
@@ -120,7 +133,7 @@ object Tools {
     override def format(output: Output) = Seq(output mkString " ")
   }
 
-  object PostaggerTool extends Tool("postag") {
+  object PostaggerTool extends Tool("postag") with StringFormat {
     type Output = Seq[PostaggedToken]
 
     override def info = ToolInfo(obamaSentences)
@@ -136,10 +149,10 @@ object Tools {
         implicitly[Writer[Output, BufferedImage]].write(output)
       )
     }
-    override def format(output: Output) = Seq(Postagger.multilineStringFormat.write(output))
+    override def stringFormat = Postagger.multilineStringFormat
   }
 
-  object ChunkerTool extends Tool("chunk") {
+  object ChunkerTool extends Tool("chunk") with StringFormat {
     type Output = Seq[ChunkedToken]
 
     override def info = ToolInfo(obamaSentences)
@@ -156,10 +169,10 @@ object Tools {
         implicitly[Writer[Output, BufferedImage]].write(output)
       )
     }
-    override def format(output: Output) = Seq(Chunker.multilineStringFormat.write(output))
+    override def stringFormat = Chunker.stringFormat
   }
 
-  object DependencyParserTool extends Tool("dependencies") {
+  object DependencyParserTool extends Tool("dependencies") with StringFormat {
     type Output = DependencyGraph
 
     override def info = ToolInfo(obamaSentences)
@@ -176,7 +189,7 @@ object Tools {
         implicitly[Writer[Output, BufferedImage]].write(output)
       )
     }
-    override def format(output: Output) = Seq(DependencyGraph.multilineStringFormat.write(output))
+    override def stringFormat = DependencyGraph.multilineStringFormat
   }
 }
 
@@ -212,7 +225,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
             post {
               entity(as[String]) { body =>
                 val sections: Seq[String] = tool.split(body)
-                val results = sections map tool.results
+                val results = sections map tool.apply
                 complete(results)
               }
             }
