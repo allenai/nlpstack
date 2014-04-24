@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 /** Provides implicit readers and writers for the whatswrong format.
-  *  
+  *
   * implicitly[Writer[DependencyGraph, BufferedImage]].write(dgraph)
   */
 object Whatswrong {
@@ -54,7 +54,7 @@ object Whatswrong {
       target.addProperty(new TokenProperty("postag", 1), source.postag)
     }
   }
-  
+
   implicit def tokenizeChunk(implicit tokenizer: WhatswrongTokenizer[PostaggedToken]): WhatswrongTokenizer[ChunkedToken] = new WhatswrongTokenizer[ChunkedToken] {
     def tokenize(source: ChunkedToken, target: com.googlecode.whatswrong.Token) {
       tokenizer.tokenize(source, target)
