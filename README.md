@@ -20,12 +20,12 @@ dependency string format and a chunked sentence string format.
 
 Presently the AI Toolkit includes the following tools.
 
-1.  Tokenizer.  Break a sentence into "word" tokens.
-2.  Lemmatizer.  Associate a base form to a token or a Part-of-Speech (POS) tagged token.  The results will be more accurate if POS tags are available.
-3.  Postagger.  Associate a POS tag with a token.
-4.  Chunker.  Associate chunk ranges with POS-tagged tokens.
-5.  Dependency Parser.  Construct dependencies between POS-tagged tokens.
-6.  Segmenter.  Split a body of text into sentences.
+1.  **Tokenizer**.  Break a sentence into "word" tokens.
+2.  **Lemmatizer**.  Associate a base form to a token or a Part-of-Speech (POS) tagged token.  The results will be more accurate if POS tags are available.
+3.  **Postagger**.  Associate a POS tag with a token.
+4.  **Chunker**.  Associate chunk ranges with POS-tagged tokens.
+5.  **Dependency Parser**.  Construct dependencies between POS-tagged tokens.
+6.  **Segmenter**.  Split a body of text into sentences.
 
 Each tool includes:
 
