@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.nlpweb
+package org.allenai.nlpstack.webapp
 
 import akka.actor.ActorSystem
 import akka.actor.Props
@@ -12,14 +12,14 @@ import scala.concurrent.duration.DurationInt
 
 object Nlpweb {
   lazy val config = ConfigFactory.load()
-  val name = "nlpweb"
+  val name = "webapp"
 
   def main(args: Array[String]): Unit = {
     // ActorSystem to host the application in.
-    implicit val system = ActorSystem("nlpweb")
+    implicit val system = ActorSystem("webapp")
 
     // Create and start our service actor.
-    val service = system.actorOf(Props[NlpwebActor], "nlpweb-actor")
+    val service = system.actorOf(Props[NlpwebActor], "webapp-actor")
 
     // Start a new HTTP server with our service actor as the handler.
     {
@@ -27,7 +27,7 @@ object Nlpweb {
       implicit val timeout = Timeout(30.seconds)
 
       // IO is a scala object with an apply method that returns an ActorRef.
-      IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = config.getInt("nlpstack.nlpweb.port"))
+      IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = config.getInt("nlpstack.webapp.port"))
     }
   }
 }

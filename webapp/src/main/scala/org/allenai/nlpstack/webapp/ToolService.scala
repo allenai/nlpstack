@@ -1,6 +1,6 @@
-package org.allenai.nlpstack.nlpweb
+package org.allenai.nlpstack.webapp
 
-import org.allenai.nlpstack.nlpweb.tools._
+import org.allenai.nlpstack.webapp.tools._
 
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport

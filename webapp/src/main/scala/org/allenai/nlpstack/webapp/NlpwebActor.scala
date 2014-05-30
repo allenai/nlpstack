@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.nlpweb
+package org.allenai.nlpstack.webapp
 
 import akka.actor.Actor
 import spray.util.LoggingContext

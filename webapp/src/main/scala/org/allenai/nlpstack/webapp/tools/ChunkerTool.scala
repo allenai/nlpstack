@@ -1,7 +1,7 @@
-package org.allenai.nlpstack.nlpweb.tools
+package org.allenai.nlpstack.webapp.tools
 
 import org.allenai.nlpstack.chunk.ChunkedToken
-import org.allenai.nlpstack.nlpweb.Whatswrong._
+import org.allenai.nlpstack.webapp.Whatswrong._
 import org.allenai.nlpstack.Writer
 import org.allenai.nlpstack.chunk.Chunker
 import java.awt.image.BufferedImage

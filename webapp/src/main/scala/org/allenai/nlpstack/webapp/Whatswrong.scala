@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.nlpweb
+package org.allenai.nlpstack.webapp
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.{ Reader, Writer, Format }

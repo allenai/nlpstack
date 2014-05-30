@@ -1,6 +1,6 @@
-package org.allenai.nlpstack.nlpweb.tools
+package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.nlpweb.Whatswrong
+import org.allenai.nlpstack.webapp.Whatswrong
 import org.allenai.nlpstack.Writer
 import java.awt.image.BufferedImage
 import org.allenai.nlpstack.tokenize._

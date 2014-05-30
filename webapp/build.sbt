@@ -1,4 +1,4 @@
-name := "nlpweb"
+name := "webapp"
 
 libraryDependencies ++= Seq(
   "commons-codec" % "commons-codec" % "1.9",

@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.nlpweb.tools
+package org.allenai.nlpstack.webapp.tools
 
 import org.allenai.nlpstack.Format
 import org.allenai.common.Resource
