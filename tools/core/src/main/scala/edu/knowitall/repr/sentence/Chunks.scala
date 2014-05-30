@@ -1,7 +1,7 @@
 package org.allenai.repr.sentence
 
 import org.allenai.common.immutable.Interval
-import org.allenai.aitk.chunk._
+import org.allenai.nlpstack.chunk._
 
 trait ChunksSupertrait extends PostagsSupertrait {
   this: Sentence =>
@@ -21,9 +21,9 @@ trait Chunks extends ChunksSupertrait {
 trait Chunker extends Chunks {
   this: Sentence =>
 
-  def tokenizer: org.allenai.aitk.tokenize.Tokenizer
-  def postagger: org.allenai.aitk.postag.Postagger
-  def chunker: org.allenai.aitk.chunk.Chunker
+  def tokenizer: org.allenai.nlpstack.tokenize.Tokenizer
+  def postagger: org.allenai.nlpstack.postag.Postagger
+  def chunker: org.allenai.nlpstack.chunk.Chunker
 
   override lazy val tokens: Seq[ChunkedToken] =
     chunker.chunk(tokenizer, postagger)(this.text)

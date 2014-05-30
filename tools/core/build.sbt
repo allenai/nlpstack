@@ -1,4 +1,4 @@
-name := "aitk-tools-core"
+name := "nlpstack-tools-core"
 
 licenses := Seq(apache2)
 

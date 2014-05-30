@@ -1,6 +1,6 @@
 package org.allenai.repr.sentence
 
-import org.allenai.aitk.postag._
+import org.allenai.nlpstack.postag._
 
 trait PostagsSupertrait extends TokensSupertrait {
   this: Sentence =>
@@ -18,8 +18,8 @@ trait Postags extends PostagsSupertrait {
 
 trait Postagger extends Postags {
   this: Sentence =>
-  def tokenizer: org.allenai.aitk.tokenize.Tokenizer
-  def postagger: org.allenai.aitk.postag.Postagger
+  def tokenizer: org.allenai.nlpstack.tokenize.Tokenizer
+  def postagger: org.allenai.nlpstack.postag.Postagger
 
   override lazy val tokens: Seq[PostaggedToken] =
     postagger.postag(tokenizer)(this.text)

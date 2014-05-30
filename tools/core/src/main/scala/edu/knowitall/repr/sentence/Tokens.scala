@@ -1,9 +1,9 @@
 package org.allenai.repr.sentence
 
-import org.allenai.aitk.tokenize._
-import org.allenai.aitk.postag._
-import org.allenai.aitk.chunk._
-import org.allenai.aitk.lemmatize._
+import org.allenai.nlpstack.tokenize._
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.chunk._
+import org.allenai.nlpstack.lemmatize._
 
 trait TokensSupertrait {
   this: Sentence =>
@@ -22,7 +22,7 @@ trait Tokens extends TokensSupertrait {
 trait Tokenizer extends Tokens {
   this: Sentence =>
 
-  def tokenizer: org.allenai.aitk.tokenize.Tokenizer
+  def tokenizer: org.allenai.nlpstack.tokenize.Tokenizer
 
   override lazy val tokens: Seq[Token] =
     tokenizer.tokenize(text)

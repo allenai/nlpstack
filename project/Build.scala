@@ -29,7 +29,7 @@ object AitkBuild extends Build {
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 
-  lazy val root = Project(id = "aitk-root", base = file(".")).settings (
+  lazy val root = Project(id = "nlpstack-root", base = file(".")).settings (
     publish := { },
     publishTo := Some("bogus" at "http://nowhere.com"),
     publishLocal := { }
@@ -37,7 +37,7 @@ object AitkBuild extends Build {
 
   val buildSettings = Defaults.defaultSettings ++ Revolver.settings ++ Deploy.settings ++
     Seq(
-      organization := "org.allenai.aitk",
+      organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
       scalacOptions ++= Seq("-Xlint", "-deprecation", "-feature"),
       conflictManager := ConflictManager.strict,
@@ -68,7 +68,7 @@ object AitkBuild extends Build {
     id = "tools-lemmatize",
     base = file("tools/lemmatize"),
     settings = buildSettings ++ Seq(
-      name := "aitk-lemmatize",
+      name := "nlpstack-lemmatize",
       licenses := Seq(
         "Academic License (for original lex files)" -> url("http://www.informatics.sussex.ac.uk/research/groups/nlp/carroll/morph.tar.gz"),
         "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")),
@@ -80,7 +80,7 @@ object AitkBuild extends Build {
     id = "tools-tokenize",
     base = file("tools/tokenize"),
     settings = buildSettings ++ Seq(
-      name := "aitk-tokenize",
+      name := "nlpstack-tokenize",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(chalk))
   ) dependsOn(toolsCore)
@@ -89,7 +89,7 @@ object AitkBuild extends Build {
     id = "tools-segment",
     base = file("tools/segment"),
     settings = buildSettings ++ Seq(
-      name := "aitk-segment",
+      name := "nlpstack-segment",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(chalk))
   ) dependsOn(toolsCore)
@@ -98,7 +98,7 @@ object AitkBuild extends Build {
     id = "tools-postag",
     base = file("tools/postag"),
     settings = buildSettings ++ Seq(
-      name := "aitk-postag",
+      name := "nlpstack-postag",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5" ))
   ) dependsOn(tokenize)
@@ -107,7 +107,7 @@ object AitkBuild extends Build {
     id = "tools-chunk",
     base = file("tools/chunk"),
     settings = buildSettings ++ Seq(
-      name := "aitk-chunk",
+      name := "nlpstack-chunk",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
   ) dependsOn(postag)
@@ -116,7 +116,7 @@ object AitkBuild extends Build {
     id = "tools-parse",
     base = file("tools/parse"),
     settings = buildSettings ++ Seq(
-      name := "aitk-parse",
+      name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         clear,

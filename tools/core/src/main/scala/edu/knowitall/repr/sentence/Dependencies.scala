@@ -1,10 +1,10 @@
 package org.allenai.repr.sentence
 
-import org.allenai.aitk.tokenize.Token
-import org.allenai.aitk.postag.PostaggedToken
-import org.allenai.aitk.parse._
-import org.allenai.aitk.parse.graph._
-import org.allenai.aitk.graph.Graph.Edge
+import org.allenai.nlpstack.tokenize.Token
+import org.allenai.nlpstack.postag.PostaggedToken
+import org.allenai.nlpstack.parse._
+import org.allenai.nlpstack.parse.graph._
+import org.allenai.nlpstack.graph.Graph.Edge
 
 trait JustDependencies {
   this: Sentence =>
