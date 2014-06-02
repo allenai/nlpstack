@@ -10,8 +10,8 @@ object AitkBuild extends Build {
   val logbackClassic = "ch.qos.logback" % "logback-classic" % logbackVersion
   val loggingImplementations = Seq(logbackCore, logbackClassic)
 
-  val allenAiCommon = "org.allenai.common" %% "common" % "0.0.1-SNAPSHOT"
-  val allenAiTestkit = "org.allenai.common" %% "testkit" % "0.0.2-SNAPSHOT"
+  val allenAiCommon = "org.allenai.common" %% "common" % "2014.04.28-SNAPSHOT"
+  val allenAiTestkit = "org.allenai.common" %% "testkit" % "0.0.3-SNAPSHOT"
 
   val clearGroup = "com.clearnlp"
   val clearVersion = "2.0.2"
