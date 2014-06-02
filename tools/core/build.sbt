@@ -1,4 +1,4 @@
-name := "nlpstack-tools-core"
+name := "nlpstack-core"
 
 licenses := Seq(apache2)
 

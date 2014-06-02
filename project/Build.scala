@@ -29,16 +29,13 @@ object AitkBuild extends Build {
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 
-  lazy val root = Project(id = "nlpstack-root", base = file(".")).settings (
-    publish := { },
-    publishTo := Some("bogus" at "http://nowhere.com"),
-    publishLocal := { }
-  ).aggregate(tools, webapp)
+  lazy val root = Project(id = "nlpstack-root", base = file(".")).aggregate(tools, webapp)
 
   val buildSettings = Defaults.defaultSettings ++
     Revolver.settings ++
     Deploy.settings ++
     Format.settings ++
+    Publish.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",

@@ -9,3 +9,5 @@ credentials += Credentials("Sonatype Nexus Repository Manager", "utility.allenai
 addSbtPlugin("org.allenai.plugins" % "sbt-deploy" % "2014.4.14-1-SNAPSHOT")
 
 addSbtPlugin("org.allenai.plugins" % "sbt-format" % "2014.5.9-1-SNAPSHOT")
+
+addSbtPlugin("org.allenai.plugins" % "sbt-travis-publisher" % "2014.2.24-1-SNAPSHOT")
