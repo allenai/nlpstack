@@ -17,10 +17,9 @@ object ChunkerTool extends Tool("chunk") with StringFormat {
     val postags = Impl.postagger.postagTokenized(tokens)
     Impl.chunker.chunkPostagged(postags)
   }
-  override def visualize(output: Output) = { 
+  override def visualize(output: Output) = {
     Seq(
-      implicitly[Writer[Output, BufferedImage]].write(output)
-    )
+      implicitly[Writer[Output, BufferedImage]].write(output))
   }
   override def stringFormat = Chunker.stringFormat
 }

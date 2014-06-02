@@ -11,12 +11,12 @@ import spray.routing.HttpService
 
 trait ToolService extends HttpService with SprayJsonSupport {
   val tools = Seq(
-      SentenceSegmenterTool,
-      LemmatizerTool,
-      TokenizerTool,
-      PostaggerTool,
-      ChunkerTool,
-      DependencyParserTool)
+    SentenceSegmenterTool,
+    LemmatizerTool,
+    TokenizerTool,
+    PostaggerTool,
+    ChunkerTool,
+    DependencyParserTool)
 
   // format: OFF
   val toolRoute =

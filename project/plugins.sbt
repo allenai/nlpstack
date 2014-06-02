@@ -7,3 +7,5 @@ resolvers += "allenai nexus repository snapshots" at "http://utility.allenai.org
 credentials += Credentials("Sonatype Nexus Repository Manager", "utility.allenai.org", "deployment", "answermyquery")
 
 addSbtPlugin("org.allenai.plugins" % "sbt-deploy" % "2014.4.14-1-SNAPSHOT")
+
+addSbtPlugin("org.allenai.plugins" % "sbt-format" % "2014.5.9-1-SNAPSHOT")

@@ -35,7 +35,10 @@ object AitkBuild extends Build {
     publishLocal := { }
   ).aggregate(tools, webapp)
 
-  val buildSettings = Defaults.defaultSettings ++ Revolver.settings ++ Deploy.settings ++
+  val buildSettings = Defaults.defaultSettings ++
+    Revolver.settings ++
+    Deploy.settings ++
+    Format.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",

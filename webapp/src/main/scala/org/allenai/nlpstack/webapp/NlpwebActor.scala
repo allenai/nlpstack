@@ -8,13 +8,13 @@ import spray.http._
 class NlpwebActor extends Actor with BasicService with VisualizationService with ToolService {
 
   implicit def myExceptionHandler(implicit log: LoggingContext) =
-  ExceptionHandler {
-    case e: Exception =>
-      requestUri { uri =>
-        log.error(toString, e)
-        complete(StatusCodes.InternalServerError -> e.getMessage)
-      }
-  }
+    ExceptionHandler {
+      case e: Exception =>
+        requestUri { uri =>
+          log.error(toString, e)
+          complete(StatusCodes.InternalServerError -> e.getMessage)
+        }
+    }
 
   // The HttpService trait defines only one abstract member, which connects the
   // services environment to the enclosing actor or test.

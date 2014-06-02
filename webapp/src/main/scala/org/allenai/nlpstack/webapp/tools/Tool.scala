@@ -13,27 +13,25 @@ import spray.json.DefaultJsonProtocol.seqFormat
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
-/**
- * A class for representing a tool.
- *
- * @param  name  the name of the tool
- * @param  split  how to divide up the input text
- * @param  process  how to process each section of the input text
- * @param  visualize  conversions of the process output to a visualization
- * @param  format  conversions of the process output to a string
- */
+/** A class for representing a tool.
+  *
+  * @param  name  the name of the tool
+  * @param  split  how to divide up the input text
+  * @param  process  how to process each section of the input text
+  * @param  visualize  conversions of the process output to a visualization
+  * @param  format  conversions of the process output to a string
+  */
 abstract class Tool(val name: String) {
   type Output
 
   /** This information is presented on /tools/name. */
   def info: ToolInfo
 
-  /**
-   * The input to all tools is a single text box.  It may be split up
-   * as the tool sees fit.  For example, a sentence segmenter may not
-   * want to split the text, but a tokenizer might want to split the
-   * input by newline.
-   */
+  /** The input to all tools is a single text box.  It may be split up
+    * as the tool sees fit.  For example, a sentence segmenter may not
+    * want to split the text, but a tokenizer might want to split the
+    * input by newline.
+    */
   def split(input: String): Seq[String]
   def process(section: String): Output
   def visualize(output: Output): Seq[BufferedImage]
@@ -72,4 +70,3 @@ case class ToolResponse(texts: Seq[String], base64Images: Seq[String])
 object ToolResponse {
   implicit val toolResponseJsonFormat = jsonFormat2(ToolResponse.apply)
 }
-  

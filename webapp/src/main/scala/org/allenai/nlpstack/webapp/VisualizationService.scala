@@ -14,10 +14,10 @@ import javax.imageio.ImageIO
 
 trait VisualizationService extends HttpService {
   val visualizers: Seq[Tool with StringFormat] = Seq(
-      TokenizerTool,
-      PostaggerTool,
-      ChunkerTool,
-      DependencyParserTool)
+    TokenizerTool,
+    PostaggerTool,
+    ChunkerTool,
+    DependencyParserTool)
 
   // format: OFF
   val visualizationRoute =

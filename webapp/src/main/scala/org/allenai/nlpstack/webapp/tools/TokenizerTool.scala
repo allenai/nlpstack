@@ -15,8 +15,7 @@ object TokenizerTool extends Tool("tokenize") with StringFormat {
   override def visualize(output: Output) = {
     import Whatswrong._
     Seq(
-      implicitly[Writer[Output, BufferedImage]].write(output)
-    )
+      implicitly[Writer[Output, BufferedImage]].write(output))
   }
   override def stringFormat = Tokenizer.multilineStringFormat
 }

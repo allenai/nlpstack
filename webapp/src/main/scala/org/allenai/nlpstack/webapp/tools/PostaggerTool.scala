@@ -17,8 +17,7 @@ object PostaggerTool extends Tool("postag") with StringFormat {
   }
   override def visualize(output: Output) = {
     Seq(
-      implicitly[Writer[Output, BufferedImage]].write(output)
-    )
+      implicitly[Writer[Output, BufferedImage]].write(output))
   }
   override def stringFormat = Postagger.multilineStringFormat
 }
