@@ -4,11 +4,10 @@ import org.allenai.nlpstack.graph.Bipath
 import org.allenai.nlpstack.graph.Graph
 import org.allenai.nlpstack.graph.DirectedEdge
 
-/**
- * A representation of a match of a pattern in a graph.
- *
- * @author  Michael Schmitz
- */
+/** A representation of a match of a pattern in a graph.
+  *
+  * @author  Michael Schmitz
+  */
 class Match[T](
     /** the pattern that was applied */
     val pattern: Pattern[T],

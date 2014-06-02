@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.conf
 
-/**
-  * A trainer for a confidence function.
+/** A trainer for a confidence function.
   *
   * @tparam  E  the extraction the confidence function will rank
   * @param  featureSet  the features to use

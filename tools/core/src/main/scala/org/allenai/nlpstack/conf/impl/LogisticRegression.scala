@@ -12,8 +12,7 @@ import org.allenai.common.Resource.using
 import org.allenai.nlpstack.conf.ConfidenceFunction
 import org.allenai.nlpstack.conf.FeatureSet
 
-/**
-  * An implementation of logistic regression of features that can be
+/** An implementation of logistic regression of features that can be
   * represented as a double.
   *
   * @param  featureSet  the features to use

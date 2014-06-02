@@ -5,8 +5,7 @@ import _root_.org.allenai.common.immutable.Interval
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * A sentencer breaks text into sentences.
+/** A sentencer breaks text into sentences.
   */
 abstract class Segmenter {
   def apply(document: String) = segment(document)

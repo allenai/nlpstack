@@ -2,14 +2,13 @@ package org.allenai.nlpstack.graph.pattern
 
 import org.allenai.nlpstack.graph.{ Graph, DirectedEdge, Bipath }
 
-/**
- * Represents a pattern with which graphs can be searched.
- * A pattern will start and end with a node matcher, and every
- * matcher (necessarily) alternates between a NodeMatcher and
- * and EdgeMatcher.
- *
- * @author  Michael Schmitz
- */
+/** Represents a pattern with which graphs can be searched.
+  * A pattern will start and end with a node matcher, and every
+  * matcher (necessarily) alternates between a NodeMatcher and
+  * and EdgeMatcher.
+  *
+  * @author  Michael Schmitz
+  */
 class Pattern[T](
     /** a list of matchers, alternating between `NodeMatcher`s and `EdgeMatcher`s. */
     val matchers: List[Matcher[T]]) extends Function[Graph[T], List[Match[T]]] {

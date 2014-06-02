@@ -11,8 +11,7 @@ import java.util.regex.{ Pattern => JPattern }
 import nlpstack.lemmatize.Stemmer
 import nlpstack.lemmatize.IdentityStemmer
 
-/**
-  * A pattern over a graph of dependencies.
+/** A pattern over a graph of dependencies.
   */
 class DependencyPattern(matchers: List[Matcher[TokenDependencyNode]])
     extends Pattern[TokenDependencyNode](matchers) {
@@ -24,8 +23,7 @@ class DependencyPattern(matchers: List[Matcher[TokenDependencyNode]])
 object DependencyPattern {
   import scala.util.parsing.combinator._
 
-  /**
-    * A parser combinator for deserializing patterns over graphs of dependencies.
+  /** A parser combinator for deserializing patterns over graphs of dependencies.
     */
   class Parser extends RegexParsers {
     def textNodeMatcher: Parser[NodeMatcher[TokenDependencyNode]] = "text=" ~> """\w+""".r ^^ { s =>
@@ -122,8 +120,7 @@ object DependencyPattern {
     }
   }
 
-  /**
-    * A more intuitive constructor that builds the pattern from a
+  /** A more intuitive constructor that builds the pattern from a
     * bidirectional path though the tree.
     */
   def create(bipath: Bipath[TokenDependencyNode]) = new Pattern[TokenDependencyNode](
@@ -164,8 +161,7 @@ object DependencyEdgeMatcher {
     new DirectedEdgeMatcher(dedge.dir, new LabelEdgeMatcher(dedge.edge.label))
 }
 
-/**
-  * Match a `DirectedEdge[TokenDependencyNode]`.
+/** Match a `DirectedEdge[TokenDependencyNode]`.
   */
 class LabelEdgeMatcher(val label: String) extends DependencyEdgeMatcher {
   override def matchText(edge: DirectedEdge[TokenDependencyNode]) =
@@ -184,8 +180,7 @@ class LabelEdgeMatcher(val label: String) extends DependencyEdgeMatcher {
   override def hashCode = this.label.hashCode
 }
 
-/**
-  * Match a `DirectedEdge[TokenDependencyNode]`.
+/** Match a `DirectedEdge[TokenDependencyNode]`.
   */
 class RegexEdgeMatcher(val labelRegex: Regex) extends DependencyEdgeMatcher {
   override def matchText(edge: DirectedEdge[TokenDependencyNode]) = edge.edge.label match {
@@ -205,8 +200,7 @@ class RegexEdgeMatcher(val labelRegex: Regex) extends DependencyEdgeMatcher {
   override def hashCode = this.labelRegex.toString.hashCode
 }
 
-/**
-  * Match a `TokenDependencyNode`.
+/** Match a `TokenDependencyNode`.
   */
 class TokenDependencyNodeMatcher(val text: String, val postag: String)
     extends BaseNodeMatcher[TokenDependencyNode] {
@@ -225,8 +219,7 @@ class TokenDependencyNodeMatcher(val text: String, val postag: String)
   def this(node: TokenDependencyNode) = this(node.string, node.postag)
 }
 
-/**
-  * Match a `TokenDependencyNode`.
+/** Match a `TokenDependencyNode`.
   */
 class TextNodeMatcher(val text: String) extends BaseNodeMatcher[TokenDependencyNode] {
   def this(node: TokenDependencyNode) = this(node.string)

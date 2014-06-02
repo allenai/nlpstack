@@ -11,19 +11,16 @@ import org.allenai.nlpstack.tokenize.Tokenizer
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * A trait for a tool that produces dependencies, such as the
+/** A trait for a tool that produces dependencies, such as the
   * Stanford dependency parser.
   */
 trait DependencyParser {
 
-  /**
-    * Create a graph of the dependencies from POS-tagged tokens.
+  /** Create a graph of the dependencies from POS-tagged tokens.
     */
   def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph
 
-  /**
-    * Create a graph of the dependencies.  This has more information than
+  /** Create a graph of the dependencies.  This has more information than
     * creating a DependencyGraph from an `Iterable[Dependency]` because it
     * will have the source text.
     */
@@ -32,8 +29,7 @@ trait DependencyParser {
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }
 
-  /**
-    * Create a graph of the dependencies from Tokens.
+  /** Create a graph of the dependencies from Tokens.
     */
   def dependencyGraphTokenized(postagger: Postagger)(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postagTokenized(tokens)

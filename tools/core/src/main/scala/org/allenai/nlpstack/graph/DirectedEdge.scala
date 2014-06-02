@@ -24,12 +24,11 @@ object Direction {
   }
 }
 
-/**
- * an edge with a direction.  This is useful for representing paths
- * that go up edges as well as down edges.  It is also useful for
- * considering all edges from a vertex at once but still having
- * the information of whether the edges go up or down.
- */
+/** an edge with a direction.  This is useful for representing paths
+  * that go up edges as well as down edges.  It is also useful for
+  * considering all edges from a vertex at once but still having
+  * the information of whether the edges go up or down.
+  */
 sealed abstract class DirectedEdge[T](val edge: Edge[T]) {
   require(edge != null)
 
@@ -55,10 +54,9 @@ sealed abstract class DirectedEdge[T](val edge: Edge[T]) {
   }
 }
 
-/**
- * an edge that is traversed in the `Up` direction.  In other words,
- * starting at the edge's dest and moving to the edge's source.
- */
+/** an edge that is traversed in the `Up` direction.  In other words,
+  * starting at the edge's dest and moving to the edge's source.
+  */
 case class UpEdge[T](override val edge: Edge[T]) extends DirectedEdge[T](edge) {
   def start = edge.dest
   def end = edge.source
@@ -75,10 +73,9 @@ case class UpEdge[T](override val edge: Edge[T]) extends DirectedEdge[T](edge) {
   override def hashCode() = (edge.hashCode + 2) * 37
 }
 
-/**
- * an edge that is traversed in the `Down` direction.  In other words,
- * starting at the edge's source and moving to the edge's dest.
- */
+/** an edge that is traversed in the `Down` direction.  In other words,
+  * starting at the edge's source and moving to the edge's dest.
+  */
 case class DownEdge[T](override val edge: Edge[T]) extends DirectedEdge[T](edge) {
   def start = edge.source
   def end = edge.dest

@@ -12,8 +12,7 @@ import nlpstack.postag.PostaggedToken
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
 
-/**
-  * A representation for a node in the graph of dependencies.  A node
+/** A representation for a node in the graph of dependencies.  A node
   * represents one or more adjacent tokens in the source sentence.
   */
 case class DependencyNode(val id: Int, val string: String) {

@@ -4,8 +4,7 @@ package postag
 import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.tokenize.Token
 
-/**
-  * A representation for a part-of-speech tagged token.  POS tokens
+/** A representation for a part-of-speech tagged token.  POS tokens
   * use PENN-treebank style tags.
   *
   * @param  string  the string of the token

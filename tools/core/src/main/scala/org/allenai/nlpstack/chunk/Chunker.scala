@@ -8,8 +8,7 @@ import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
 
-/**
-  * A Chunker takes postagged text and adds a chunk tag, specifying
+/** A Chunker takes postagged text and adds a chunk tag, specifying
   * whether a noun or verb phrase is starting or continuing.
   */
 abstract class Chunker {
@@ -50,8 +49,7 @@ object Chunker {
   def joinOf(chunks: Seq[ChunkedToken]) = join("of".r, "IN")(chunks)
   def joinPos(chunks: Seq[ChunkedToken]) = join("'|'s".r, "POS")(chunks)
 
-  /**
-    * Return the intervals represented by these ChunkedTokens.
+  /** Return the intervals represented by these ChunkedTokens.
     * The first part of a pair is the chunk type, the second part is the interval.
     */
   def intervals(chunks: Seq[ChunkedToken]): Seq[(String, Interval)] = {

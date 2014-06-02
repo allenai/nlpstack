@@ -41,8 +41,7 @@ class JoinedDependencyGraph(vertices: Set[JoinedDependencyNode], edges: Set[Edge
     this.collapse(pred(_))(merge)
   }
 
-  /**
-    * Find components that are connected by the predicate.
+  /** Find components that are connected by the predicate.
     * Then, split components into subcomponents in which
     * all vertices correspond to adjacent words in the
     * source sentence.

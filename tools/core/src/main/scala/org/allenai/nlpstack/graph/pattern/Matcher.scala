@@ -5,17 +5,15 @@ import scala.Option.option2Iterable
 import org.allenai.nlpstack.graph.{ Graph, DirectedEdge }
 import org.allenai.nlpstack.graph.{ UpEdge, DownEdge, Direction }
 
-/**
- * Abstract superclass for all matchers.
- */
+/** Abstract superclass for all matchers.
+  */
 sealed abstract class Matcher[T] {
   override def toString = toStringF(identity[String])
   def toStringF(f: String => String): String
 }
 
-/**
- * Trait to match dependency graph edges.
- */
+/** Trait to match dependency graph edges.
+  */
 sealed abstract class EdgeMatcher[T] extends Matcher[T] {
   def apply(edge: DirectedEdge[T]) = this.matchText(edge)
 
@@ -90,9 +88,8 @@ class CaptureEdgeMatcher[T](val alias: String, matcher: EdgeMatcher[T]) extends 
   override def hashCode = alias.hashCode + 39 * matcher.hashCode
 }
 
-/**
- * Trait to match dependency graph nodes.
- */
+/** Trait to match dependency graph nodes.
+  */
 sealed abstract class NodeMatcher[T] extends Matcher[T] {
   def apply(node: T) = this.matchText(node)
 
@@ -141,9 +138,8 @@ class ConjunctiveNodeMatcher[T](val matchers: Set[NodeMatcher[T]])
   }
 }
 
-/**
- * Always match any node.
- */
+/** Always match any node.
+  */
 class TrivialNodeMatcher[T] extends BaseNodeMatcher[T] {
   override def matchText(node: T) = Some(".*")
 
@@ -157,16 +153,14 @@ class TrivialNodeMatcher[T] extends BaseNodeMatcher[T] {
   override def hashCode = toString.hashCode
 }
 
-/**
- * Trait that captures the contents of a node if it's matched.
- * @param  alias  the name of the captured node
- * @param  matcher  the matcher to apply
- */
+/** Trait that captures the contents of a node if it's matched.
+  * @param  alias  the name of the captured node
+  * @param  matcher  the matcher to apply
+  */
 class CaptureNodeMatcher[T](val alias: String, matcher: NodeMatcher[T])
     extends WrappedNodeMatcher[T](matcher) {
-  /**
-   * Convenience constructor that uses the TrivialNodeMatcher.
-   */
+  /** Convenience constructor that uses the TrivialNodeMatcher.
+    */
   def this(alias: String) = this(alias, new TrivialNodeMatcher[T]())
 
   override def matchText(node: T) = matcher.matchText(node)

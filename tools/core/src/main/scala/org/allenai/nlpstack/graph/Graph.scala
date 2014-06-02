@@ -5,12 +5,11 @@ import scala.collection.{ mutable, immutable }
 
 import org.allenai.nlpstack.graph.Graph.Edge
 
-/**
- * A graph representation where data is stored in vertices and edges are
- * represented with adjacency lists.
- *
- * @author  Michael Schmitz
- */
+/** A graph representation where data is stored in vertices and edges are
+  * represented with adjacency lists.
+  *
+  * @author  Michael Schmitz
+  */
 class Graph[T](
     val vertices: Set[T],
     val edges: Set[Edge[T]]) {
@@ -139,15 +138,15 @@ class Graph[T](
   }
 
   /* Find all connected components joined by the specified predicate. */
-  def components(pred: Edge[T]=>Boolean): Set[Set[T]] = {
-    this.vertices.foldLeft(Set.empty[Set[T]]){ case (s, v) =>
-      val nx = this.connected(v, dedge=>pred(dedge.edge))
-      if (nx.size > 1) {
-        s + (nx + v)
-      }
-      else {
-        s
-      }
+  def components(pred: Edge[T] => Boolean): Set[Set[T]] = {
+    this.vertices.foldLeft(Set.empty[Set[T]]) {
+      case (s, v) =>
+        val nx = this.connected(v, dedge => pred(dedge.edge))
+        if (nx.size > 1) {
+          s + (nx + v)
+        } else {
+          s
+        }
     }
   }
 
@@ -159,10 +158,9 @@ class Graph[T](
     outgoing(vertex).map(new DownEdge(_): DirectedEdge[T]).union(
       incoming(vertex).map(new UpEdge(_): DirectedEdge[T])).toSet
 
-  /**
-   * all vertices seperated from `v` by a single edge that
-   * satisfied `pred`.
-   */
+  /** all vertices seperated from `v` by a single edge that
+    * satisfied `pred`.
+    */
   def neighbors(v: T, pred: DirectedEdge[T] => Boolean): Set[T] =
     dedges(v).withFilter(pred).map {
       _ match {
@@ -188,12 +186,11 @@ class Graph[T](
   def successors(v: T, pred: Edge[T] => Boolean): Set[T] =
     neighbors(v, (dedge: DirectedEdge[T]) => dedge.dir == Direction.Down && pred(dedge.edge))
 
-  /**
-   * Iteratively expand a vertex to all vertices beneath it.
-   *
-   * @param  vertex  the seed vertex
-   * @return  the set of vertices beneath `vertex`
-   */
+  /** Iteratively expand a vertex to all vertices beneath it.
+    *
+    * @param  vertex  the seed vertex
+    * @return  the set of vertices beneath `vertex`
+    */
   def inferiors(v: T, cond: E => Boolean = (x => true)): Set[T] = {
     def conditional(dedge: DirectedEdge[T]) = dedge match {
       case down: DownEdge[_] => cond(down.edge)
@@ -202,12 +199,11 @@ class Graph[T](
     connected(v, conditional)
   }
 
-  /**
-   * Iteratively expand a vertex to all vertices above it.
-   *
-   * @param  vertex  the seed vertex
-   * @return  the set of vertices beneath `vertex`
-   */
+  /** Iteratively expand a vertex to all vertices above it.
+    *
+    * @param  vertex  the seed vertex
+    * @return  the set of vertices beneath `vertex`
+    */
   def superiors(v: T, cond: E => Boolean = (x => true)): Set[T] = {
     def conditional(dedge: DirectedEdge[T]) = dedge match {
       case up: UpEdge[_] => cond(up.edge)
@@ -247,9 +243,8 @@ class Graph[T](
     vertexPaths.flatMap(np => toBipath(np))
   }
 
-  /**
-   * Find a path from vertex (start) to vertex (end).
-   */
+  /** Find a path from vertex (start) to vertex (end).
+    */
   def vertexBipaths(start: T, end: T): List[List[T]] = {
     def bipaths(start: T, path: List[T]): List[List[T]] = {
       if (start.equals(end)) List(path)
@@ -259,9 +254,8 @@ class Graph[T](
     bipaths(start, List(start)).map(_.reverse)
   }
 
-  /**
-   * Find a path that contains all vertices in (vertices).
-   */
+  /** Find a path that contains all vertices in (vertices).
+    */
   private def vertexBipaths(vertices: Set[T], maxLength: Option[Int] = None): Set[List[T]] = {
     def bipaths(start: T, path: List[T], length: Int): List[List[T]] = {
       if (maxLength.isDefined && length > maxLength.get) List()
@@ -272,24 +266,21 @@ class Graph[T](
     vertices.flatMap(start => bipaths(start, List(start), 0).map(_.reverse))
   }
 
-  /**
-   * Test if the two nodes border each other.
-   */
+  /** Test if the two nodes border each other.
+    */
   def areNeighbors(a: T, b: T): Boolean =
     this.neighbors(a).contains(b)
 
-  /**
-   * Test if the nodes are connected.  In other words, for each node,
-   * there exists another node in the set that is its neighbor.
-   */
+  /** Test if the nodes are connected.  In other words, for each node,
+    * there exists another node in the set that is its neighbor.
+    */
   def areConnected(vertices: Iterable[T]): Boolean =
     vertices.forall(v => vertices.exists(w => this.areNeighbors(v, w)))
 
-  /**
-   * Find the node which is most superior.
-   *
-   * @throws  IllegalArgumentException  nodes are not connected or no one superior
-   */
+  /** Find the node which is most superior.
+    *
+    * @throws  IllegalArgumentException  nodes are not connected or no one superior
+    */
   def superior(vertices: Set[T]): T = {
     require(vertices.size > 0, "vertices must not be empty")
     require(this.areConnected(vertices), "vertices are not connected")

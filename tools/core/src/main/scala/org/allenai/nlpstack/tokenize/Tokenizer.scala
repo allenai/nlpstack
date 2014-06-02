@@ -4,8 +4,7 @@ package tokenize
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * A tokenizer takes a sentence string as input and
+/** A tokenizer takes a sentence string as input and
   * seperates words (tokens) along word (token) boundaries.
   */
 trait Tokenizer {
@@ -14,8 +13,7 @@ trait Tokenizer {
 }
 
 object Tokenizer {
-  /**
-    * This method takes tokenized strings and the source sentence.
+  /** This method takes tokenized strings and the source sentence.
     * It adds offset information to the strings by tracing through
     * the source sentence and skipping whitespace.
     */
@@ -44,8 +42,7 @@ object Tokenizer {
     tokens
   }
 
-  /**
-    * Rebuild the original text from tokens.  This will maintain
+  /** Rebuild the original text from tokens.  This will maintain
     * the original spacing, although different forms of spacing
     * such as tabs will become standard spaces. Optional argument
     * startOffset specifies offset at which the original text

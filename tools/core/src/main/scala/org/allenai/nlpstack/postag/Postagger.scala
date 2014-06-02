@@ -5,8 +5,7 @@ package postag
 import org.allenai.nlpstack.tokenize._
 import scala.collection.immutable
 
-/**
-  * A POS tagger takes tokenized input and associates a part of speech
+/** A POS tagger takes tokenized input and associates a part of speech
   * tag with each token.
   */
 abstract class Postagger {

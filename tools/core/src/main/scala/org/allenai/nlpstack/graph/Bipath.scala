@@ -2,12 +2,11 @@ package org.allenai.nlpstack.graph
 
 import Graph._
 
-/**
- * A representation of a path through a graph.  The path is represented
- * by a list of directed edges.
- *
- * @author  Michael Schmitz
- */
+/** A representation of a path through a graph.  The path is represented
+  * by a list of directed edges.
+  *
+  * @author  Michael Schmitz
+  */
 class Bipath[T](val path: List[DirectedEdge[T]]) {
   require(path != null)
 

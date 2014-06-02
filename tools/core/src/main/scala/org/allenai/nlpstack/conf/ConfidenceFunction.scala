@@ -7,8 +7,7 @@ import java.io.OutputStream
 
 import org.allenai.common.Resource.using
 
-/**
-  * A confidence function for ranking how likely an extraction is correct.
+/** A confidence function for ranking how likely an extraction is correct.
   *
   * @tparam  E  the extraction to rank
   * @param  featureSet  the features to use

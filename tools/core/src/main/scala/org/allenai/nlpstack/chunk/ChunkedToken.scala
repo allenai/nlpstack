@@ -5,8 +5,7 @@ import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.postag.PostaggedToken
 import org.allenai.nlpstack.Format
 
-/**
-  * A representation of a chunked token.  A chunked token has all the
+/** A representation of a chunked token.  A chunked token has all the
   * aspects of a postagged token along with a chunk tag.
   *
   * @constructor

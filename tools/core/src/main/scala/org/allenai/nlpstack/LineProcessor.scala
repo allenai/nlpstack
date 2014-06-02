@@ -66,8 +66,7 @@ abstract class LineProcessor(name: String) {
     if (config.server) {
       val server = new LineProcessorServer(name, config.port, process)
       server.run()
-    }
-    else {
+    } else {
       runCli(config)
     }
   }
@@ -129,15 +128,15 @@ class LineProcessorServer(name: String, port: Int, process: String => String) {
   }
 }
 
-class ToolActor(name: String, process: String=>String) extends HttpServiceActor {
+class ToolActor(name: String, process: String => String) extends HttpServiceActor {
   implicit def myExceptionHandler(implicit log: LoggingContext) =
-  ExceptionHandler {
-    case e: Exception =>
-      requestUri { uri =>
-        log.error(toString, e)
-        complete(StatusCodes.InternalServerError -> e.getMessage)
-      }
-  }
+    ExceptionHandler {
+      case e: Exception =>
+        requestUri { uri =>
+          log.error(toString, e)
+          complete(StatusCodes.InternalServerError -> e.getMessage)
+        }
+    }
 
   // format: OFF
   val route =
