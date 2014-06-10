@@ -36,6 +36,7 @@ object NlpstackBuild extends Build {
     Deploy.settings ++
     Format.settings ++
     Publish.settings ++
+    TravisPublisher.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
