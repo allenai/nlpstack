@@ -3,7 +3,7 @@ import Keys._
 
 import spray.revolver.RevolverPlugin._
 
-object AitkBuild extends Build {
+object NlpstackBuild extends Build {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.6"
   val logbackVersion = "1.1.1"
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
