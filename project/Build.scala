@@ -17,7 +17,7 @@ object NlpstackBuild extends Build {
   val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
   val opennlp = "org.apache.opennlp" % "opennlp-tools" % "1.5.3" exclude("net.sf.jwordnet", "jwnl")
-  val chalk = "org.scalanlp" % "chalk" % "1.3.0" exclude("com.typesafe.akka", "akka-actor_2.10") exclude("org.apache.logging.log4j", "log4j-api")
+  val chalk = "org.scalanlp" % "chalk" % "1.3.0" exclude("com.typesafe.akka", "akka-actor_2.10") exclude("org.apache.logging.log4j", "log4j-api") exclude("junit", "junit")
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
