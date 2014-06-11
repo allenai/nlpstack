@@ -1,6 +1,4 @@
-package org.allenai
-package nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
 
 import org.allenai.nlpstack.chunk.ChunkedToken
 import org.allenai.nlpstack.chunk.Chunker

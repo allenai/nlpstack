@@ -1,7 +1,6 @@
-package org.allenai.nlpstack
-package segment
+package org.allenai.nlpstack.segment
 
-import _root_.org.allenai.common.immutable.Interval
+import org.allenai.common.immutable.Interval
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

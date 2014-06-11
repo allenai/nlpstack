@@ -1,9 +1,9 @@
-package org.allenai.nlpstack
-package srl
+package org.allenai.nlpstack.srl
 
+import org.allenai.nlpstack.LineProcessor
+import org.allenai.nlpstack.parse.DependencyParser
 import org.allenai.nlpstack.parse.graph._
 import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.parse.DependencyParser
 
 abstract class SrlMain extends LineProcessor("srl") {
   def srl: Srl

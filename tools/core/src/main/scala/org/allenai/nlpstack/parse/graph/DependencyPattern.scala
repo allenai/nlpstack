@@ -1,15 +1,14 @@
-package org.allenai
-package nlpstack
-package parse
-package graph
+package org.allenai.nlpstack.parse.graph
 
+import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.graph._
 import org.allenai.nlpstack.graph.Graph._
 import org.allenai.nlpstack.graph.pattern._
-import scala.util.matching.Regex
+import org.allenai.nlpstack.lemmatize.IdentityStemmer
+import org.allenai.nlpstack.lemmatize.Stemmer
+
 import java.util.regex.{ Pattern => JPattern }
-import nlpstack.lemmatize.Stemmer
-import nlpstack.lemmatize.IdentityStemmer
+import scala.util.matching.Regex
 
 /** A pattern over a graph of dependencies.
   */

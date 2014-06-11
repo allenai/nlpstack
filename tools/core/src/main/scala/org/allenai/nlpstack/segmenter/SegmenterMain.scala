@@ -1,5 +1,6 @@
-package org.allenai.nlpstack
-package segment
+package org.allenai.nlpstack.segment
+
+import org.allenai.nlpstack.LineProcessor
 
 abstract class SegmenterMain
     extends LineProcessor("segmenter") {

@@ -1,6 +1,6 @@
-package org.allenai
-package nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
+
+import org.allenai.nlpstack.LineProcessor
 
 /* The PennTokenizer was used to tokenize the Penn Treebank.
  * The following is a translation from a sed file.  This algorithm

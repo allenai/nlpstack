@@ -1,9 +1,7 @@
-package org.allenai
-package nlpstack
-package parse
+package org.allenai.nlpstack.parse
 
-import graph._
-
+import org.allenai.nlpstack.Format
+import org.allenai.nlpstack.parse.graph._
 import org.allenai.nlpstack.postag.PostaggedToken
 import org.allenai.nlpstack.postag.Postagger
 import org.allenai.nlpstack.tokenize.Token

@@ -1,6 +1,4 @@
-package org.allenai
-package nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
 
 import org.allenai.nlpstack.graph.Graph._
 import org.allenai.nlpstack.lemmatize.Stemmer

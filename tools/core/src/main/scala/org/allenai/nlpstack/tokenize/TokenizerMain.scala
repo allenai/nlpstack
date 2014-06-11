@@ -1,5 +1,6 @@
-package org.allenai.nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
+
+import org.allenai.nlpstack.LineProcessor
 
 abstract class TokenizerMain extends LineProcessor("tokenizer") {
   def tokenizer: Tokenizer

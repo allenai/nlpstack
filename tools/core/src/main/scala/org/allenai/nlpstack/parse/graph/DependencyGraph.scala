@@ -1,25 +1,19 @@
-package org.allenai
-package nlpstack
-package parse
-package graph
+package org.allenai.nlpstack.parse.graph
 
-import scala.Option.option2Iterable
-import scala.collection.immutable
-import scala.util.{ Try, Success, Failure }
-import org.slf4j.LoggerFactory
 import org.allenai.common.immutable.Interval
+import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.graph.Direction
 import org.allenai.nlpstack.graph.DownEdge
 import org.allenai.nlpstack.graph.Graph
 import org.allenai.nlpstack.graph.Graph.Edge
 import org.allenai.nlpstack.graph.UpEdge
-import org.allenai.nlpstack.Format
-import org.allenai.nlpstack.tokenize.Tokenizer
-import org.allenai.nlpstack.lemmatize.Stemmer
-import org.allenai.nlpstack.postag.Postagger
-import org.allenai.nlpstack.tokenize.Token
-import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.lemmatize.Lemmatized
+import org.allenai.nlpstack.lemmatize._
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
+import org.slf4j.LoggerFactory
+import scala.collection.immutable
+import scala.Option.option2Iterable
+import scala.util.{ Try, Success, Failure }
 
 /** A representation of a graph over dependencies.
   * This richer representation may include the text of the original sentence,

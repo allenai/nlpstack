@@ -1,14 +1,12 @@
-package org.allenai
-package nlpstack
-package parse
-package graph
+package org.allenai.nlpstack.parse.graph
 
+import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.graph.Graph
 import org.allenai.nlpstack.graph.Graph._
+import org.allenai.nlpstack.lemmatize.{ Stemmer, IdentityStemmer }
+import org.allenai.nlpstack.postag.PostaggedToken
+
 import scala.collection.immutable.SortedSet
-import org.allenai.common.immutable.Interval
-import nlpstack.lemmatize.{ Stemmer, IdentityStemmer }
-import nlpstack.postag.PostaggedToken
 
 /** A representation for a node in the graph of dependencies.  A node
   * represents one or more adjacent tokens in the source sentence.

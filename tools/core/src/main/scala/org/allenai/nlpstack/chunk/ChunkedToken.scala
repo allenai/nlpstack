@@ -1,5 +1,4 @@
-package org.allenai
-package nlpstack.chunk
+package org.allenai.nlpstack.chunk
 
 import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.postag.PostaggedToken

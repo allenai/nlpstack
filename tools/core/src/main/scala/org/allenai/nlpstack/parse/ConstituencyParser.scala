@@ -1,6 +1,4 @@
-package org.allenai
-package nlpstack
-package parse
+package org.allenai.nlpstack.parse
 
 import graph._
 

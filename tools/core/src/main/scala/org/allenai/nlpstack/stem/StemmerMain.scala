@@ -1,5 +1,6 @@
-package org.allenai.nlpstack
-package lemmatize
+package org.allenai.nlpstack.lemmatize
+
+import org.allenai.nlpstack.LineProcessor
 
 abstract class StemmerMain
     extends LineProcessor("stemmer") {

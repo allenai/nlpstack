@@ -1,2 +1,1 @@
-package org.allenai.nlpstack
-package parse
+package org.allenai.nlpstack.parse

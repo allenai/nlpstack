@@ -1,13 +1,11 @@
-package org.allenai
-package nlpstack
-package parse
-package graph
+package org.allenai.nlpstack.parse.graph
 
+import org.allenai.common.immutable.Interval
+import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.graph.Graph
 import org.allenai.nlpstack.graph.Graph._
-import org.allenai.common.immutable.Interval
-import nlpstack.lemmatize.{ Stemmer, IdentityStemmer }
-import nlpstack.postag.PostaggedToken
+import org.allenai.nlpstack.lemmatize.{ Stemmer, IdentityStemmer }
+import org.allenai.nlpstack.postag.PostaggedToken
 
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex

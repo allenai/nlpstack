@@ -1,9 +1,8 @@
-package org.allenai
-package nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.common.immutable.Interval
+import org.allenai.nlpstack.Format
+import org.allenai.nlpstack.HashCodeHelper
 
 /** The most simple representation of a token.  A token has a string
   * and a character offset in the original text.

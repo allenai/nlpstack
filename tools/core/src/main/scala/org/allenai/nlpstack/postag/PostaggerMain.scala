@@ -1,5 +1,6 @@
-package org.allenai.nlpstack
-package postag
+package org.allenai.nlpstack.postag
+
+import org.allenai.nlpstack.LineProcessor
 
 import org.allenai.nlpstack.tokenize._
 

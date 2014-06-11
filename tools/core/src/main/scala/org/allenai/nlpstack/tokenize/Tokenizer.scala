@@ -1,6 +1,6 @@
-package org.allenai
-package nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
+
+import org.allenai.nlpstack.Format
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

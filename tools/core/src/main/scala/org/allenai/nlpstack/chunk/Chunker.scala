@@ -1,22 +1,21 @@
-package org.allenai
-package nlpstack
-package chunk
+package org.allenai.nlpstack.chunk
 
-import scala.util.matching.Regex
-
+import org.allenai.nlpstack.Format
 import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
+
+import scala.util.matching.Regex
 
 /** A Chunker takes postagged text and adds a chunk tag, specifying
   * whether a noun or verb phrase is starting or continuing.
   */
 abstract class Chunker {
   /** chunk postagged text */
-  def chunkPostagged(tokens: Seq[postag.PostaggedToken]): Seq[ChunkedToken]
+  def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken]
 
   /** chunk tokenized text */
-  def chunkTokenized(postagger: Postagger)(tokens: Seq[tokenize.Token]): Seq[ChunkedToken] = {
+  def chunkTokenized(postagger: Postagger)(tokens: Seq[Token]): Seq[ChunkedToken] = {
     val postags = postagger.postagTokenized(tokens)
     chunkPostagged(postags)
   }

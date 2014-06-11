@@ -1,6 +1,6 @@
-package org.allenai.nlpstack
-package postag
+package org.allenai.nlpstack.postag
 
+import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.tokenize.Token
 

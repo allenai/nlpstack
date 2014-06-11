@@ -1,11 +1,11 @@
-package org.allenai.nlpstack
-package parse
-package graph
+package org.allenai.nlpstack.parse.graph
 
+import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.graph.Graph._
-import lemmatize.Stemmer
-import scala.util.matching.Regex
+import org.allenai.nlpstack.lemmatize.Stemmer
+
 import scala.collection.immutable.SortedSet
+import scala.util.matching.Regex
 
 object Dependency {
   val Serialized = new Regex("""(\p{Graph}+)\(\s*(\p{Graph}*?-\d\d*?),\s*(\p{Graph}*?-\d\d*)\s*\)""")

@@ -1,9 +1,7 @@
-package org.allenai
-package nlpstack
-package parse
+package org.allenai.nlpstack.parse
 
-import org.allenai.nlpstack.parse.graph.DependencyNode
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.parse.graph.DependencyNode
 
 class DependencyNodeSpec extends UnitSpec {
   "DependencyNode" should "round trip through serialization when it contains a hyphen" in {

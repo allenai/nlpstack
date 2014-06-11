@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.srl
 
-import org.allenai.nlpstack.parse.graph.DependencyGraph
 import org.allenai.nlpstack.graph.Direction
+import org.allenai.nlpstack.parse.graph.DependencyGraph
 
 case class FrameHierarchy(frame: Frame, children: Seq[FrameHierarchy]) {
   def height: Int =

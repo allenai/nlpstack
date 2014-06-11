@@ -1,5 +1,6 @@
-package org.allenai.nlpstack
-package parse
+package org.allenai.nlpstack.parse
+
+import org.allenai.nlpstack.LineProcessor
 
 abstract class ConstituencyParserMain
     extends LineProcessor("constit-parser") {

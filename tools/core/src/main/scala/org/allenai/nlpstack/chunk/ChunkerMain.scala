@@ -1,8 +1,8 @@
-package org.allenai.nlpstack
-package chunk
+package org.allenai.nlpstack.chunk
 
-import org.allenai.nlpstack.tokenize._
+import org.allenai.nlpstack.LineProcessor
 import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
 
 abstract class ChunkerMain
     extends LineProcessor("chunker") {

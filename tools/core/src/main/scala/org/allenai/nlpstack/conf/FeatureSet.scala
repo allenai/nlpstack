@@ -1,4 +1,5 @@
 package org.allenai.nlpstack.conf
+
 import scala.collection.immutable.SortedMap
 
 /** FeatureSet represents a set of features on T that can be

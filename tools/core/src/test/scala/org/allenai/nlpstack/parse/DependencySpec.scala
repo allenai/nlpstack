@@ -1,6 +1,4 @@
-package org.allenai
-package nlpstack
-package parse
+package org.allenai.nlpstack.parse
 
 import org.allenai.nlpstack.parse.graph.Dependency
 import org.allenai.nlpstack.tokenize._

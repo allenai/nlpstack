@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.srl
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.tokenize.Token
-import org.allenai.nlpstack.parse.graph.DependencyNode
 import org.allenai.nlpstack.parse.graph.DependencyGraph
+import org.allenai.nlpstack.parse.graph.DependencyNode
+import org.allenai.nlpstack.tokenize.Token
 
 case class Frame(relation: Relation, arguments: Seq[Argument]) {
   override def toString = relation.toString + ":" + arguments.mkString("[", ", ", "]")

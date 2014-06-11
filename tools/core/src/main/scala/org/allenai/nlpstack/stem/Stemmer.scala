@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.lemmatize
 
-import org.allenai.nlpstack.tokenize.Token
 import org.allenai.nlpstack.postag.PostaggedToken
+import org.allenai.nlpstack.tokenize.Token
 
 /** A stemmer takes a string token and produces a normalized form. */
 abstract class Stemmer {

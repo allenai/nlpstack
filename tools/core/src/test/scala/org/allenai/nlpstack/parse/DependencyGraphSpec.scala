@@ -1,6 +1,4 @@
-package org.allenai
-package nlpstack
-package chunk
+package org.allenai.nlpstack.chunk
 
 import org.allenai.nlpstack.tokenize._
 import org.allenai.nlpstack.postag._
