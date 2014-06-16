@@ -71,9 +71,12 @@ object LogisticRegression {
       using(Source.fromInputStream(input)) { source =>
         source.getLines.foreach { line =>
           val parts = tab.split(line)
-          val featureName = parts(0).trim
-          val weight = parts(1).toDouble
-          featureWeights += featureName -> weight
+          /* lines with no tabs are considered comment lines and ignored */
+          if (parts.length > 1) {
+            val featureName = parts(0).trim
+            val weight = parts(1).toDouble
+            featureWeights += featureName -> weight
+          }
         }
       }
 
