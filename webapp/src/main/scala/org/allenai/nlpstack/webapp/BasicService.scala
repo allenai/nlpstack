@@ -6,7 +6,7 @@ import spray.http.MediaTypes._
 import spray.routing._
 
 trait BasicService extends HttpService {
-  val staticContentRoot = "webapp/public"
+  val staticContentRoot = "public"
 
   // format: OFF
   val basicRoute =
