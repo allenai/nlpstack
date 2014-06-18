@@ -23,6 +23,13 @@ object NlpstackBuild extends Build {
     exclude("org.apache.logging.log4j", "log4j-api")
     exclude("junit", "junit"))    // why is this a dependency?
 
+  val factorie = ("cc.factorie" % "factorie" % "1.0"
+    exclude("com.typesafe.akka", "akka-actor_2.10")
+    exclude("org.scala-lang", "scala-reflect")
+    exclude("com.thoughtworks.paranamer", "paranamer")
+    exclude("com.google.guava", "guava"))
+  val factorieModels = "cc.factorie.app.nlp" % "all-models" % "1.0.0"
+
   val testingLibraries = Seq(allenAiTestkit % "test")
 
   val scopt = "com.github.scopt" %% "scopt" % "3.2.0"
@@ -87,7 +94,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(chalk))
+      libraryDependencies ++= Seq(chalk, factorie))
   ) dependsOn(toolsCore)
 
   lazy val segment = Project(
