@@ -23,7 +23,7 @@ abstract class TokenizerSpec extends UnitSpec {
     for ((text, expected) <- texts zip tokenizedTexts) {
       val tokenized = tokenizerToTest.tokenize(text)
       val tokenizedString = tokenized.mkString("; ");
-      tokenizedString should be(expected)
+      assert(tokenizedString === expected)
     }
   }
 }
