@@ -4,8 +4,6 @@ resolvers += "allenai nexus repository" at "http://utility.allenai.org:8081/nexu
 
 resolvers += "allenai nexus repository snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots"
 
-resolvers += "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"
-
 credentials += Credentials("Sonatype Nexus Repository Manager", "utility.allenai.org", "deployment", "answermyquery")
 
 addSbtPlugin("org.allenai.plugins" % "sbt-deploy" % "2014.4.14-1-SNAPSHOT")

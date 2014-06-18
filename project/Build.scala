@@ -56,7 +56,8 @@ object NlpstackBuild extends Build {
       resolvers ++= Seq(
               "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
+              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+              "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries,
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value)
