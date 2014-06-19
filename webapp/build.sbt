@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtNativePackager._
-
 import NativePackagerHelper._
 
 name := "webapp"
