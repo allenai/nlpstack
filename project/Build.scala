@@ -95,7 +95,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(chalk, factorie))
+      libraryDependencies ++= Seq(factorie))
   ) dependsOn(toolsCore)
 
   lazy val segment = Project(
