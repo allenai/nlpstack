@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.tokenize
 
 import org.allenai.nlpstack.LineProcessor
+
 import java.util.regex._
 import scala.collection.JavaConversions._
 
