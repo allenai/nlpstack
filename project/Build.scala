@@ -16,8 +16,19 @@ object NlpstackBuild extends Build {
   val clearGroup = "com.clearnlp"
   val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
-  val opennlp = "org.apache.opennlp" % "opennlp-tools" % "1.5.3" exclude("net.sf.jwordnet", "jwnl")
-  val chalk = "org.scalanlp" % "chalk" % "1.3.0" exclude("com.typesafe.akka", "akka-actor_2.10") exclude("org.apache.logging.log4j", "log4j-api") exclude("junit", "junit")
+  val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3" 
+    exclude("net.sf.jwordnet", "jwnl"))
+  val chalk = ("org.scalanlp" % "chalk" % "1.3.0"
+    exclude("com.typesafe.akka", "akka-actor_2.10")
+    exclude("org.apache.logging.log4j", "log4j-api")
+    exclude("junit", "junit"))    // why is this a dependency?
+
+  val factorie = ("cc.factorie" % "factorie" % "1.0"
+    exclude("com.typesafe.akka", "akka-actor_2.10")
+    exclude("org.scala-lang", "scala-reflect")
+    exclude("com.thoughtworks.paranamer", "paranamer")
+    exclude("com.google.guava", "guava"))
+  val factorieModels = "cc.factorie.app.nlp" % "all-models" % "1.0.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
@@ -45,7 +56,8 @@ object NlpstackBuild extends Build {
       resolvers ++= Seq(
               "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
+              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+              "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries,
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value)
@@ -83,7 +95,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(chalk))
+      libraryDependencies ++= Seq(factorie))
   ) dependsOn(toolsCore)
 
   lazy val segment = Project(
