@@ -9,7 +9,7 @@ import org.allenai.common.testkit.UnitSpec
 class OpenNlpChunkerSpec extends UnitSpec {
   "chunker" should "correctly chunk an example sentence" in {
     val text = "This is a test of the OpenNlp chunker."
-    val tokenizer = new SimpleEnglishTokenizer
+    val tokenizer = defaultTokenizer
     val postagger = new OpenNlpPostagger
     val chunker = new OpenNlpChunker
 

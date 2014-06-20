@@ -2,7 +2,7 @@ package org.allenai.nlpstack
 package postag
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.tokenize.SimpleEnglishTokenizer
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.tokenize.Token
 
 import opennlp.tools.postag._
@@ -42,6 +42,6 @@ object OpenNlpPostagger {
 }
 
 object OpenNlpPostaggerMain extends PostaggerMain {
-  override val tokenizer = new SimpleEnglishTokenizer()
+  override val tokenizer = defaultTokenizer
   override val postagger = new OpenNlpPostagger()
 }
