@@ -20,7 +20,7 @@ import java.util.zip.ZipInputStream
 import scala.collection.JavaConverters._
 
 class ClearParser(
-    val tokenizer: Tokenizer = new SimpleEnglishTokenizer,
+    val tokenizer: Tokenizer = defaultTokenizer,
     val postagger: Postagger = new OpenNlpPostagger()) extends DependencyParser {
   val clearMorpha = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_MORPH)
 
@@ -64,7 +64,7 @@ object ClearParser {
 }
 
 object ClearDependencyParserMain extends DependencyParserMain {
-  override lazy val tokenizer = new SimpleEnglishTokenizer()
+  override lazy val tokenizer = defaultTokenizer
   override lazy val postagger = new OpenNlpPostagger()
   override lazy val dependencyParser = new ClearParser()
 }

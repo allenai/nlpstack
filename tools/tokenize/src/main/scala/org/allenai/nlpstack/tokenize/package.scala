@@ -1,7 +1,8 @@
 package org.allenai.nlpstack
 
 package object tokenize {
-  // Other places depend on SimpleEnglishTokenizer to exist, so for now we give
-  // it to them this way.
+  @deprecated("Please use defaultTokenizer instead", "2014-06-19")
   type SimpleEnglishTokenizer = FactorieTokenizer
+
+  def defaultTokenizer: Tokenizer = new FactorieTokenizer
 }
