@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 
 class ClearParser(
     val tokenizer: Tokenizer = defaultTokenizer,
-    val postagger: Postagger = new OpenNlpPostagger()) extends DependencyParser {
+    val postagger: Postagger = new FactoriePostagger()) extends DependencyParser {
   val clearMorpha = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_MORPH)
 
   val clearDepParser = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_DEP)
@@ -65,6 +65,6 @@ object ClearParser {
 
 object ClearDependencyParserMain extends DependencyParserMain {
   override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = new OpenNlpPostagger()
+  override lazy val postagger = new FactoriePostagger()
   override lazy val dependencyParser = new ClearParser()
 }

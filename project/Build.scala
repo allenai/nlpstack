@@ -115,7 +115,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-postag",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5", factoriePosModel))
+      libraryDependencies ++= Seq(opennlp, factoriePosModel))
   ) dependsOn(tokenize)
 
   lazy val chunk = Project(
