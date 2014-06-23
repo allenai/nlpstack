@@ -1,9 +1,10 @@
 package org.allenai.nlpstack.postag
 
-import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
-import cc.factorie.app.nlp._
 import org.allenai.nlpstack.tokenize.Token
 import org.allenai.nlpstack.tokenize.defaultTokenizer
+
+import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
+import cc.factorie.app.nlp._
 
 class FactoriePostagger extends Postagger {
   private val tagger = OntonotesForwardPosTagger
@@ -22,7 +23,7 @@ class FactoriePostagger extends Postagger {
       t => new cc.factorie.app.nlp.Token(t.offset, t.offset + t.string.length))
     section ++= factorieTokens
 
-    tagger.predict(factorieTokens)  // modifies factoryTokens
+    tagger.predict(factorieTokens) // modifies factoryTokens
 
     for (token <- factorieTokens)
       yield PostaggedToken(
