@@ -22,10 +22,8 @@ class FactoriePostagger extends Postagger {
       str.replace(token.offset, token.offset + token.string.length, token.string)
     }
     val factorieDoc = new Document(str.mkString)
-    val section = new BasicSection(factorieDoc, 0, str.length)
     val factorieTokens = tokens.map(
-      t => new cc.factorie.app.nlp.Token(t.offset, t.offset + t.string.length))
-    section ++= factorieTokens
+      t => new cc.factorie.app.nlp.Token(factorieDoc, t.offset, t.offset + t.string.length))
 
     tagger.predict(factorieTokens) // modifies factoryTokens
 
