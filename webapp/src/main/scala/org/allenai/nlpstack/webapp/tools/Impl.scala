@@ -3,7 +3,7 @@ package org.allenai.nlpstack.webapp.tools
 import org.allenai.nlpstack.segment.ChalkSentenceSegmenter
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
-import org.allenai.nlpstack.postag.OpenNlpPostagger
+import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.chunk.OpenNlpChunker
 import org.allenai.nlpstack.parse.ClearParser
 
@@ -11,7 +11,7 @@ object Impl {
   private[tools] val sentenceSegmenter = new ChalkSentenceSegmenter()
   private[tools] val tokenizer = defaultTokenizer
   private[tools] val lemmatizer = new MorphaStemmer()
-  private[tools] val postagger = new OpenNlpPostagger()
+  private[tools] val postagger = defaultPostagger
   private[tools] val chunker = new OpenNlpChunker()
   private[tools] lazy val dependencyParser = new ClearParser()
 
