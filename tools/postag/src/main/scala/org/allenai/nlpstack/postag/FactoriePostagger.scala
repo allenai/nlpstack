@@ -2,7 +2,6 @@ package org.allenai.nlpstack.postag
 
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp._
-import cc.factorie.app.nlp.segment.DeterministicTokenizer
 import org.allenai.nlpstack.tokenize.Token
 
 class FactoriePostagger extends Postagger {
