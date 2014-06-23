@@ -3,6 +3,7 @@ package org.allenai.nlpstack.postag
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp._
 import org.allenai.nlpstack.tokenize.Token
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 class FactoriePostagger extends Postagger {
   private val tagger = OntonotesForwardPosTagger
@@ -29,4 +30,9 @@ class FactoriePostagger extends Postagger {
       token.string,
       token.stringStart)
   }
+}
+
+object FactoriePostaggerMain extends PostaggerMain {
+  override val tokenizer = defaultTokenizer
+  override val postagger = new FactoriePostagger()
 }
