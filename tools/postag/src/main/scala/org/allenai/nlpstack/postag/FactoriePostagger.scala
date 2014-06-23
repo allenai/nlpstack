@@ -6,6 +6,10 @@ import org.allenai.nlpstack.tokenize.defaultTokenizer
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp._
 
+/** This is thread-safe. The only thing we call on OntonotesForwardPosTagger is
+  * predict(), and predict() is threadsafe. I don't know about the other methods
+  * on OntonotesForwardPosTagger.
+  */
 class FactoriePostagger extends Postagger {
   private val tagger = OntonotesForwardPosTagger
 
