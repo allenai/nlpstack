@@ -57,7 +57,7 @@ abstract class PostaggerSpec extends UnitSpec {
         |outer 217 JJ
         |defense 223 NN
         |. 230 .""".stripMargin,
-      """Pardon 0 NNP
+      """Pardon 0 VB
         |me 7 PRP
         |for 10 IN
         |asking 14 VBG
@@ -68,7 +68,7 @@ abstract class PostaggerSpec extends UnitSpec {
         |what 31 WP
         |good 36 JJ
         |are 41 VBP
-        |snub 45 NN
+        |snub 45 JJ
         |fighters 50 NNS
         |going 59 VBG
         |to 65 TO
