@@ -41,6 +41,6 @@ object OpenNlpChunker {
 
 object OpenNlpChunkerMain extends ChunkerMain {
   override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = new FactoriePostagger()
+  override lazy val postagger = defaultPostagger
   override lazy val chunker = new OpenNlpChunker()
 }

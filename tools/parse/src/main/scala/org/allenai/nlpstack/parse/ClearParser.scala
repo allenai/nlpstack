@@ -11,17 +11,12 @@ import org.allenai.nlpstack.parse.graph.DependencyGraph
 import org.allenai.nlpstack.parse.graph.DependencyNode
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
-import org.allenai.common.Resource.using
-
-import java.io.PrintWriter
-import java.lang.ProcessBuilder
-import java.util.zip.ZipInputStream
 
 import scala.collection.JavaConverters._
 
 class ClearParser(
     val tokenizer: Tokenizer = defaultTokenizer,
-    val postagger: Postagger = new FactoriePostagger()) extends DependencyParser {
+    val postagger: Postagger = defaultPostagger) extends DependencyParser {
   val clearMorpha = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_MORPH)
 
   val clearDepParser = NLPGetter.getComponent("general-en", "en", NLPMode.MODE_DEP)
@@ -65,6 +60,6 @@ object ClearParser {
 
 object ClearDependencyParserMain extends DependencyParserMain {
   override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = new FactoriePostagger()
+  override lazy val postagger = defaultPostagger
   override lazy val dependencyParser = new ClearParser()
 }
