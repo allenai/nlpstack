@@ -1,7 +1,5 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.graph.Graph._
-import org.allenai.nlpstack.lemmatize.Stemmer
 import org.allenai.common.testkit.UnitSpec
 
 abstract class TokenizerSpec extends UnitSpec {
@@ -22,7 +20,7 @@ abstract class TokenizerSpec extends UnitSpec {
 
     for ((text, expected) <- texts zip tokenizedTexts) {
       val tokenized = tokenizerToTest.tokenize(text)
-      val tokenizedString = tokenized.mkString("; ");
+      val tokenizedString = tokenized.mkString("; ")
       assert(tokenizedString === expected)
     }
   }
