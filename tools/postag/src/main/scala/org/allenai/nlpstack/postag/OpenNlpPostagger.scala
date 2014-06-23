@@ -9,9 +9,7 @@ import opennlp.tools.postag._
 
 import java.net.URL
 
-class OpenNlpPostagger(val model: POSModel)
-    extends Postagger {
-
+class OpenNlpPostagger(val model: POSModel) extends Postagger {
   def this() = this(OpenNlpPostagger.loadDefaultModel())
 
   val postagger = new POSTaggerME(model)

@@ -28,7 +28,9 @@ object NlpstackBuild extends Build {
     exclude("org.scala-lang", "scala-reflect")
     exclude("com.thoughtworks.paranamer", "paranamer")
     exclude("com.google.guava", "guava"))
-  val factorieModels = "cc.factorie.app.nlp" % "all-models" % "1.0.0"
+  val factoriePosModel = "cc.factorie.app.nlp.pos" % "OntonotesForwardPosTaggerModel" % "1.0"
+  val factorieParseModel = "cc.factorie.app.nlp.parse" % "OntonotesTransitionBasedParserModel" % "1.0"
+  val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
@@ -113,7 +115,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-postag",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5" ))
+      libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5", factoriePosModel))
   ) dependsOn(tokenize)
 
   lazy val chunk = Project(
