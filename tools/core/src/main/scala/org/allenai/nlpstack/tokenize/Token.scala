@@ -43,4 +43,14 @@ object Token {
       Token(string, offset)
     }
   }
+
+  def rebuildString(tokens: Iterable[Token]): String = {
+    val str = new StringBuilder
+    for (token <- tokens) {
+      if (str.length < token.offset)
+        str.append(" " * (token.offset - str.length))
+      str.replace(token.offset, token.offset + token.string.length, token.string)
+    }
+    str.mkString
+  }
 }

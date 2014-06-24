@@ -15,13 +15,7 @@ class FactoriePostagger extends Postagger {
 
   override def postagTokenized(tokens: Seq[Token]): Seq[PostaggedToken] = {
     // translate the tokens into a Factorie document
-    val str = new StringBuilder
-    for (token <- tokens) {
-      if (str.length < token.offset)
-        str.append(" " * (token.offset - str.length))
-      str.replace(token.offset, token.offset + token.string.length, token.string)
-    }
-    val factorieDoc = new Document(str.mkString)
+    val factorieDoc = new Document(Token.rebuildString(tokens))
     val factorieTokens = tokens.map(
       t => new cc.factorie.app.nlp.Token(factorieDoc, t.offset, t.offset + t.string.length))
 
