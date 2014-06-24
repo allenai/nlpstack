@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.segment
 
-import cc.factorie.app.nlp.{Document, DocumentAnnotatorPipeline, MutableDocumentAnnotatorMap}
+import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.{DeterministicTokenizer, DeterministicSentenceSegmenter}
 
 class FactorieSegmenter extends Segmenter {
@@ -26,4 +26,8 @@ class FactorieSegmenter extends Segmenter {
     for(sentence <- doc.sentences)
       yield new Segment(sentence.documentString, sentence.tokens(0).stringStart)
   }
+}
+
+object FactorieSegmenterMain extends SegmenterMain {
+  val sentencer = new FactorieSegmenter()
 }
