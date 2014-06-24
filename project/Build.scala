@@ -106,7 +106,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(chalk))
+      libraryDependencies ++= Seq(chalk, factorie))
   ) dependsOn(toolsCore)
 
   lazy val postag = Project(
