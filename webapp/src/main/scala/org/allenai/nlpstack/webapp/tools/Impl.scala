@@ -11,7 +11,7 @@ object Impl {
   private[tools] val sentenceSegmenter = new ChalkSentenceSegmenter()
   private[tools] val tokenizer = defaultTokenizer
   private[tools] val lemmatizer = new MorphaStemmer()
-  private[tools] val postagger = defaultPostagger
+  private[tools] lazy val postagger = defaultPostagger
   private[tools] val chunker = new OpenNlpChunker()
   private[tools] lazy val dependencyParser = new ClearParser()
 
