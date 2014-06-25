@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.segment
 
 import cc.factorie.app.nlp._
-import cc.factorie.app.nlp.segment.{DeterministicTokenizer, DeterministicSentenceSegmenter}
+import cc.factorie.app.nlp.segment.{ DeterministicTokenizer, DeterministicSentenceSegmenter }
 
 class FactorieSegmenter extends Segmenter {
   /* This is a bit unfortunate. In Factorie, you tokenize first, and then
@@ -9,7 +9,7 @@ class FactorieSegmenter extends Segmenter {
    * tokenizing twice, once here to get the sentences, and then again in
    * FactorieTokenizer. */
   private val tokenizer =
-      new DeterministicTokenizer(tokenizeAllDashedWords = true)
+    new DeterministicTokenizer(tokenizeAllDashedWords = true)
   private val segmenter = DeterministicSentenceSegmenter
   private val map = new MutableDocumentAnnotatorMap ++=
     DocumentAnnotatorPipeline.defaultDocumentAnnotationMap
@@ -20,11 +20,12 @@ class FactorieSegmenter extends Segmenter {
     prereqs = Nil,
     segmenter.postAttrs)
 
-  override def segment(document: String) : Iterable[Segment] = {
+  override def segment(document: String): Iterable[Segment] = {
     val doc = pipeline.process(new Document(document))
 
-    for(sentence <- doc.sentences)
-      yield new Segment(sentence.documentString, sentence.tokens(0).stringStart)
+    for (sentence <- doc.sentences) yield {
+      new Segment(sentence.documentString, sentence.tokens(0).stringStart)
+    }
   }
 }
 
