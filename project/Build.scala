@@ -18,10 +18,6 @@ object NlpstackBuild extends Build {
   val clear = clearGroup % "clearnlp" % clearVersion
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3" 
     exclude("net.sf.jwordnet", "jwnl"))
-  val chalk = ("org.scalanlp" % "chalk" % "1.3.0"
-    exclude("com.typesafe.akka", "akka-actor_2.10")
-    exclude("org.apache.logging.log4j", "log4j-api")
-    exclude("junit", "junit"))    // why is this a dependency?
 
   val factorie = ("cc.factorie" % "factorie" % "1.0"
     exclude("com.typesafe.akka", "akka-actor_2.10")
@@ -106,7 +102,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(chalk))
+      libraryDependencies ++= Seq(factorie))
   ) dependsOn(toolsCore)
 
   lazy val postag = Project(
@@ -137,6 +133,8 @@ object NlpstackBuild extends Build {
         clear,
         clearGroup % "clearnlp-dictionary" % "1.0",
         clearGroup % "clearnlp-general-en-dep" % "1.1",
-        clearGroup % "clearnlp-general-en-pos" % "1.0"))
+        clearGroup % "clearnlp-general-en-pos" % "1.0",
+        factorie,
+        factorieParseModel))
   ) dependsOn(postag)
 }

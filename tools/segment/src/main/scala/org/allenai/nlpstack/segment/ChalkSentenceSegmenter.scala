@@ -1,26 +1,9 @@
 package org.allenai.nlpstack
 package segment
 
-import org.allenai.nlpstack.tokenize.Tokenizer
-import org.allenai.nlpstack.tokenize.Token
+@deprecated("Please use defaultSegmenter instead", "2014-06-24")
+class ChalkSentenceSegmenter extends FactorieSegmenter
 
-import chalk.text.segment.JavaSentenceSegmenter
-
-class ChalkSentenceSegmenter extends Segmenter {
-  val sentencer = new JavaSentenceSegmenter()
-
-  override def segmentTexts(document: String) = {
-    sentencer(document)
-  }
-
-  def segment(document: String) = {
-    Tokenizer.computeOffsets(segmentTexts(document), document).map {
-      case Token(string, offset) => Segment(string, offset)
-    }
-  }
-}
-
-object ChalkSentencerMain
-    extends SegmenterMain {
+object ChalkSentencerMain extends SegmenterMain {
   lazy val sentencer = new ChalkSentenceSegmenter
 }
