@@ -50,17 +50,16 @@ object Tokenizer {
     * at beginning of the rebuilt original text string.
     */
   def originalText(tokens: TraversableOnce[Token], startOffset: Int = 0) = {
-    val builder = new StringBuilder()
-
+    val str = new StringBuilder
     for (token <- tokens) {
-      require(token.offset >= startOffset,
+      val adjustedTokenOffset = token.offset - startOffset
+      require(adjustedTokenOffset >= 0,
         "Token must have offset >= startOffset. " +
           "Given offset=" + token.offset + ", startOffset=" + startOffset)
-      builder.append(" " * (token.offset - builder.length - startOffset))
-      builder.append(token.string)
+      str.append(" " * (adjustedTokenOffset - str.length))
+      str.replace(adjustedTokenOffset, adjustedTokenOffset + token.string.length, token.string)
     }
-
-    builder.toString()
+    str.mkString
   }
 
   private[this] val tokenRegex = """(.+)@(\d+)""".r
