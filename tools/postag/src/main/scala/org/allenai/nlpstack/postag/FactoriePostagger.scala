@@ -20,8 +20,9 @@ class FactoriePostagger extends Postagger {
 
     tagger.predict(factorieTokens) // modifies factoryTokens
 
-    for (token <- factorieTokens)
-      yield PostaggedToken(tagger.tokenAnnotationString(token), token.string, token.stringStart)
+    for (token <- factorieTokens) yield {
+      PostaggedToken(tagger.tokenAnnotationString(token), token.string, token.stringStart)
+    }
   }
 }
 
