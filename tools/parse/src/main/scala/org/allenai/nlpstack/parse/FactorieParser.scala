@@ -35,10 +35,14 @@ class FactorieParser extends DependencyParser {
       DependencyNode(t.positionInSentence, t.string)
     }
     def pis2node(positionInSentence: Int) =
-      nodes.find(_.id == positionInSentence).get
-    val edges = for(t <- factorieTokens) yield {
-      val childNode = pis2node(t.positionInSentence)
+      nodes.find(_.id == positionInSentence).getOrElse(
+        sys.error("No token with PIS " + positionInSentence))
+    // Since the number of tokens in the sentence will be small most of the
+    // time, we don't need to optimize with a map that would do this lookup
+    // quicker.
+    val edges = for (t <- factorieTokens if t.parseParentIndex >= 0) yield {
       val parentNode = pis2node(t.parseParentIndex)
+      val childNode = pis2node(t.positionInSentence)
       new Graph.Edge[DependencyNode](
         parentNode,
         childNode,
