@@ -139,10 +139,6 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        clear,
-        clearGroup % "clearnlp-dictionary" % "1.0",
-        clearGroup % "clearnlp-general-en-dep" % "1.1",
-        clearGroup % "clearnlp-general-en-pos" % "1.0",
         factorie,
         factorieParseModel,
         factorieWordnet))
