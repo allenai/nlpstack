@@ -1,11 +1,11 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.nlpstack.graph.Graph
-import org.allenai.nlpstack.parse.graph.{DependencyNode, DependencyGraph}
+import org.allenai.nlpstack.parse.graph.{ DependencyNode, DependencyGraph }
 import org.allenai.nlpstack.postag.PostaggedToken
 import org.allenai.nlpstack.tokenize.Token
 
-import cc.factorie.app.nlp.{Sentence, Document}
+import cc.factorie.app.nlp.{ Sentence, Document }
 import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
 import cc.factorie.app.nlp.pos.PennPosTag
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
@@ -16,7 +16,7 @@ class FactorieParser extends DependencyParser {
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // translate the tokens into a Factorie document
     val factorieDoc = new Document(Token.rebuildString(tokens))
-    val factorieTokens = for(t <- tokens) yield {
+    val factorieTokens = for (t <- tokens) yield {
       val factorieT = new cc.factorie.app.nlp.Token(
         factorieDoc,
         t.offset,
@@ -31,8 +31,9 @@ class FactorieParser extends DependencyParser {
     parser.process(sentence)
 
     // translate into our representation
-    val nodes = for(t <- factorieTokens)
-      yield DependencyNode(t.positionInSentence, t.string)
+    val nodes = for (t <- factorieTokens) yield {
+      DependencyNode(t.positionInSentence, t.string)
+    }
     def pis2node(positionInSentence: Int) =
       nodes.find(_.id == positionInSentence).get
     val edges = for(t <- factorieTokens) yield {
