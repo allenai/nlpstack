@@ -2,8 +2,8 @@ package org.allenai.nlpstack.parse
 
 import org.allenai.nlpstack.graph.Graph
 import org.allenai.nlpstack.parse.graph.{ DependencyNode, DependencyGraph }
-import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.tokenize.Token
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
 
 import cc.factorie.app.nlp.{ Sentence, Document }
 import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
@@ -51,4 +51,10 @@ class FactorieParser extends DependencyParser {
 
     DependencyGraph(nodes.toSet, edges.toSet)
   }
+}
+
+object FactorieParserMain extends DependencyParserMain {
+  override lazy val tokenizer = defaultTokenizer
+  override lazy val postagger = defaultPostagger
+  override lazy val dependencyParser = new FactorieParser
 }
