@@ -1,7 +1,5 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.graph.Graph._
-import org.allenai.nlpstack.lemmatize.Stemmer
 import org.allenai.common.testkit.UnitSpec
 
 class TokenizerSpecTest extends UnitSpec {
@@ -37,5 +35,16 @@ class TokenizerSpecTest extends UnitSpec {
 
     // make sure we can go back to the original sentence
     assert(Tokenizer.originalText(tokens, tokens.head.offset) === trimmedSentence)
+  }
+
+  it should "throw an exception if tokens are out of order" in {
+    val tokens = Seq(
+      new Token("large-scale", 0),
+      new Token("large", 0),
+      new Token("scale", 6))
+
+    a [IllegalArgumentException] should be thrownBy {
+      Tokenizer.originalText(tokens, 10)
+    }
   }
 }
