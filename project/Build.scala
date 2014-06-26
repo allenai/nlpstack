@@ -135,6 +135,7 @@ object NlpstackBuild extends Build {
         clearGroup % "clearnlp-general-en-dep" % "1.1",
         clearGroup % "clearnlp-general-en-pos" % "1.0",
         factorie,
-        factorieParseModel))
+        factorieParseModel,
+        factorieWordnet))
   ) dependsOn(postag)
 }
