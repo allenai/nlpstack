@@ -46,7 +46,7 @@ class FactorieParser extends DependencyParser {
       new Graph.Edge[DependencyNode](
         parentNode,
         childNode,
-        t.parseLabel.toString())
+        t.parseLabel.categoryValue)
     }
 
     DependencyGraph(nodes.toSet, edges.toSet)
