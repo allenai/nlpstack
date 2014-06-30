@@ -28,6 +28,8 @@ object NlpstackBuild extends Build {
   val factorieParseModel = "cc.factorie.app.nlp.parse" % "OntonotesTransitionBasedParserModel" % "1.0"
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
+  val scalaVersionString = "2.10.4"
+
   val testingLibraries = Seq(allenAiTestkit % "test")
 
   val scopt = "com.github.scopt" %% "scopt" % "3.2.0"
@@ -56,7 +58,7 @@ object NlpstackBuild extends Build {
     TravisPublisher.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
-      scalaVersion := "2.10.4",
+      scalaVersion := scalaVersionString,
       scalacOptions ++= Seq("-Xlint", "-deprecation", "-feature"),
       conflictManager := ConflictManager.strict,
       resolvers ++= Seq(
@@ -66,7 +68,8 @@ object NlpstackBuild extends Build {
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries,
       dependencyOverrides ++= Set(
-        "org.scala-lang" % "scala-library" % scalaVersion.value)
+        "org.scala-lang" % "scala-library" % scalaVersionString,
+        "org.scala-lang" % "scala-reflect" % scalaVersionString)
     )
 
   lazy val tools = Project(
@@ -120,7 +123,10 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-postag",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(factorie, factoriePosModel))
+      libraryDependencies ++= Seq(
+        factorie,
+        factoriePosModel,
+        "org.scala-lang" % "scala-reflect" % scalaVersionString))
   ) dependsOn(tokenize)
 
   lazy val chunk = Project(
@@ -139,11 +145,9 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        clear,
-        clearGroup % "clearnlp-dictionary" % "1.0",
-        clearGroup % "clearnlp-general-en-dep" % "1.1",
-        clearGroup % "clearnlp-general-en-pos" % "1.0",
         factorie,
-        factorieParseModel))
+        factorieParseModel,
+        factorieWordnet,
+        "org.scala-lang" % "scala-reflect" % scalaVersionString))
   ) dependsOn(postag)
 }
