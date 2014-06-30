@@ -96,7 +96,7 @@ abstract class LineProcessor(name: String) {
       }
       for (line <- lines) {
         handle(writer, line)
-        println()
+        writer.println()
       }
     }
 
