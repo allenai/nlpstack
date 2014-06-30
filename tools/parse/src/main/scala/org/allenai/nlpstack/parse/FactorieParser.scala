@@ -49,7 +49,9 @@ class FactorieParser extends DependencyParser {
         t.parseLabel.categoryValue)
     }
 
-    DependencyGraph(nodes.toSet, edges.toSet)
+    val firstRoot = pis2node(sentence.parseRootChild.positionInSentence)
+
+    DependencyGraph(Some(firstRoot), nodes.toSet, edges.toSet)
   }
 }
 
