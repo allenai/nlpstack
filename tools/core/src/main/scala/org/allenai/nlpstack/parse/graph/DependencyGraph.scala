@@ -153,32 +153,32 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       * connected component joined by the conjunction.
       *
       * 1.  Distribute nsubj.
-      *   a.  "Michael, Rob, and NJ went to Than Vi."
-      *   b.  "The apple was crisp and fresh."
+      *  a.  "Michael, Rob, and NJ went to Than Vi."
+      *  b.  "The apple was crisp and fresh."
       * 2.  Distribute nsubjpass.
-      *   a.  incoming: "The bullet and gunpowder was loaded and fired."
-      *   b.  outgoing: "The bullet was loaded and fired."
+      *  a.  incoming: "The bullet and gunpowder was loaded and fired."
+      *  b.  outgoing: "The bullet was loaded and fired."
       * 3.  Distribute incoming advmod edges
-      *   a.  incoming: "He spoke wisely and surely."
-      *   b.  outgoing: "Just write them down and I will edit it for you."
+      *  a.  incoming: "He spoke wisely and surely."
+      *  b.  outgoing: "Just write them down and I will edit it for you."
       * 4.  Distribute incoming acomp edges
-      *   a.  incoming: "The water looked blue and refreshing.
+      *  a.  incoming: "The water looked blue and refreshing.
       * 5.  Distribute incoming amod edges
-      *   a.  incoming: "The blue and cool water felt nice."
-      *   b.  outgoing: "Pills raise clotting , high blood pressure , heart attack , and stroke . "
+      *  a.  incoming: "The blue and cool water felt nice."
+      *  b.  outgoing: "Pills raise clotting , high blood pressure , heart attack , and stroke . "
       * 6.  Distribute incoming dobj edges
-      *   a.  incoming: "Michael found rocks and spiders."
-      *   b.  outgoing: "Michael went to the beach and found rocks."
+      *  a.  incoming: "Michael found rocks and spiders."
+      *  b.  outgoing: "Michael went to the beach and found rocks."
       * 7.  Distribute incoming rcmod edges
-      *   a.  incoming: "The woman, who wore a black dress and spoke in the theater, ate cheese."
-      *   b.  outgoing:
+      *  a.  incoming: "The woman, who wore a black dress and spoke in the theater, ate cheese."
+      *  b.  outgoing:
       * 8.  Distribute incoming ccomp edges
-      *   a.  incoming: "He says you swim fast and eat cherries."
+      *  a.  incoming: "He says you swim fast and eat cherries."
       * 9.  Distribute incoming xcomp edges
-      *   a.  incoming: "He says you like to swim fast and eat cherries."
+      *  a.  incoming: "He says you like to swim fast and eat cherries."
       * 10. Distribute incoming prep edges
-      *   a.  incoming: "Michael and George went to the beach in Spring and Fall."
-      *   b.  outgoing: "Michael and George went to the beach and slept."
+      *  a.  incoming: "Michael and George went to the beach in Spring and Fall."
+      *  b.  outgoing: "Michael and George went to the beach and slept."
       */
     def distributeConjunctions(graph: Graph[DependencyNode]) = {
       // find components connected by conj_and
