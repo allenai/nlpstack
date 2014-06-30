@@ -355,65 +355,6 @@ object DependencyGraph {
     }
   }
 
-  /*
-  class ConllFormat[T <: PostaggedToken](lemmatizer: Stemmer)(implicit tokenSerializer: Format[T, String]) extends Format[DependencyGraph[T], String] {
-    def write(graph: DependencyGraph[T]): String = {
-      graph.tokens.toSeq.zipWithIndex.map { case (node, index) =>
-        val deps = graph.dependencies.filter(_.dest == node)
-        require(deps.size <= 1, "multiple dependencies from node: " + node)
-        val (destIndex, label) = deps.headOption match {
-          case Some(dep) =>
-            (dep.source.id, dep.label)
-          case None => (0, "root")
-        }
-
-        val cols = Iterable(
-            index + 1,
-            node.string,
-            lemmatizer(node.string),
-            node.postag,
-            "_",
-            destIndex,
-            label
-        )
-
-        cols mkString "\t"
-      }.mkString("\n")
-    }
-
-    // WARNING: this won't restore the actual sentence text because
-    // there is no offset information stored in CONLL format.
-    def read(iterator: Iterator[String]): DependencyGraph[T] = {
-      val section = iterator.takeWhile(!_.trim.isEmpty).toIndexedSeq
-
-      var offset = 0
-      val nodes = section.map { line =>
-        val Array(index, string, lemma, postag, _, _, _) = line.split("\t")
-        val node = new DependencyNode(string, index.toInt - 1, offset)
-        offset += string.length + 1
-
-        node
-      }
-
-      val deps = section.flatMap { line =>
-        val Array(index, string, lemma, postag, _, sourceIndex, edge) = line.split("\t")
-        if (sourceIndex.toInt > 0) {
-          Some(new Dependency(nodes(sourceIndex.toInt - 1), nodes(index.toInt - 1), edge))
-        }
-        else {
-          None
-        }
-      }
-
-      DependencyGraph.create(nodes, deps)
-    }
-
-    def read(string: String): DependencyGraph = {
-      this.read(string.split("\n").iterator)
-    }
-  }
-  */
-
   class SerializationException(message: String, cause: Throwable)
     extends RuntimeException(message, cause)
 
