@@ -15,12 +15,12 @@ class FactorieParser extends DependencyParser {
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // translate the tokens into a Factorie document
     val factorieDoc = new Document(Token.rebuildString(tokens))
-    val factorieTokens = for (t <- tokens) yield {
+    val factorieTokens = for (token <- tokens) yield {
       val factorieT = new FactorieToken(
         factorieDoc,
-        t.offset,
-        t.offset + t.string.length)
-      factorieT.attr += new PennPosTag(factorieT, t.postag)
+        token.offset,
+        token.offset + token.string.length)
+      factorieT.attr += new PennPosTag(factorieT, token.postag)
       factorieT
     }
     WordNetLemmatizer.process(factorieDoc)
