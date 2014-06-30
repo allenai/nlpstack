@@ -7,6 +7,7 @@ import org.allenai.nlpstack.tokenize._
 
 import cc.factorie.app.nlp.{ Sentence, Document }
 import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
+import cc.factorie.app.nlp.{ Token => FactorieToken }
 import cc.factorie.app.nlp.pos.PennPosTag
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
 
@@ -15,7 +16,7 @@ class FactorieParser extends DependencyParser {
     // translate the tokens into a Factorie document
     val factorieDoc = new Document(Token.rebuildString(tokens))
     val factorieTokens = for (t <- tokens) yield {
-      val factorieT = new cc.factorie.app.nlp.Token(
+      val factorieT = new FactorieToken(
         factorieDoc,
         t.offset,
         t.offset + t.string.length)
