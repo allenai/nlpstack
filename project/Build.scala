@@ -68,8 +68,8 @@ object NlpstackBuild extends Build {
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries,
       dependencyOverrides ++= Set(
-        "org.scala-lang" % "scala-library" % scalaVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value)
+        "org.scala-lang" % "scala-library" % scalaVersionString,
+        "org.scala-lang" % "scala-reflect" % scalaVersionString)
     )
 
   lazy val tools = Project(
