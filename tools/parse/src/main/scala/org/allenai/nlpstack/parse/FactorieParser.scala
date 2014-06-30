@@ -11,8 +11,6 @@ import cc.factorie.app.nlp.pos.PennPosTag
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
 
 class FactorieParser extends DependencyParser {
-  private val parser = OntonotesTransitionBasedParser
-
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // translate the tokens into a Factorie document
     val factorieDoc = new Document(Token.rebuildString(tokens))
@@ -28,7 +26,7 @@ class FactorieParser extends DependencyParser {
     val sentence = new Sentence(factorieDoc.asSection, 0, factorieDoc.tokenCount)
 
     // parse
-    parser.process(sentence)
+    OntonotesTransitionBasedParser.process(sentence)
 
     // translate into our representation
     val nodes = for (t <- factorieTokens) yield {
