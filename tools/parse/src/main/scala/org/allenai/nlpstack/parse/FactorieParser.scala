@@ -33,9 +33,11 @@ class FactorieParser extends DependencyParser {
     val nodes = for (t <- factorieTokens) yield {
       DependencyNode(t.positionInSentence, t.string)
     }
-    def pis2node(positionInSentence: Int) =
-      nodes.find(_.id == positionInSentence).getOrElse(
-        sys.error("No token with PIS " + positionInSentence))
+    def pis2node(positionInSentence: Int) = {
+      val nodeOption = nodes.find(_.id == positionInSentence)
+      assert(nodeOption.isDefined)
+      nodeOption.get
+    }
     // Since the number of tokens in the sentence will be small most of the
     // time, we don't need to optimize with a map that would do this lookup
     // quicker.
