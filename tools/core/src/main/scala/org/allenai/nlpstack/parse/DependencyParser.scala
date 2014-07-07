@@ -1,36 +1,39 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.nlpstack.Format
-import org.allenai.nlpstack.parse.graph._
-import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.postag.Postagger
-import org.allenai.nlpstack.tokenize.Token
-import org.allenai.nlpstack.tokenize.Tokenizer
+import org.allenai.nlpstack.parse.graph.DependencyGraph
+import org.allenai.nlpstack.postag.{ PostaggedToken, Postagger }
+import org.allenai.nlpstack.tokenize.{ Token, Tokenizer }
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-/** A trait for a tool that produces dependencies, such as the
-  * Stanford dependency parser.
+/** A trait for a tool that produces a dependency graph, such as the Stanford dependency parser.
+  * Subclasses should override dependencyGraphPostagged.
   */
 trait DependencyParser {
 
-  /** Create a graph of the dependencies from POS-tagged tokens.
+  /** Create a dependency graph from POS-tagged tokens.
+    * @param tokens the tokens to parse
+    * @return the dependency graph built from the given tokens
     */
   def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph
 
-  /** Create a graph of the dependencies.  This has more information than
-    * creating a DependencyGraph from an `Iterable[Dependency]` because it
-    * will have the source text.
-    */
-  def dependencyGraph(tokenizer: Tokenizer, postagger: Postagger)(string: String): (Seq[PostaggedToken], DependencyGraph) = {
-    val postaggedTokens = postagger.postag(tokenizer)(string)
-    (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
-  }
-
-  /** Create a graph of the dependencies from Tokens.
+  /** Create a dependency graph using a given postagger, for a given tokenized string.
+    * @param postagger the postagger to use to POS tag the input tokens
+    * @param tokens the tokenized string to parse
+    * @return a tuple with the resultant POS tagged tokens and dependency graph
     */
   def dependencyGraphTokenized(postagger: Postagger)(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postagTokenized(tokens)
+    (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
+  }
+
+  /** Create a dependency graph using a given tokenizer and postagger, for a given string.
+    * @param tokenizer the tokenizer to use to parse the input string
+    * @param postagger the postagger to use to POS tag the input string
+    * @param string the string to parse
+    * @return a tuple with the resultant POS tagged tokens and dependency graph
+    */
+  def dependencyGraph(tokenizer: Tokenizer, postagger: Postagger)(string: String): (Seq[PostaggedToken], DependencyGraph) = {
+    val postaggedTokens = postagger.postag(tokenizer)(string)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }
 }

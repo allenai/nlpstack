@@ -9,14 +9,13 @@ tool does and so we can change the underlying implementation of a tool.
 Each tool also has a pickle format for its output.  For example, there is a
 dependency string format and a chunked sentence string format.
 
-## Project Layout
+## Folder Layout
 
-1.  tools/core: this project contains the tool interfaces and NLP representations.
-2.  tools/impl: the implementations of the NLP tools
-3.  webapp: a web application for running tools and visualizing serialized
+1.  tools: this project contains the main Nlpstack code.
+2.  webapp: a web application for running tools and visualizing serialized
     representations.
 
-## Tools
+## Tools in the Kit
 
 Presently the AI Toolkit includes the following tools.
 
@@ -32,3 +31,31 @@ Each tool includes:
 * An API so it can be called programatically.
 * A CLI application so it can be run in batch.
 * A simple REST server so it can be called remotely.
+
+## Tool Subprojects
+
+Nlpstack is split up into multiple subprojects to minimize the number of
+dependencies needed to install components. The source for each of these is in
+`tools/${projectName}`.
+
+`tools-core`: This contains all of the APIs needed for interoperating with Nlpstack, but none of the implementations.
+`tools-segment`: Implementation of the segmenter. Depends on `core`.
+`tools-lemmatize`: Implementation of the lemmatizer. Depends on `core`.
+`tools-tokenize`: Implementation of the tokenizer. Depends on `core`.
+`tools-postag`: Implementation of the POS tagger. Depends on `tokenize`.
+`tools-chunk`: Implementation of the sentence chunker. Depends on `postag`.
+`tools-parse`: Implementation of the dependency parser. Depends on `postag`.
+
+These each produce a single artifact, named `nlptools-${projectName}`.
+A client should depend on every implementation they will be using, as well as `nlpstack-core`.
+
+These all use the group `org.allenai.nlpstack`.
+
+So, if you wanted to use the tokenizer, you should have the dependencies (in sbt):
+
+```
+"org.allenai.nlpstack" %% "nlpstack-core" % "2014.6.23-1-SNAPSHOT"
+"org.allenai.nlpstack" %% "nlpstack-tokenize" % "2014.6.23-1-SNAPSHOT"
+```
+
+The current version is in [version.sbt](version.sbt).
