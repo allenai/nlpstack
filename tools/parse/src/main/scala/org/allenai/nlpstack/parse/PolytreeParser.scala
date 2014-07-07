@@ -21,6 +21,7 @@ class PolytreeParser extends DependencyParser {
         Some(token.postagSymbol))
     }
     val polyTokensVector = NexusToken +: polyTokens.toVector
+      // Polyparser needs a nexus token in its initial state.
     val initialState =
       polyparser.TransitionParserState.initialState(polyTokensVector)
     val transitionsOption = parser.parse(initialState)
@@ -29,7 +30,7 @@ class PolytreeParser extends DependencyParser {
 
     val nodes = for (
       parse <- parseOption.toList;
-      (token, index) <- parse.tokens.drop(1).zipWithIndex
+      (token, index) <- parse.tokens.drop(1).zipWithIndex   // dropping the nexus token
     ) yield {
       DependencyNode(index, token.word.name)
     }
