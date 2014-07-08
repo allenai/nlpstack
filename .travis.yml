@@ -5,3 +5,6 @@ jdk:
 - openjdk7
 after_success:
 - sbt publishMasterOnTravis
+cache:
+  directories:
+    - $HOME/.ivy2/cache
