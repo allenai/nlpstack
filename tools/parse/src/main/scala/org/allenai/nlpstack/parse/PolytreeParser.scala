@@ -6,12 +6,16 @@ import org.allenai.nlpstack.postag.{ PostaggedToken, defaultPostagger }
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.parsers.polyparser
 import org.allenai.parsers.polyparser.{ NexusToken, WordClusters, Transition }
+import org.allenai.common.Resource.using
 
 class PolytreeParser extends DependencyParser {
   private val parser =
     new polyparser.GreedyTransitionParser(
-      polyparser.ClassifierBasedCostFunction.loadFromClasspath(
-        "org/allenai/polyparser-models/example1.poly.json.gz"))
+      using(
+        Thread.currentThread.getContextClassLoader.getResourceAsStream(
+          "org/allenai/polyparser-models/example1.poly.json.gz")) {
+          polyparser.ClassifierBasedCostFunction.loadFromStream(_)
+        })
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     val polyTokens = for (token <- tokens) yield {
