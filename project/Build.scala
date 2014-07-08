@@ -67,7 +67,11 @@ object NlpstackBuild extends Build {
       libraryDependencies ++= testingLibraries,
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value)
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value),
+      javaOptions in run += "-Xmx3G",
+      fork in run := true,
+      javaOptions in test += "-Xmx3G",
+      fork in test := true
     )
 
   lazy val tools = Project(
