@@ -27,7 +27,7 @@ class FactorieParserSpec extends UnitSpec {
    * suite.
    */
 
-  "FactorieParser" should "correctly parse a simple sentence" ignore {
+  ignore should "correctly parse a simple sentence" in {
     val parseTreeStr = parseTreeString("A waffle is like a pancake with a syrup trap.")
     val expectedParseTreeStr =
       """|det(waffle-2, A-1)
@@ -44,7 +44,7 @@ class FactorieParserSpec extends UnitSpec {
     assert(parseTreeStr === expectedParseTreeStr)
   }
 
-  it should "correctly parse a complicated sentence" ignore {
+  ignore should "correctly parse a complicated sentence" in {
     // This sentence has two roots when it comes out of Factorie.
     val parseTreeStr = parseTreeString("Big investment banks refused to step up to the plate, traders say.")
     val expectedParseTreeStr =
