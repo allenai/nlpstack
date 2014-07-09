@@ -49,8 +49,7 @@ dependency string format and a chunked sentence string format.
     /* ... */
     
     val tokens = defaultTokenizer.tokenize(
-      "I was wondering why the ball kept getting bigger and bigger, " +
-      "and then it hit me.")
+      "I was wondering why the ball kept getting bigger and bigger, and then it hit me.")
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
     val dependencyGraph = defaultParser.dependencyGraphPostagged(postaggedTokens)
     ```
