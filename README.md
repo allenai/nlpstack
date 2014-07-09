@@ -48,7 +48,9 @@ dependency string format and a chunked sentence string format.
 
     /* ... */
     
-    val tokens = defaultTokenizer.tokenize("I was wondering why the ball kept getting bigger and bigger, and then it hit me.")
+    val tokens = defaultTokenizer.tokenize(
+      "I was wondering why the ball kept getting bigger and bigger, " +
+      "and then it hit me.")
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
     val dependencyGraph = defaultParser.dependencyGraphPostagged(postaggedTokens)
     ```
@@ -103,3 +105,23 @@ So, if you wanted to use the tokenizer, you should have the dependencies (in sbt
 ```
 
 The current version is in [version.sbt](version.sbt).
+
+### Parsing API Details
+
+The example in "Getting Started" shows how to generate a
+[dependency graph](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/parse/graph/DependencyGraph.scala)
+from a sentence. The graph object itself contains [dependency nodes](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/parse/graph/DependencyNode.scala)
+with integer IDs. These IDs can be used to index the original tokens given to the parser.
+
+If you want to have lemmatized token information, you'll want to run the tokens through a lemmatizer:
+```
+import org.allenai.nlpstack.lemmatize.MorphaStemmer
+
+val lemmatizer = new MorphaStemmer()
+val lemmatizedTokens = postaggedTokens map { lemmatizer.lemmatizePostaggedToken }
+```
+
+Once you have lemmatized tokens, you can build a new dependency graph with token information contained in the nodes:
+```
+val dependencyGraphWithTokenInfo = dependencyGraph.tokenized(lemmatizedTokens)
+```
