@@ -9,6 +9,50 @@ tool does and so we can change the underlying implementation of a tool.
 Each tool also has a pickle format for its output.  For example, there is a
 dependency string format and a chunked sentence string format.
 
+## Getting started
+
+1.  NLPStack uses Factorie for a lot of things. Unfortunately, Factorie is not on Maven Central. To make it available to your project, you have to add it to your resolvers with this line:
+
+    ```scala
+    "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"
+    ```
+    The complete list of resolvers might look like this:
+    ```scala
+    val Resolvers = Seq(
+      "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
+      "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
+      "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
+      Resolver.sonatypeRepo("snapshots")
+    ```
+2.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
+
+    ```scala
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-core" % "0.2"
+
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-parse" % "0.2"
+
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-postag" % "0.2"
+    ```
+    As an option, you can define a function for the various nlpstack components, and use them like this:
+    ```scala
+    def nlpstackModule(id: String) = "org.allenai.nlpstack" %% s"nlpstack-${id}" % "0.2"
+    
+    libraryDependencies += nlpstackModule("parse")
+    ```
+3.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
+    
+    ```scala
+    import org.allenai.nlpstack.tokenize.defaultTokenizer
+    import org.allenai.nlpstack.postag.defaultPostagger
+    import org.allenai.nlpstack.parse.defaultParser
+
+    /* ... */
+    
+    val tokens = defaultTokenizer.tokenize("I was wondering why the ball kept getting bigger and bigger, and then it hit me.")
+    val postaggedTokens = defaultPostagger.postagTokenized(tokens)
+    val dependencyGraph = defaultParser.dependencyGraphPostagged(postaggedTokens)
+    ```
+
 ## Folder Layout
 
 1.  tools: this project contains the main Nlpstack code.
