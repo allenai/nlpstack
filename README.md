@@ -21,8 +21,8 @@ dependency string format and a chunked sentence string format.
     val Resolvers = Seq(
       "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
       "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-      "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
-      Resolver.sonatypeRepo("snapshots")
+      "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public",
+      Resolver.sonatypeRepo("snapshots"))
     ```
 2.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
 
@@ -44,14 +44,14 @@ dependency string format and a chunked sentence string format.
     ```scala
     import org.allenai.nlpstack.tokenize.defaultTokenizer
     import org.allenai.nlpstack.postag.defaultPostagger
-    import org.allenai.nlpstack.parse.defaultParser
+    import org.allenai.nlpstack.parse.defaultDependencyParser
 
     /* ... */
     
     val tokens = defaultTokenizer.tokenize(
       "I was wondering why the ball kept getting bigger and bigger, and then it hit me.")
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
-    val dependencyGraph = defaultParser.dependencyGraphPostagged(postaggedTokens)
+    val dependencyGraph = defaultDependencyParser.dependencyGraphPostagged(postaggedTokens)
     ```
 
 ## Folder Layout
