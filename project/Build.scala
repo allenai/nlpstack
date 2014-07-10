@@ -58,7 +58,6 @@ object NlpstackBuild extends Build {
   val buildSettings = Defaults.defaultSettings ++
     Revolver.settings ++
     Publish.settings ++
-    TravisPublisher.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
