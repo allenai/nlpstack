@@ -1,6 +1,9 @@
 import sbt._
 import Keys._
 
+import org.allenai.sbt.format._
+import org.allenai.sbt.deploy._
+
 import spray.revolver.RevolverPlugin._
 
 object NlpstackBuild extends Build {
@@ -38,22 +41,23 @@ object NlpstackBuild extends Build {
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 
+  var noopRepo = Some(Resolver.file("Unused Repository", file("target/unusedrepo")))
+
   val aggregateSettings = Defaults.coreDefaultSettings ++
       Seq(
         publishArtifact := false,
-        publishTo := Some(Resolver.file("Unused Repository", file("target/unusedrepo"))))
+        publishTo := noopRepo)
 
   lazy val root = Project(
     id = "nlpstack-root",
     base = file("."),
-    settings = aggregateSettings).aggregate(tools, webapp)
+    settings = aggregateSettings).aggregate(
+      tools,
+      webapp)
 
   val buildSettings = Defaults.defaultSettings ++
     Revolver.settings ++
-    Deploy.settings ++
-    Format.settings ++
     Publish.settings ++
-    TravisPublisher.settings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
@@ -74,12 +78,26 @@ object NlpstackBuild extends Build {
   lazy val tools = Project(
     id = "tools-root",
     base = file("tools"),
-    settings = aggregateSettings).aggregate(lemmatize, tokenize, postag, chunk, parse, segment, core)
+    settings = aggregateSettings).aggregate(
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment,
+      core)
 
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings) dependsOn(core, lemmatize, tokenize, postag, chunk, parse, segment)
+    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
+      core,
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment)
 
   lazy val core = Project(
     id = "tools-core",
@@ -152,5 +170,5 @@ object NlpstackBuild extends Build {
         factorieParseModel,
         factorieWordnet,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ) dependsOn(postag)
+  ) dependsOn(postag, tokenize)
 }
