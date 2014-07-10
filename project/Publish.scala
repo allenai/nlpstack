@@ -13,5 +13,10 @@ object Publish {
         Some("snapshots" at nexus + "snapshots")
       else
         Some("releases"  at nexus + "releases")
-    })
+    },
+    credentials += Credentials(
+      "Sonatype Nexus Repository Manager",
+      "utility.allenai.org",
+      "travis",
+      System.getenv("NEXUS_PASS")))
 }
