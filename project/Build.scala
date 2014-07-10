@@ -38,10 +38,12 @@ object NlpstackBuild extends Build {
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 
+  var noopRepo = Some(Resolver.file("Unused Repository", file("target/unusedrepo")))
+
   val aggregateSettings = Defaults.coreDefaultSettings ++
       Seq(
         publishArtifact := false,
-        publishTo := Some(Resolver.file("Unused Repository", file("target/unusedrepo"))))
+        publishTo := noopRepo)
 
   lazy val root = Project(
     id = "nlpstack-root",
