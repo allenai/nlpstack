@@ -4,6 +4,9 @@ import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.tokenize.Token
 
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 /** A representation for a part-of-speech tagged token.  POS tokens
   * use PENN-treebank style tags.
   *
@@ -78,6 +81,20 @@ object PostaggedToken {
   def apply(token: Token, postag: String): PostaggedToken = PostaggedToken(postag, token.string, token.offset)
 
   def unapply(token: PostaggedToken): Option[(String, String, Int)] = Some((token.postag, token.string, token.offset))
+
+  implicit object postaggedTokenJsonFormat extends RootJsonFormat[PostaggedToken] {
+    def write(t: PostaggedToken) = JsObject(Token.tokenJsonFormat.write(t).fields +
+      ("postag" -> JsString(t.postag)))
+
+    def read(value: JsValue) = {
+      val token = Token.tokenJsonFormat.read(value)
+      val postag = value.asJsObject.fields("postag") match {
+        case JsString(string) => string
+        case _ => deserializationError("No postag field.")
+      }
+      PostaggedToken.apply(token, postag)
+    }
+  }
 
   object bratFormat extends Format[PostaggedToken, String] {
     def write(token: PostaggedToken): String = {

@@ -4,6 +4,9 @@ import org.allenai.nlpstack.HashCodeHelper
 import org.allenai.nlpstack.postag.PostaggedToken
 import org.allenai.nlpstack.Format
 
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 /** A representation of a chunked token.  A chunked token has all the
   * aspects of a postagged token along with a chunk tag.
   *
@@ -38,6 +41,20 @@ object ChunkedToken {
     new ChunkedToken(Symbol(chunk), token.postagSymbol, token.string, token.offset)
 
   def unapply(token: ChunkedToken): Option[(String, String, String, Int)] = Some((token.chunk, token.postag, token.string, token.offset))
+
+  implicit object chunkedTokenJsonFormat extends RootJsonFormat[ChunkedToken] {
+    def write(t: ChunkedToken) = JsObject(PostaggedToken.postaggedTokenJsonFormat.write(t).fields +
+      ("chunk" -> JsString(t.chunk)))
+
+    def read(value: JsValue) = {
+      val postaggedToken = PostaggedToken.postaggedTokenJsonFormat.read(value)
+      val chunk = value.asJsObject.fields("chunk") match {
+        case JsString(string) => string
+        case _ => deserializationError("No chunk field.")
+      }
+      ChunkedToken.apply(postaggedToken, chunk)
+    }
+  }
 
   object stringFormat extends Format[ChunkedToken, String] {
     def write(chunkedToken: ChunkedToken): String = {
