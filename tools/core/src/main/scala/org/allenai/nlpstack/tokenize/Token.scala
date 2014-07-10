@@ -4,6 +4,9 @@ import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.Format
 import org.allenai.nlpstack.HashCodeHelper
 
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 /** The most simple representation of a token.  A token has a string
   * and a character offset in the original text.
   *
@@ -41,6 +44,18 @@ object Token {
         case _ => throw new MatchError("Error parsing token: " + pickled)
       }
       Token(string, offset)
+    }
+  }
+
+  implicit object tokenJsonFormat extends RootJsonFormat[Token] {
+    def write(t: Token) = JsObject(
+      "string" -> JsString(t.string),
+      "offset" -> JsNumber(t.offset))
+
+    def read(value: JsValue) = value.asJsObject.getFields("string", "offset") match {
+      case Seq(JsString(string), JsNumber(offset)) =>
+        Token.apply(string, offset.toInt)
+      case _ => throw new DeserializationException("Token expected.")
     }
   }
 

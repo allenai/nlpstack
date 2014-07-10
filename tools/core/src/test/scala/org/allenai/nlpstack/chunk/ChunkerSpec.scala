@@ -14,7 +14,7 @@ class ChunkerSpec extends UnitSpec {
     val tokens = Tokenizer.computeOffsets(strings, text)
     val chunkedTokens = Chunker.tokensFrom(chunks, postags, tokens)
 
-    Chunker.intervals(chunkedTokens).map(_.toString) should contain theSameElementsAs(
+    Chunker.intervals(chunkedTokens).map(_.toString) should contain theSameElementsAs (
       List(
         "(NP,{0})",
         "(ADVP,{1})",
