@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 
 import org.allenai.sbt.format._
+import org.allenai.sbt.deploy._
 
 import spray.revolver.RevolverPlugin._
 
@@ -56,7 +57,6 @@ object NlpstackBuild extends Build {
 
   val buildSettings = Defaults.defaultSettings ++
     Revolver.settings ++
-    Deploy.settings ++
     Publish.settings ++
     TravisPublisher.settings ++
     Seq(
@@ -91,7 +91,14 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings) dependsOn(core, lemmatize, tokenize, postag, chunk, parse, segment)
+    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
+      core,
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment)
 
   lazy val core = Project(
     id = "tools-core",
