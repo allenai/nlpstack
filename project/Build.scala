@@ -52,7 +52,7 @@ object NlpstackBuild extends Build {
     base = file("."),
     settings = aggregateSettings).aggregate(
       tools,
-      webapp).enablePlugins(FormatPlugin)
+      webapp)
 
   val buildSettings = Defaults.defaultSettings ++
     Revolver.settings ++
@@ -86,17 +86,17 @@ object NlpstackBuild extends Build {
       chunk,
       parse,
       segment,
-      core).enablePlugins(FormatPlugin)
+      core)
 
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings).enablePlugins(FormatPlugin) dependsOn(core, lemmatize, tokenize, postag, chunk, parse, segment)
+    settings = buildSettings) dependsOn(core, lemmatize, tokenize, postag, chunk, parse, segment)
 
   lazy val core = Project(
     id = "tools-core",
     base = file("tools/core"),
-    settings = buildSettings).enablePlugins(FormatPlugin)
+    settings = buildSettings)
 
   lazy val lemmatize = Project(
     id = "tools-lemmatize",
@@ -108,7 +108,7 @@ object NlpstackBuild extends Build {
         "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")),
       libraryDependencies ++= Seq(clear,
         "edu.washington.cs.knowitall" % "morpha-stemmer" % "1.0.5"))
-  ).enablePlugins(FormatPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val tokenize = Project(
     id = "tools-tokenize",
@@ -117,7 +117,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie))
-  ).enablePlugins(FormatPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val segment = Project(
     id = "tools-segment",
@@ -126,7 +126,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-segment",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie))
-  ).enablePlugins(FormatPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val postag = Project(
     id = "tools-postag",
@@ -138,7 +138,7 @@ object NlpstackBuild extends Build {
         factorie,
         factoriePosModel,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(FormatPlugin) dependsOn(tokenize)
+  ) dependsOn(tokenize)
 
   lazy val chunk = Project(
     id = "tools-chunk",
@@ -147,7 +147,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-chunk",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
-  ).enablePlugins(FormatPlugin) dependsOn(postag)
+  ) dependsOn(postag)
 
   lazy val parse = Project(
     id = "tools-parse",
@@ -164,5 +164,5 @@ object NlpstackBuild extends Build {
         factorieParseModel,
         factorieWordnet,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(FormatPlugin) dependsOn(postag, tokenize)
+  ) dependsOn(postag, tokenize)
 }

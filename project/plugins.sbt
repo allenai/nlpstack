@@ -12,6 +12,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "0.7.1")
 
 addSbtPlugin("org.allenai.plugins" % "sbt-deploy" % "2014.4.14-1-SNAPSHOT")
 
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-format" % "2014.07.02")
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-format" % "2014.07.03-0")
 
 addSbtPlugin("org.allenai.plugins" % "sbt-travis-publisher" % "2014.2.24-1-SNAPSHOT")
