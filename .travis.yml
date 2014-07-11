@@ -10,8 +10,8 @@ cache:
   - $HOME/.ivy2/cache
 env:
   global:
-    - FOO=bar
-    - secure: PtbLS6UoHrgIGxBnR2NILZjkZCvHT1U0iM0CWfzdFrM9mhJZTuL6Fo+gmxQIRPeFZbOG8LG2cD5AWlE0tzSKRq/m0dEmUNvTK9f8/yIzm+iIo5sXFg7gQzHU8AT0GaU8CUKDZJdk8WbOcYcbwOpAMCdGazmx5SgPE3mw9uZ4m3E=
+  - FOO=bar
+  - secure: NKCYnxbH6dq8qTq5bzM/eIU1LFDxNSzD6VN0OGhynaxF3Q5JaawEv3Av0tPHR9R/o2i9t8QtWPzYBfwXtwcdaantjAa15PdK9/JDqv0ON1cMhZcKbOkNueEkNa8ehJ/JMBB+55f+G4y2XqykIur3d9TJ3z91PG866hQJRaZ55es=
 before_script:
-  - env
-  - sbt "show credentials"
+- env
+- sbt "show credentials"
