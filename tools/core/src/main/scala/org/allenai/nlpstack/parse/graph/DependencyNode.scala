@@ -7,6 +7,9 @@ import org.allenai.nlpstack.graph.Graph._
 import org.allenai.nlpstack.lemmatize.{ Stemmer, IdentityStemmer }
 import org.allenai.nlpstack.postag.PostaggedToken
 
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
 
@@ -41,6 +44,8 @@ object DependencyNode {
       new DependencyNode(id.toInt, text)
     }
   }
+
+  implicit val dependencyNodeJsonFormat = jsonFormat2(DependencyNode.apply)
 
   @deprecated("Use StringFormat instead.", "2.4.5")
   def deserialize(string: String) = {
