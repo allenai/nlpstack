@@ -11,6 +11,10 @@ import org.allenai.nlpstack.lemmatize._
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
 import org.slf4j.LoggerFactory
+
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 import scala.collection.immutable
 import scala.Option.option2Iterable
 import scala.util.{ Try, Success, Failure }
@@ -297,6 +301,38 @@ object DependencyGraph {
 
   def create(dependencies: Iterable[Dependency]): DependencyGraph = {
     this.apply(dependencies)
+  }
+
+  implicit object dependencyJsonFormat extends RootJsonFormat[Edge[DependencyNode]] {
+    def write(edge: Edge[DependencyNode]): JsValue = {
+      JsObject(
+        "label" -> JsString(edge.label),
+        "source" -> edge.source.toJson,
+        "dest" -> edge.dest.toJson)
+    }
+
+    def read(value: JsValue): Edge[DependencyNode] = {
+      value.asJsObject.getFields("label", "source", "dest") match {
+        case Seq(JsString(label), sourceJsObject, destJsObject) =>
+          val source = sourceJsObject.convertTo[DependencyNode]
+          val dest = destJsObject.convertTo[DependencyNode]
+          new Edge[DependencyNode](source, dest, label)
+        case _ => deserializationError("Dependency expected.")
+      }
+    }
+  }
+
+  implicit object dependencyGraphJsonFormat extends RootJsonFormat[DependencyGraph] {
+    def write(graph: DependencyGraph): JsValue = {
+      JsArray(graph.edges.toList map (_.toJson))
+    }
+
+    def read(value: JsValue): DependencyGraph = value match {
+      case JsArray(edgeJsObjects) =>
+        val edges = edgeJsObjects map (_.convertTo[Edge[DependencyNode]])
+        DependencyGraph.apply(edges)
+      case _ => deserializationError("Dependencies expected.")
+    }
   }
 
   object singlelineStringFormat extends StringFormat("; ")

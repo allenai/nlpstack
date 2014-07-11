@@ -2,6 +2,9 @@ package org.allenai.nlpstack.segment
 
 import org.allenai.common.immutable.Interval
 
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /** A sentencer breaks text into sentences.
@@ -33,4 +36,6 @@ object Segment {
       case s => throw new MatchError("Could not deserialize: " + s)
     }
   }
+
+  implicit val segmentJsonFormat = jsonFormat2(Segment.apply)
 }
