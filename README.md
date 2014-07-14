@@ -1,13 +1,13 @@
-# AI Toolkit
+# NLP Stack
 
-This contains our basic stack of NLP tools.  It's called the AI Toolkit presently
-so it's not constrained to house NLP technology.
+This contains our basic stack of NLP tools.
 
-We have general interfaces on each tool so we have a clear definition of what each
-tool does and so we can change the underlying implementation of a tool.
+We have general interfaces on each tool so we have a clear definition of the
+inputs and outputs of each tool and so we can change the underlying
+implementation of a tool.
 
-Each tool also has a pickle format for its output.  For example, there is a
-dependency string format and a chunked sentence string format.
+Each tool also has a serialization format for its output.  For example, there
+is a dependency string format and a chunked sentence string format.
 
 ## Getting started
 
@@ -36,18 +36,18 @@ dependency string format and a chunked sentence string format.
     As an option, you can define a function for the various nlpstack components, and use them like this:
     ```scala
     def nlpstackModule(id: String) = "org.allenai.nlpstack" %% s"nlpstack-${id}" % "0.2"
-    
+
     libraryDependencies += nlpstackModule("parse")
     ```
 3.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
-    
+
     ```scala
     import org.allenai.nlpstack.tokenize.defaultTokenizer
     import org.allenai.nlpstack.postag.defaultPostagger
     import org.allenai.nlpstack.parse.defaultDependencyParser
 
     /* ... */
-    
+
     val tokens = defaultTokenizer.tokenize(
       "I was wondering why the ball kept getting bigger and bigger, and then it hit me.")
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
