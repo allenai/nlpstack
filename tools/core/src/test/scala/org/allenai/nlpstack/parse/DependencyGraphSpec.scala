@@ -46,4 +46,24 @@ pobj(in-11, mirror-13)"""
     val repickled = DependencyParser.multilineStringFormat.write(dgraph)
     assert(multilinePickled === repickled)
   }
+
+  it should "find the first root if there are multiple" in {
+    val sentence = "Alice sings, John said."
+    val multilinePickled =
+      """|Alice 0 NNP
+         |sings 6 VBD
+         |, 11 .
+         |John 13 NNP
+         |said 18 VBD
+         |. 22 .
+         |
+         |nsubj(sings-2, Alice-1)
+         |root(ROOT-0, sings-2)
+         |nsubj(said-5, John-4)""".stripMargin
+
+    val (tokens, dgraph) = DependencyParser.multilineStringFormat.read(multilinePickled)
+    val collapsedGraph = dgraph.collapse
+
+    assert(DependencyParser.multilineStringFormat.write((tokens, collapsedGraph)) === multilinePickled)
+  }
 }
