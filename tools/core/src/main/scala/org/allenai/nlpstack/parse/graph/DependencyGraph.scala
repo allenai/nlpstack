@@ -224,7 +224,7 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
           collapseJunctions(
             collapseMultiwordPrepositions(this))))
 
-    DependencyGraph(graph.vertices, graph.edges)
+    DependencyGraph.withFirstRoot(graph.vertices, graph.edges)
   }
 
   /** Simplify xsubj and nsubj to just subj. */
@@ -289,6 +289,16 @@ object DependencyGraph {
     }
 
     this.apply(root, vertices, edges)
+  }
+
+  def withFirstRoot(vertices: Set[DependencyNode], edges: Set[Edge[DependencyNode]]) = {
+    val nodesWithIncomingEdges = edges.map(_.dest).toSet
+    val nodesWithoutIncomingEdges = vertices -- nodesWithIncomingEdges
+    if (nodesWithIncomingEdges.isEmpty)
+      throw new IllegalArgumentException("Graph is not a tree. No root node found.")
+    val firstRoot = nodesWithoutIncomingEdges.toSeq(0)
+
+    DependencyGraph(Some(firstRoot), vertices, edges)
   }
 
   def apply(dependencies: Iterable[Dependency]): DependencyGraph = {

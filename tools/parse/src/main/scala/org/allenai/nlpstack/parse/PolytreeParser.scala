@@ -48,11 +48,7 @@ class PolytreeParser extends DependencyParser {
       new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label)
     }
 
-    val nodesWithIncomingEdges = edges.map(_.dest).toSet
-    val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
-    val firstRoot = nodesWithoutIncomingEdges.toSeq(0)
-
-    DependencyGraph(Some(firstRoot), nodes.toSet, edges.toSet)
+    DependencyGraph.withFirstRoot(nodes.toSet, edges.toSet)
   }
 }
 
