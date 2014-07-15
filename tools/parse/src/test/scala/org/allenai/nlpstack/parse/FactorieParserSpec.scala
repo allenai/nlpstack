@@ -17,9 +17,6 @@ class FactorieParserSpec extends UnitSpec {
   }
 
   /*
-   * Tests are ignored because they take more memory than Travis is willing to
-   * give them.
-   *
    * When these tests fail with anything but an exception, it's a judgement call
    * whether the trees that the parser produces are valid parses or whether this
    * is a genuine error. If in doubt, consult your favorite linguist, but by and
@@ -27,7 +24,7 @@ class FactorieParserSpec extends UnitSpec {
    * suite.
    */
 
-  ignore should "correctly parse a simple sentence" in {
+  "FactorieParser" should "correctly parse a simple sentence" in {
     val parseTreeStr = parseTreeString("A waffle is like a pancake with a syrup trap.")
     val expectedParseTreeStr =
       """|det(waffle-2, A-1)
@@ -44,7 +41,7 @@ class FactorieParserSpec extends UnitSpec {
     assert(parseTreeStr === expectedParseTreeStr)
   }
 
-  ignore should "correctly parse a complicated sentence" in {
+  it should "correctly parse a complicated sentence" in {
     // This sentence has two roots when it comes out of Factorie.
     val parseTreeStr = parseTreeString("Big investment banks refused to step up to the plate, traders say.")
     val expectedParseTreeStr =
