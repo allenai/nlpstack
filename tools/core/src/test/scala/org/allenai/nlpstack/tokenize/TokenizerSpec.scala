@@ -43,7 +43,7 @@ class TokenizerSpecTest extends UnitSpec {
       new Token("large", 0),
       new Token("scale", 6))
 
-    a [IllegalArgumentException] should be thrownBy {
+    a[IllegalArgumentException] should be thrownBy {
       Tokenizer.originalText(tokens, 10)
     }
   }

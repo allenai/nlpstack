@@ -1,5 +1,7 @@
 import NativePackagerHelper._
 
+import Dependencies._
+
 name := "webapp"
 
 libraryDependencies ++= Seq(

@@ -1,3 +1,5 @@
+import Dependencies._
+
 name := "nlpstack-core"
 
 licenses := Seq(apache2)
