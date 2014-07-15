@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.tokenize
 
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.core.tokenize.Tokenizer
 
 abstract class TokenizerSpec extends UnitSpec {
   def tokenizerToTest: Tokenizer

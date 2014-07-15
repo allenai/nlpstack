@@ -1,6 +1,5 @@
-import NativePackagerHelper._
-
 import Dependencies._
+import com.typesafe.sbt.SbtNativePackager.NativePackagerHelper._
 
 name := "webapp"
 

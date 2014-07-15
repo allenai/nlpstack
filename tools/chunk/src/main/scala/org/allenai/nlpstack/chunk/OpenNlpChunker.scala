@@ -2,16 +2,16 @@ package org.allenai.nlpstack
 package chunk
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.tokenize._
-import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker, ChunkerMain }
+import org.allenai.nlpstack.core.postag
+import org.allenai.nlpstack.postag.defaultPostagger
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
-import opennlp.tools.chunker._
+import opennlp.tools.chunker.{ ChunkerME, ChunkerModel }
 
 import java.net.URL
 
-class OpenNlpChunker(
-  val model: ChunkerModel)
-    extends Chunker {
+class OpenNlpChunker(val model: ChunkerModel) extends Chunker {
   def this() = this(OpenNlpChunker.loadDefaultModel())
 
   val chunker = new ChunkerME(model)

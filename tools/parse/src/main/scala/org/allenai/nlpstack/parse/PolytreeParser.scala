@@ -1,12 +1,14 @@
 package org.allenai.nlpstack.parse
 
-import org.allenai.nlpstack.graph.Graph
-import org.allenai.nlpstack.parse.graph.{ DependencyNode, DependencyGraph }
-import org.allenai.nlpstack.postag.{ PostaggedToken, defaultPostagger }
+import org.allenai.common.Resource.using
+import org.allenai.nlpstack.core.graph.Graph
+import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
+import org.allenai.nlpstack.core.parse.{ DependencyParser, DependencyParserMain }
+import org.allenai.nlpstack.core.postag.PostaggedToken
+import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.parsers.polyparser
-import org.allenai.parsers.polyparser.{ NexusToken, WordClusters, Transition }
-import org.allenai.common.Resource.using
+import org.allenai.parsers.polyparser.{ NexusToken, WordClusters }
 
 class PolytreeParser extends DependencyParser {
   private val parser =

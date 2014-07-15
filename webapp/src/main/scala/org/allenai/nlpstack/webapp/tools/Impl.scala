@@ -1,11 +1,11 @@
 package org.allenai.nlpstack.webapp.tools
 
+import org.allenai.nlpstack.chunk.OpenNlpChunker
+import org.allenai.nlpstack.lemmatize.MorphaStemmer
+import org.allenai.nlpstack.parse.PolytreeParser
+import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.segment.defaultSegmenter
 import org.allenai.nlpstack.tokenize.defaultTokenizer
-import org.allenai.nlpstack.lemmatize.MorphaStemmer
-import org.allenai.nlpstack.postag.defaultPostagger
-import org.allenai.nlpstack.chunk.OpenNlpChunker
-import org.allenai.nlpstack.parse.PolytreeParser
 
 object Impl {
   private[tools] val sentenceSegmenter = defaultSegmenter
