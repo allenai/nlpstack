@@ -10,7 +10,7 @@ before_install:
   - mkdir -p ~/.sbt/0.13
   - echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"utility.allenai.org\", \"$NEXUS_USER\", \"$NEXUS_PASS\")" > ~/.sbt/0.13/allenai.sbt
 script:
-  - sbt -J-Xmx8G ++$SHIPPABLE_SCALA_VERSION test
+  - sbt -J-Xmx8G test
 env:
   global:
     - SBT_OPTS=-Xmx8G
