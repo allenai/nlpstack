@@ -50,9 +50,9 @@ class PolytreeParser extends DependencyParser {
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
     val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
-    val firstRoot = nodesWithoutIncomingEdges.toSeq(0)
-
-    DependencyGraph(Some(firstRoot), nodes.toSet, edges.toSet)
+    require(nodesWithoutIncomingEdges.size <= 1, s"Parser output for sentence '${tokens.map(_.string).mkString(" ")}' has multiple roots.")
+    
+    DependencyGraph(nodes.toSet, edges.toSet)
   }
 }
 
