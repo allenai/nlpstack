@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CLASS_NAME="org.allenai.nlpstack.webapp.Nlpweb"
-JVM_ARGS="-Xmx4g"
+JVM_ARGS="-Xmx3g"
 
 SCRIPT_DIR=`dirname $0`
 SHORT_NAME=`basename $0 .sh`
