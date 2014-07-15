@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.parse.graph.DependencyGraph
+import org.allenai.nlpstack.core.parse.graph.DependencyGraph
 import org.allenai.nlpstack.webapp.Whatswrong._
-import org.allenai.nlpstack.Writer
+import org.allenai.nlpstack.core.Writer
 import java.awt.image.BufferedImage
 
 object DependencyParserTool extends Tool("dependencies") with StringFormat {

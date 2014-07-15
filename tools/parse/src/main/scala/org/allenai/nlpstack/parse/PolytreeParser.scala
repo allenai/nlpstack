@@ -1,11 +1,13 @@
 package org.allenai.nlpstack.parse
 
-import org.allenai.nlpstack.graph.Graph
-import org.allenai.nlpstack.parse.graph.{ DependencyNode, DependencyGraph }
-import org.allenai.nlpstack.postag.{ PostaggedToken, defaultPostagger }
+import org.allenai.nlpstack.core.graph.Graph
+import org.allenai.nlpstack.core.parse.{ DependencyParserMain, DependencyParser }
+import org.allenai.nlpstack.core.parse.graph.{ DependencyNode, DependencyGraph }
+import org.allenai.nlpstack.core.postag.PostaggedToken
 import org.allenai.nlpstack.tokenize.defaultTokenizer
+import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.parsers.polyparser
-import org.allenai.parsers.polyparser.{ NexusToken, WordClusters, Transition }
+import org.allenai.parsers.polyparser.{ NexusToken, WordClusters }
 import org.allenai.common.Resource.using
 
 class PolytreeParser extends DependencyParser {
@@ -51,7 +53,7 @@ class PolytreeParser extends DependencyParser {
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
     val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
     require(nodesWithoutIncomingEdges.size <= 1, s"Parser output for sentence '${tokens.map(_.string).mkString(" ")}' has multiple roots.")
-    
+
     DependencyGraph(nodes.toSet, edges.toSet)
   }
 }

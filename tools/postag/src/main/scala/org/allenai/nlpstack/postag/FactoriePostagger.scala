@@ -1,6 +1,8 @@
 package org.allenai.nlpstack.postag
 
-import org.allenai.nlpstack.tokenize.{ Tokenizer, Token, defaultTokenizer }
+import org.allenai.nlpstack.core.postag.{ PostaggerMain, PostaggedToken, Postagger }
+import org.allenai.nlpstack.core.tokenize.{ Tokenizer, Token }
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp._

@@ -1,9 +1,7 @@
 package org.allenai.nlpstack.lemmatize
 
 import edu.washington.cs.knowitall.morpha.{ MorphaStemmer => MorphaStem }
-import uk.ac.susx.informatics.Morpha
-
-import java.io.StringReader
+import org.allenai.nlpstack.core.lemmatize.{ StemmerMain, PostaggedStemmer, Stemmer }
 
 /** This stemmer handles many cases, but the JFlex is 5 MB. */
 class MorphaStemmer extends Stemmer with PostaggedStemmer {
@@ -15,7 +13,6 @@ class MorphaStemmer extends Stemmer with PostaggedStemmer {
 /** MorphaStemmer is threadsafe.  Clients can use this global instance. */
 object MorphaStemmer extends MorphaStemmer
 
-object MorphaStemmerMain
-    extends StemmerMain {
+object MorphaStemmerMain extends StemmerMain {
   lazy val lemmatizer = new MorphaStemmer
 }

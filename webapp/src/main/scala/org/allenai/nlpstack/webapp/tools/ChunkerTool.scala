@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.chunk.ChunkedToken
+import org.allenai.nlpstack.core.chunk.ChunkedToken
 import org.allenai.nlpstack.webapp.Whatswrong._
-import org.allenai.nlpstack.Writer
-import org.allenai.nlpstack.chunk.Chunker
+import org.allenai.nlpstack.core.Writer
+import org.allenai.nlpstack.core.chunk.Chunker
 import java.awt.image.BufferedImage
 
 object ChunkerTool extends Tool("chunk") with StringFormat {

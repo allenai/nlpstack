@@ -1,9 +1,6 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.webapp.Whatswrong
-import org.allenai.nlpstack.Writer
-import java.awt.image.BufferedImage
-import org.allenai.nlpstack.segment._
+import org.allenai.nlpstack.core.segment._
 
 object SentenceSegmenterTool extends Tool("segment") {
   type Output = Seq[Segment]

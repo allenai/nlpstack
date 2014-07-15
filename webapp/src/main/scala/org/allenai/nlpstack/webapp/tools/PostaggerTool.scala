@@ -1,9 +1,10 @@
 package org.allenai.nlpstack.webapp.tools
 
 import org.allenai.nlpstack.webapp.Whatswrong._
-import org.allenai.nlpstack.Writer
+import org.allenai.nlpstack.core.Writer
+import org.allenai.nlpstack.core.postag._
+
 import java.awt.image.BufferedImage
-import org.allenai.nlpstack.postag._
 
 object PostaggerTool extends Tool("postag") with StringFormat {
   type Output = Seq[PostaggedToken]

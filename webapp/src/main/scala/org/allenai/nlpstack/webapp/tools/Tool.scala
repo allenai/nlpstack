@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.Format
+import org.allenai.nlpstack.core.Format
 import org.allenai.common.Resource
 import org.apache.commons.codec.binary.Base64OutputStream
 import org.apache.commons.io.output.ByteArrayOutputStream

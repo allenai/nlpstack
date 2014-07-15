@@ -1,7 +1,10 @@
 package org.allenai.nlpstack.parse
 
-import org.allenai.nlpstack.graph.Graph
-import org.allenai.nlpstack.parse.graph.{ DependencyNode, DependencyGraph }
+import org.allenai.nlpstack.core.graph.Graph
+import org.allenai.nlpstack.core.parse.{ DependencyParserMain, DependencyParser }
+import org.allenai.nlpstack.core.parse.graph.{ DependencyNode, DependencyGraph }
+import org.allenai.nlpstack.core.postag.PostaggedToken
+import org.allenai.nlpstack.core.tokenize.Token
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
 

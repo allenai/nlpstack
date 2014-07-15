@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.postag
 
+import org.allenai.nlpstack.core.postag.Postagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.common.testkit.UnitSpec
 
