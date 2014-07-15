@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.webapp
 
 import akka.actor.Actor
-import spray.util.LoggingContext
-import spray.routing._
 import spray.http._
+import spray.routing._
+import spray.util.LoggingContext
 
 class NlpwebActor extends Actor with BasicService with VisualizationService with ToolService {
 

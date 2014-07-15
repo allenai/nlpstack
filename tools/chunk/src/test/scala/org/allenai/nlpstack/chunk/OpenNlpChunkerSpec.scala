@@ -1,10 +1,9 @@
 package org.allenai.nlpstack
 package chunk
 
-import org.allenai.nlpstack.tokenize._
-import org.allenai.nlpstack.postag._
-
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
 
 class OpenNlpChunkerSpec extends UnitSpec {
   "chunker" should "correctly chunk an example sentence" in {

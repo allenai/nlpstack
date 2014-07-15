@@ -1,5 +1,4 @@
 import sbt._
-import Keys._
 
 object Dependencies {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.6"

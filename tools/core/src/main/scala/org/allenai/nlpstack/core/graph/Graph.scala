@@ -1,9 +1,8 @@
 package org.allenai.nlpstack.core.graph
 
-import scala.Option.option2Iterable
-import scala.collection.{ mutable, immutable }
-
 import org.allenai.nlpstack.core.graph.Graph.Edge
+
+import scala.Option.option2Iterable
 
 /** A graph representation where data is stored in vertices and edges are
   * represented with adjacency lists.

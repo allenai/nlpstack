@@ -1,11 +1,9 @@
 package org.allenai.nlpstack.core.tokenize
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.core.Format
-import org.allenai.nlpstack.core.HashCodeHelper
+import org.allenai.nlpstack.core.{ Format, HashCodeHelper }
 
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 /** The most simple representation of a token.  A token has a string
   * and a character offset in the original text.

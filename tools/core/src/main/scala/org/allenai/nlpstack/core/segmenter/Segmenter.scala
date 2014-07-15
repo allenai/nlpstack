@@ -2,10 +2,7 @@ package org.allenai.nlpstack.core.segment
 
 import org.allenai.common.immutable.Interval
 
-import spray.json._
 import spray.json.DefaultJsonProtocol._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** A sentencer breaks text into sentences.
   */

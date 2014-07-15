@@ -3,10 +3,8 @@ package org.allenai.nlpstack.webapp
 import org.allenai.common.Resource
 import org.allenai.nlpstack.webapp.tools._
 
-import com.typesafe.config.ConfigRenderOptions
 import org.apache.commons.codec.binary.Base64OutputStream
 import spray.http._
-import spray.http.MediaTypes._
 import spray.routing._
 
 import java.io.ByteArrayOutputStream

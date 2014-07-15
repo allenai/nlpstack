@@ -1,12 +1,9 @@
 package org.allenai.nlpstack.core
 
-import dispatch.as
-import dispatch.Http
-import dispatch.url
+import dispatch.{ Http, as, url }
 
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ Await, ExecutionContext }
 
 trait Remote {
   def urlString: String

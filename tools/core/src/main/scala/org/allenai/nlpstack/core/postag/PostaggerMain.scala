@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.core.postag
 
 import org.allenai.nlpstack.core.LineProcessor
-
 import org.allenai.nlpstack.core.tokenize._
 
 abstract class PostaggerMain extends LineProcessor("postagger") {

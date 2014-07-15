@@ -2,13 +2,11 @@ package org.allenai.nlpstack.core.parse.graph
 
 import org.allenai.nlpstack.core.Format
 import org.allenai.nlpstack.core.graph._
-import org.allenai.nlpstack.core.graph.Graph._
 import org.allenai.nlpstack.core.graph.pattern._
-import org.allenai.nlpstack.core.lemmatize.IdentityStemmer
-import org.allenai.nlpstack.core.lemmatize.Stemmer
+import org.allenai.nlpstack.core.lemmatize.{ IdentityStemmer, Stemmer }
 
-import java.util.regex.{ Pattern => JPattern }
 import scala.util.matching.Regex
+import java.util.regex.{ Pattern => JPattern }
 
 /** A pattern over a graph of dependencies.
   */

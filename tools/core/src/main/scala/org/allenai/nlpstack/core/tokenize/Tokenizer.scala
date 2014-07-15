@@ -2,8 +2,6 @@ package org.allenai.nlpstack.core.tokenize
 
 import org.allenai.nlpstack.core.Format
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 /** A tokenizer takes a sentence string as input and
   * separates words (tokens) along word (token) boundaries.
   */

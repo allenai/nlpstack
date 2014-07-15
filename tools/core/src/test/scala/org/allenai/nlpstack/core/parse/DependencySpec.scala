@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.core.parse
 
-import org.allenai.nlpstack.core.parse.graph.Dependency
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.core.parse.graph.Dependency
 
 class DependencySpec extends UnitSpec {
   "Dependency" should "round trip through serialization" in {

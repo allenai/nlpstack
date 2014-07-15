@@ -1,14 +1,11 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.core.Format
 import org.allenai.common.Resource
+import org.allenai.nlpstack.core.Format
+
 import org.apache.commons.codec.binary.Base64OutputStream
 import org.apache.commons.io.output.ByteArrayOutputStream
-
-import spray.json.DefaultJsonProtocol.StringJsonFormat
-import spray.json.DefaultJsonProtocol.jsonFormat1
-import spray.json.DefaultJsonProtocol.jsonFormat2
-import spray.json.DefaultJsonProtocol.seqFormat
+import spray.json.DefaultJsonProtocol.{ StringJsonFormat, jsonFormat2, seqFormat }
 
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO

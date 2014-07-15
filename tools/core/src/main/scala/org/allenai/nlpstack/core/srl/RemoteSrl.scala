@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.core.srl
 
+import org.allenai.nlpstack.core.Remote
 import org.allenai.nlpstack.core.parse.DependencyParser
 import org.allenai.nlpstack.core.parse.graph._
 import org.allenai.nlpstack.core.postag.PostaggedToken
-import org.allenai.nlpstack.core.Remote
 
 import scala.concurrent.ExecutionContext
 

@@ -1,11 +1,8 @@
 package org.allenai.nlpstack.core.conf
 
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
-
 import org.allenai.common.Resource.using
+
+import java.io.{ BufferedOutputStream, File, FileOutputStream, OutputStream }
 
 /** A confidence function for ranking how likely an extraction is correct.
   *

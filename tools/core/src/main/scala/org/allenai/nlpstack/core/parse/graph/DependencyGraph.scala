@@ -1,23 +1,16 @@
 package org.allenai.nlpstack.core.parse.graph
 
-import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.core.Format
-import org.allenai.nlpstack.core.graph.Direction
-import org.allenai.nlpstack.core.graph.DownEdge
-import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.graph.Graph.Edge
-import org.allenai.nlpstack.core.graph.UpEdge
+import org.allenai.nlpstack.core.graph.{ Direction, DownEdge, Graph, UpEdge }
 import org.allenai.nlpstack.core.lemmatize._
 import org.allenai.nlpstack.core.postag._
-import org.allenai.nlpstack.core.tokenize._
+
 import org.slf4j.LoggerFactory
-
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 
-import scala.collection.immutable
 import scala.Option.option2Iterable
-import scala.util.{ Try, Success, Failure }
+import scala.collection.immutable
 
 /** A representation of a graph over dependencies.
   * This richer representation may include the text of the original sentence,
@@ -269,7 +262,7 @@ object DependencyGraph {
   type JoinedDependencyGraph = Graph[JoinedDependencyNode]
 
   def apply(root: Option[DependencyNode], vertices: Set[DependencyNode], edges: Set[Edge[DependencyNode]]): DependencyGraph = {
-    import Dependency.DependencyOrdering
+    import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
     val sortedVertices = immutable.SortedSet.empty[DependencyNode] ++ vertices
     val sortedEdges = immutable.SortedSet.empty[Dependency] ++ edges
@@ -340,7 +333,7 @@ object DependencyGraph {
 
   class StringFormat(seperator: String) extends Format[DependencyGraph, String] {
     def write(graph: DependencyGraph) = {
-      import Dependency.DependencyOrdering
+      import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
       // create a root dependency
       val root = graph.root.map { root =>
@@ -367,7 +360,7 @@ object DependencyGraph {
 
     val nodeRegex = "\\s*\\((.*)\\)\\s*".r
     def read(pickled: String) = {
-      import Dependency.DependencyOrdering
+      import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
       // Split dependencies (edges).
       val pickledDeps = pickled.split(seperator)

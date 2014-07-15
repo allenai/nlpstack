@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.core.chunk
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.tokenize._
 
 class ChunkerSpec extends UnitSpec {

@@ -12,12 +12,9 @@ import spray.http._
 import spray.routing._
 import spray.util.LoggingContext
 
-import java.io.File
-import java.io.PrintWriter
-import java.util.Scanner
 import scala.concurrent.duration._
-import scala.io.Codec
-import scala.io.Source
+import scala.io.{ Codec, Source }
+import java.io.{ File, PrintWriter }
 
 abstract class LineProcessor(name: String) {
   val typesafeConfig = ConfigFactory.load()

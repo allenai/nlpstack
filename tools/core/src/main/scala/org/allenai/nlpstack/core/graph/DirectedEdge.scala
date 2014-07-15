@@ -2,8 +2,6 @@ package org.allenai.nlpstack.core.graph
 
 import org.allenai.nlpstack.core.graph.Graph.Edge
 
-import Graph.Edge
-
 /** represents a direction in a graph */
 sealed trait Direction {
   // extend Object

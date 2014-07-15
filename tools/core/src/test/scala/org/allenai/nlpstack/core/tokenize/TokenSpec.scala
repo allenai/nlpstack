@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.core.tokenize
 
-import org.allenai.nlpstack.core.chunk.{ Chunker, ChunkedToken }
-import org.allenai.nlpstack.core.postag.{ Postagger, PostaggedToken }
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker }
+import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger }
 
 import spray.json._
 

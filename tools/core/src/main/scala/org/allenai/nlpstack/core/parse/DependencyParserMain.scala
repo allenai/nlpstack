@@ -1,11 +1,6 @@
 package org.allenai.nlpstack.core.parse
 
-import org.allenai.nlpstack.core.Format
 import org.allenai.nlpstack.core.LineProcessor
-import org.allenai.nlpstack.core.graph.Graph
-
-import org.allenai.nlpstack.core.parse.graph._
-import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.postag.Postagger
 import org.allenai.nlpstack.core.tokenize._
 

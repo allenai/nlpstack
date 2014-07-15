@@ -1,16 +1,9 @@
 package org.allenai.nlpstack.core.parse.graph
 
-import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.core.Format
-import org.allenai.nlpstack.core.graph.Graph
-import org.allenai.nlpstack.core.graph.Graph._
-import org.allenai.nlpstack.core.lemmatize.{ Stemmer, IdentityStemmer }
-import org.allenai.nlpstack.core.postag.PostaggedToken
 
-import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
 
 /** A representation for a node in the graph of dependencies.  A node

@@ -1,16 +1,11 @@
 package org.allenai.nlpstack.core.conf.impl
 
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.PrintWriter
-import java.net.URL
-import java.util.Scanner
+import org.allenai.common.Resource.using
+import org.allenai.nlpstack.core.conf.{ ConfidenceFunction, FeatureSet }
 
 import scala.io.Source
-
-import org.allenai.common.Resource.using
-import org.allenai.nlpstack.core.conf.ConfidenceFunction
-import org.allenai.nlpstack.core.conf.FeatureSet
+import java.io.{ InputStream, OutputStream, PrintWriter }
+import java.net.URL
 
 /** An implementation of logistic regression of features that can be
   * represented as a double.

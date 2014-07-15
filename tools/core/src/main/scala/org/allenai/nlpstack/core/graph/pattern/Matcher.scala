@@ -1,9 +1,6 @@
 package org.allenai.nlpstack.core.graph.pattern
 
-import scala.Option.option2Iterable
-
-import org.allenai.nlpstack.core.graph.{ Graph, DirectedEdge }
-import org.allenai.nlpstack.core.graph.{ UpEdge, DownEdge, Direction }
+import org.allenai.nlpstack.core.graph.{ DirectedEdge, Direction, DownEdge, Graph, UpEdge }
 
 /** Abstract superclass for all matchers.
   */

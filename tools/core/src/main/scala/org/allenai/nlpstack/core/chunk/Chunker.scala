@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.core.chunk
 
-import org.allenai.nlpstack.core.Format
 import org.allenai.common.immutable.Interval
+import org.allenai.nlpstack.core.Format
 import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.tokenize._
 

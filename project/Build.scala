@@ -1,12 +1,9 @@
-import sbt._
-import Keys._
-
-import Dependencies._
-
-import org.allenai.sbt.format._
 import org.allenai.sbt.deploy._
 import org.allenai.sbt.travispublisher._
 
+import Dependencies._
+import sbt.Keys._
+import sbt._
 import spray.revolver.RevolverPlugin._
 
 object NlpstackBuild extends Build {

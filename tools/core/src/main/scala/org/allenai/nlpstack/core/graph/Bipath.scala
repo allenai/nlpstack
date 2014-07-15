@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.core.graph
 
-import Graph._
+import org.allenai.nlpstack.core.graph.Graph._
 
 /** A representation of a path through a graph.  The path is represented
   * by a list of directed edges.

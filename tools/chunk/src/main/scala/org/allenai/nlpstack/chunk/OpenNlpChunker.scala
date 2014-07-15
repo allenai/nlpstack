@@ -1,13 +1,13 @@
 package org.allenai.nlpstack
 package chunk
 
-import org.allenai.nlpstack.core.chunk.{ Chunker, ChunkerMain, ChunkedToken }
+import org.allenai.common.Resource
+import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker, ChunkerMain }
 import org.allenai.nlpstack.core.postag
-import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.postag.defaultPostagger
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 import opennlp.tools.chunker.{ ChunkerME, ChunkerModel }
-import org.allenai.common.Resource
 
 import java.net.URL
 

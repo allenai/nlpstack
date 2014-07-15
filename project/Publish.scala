@@ -1,7 +1,5 @@
+import sbt.Keys._
 import sbt._
-import Keys._
-
-import scala.util.Try
 
 object Publish {
   val nexusHost = "utility.allenai.org"

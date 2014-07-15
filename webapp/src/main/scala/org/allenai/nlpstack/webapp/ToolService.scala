@@ -5,7 +5,7 @@ import org.allenai.nlpstack.webapp.tools._
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
-import spray.json.DefaultJsonProtocol._
+import spray.json.DefaultJsonProtocol._ // IntelliJ thinks this is unused, but it's not.
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
 

@@ -1,8 +1,5 @@
 package org.allenai.nlpstack.webapp
 
-import com.typesafe.config.ConfigRenderOptions
-import spray.http._
-import spray.http.MediaTypes._
 import spray.routing._
 
 trait BasicService extends HttpService {

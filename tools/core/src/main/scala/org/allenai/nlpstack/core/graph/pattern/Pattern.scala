@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.core.graph.pattern
 
-import org.allenai.nlpstack.core.graph.{ Graph, DirectedEdge, Bipath }
+import org.allenai.nlpstack.core.graph.{ Bipath, DirectedEdge, Graph }
 
 /** Represents a pattern with which graphs can be searched.
   * A pattern will start and end with a node matcher, and every

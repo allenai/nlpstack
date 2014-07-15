@@ -1,8 +1,6 @@
 package org.allenai.nlpstack.core.graph.pattern
 
-import org.allenai.nlpstack.core.graph.Bipath
-import org.allenai.nlpstack.core.graph.Graph
-import org.allenai.nlpstack.core.graph.DirectedEdge
+import org.allenai.nlpstack.core.graph.{ Bipath, DirectedEdge, Graph }
 
 /** A representation of a match of a pattern in a graph.
   *

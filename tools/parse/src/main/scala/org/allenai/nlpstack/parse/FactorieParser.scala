@@ -1,18 +1,17 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.nlpstack.core.graph.Graph
-import org.allenai.nlpstack.core.parse.{ DependencyParserMain, DependencyParser }
-import org.allenai.nlpstack.core.parse.graph.{ DependencyNode, DependencyGraph }
+import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
+import org.allenai.nlpstack.core.parse.{ DependencyParser, DependencyParserMain }
 import org.allenai.nlpstack.core.postag.PostaggedToken
 import org.allenai.nlpstack.core.tokenize.Token
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._
 
-import cc.factorie.app.nlp.{ Sentence, Document }
-import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
-import cc.factorie.app.nlp.{ Token => FactorieToken }
-import cc.factorie.app.nlp.pos.PennPosTag
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
+import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
+import cc.factorie.app.nlp.pos.PennPosTag
+import cc.factorie.app.nlp.{ Document, Sentence, Token => FactorieToken }
 
 class FactorieParser extends DependencyParser {
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {

@@ -1,10 +1,6 @@
 package org.allenai.nlpstack.core.parse
 
-import org.allenai.nlpstack.core.chunk._
-import org.allenai.nlpstack.core.parse.graph._
-import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.Remote
-import org.allenai.nlpstack.core.tokenize._
 
 import scala.concurrent.ExecutionContext
 

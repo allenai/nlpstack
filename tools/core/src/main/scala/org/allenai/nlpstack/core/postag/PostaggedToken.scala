@@ -1,11 +1,9 @@
 package org.allenai.nlpstack.core.postag
 
-import org.allenai.nlpstack.core.Format
-import org.allenai.nlpstack.core.HashCodeHelper
 import org.allenai.nlpstack.core.tokenize.Token
+import org.allenai.nlpstack.core.{ Format, HashCodeHelper }
 
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 /** A representation for a part-of-speech tagged token.  POS tokens
   * use PENN-treebank style tags.

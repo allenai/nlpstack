@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.lemmatize
 
+import org.allenai.nlpstack.core.lemmatize.{ PostaggedStemmer, Stemmer, StemmerMain }
+
 import edu.washington.cs.knowitall.morpha.{ MorphaStemmer => MorphaStem }
-import org.allenai.nlpstack.core.lemmatize.{ StemmerMain, PostaggedStemmer, Stemmer }
 
 /** This stemmer handles many cases, but the JFlex is 5 MB. */
 class MorphaStemmer extends Stemmer with PostaggedStemmer {

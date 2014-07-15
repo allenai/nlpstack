@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.segment
 
-import org.allenai.nlpstack.core.segment.{ SegmenterMain, Segmenter, Segment }
+import org.allenai.nlpstack.core.segment.{ Segment, Segmenter, SegmenterMain }
 
 import cc.factorie.app.nlp._
-import cc.factorie.app.nlp.segment.{ DeterministicTokenizer, DeterministicSentenceSegmenter }
+import cc.factorie.app.nlp.segment.{ DeterministicSentenceSegmenter, DeterministicTokenizer }
 
 class FactorieSegmenter extends Segmenter {
   /* This is a bit unfortunate. In Factorie, you tokenize first, and then
