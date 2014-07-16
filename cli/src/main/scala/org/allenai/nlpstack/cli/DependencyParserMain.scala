@@ -4,6 +4,9 @@ import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.core.parse._
 import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.tokenize._
+import org.allenai.nlpstack.parse._
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
 
 abstract class DependencyParserMain extends LineProcessor("dep-parser") {
   def tokenizer: Tokenizer
