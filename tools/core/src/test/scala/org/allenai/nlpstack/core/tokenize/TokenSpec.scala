@@ -56,7 +56,7 @@ class TokenSpec extends UnitSpec {
     val t = ChunkedToken("B-NP", "DT", "asdf", 4)
     val json = """{ "string" : "asdf", "postag" : "DT", "chunk" : "B-NP", "offset" : 4}"""
 
-    assert(ChunkedToken.chunkedTokenJsonFormat.read(json.asJson) === t)
+    assert(ChunkedToken.chunkedTokenJsonFormat.read(json.parseJson) === t)
   }
 
   "tokenizer serialization" should "round trip" in {
