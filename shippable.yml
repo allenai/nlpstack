@@ -9,10 +9,9 @@ cache:
 before_install:
   - env
   - mkdir -p ~/.sbt/0.13
-  - echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"utility.allenai.org\", \"$NEXUS_USER\", \"$NEXUS_PASS\")" > ~/.sbt/0.13/allenai.sbt
+  - scp cred@utility.allenai.org:~/credentials.sbt ~/.sbt/0.13/
 script:
   - sbt -J-Xmx8G test
 env:
   global:
     - SBT_OPTS=-Xmx8G
-    - secure: gbbMTBVsf5J0uyny5sUet2Erfok+Tl04x9rT9cKolcaj8PmPSZSpD0tOytfUCsMiVa601LABxcthCH4c5JG+lZcmq6CGR30nPxTQzNF1604uUR6nevIajgK2qj1TUNN42VubsBGKi58nCWUWN3hn7mTo9zBThvA5aixwin+LsnSSoFkD2y70mZelYPBcgXKNU+R5pqueczOxsAgCttUeZKI1YCVDhW7SwcCROMRQtVvSB513IycLlK1/7WjsPRWtN5olVK9wLGpFMGLGgOTBFkmsIYMICCGyhrvN+DejrTchW+79k6Zgl7KgQhw2NdrpmIHnF3C4484NdUGXnjHb/g==
