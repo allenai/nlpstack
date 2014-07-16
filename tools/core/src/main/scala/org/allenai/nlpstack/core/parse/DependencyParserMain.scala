@@ -20,31 +20,6 @@ abstract class DependencyParserMain extends LineProcessor("dep-parser") {
     val tokens = tokenizer(line)
     val postagged = postagger.postagTokenized(tokens)
     val dgraph = dependencyParser.dependencyGraphPostagged(postagged)
-
-    // produce connl format
-    val builder = new StringBuilder
-    for ((token, i) <- postagged.zipWithIndex) {
-      builder ++= token.string
-      builder ++= "\t\t\t"
-      builder ++= token.postag
-      builder ++= "\t\t"
-      val node = dgraph.nodes.find(_.id == i).get
-      val parentEdges = dgraph.incoming(node)
-      if (parentEdges.isEmpty) {
-        builder ++= "0\tROOT"
-      } else {
-        assert(parentEdges.size == 1)
-        val parentEdge = parentEdges.head
-        val parent = parentEdge.source
-        builder ++= parent.id.toString
-        builder ++= "\t"
-        builder ++= parentEdge.label
-      }
-      builder ++= "\t\t\n"
-    }
-
-    // cut off trailing \n
-    builder.length = builder.length - 1
-    builder.result
+    DependencyParser.multilineStringFormat.write((postagged, dgraph))
   }
 }
