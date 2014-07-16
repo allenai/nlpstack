@@ -1,12 +1,13 @@
-package org.allenai.nlpstack
-package tokenize
+package org.allenai.nlpstack.tokenize
+
+import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer, TokenizerMain }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.DeterministicTokenizer
 
 class FactorieTokenizer extends Tokenizer {
   private val tokenizer =
-    new DeterministicTokenizer(tokenizeAllDashedWords = true)
+    new DeterministicTokenizer(tokenizeAllDashedWords = false)
   private val map = new MutableDocumentAnnotatorMap ++=
     DocumentAnnotatorPipeline.defaultDocumentAnnotationMap
   map += tokenizer

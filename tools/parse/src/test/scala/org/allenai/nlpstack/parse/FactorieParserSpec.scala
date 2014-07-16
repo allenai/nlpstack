@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.graph.DependencyGraph
-import org.allenai.nlpstack.tokenize.defaultTokenizer
+import org.allenai.nlpstack.core.parse.graph.DependencyGraph
 import org.allenai.nlpstack.postag.defaultPostagger
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 class FactorieParserSpec extends UnitSpec {
   private def parseTreeString(text: String) = {

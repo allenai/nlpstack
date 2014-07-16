@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.Remote
+import org.allenai.nlpstack.core.Remote
+import org.allenai.nlpstack.core.tokenize.Tokenizer
 
 import scala.concurrent.ExecutionContext
 

@@ -1,9 +1,7 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.Writer
-import java.awt.image.BufferedImage
-import org.allenai.nlpstack.lemmatize._
-import org.allenai.nlpstack.tokenize._
+import org.allenai.nlpstack.core.lemmatize._
+import org.allenai.nlpstack.core.tokenize._
 
 object LemmatizerTool extends Tool("lemmatize") {
   type Output = Seq[Lemmatized[Token]]

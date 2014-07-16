@@ -1,9 +1,11 @@
 package org.allenai.nlpstack.postag
 
-import org.allenai.nlpstack.tokenize.{ Tokenizer, Token, defaultTokenizer }
+import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger, PostaggerMain }
+import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
+import org.allenai.nlpstack.tokenize.defaultTokenizer
 
-import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp._
+import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 
 /** This is thread-safe. The only thing we call on OntonotesForwardPosTagger is
   * predict(), and predict() is threadsafe. I don't know about the other methods

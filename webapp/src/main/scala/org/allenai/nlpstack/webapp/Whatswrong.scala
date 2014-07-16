@@ -1,23 +1,16 @@
 package org.allenai.nlpstack.webapp
 
-import org.allenai.common.Resource
-import org.allenai.nlpstack.{ Reader, Writer, Format }
-import org.allenai.nlpstack.chunk.ChunkedToken
-import org.allenai.nlpstack.parse.graph.DependencyGraph
-import org.allenai.nlpstack.parse.graph.DependencyNode
-import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.srl.Frame
-import org.allenai.nlpstack.tokenize.Token
+import org.allenai.nlpstack.core.Writer
+import org.allenai.nlpstack.core.chunk.ChunkedToken
+import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
+import org.allenai.nlpstack.core.postag.PostaggedToken
+import org.allenai.nlpstack.core.srl.Frame
+import org.allenai.nlpstack.core.tokenize.Token
 
-import com.googlecode.whatswrong.NLPInstance
-import com.googlecode.whatswrong.SingleSentenceRenderer
-import com.googlecode.whatswrong.TokenProperty
-import org.apache.commons.codec.binary.Base64OutputStream
+import com.googlecode.whatswrong.{ NLPInstance, SingleSentenceRenderer, TokenProperty }
 
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import javax.imageio.ImageIO
 
 /** Provides implicit readers and writers for the whatswrong format.
   *

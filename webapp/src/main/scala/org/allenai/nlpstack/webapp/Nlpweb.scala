@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.webapp
 
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{ ActorSystem, Props }
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
