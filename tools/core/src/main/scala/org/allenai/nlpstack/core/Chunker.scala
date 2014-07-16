@@ -1,9 +1,6 @@
-package org.allenai.nlpstack.core.chunk
+package org.allenai.nlpstack.core
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.core.Format
-import org.allenai.nlpstack.core.postag._
-import org.allenai.nlpstack.core.tokenize._
 
 import scala.util.matching.Regex
 

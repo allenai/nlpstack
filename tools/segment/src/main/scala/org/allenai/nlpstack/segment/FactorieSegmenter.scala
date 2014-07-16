@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.segment
 
-import org.allenai.nlpstack.core.segment.{ Segment, Segmenter }
+import org.allenai.nlpstack.core.{ Segment, Segmenter }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.{ DeterministicSentenceSegmenter, DeterministicTokenizer }

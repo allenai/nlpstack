@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.core.parse.graph
 
-import org.allenai.nlpstack.core.lemmatize._
-import org.allenai.nlpstack.core.postag._
+import org.allenai.nlpstack.core._
 
 /** A representation for a node in the graph of dependencies.  A node
   * represents one or more adjacent tokens in the source sentence.

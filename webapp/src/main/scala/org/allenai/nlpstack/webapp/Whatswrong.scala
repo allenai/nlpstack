@@ -1,11 +1,8 @@
 package org.allenai.nlpstack.webapp
 
-import org.allenai.nlpstack.core.Writer
-import org.allenai.nlpstack.core.chunk.ChunkedToken
+import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
-import org.allenai.nlpstack.core.postag.PostaggedToken
 import org.allenai.nlpstack.core.srl.Frame
-import org.allenai.nlpstack.core.tokenize.Token
 
 import com.googlecode.whatswrong.{ NLPInstance, SingleSentenceRenderer, TokenProperty }
 

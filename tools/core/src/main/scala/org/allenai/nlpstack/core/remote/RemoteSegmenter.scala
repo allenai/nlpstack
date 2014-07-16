@@ -1,6 +1,6 @@
-package org.allenai.nlpstack.core.segment
+package org.allenai.nlpstack.core.remote
 
-import org.allenai.nlpstack.core.Remote
+import org.allenai.nlpstack.core.{ Segment, Segmenter }
 
 import scala.concurrent.ExecutionContext
 

@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.core.lemmatize._
-import org.allenai.nlpstack.core.tokenize._
+import org.allenai.nlpstack.core.{ Lemmatized, Token }
 
 object LemmatizerTool extends Tool("lemmatize") {
   type Output = Seq[Lemmatized[Token]]

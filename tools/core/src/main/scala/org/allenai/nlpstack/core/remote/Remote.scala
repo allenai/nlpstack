@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core
+package org.allenai.nlpstack.core.remote
 
 import dispatch.{ Http, as, url }
 

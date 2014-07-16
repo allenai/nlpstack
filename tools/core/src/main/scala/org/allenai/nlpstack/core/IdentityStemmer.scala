@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.lemmatize
+package org.allenai.nlpstack.core
 
 /** A trivial stemmer that doesn't apply a stemming algorithm. */
 object IdentityStemmer extends Stemmer {

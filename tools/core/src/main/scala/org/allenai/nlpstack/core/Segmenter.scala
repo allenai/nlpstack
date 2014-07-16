@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.segment
+package org.allenai.nlpstack.core
 
 import org.allenai.common.immutable.Interval
 

@@ -1,7 +1,6 @@
-package org.allenai.nlpstack.core.chunk
+package org.allenai.nlpstack.core
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.core.tokenize._
 
 class ChunkerSpec extends UnitSpec {
   "chunker" should "determine intervals correctly." in {

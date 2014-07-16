@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.cli
 
-import org.allenai.nlpstack.core.segment._
+import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.segment.ChalkSentenceSegmenter
 import org.allenai.nlpstack.segment.FactorieSegmenter
 

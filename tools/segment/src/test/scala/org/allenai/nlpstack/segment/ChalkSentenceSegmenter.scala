@@ -2,7 +2,7 @@ package org.allenai.nlpstack
 package segment
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.core.segment.Segment
+import org.allenai.nlpstack.core.Segment
 
 class ChalkSentencerSpec extends UnitSpec {
   val sentencer = new ChalkSentenceSegmenter

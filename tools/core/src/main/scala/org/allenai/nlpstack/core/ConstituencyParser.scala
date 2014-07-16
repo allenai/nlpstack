@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.parse
+package org.allenai.nlpstack.core
 
 /** A constituency parser turns a sentence into a constituency
   * tree, a structure that is somewhat like chunking but

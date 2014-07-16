@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.core.typer
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.core.tokenize.Token
+import org.allenai.nlpstack.core.Token
 
 abstract class Typer[E <: Token] {
   def name: String

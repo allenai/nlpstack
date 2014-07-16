@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.tokenize
+package org.allenai.nlpstack.core
 
 import org.allenai.common.testkit.UnitSpec
 

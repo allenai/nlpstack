@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.tokenize.Tokenizer
+import org.allenai.nlpstack.core.Tokenizer
 
 import java.util.regex._
 

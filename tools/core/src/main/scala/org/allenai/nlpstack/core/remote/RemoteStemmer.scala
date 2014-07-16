@@ -1,6 +1,6 @@
-package org.allenai.nlpstack.core.lemmatize
+package org.allenai.nlpstack.core.remote
 
-import org.allenai.nlpstack.core.Remote
+import org.allenai.nlpstack.core.Stemmer
 
 import scala.concurrent.ExecutionContext
 

@@ -1,6 +1,6 @@
-package org.allenai.nlpstack.core.parse
+package org.allenai.nlpstack.core.remote
 
-import org.allenai.nlpstack.core.Remote
+import org.allenai.nlpstack.core.DependencyParser
 
 import scala.concurrent.ExecutionContext
 
