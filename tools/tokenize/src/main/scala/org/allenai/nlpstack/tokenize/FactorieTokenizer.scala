@@ -7,7 +7,7 @@ import cc.factorie.app.nlp.segment.DeterministicTokenizer
 
 class FactorieTokenizer extends Tokenizer {
   private val tokenizer =
-    new DeterministicTokenizer(tokenizeAllDashedWords = true)
+    new DeterministicTokenizer(tokenizeAllDashedWords = false)
   private val map = new MutableDocumentAnnotatorMap ++=
     DocumentAnnotatorPipeline.defaultDocumentAnnotationMap
   map += tokenizer
