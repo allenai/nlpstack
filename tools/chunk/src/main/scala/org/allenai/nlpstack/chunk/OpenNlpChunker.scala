@@ -1,8 +1,7 @@
-package org.allenai.nlpstack
-package chunk
+package org.allenai.nlpstack.chunk
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker, ChunkerMain }
+import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker }
 import org.allenai.nlpstack.core.postag
 import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
@@ -37,10 +36,4 @@ object OpenNlpChunker {
       new ChunkerModel(stream)
     }
   }
-}
-
-object OpenNlpChunkerMain extends ChunkerMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val chunker = new OpenNlpChunker()
 }

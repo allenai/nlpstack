@@ -1,8 +1,12 @@
-package org.allenai.nlpstack.core.chunk
+package org.allenai.nlpstack.cli
 
-import org.allenai.nlpstack.core.LineProcessor
-import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.tokenize._
+import org.allenai.nlpstack.core.postag._
+import org.allenai.nlpstack.core.chunk._
+import org.allenai.nlpstack.core.parse._
+import org.allenai.nlpstack.chunk._
+import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.tokenize._
 
 abstract class ChunkerMain
     extends LineProcessor("chunker") {
@@ -19,4 +23,10 @@ abstract class ChunkerMain
     // for timing purposes
     chunker.chunk(tokenizer, postagger)("I want to initialize the chunker.")
   }
+}
+
+object OpenNlpChunkerMain extends ChunkerMain {
+  override lazy val tokenizer = defaultTokenizer
+  override lazy val postagger = defaultPostagger
+  override lazy val chunker = new OpenNlpChunker()
 }

@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.lemmatize
 
-import org.allenai.nlpstack.core.lemmatize.{ PostaggedStemmer, Stemmer, StemmerMain }
+import org.allenai.nlpstack.core.lemmatize.{ PostaggedStemmer, Stemmer }
 
 import edu.washington.cs.knowitall.morpha.{ MorphaStemmer => MorphaStem }
 
@@ -13,7 +13,3 @@ class MorphaStemmer extends Stemmer with PostaggedStemmer {
 
 /** MorphaStemmer is threadsafe.  Clients can use this global instance. */
 object MorphaStemmer extends MorphaStemmer
-
-object MorphaStemmerMain extends StemmerMain {
-  lazy val lemmatizer = new MorphaStemmer
-}

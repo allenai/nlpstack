@@ -1,7 +1,8 @@
-package org.allenai.nlpstack.core.parse
+package org.allenai.nlpstack.cli
 
-import org.allenai.nlpstack.core.LineProcessor
-import org.allenai.nlpstack.core.postag.Postagger
+import org.allenai.nlpstack.core._
+import org.allenai.nlpstack.core.parse._
+import org.allenai.nlpstack.core.postag._
 import org.allenai.nlpstack.core.tokenize._
 
 abstract class DependencyParserMain extends LineProcessor("dep-parser") {

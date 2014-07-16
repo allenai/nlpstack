@@ -19,7 +19,8 @@ object NlpstackBuild extends Build {
     base = file("."),
     settings = aggregateSettings).aggregate(
       tools,
-      webapp)
+      webapp,
+      cli)
 
   val buildSettings =
     Revolver.settings ++
@@ -60,6 +61,18 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
+    settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
+      core,
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment)
+
+  lazy val cli = Project(
+    id = "cli",
+    base = file("cli"),
     settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
       core,
       lemmatize,

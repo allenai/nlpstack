@@ -3,7 +3,7 @@ package org.allenai.nlpstack.parse
 import org.allenai.common.Resource.using
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
-import org.allenai.nlpstack.core.parse.{ DependencyParser, DependencyParserMain }
+import org.allenai.nlpstack.core.parse.{ DependencyParser }
 import org.allenai.nlpstack.core.postag.PostaggedToken
 import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
@@ -56,10 +56,4 @@ class PolytreeParser extends DependencyParser {
 
     DependencyGraph(nodes.toSet, edges.toSet)
   }
-}
-
-object PolytreeParserMain extends DependencyParserMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val dependencyParser = new PolytreeParser
 }

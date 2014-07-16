@@ -1,6 +1,5 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.LineProcessor
 import org.allenai.nlpstack.core.tokenize.Tokenizer
 
 /* The PennTokenizer was used to tokenize the Penn Treebank.
@@ -13,10 +12,4 @@ import org.allenai.nlpstack.core.tokenize.Tokenizer
 object WhitespaceTokenizer extends Tokenizer {
   override def tokenize(string: String) =
     Tokenizer.computeOffsets(string.split("\\s+").toSeq, string)
-}
-
-object WhitespaceTokenizerMain extends LineProcessor("whitespace-tokenizer") {
-  val tokenizer = WhitespaceTokenizer
-  override def process(sentence: String) =
-    tokenizer.tokenize(sentence).mkString(" ")
 }
