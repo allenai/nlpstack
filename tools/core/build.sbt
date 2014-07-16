@@ -7,6 +7,8 @@ licenses := Seq(apache2)
 libraryDependencies ++= Seq(
     allenAiCommon,
     slf4j,
+    logbackCore,
+    logbackClassic,
     // standalone scope
     scopt,
     typesafeConfig,
