@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer, TokenizerMain }
+import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.DeterministicTokenizer
@@ -22,8 +22,4 @@ class FactorieTokenizer extends Tokenizer {
     for (section <- doc.sections; token <- section.tokens)
       yield Token(token.string, token.stringStart)
   }
-}
-
-object FactorieTokenizerMain extends TokenizerMain {
-  val tokenizer = new FactorieTokenizer()
 }

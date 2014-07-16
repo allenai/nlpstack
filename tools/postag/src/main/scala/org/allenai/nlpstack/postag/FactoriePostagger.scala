@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.postag
 
-import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger, PostaggerMain }
+import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger }
 import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
@@ -26,9 +26,4 @@ class FactoriePostagger extends Postagger {
       PostaggedToken(tagger.tokenAnnotationString(token), token.string, token.stringStart)
     }
   }
-}
-
-object FactoriePostaggerMain extends PostaggerMain {
-  override val tokenizer = defaultTokenizer
-  override val postagger = new FactoriePostagger()
 }

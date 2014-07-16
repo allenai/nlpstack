@@ -19,7 +19,8 @@ object NlpstackBuild extends Build {
     base = file("."),
     settings = aggregateSettings).aggregate(
       tools,
-      webapp)
+      webapp,
+      cli)
 
   val buildSettings =
     Revolver.settings ++
@@ -34,7 +35,7 @@ object NlpstackBuild extends Build {
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
               "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
-      libraryDependencies ++= testingLibraries,
+      libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -60,6 +61,18 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
+    settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
+      core,
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment)
+
+  lazy val cli = Project(
+    id = "cli",
+    base = file("cli"),
     settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
       core,
       lemmatize,
