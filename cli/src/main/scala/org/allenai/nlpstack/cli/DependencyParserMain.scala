@@ -24,3 +24,15 @@ abstract class DependencyParserMain extends LineProcessor("dep-parser") {
     DependencyParser.multilineStringFormat.write((postagged, dgraph))
   }
 }
+
+object FactorieParserMain extends DependencyParserMain {
+  override lazy val tokenizer = defaultTokenizer
+  override lazy val postagger = defaultPostagger
+  override lazy val dependencyParser = new FactorieParser
+}
+
+object PolytreeParserMain extends DependencyParserMain {
+  override lazy val tokenizer = defaultTokenizer
+  override lazy val postagger = defaultPostagger
+  override lazy val dependencyParser = new PolytreeParser
+}

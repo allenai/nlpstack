@@ -13,15 +13,3 @@ abstract class ConstituencyParserMain
     constituencyParser.parse(line).toString
   }
 }
-
-object FactorieParserMain extends DependencyParserMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val dependencyParser = new FactorieParser
-}
-
-object PolytreeParserMain extends DependencyParserMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val dependencyParser = new PolytreeParser
-}
