@@ -35,7 +35,7 @@ object NlpstackBuild extends Build {
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
               "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
-      libraryDependencies ++= testingLibraries,
+      libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
