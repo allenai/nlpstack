@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.cli
 
-import org.allenai.nlpstack.core.tokenize.Tokenizer
+import org.allenai.nlpstack.core.Tokenizer
 import org.allenai.nlpstack.tokenize.FactorieTokenizer
 import org.allenai.nlpstack.tokenize.PennTokenizer
 import org.allenai.nlpstack.tokenize.WhitespaceTokenizer

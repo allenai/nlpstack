@@ -1,10 +1,8 @@
 package org.allenai.nlpstack.core.parse.graph
 
-import org.allenai.nlpstack.core.Format
 import org.allenai.nlpstack.core.graph.Graph.Edge
 import org.allenai.nlpstack.core.graph.{ Direction, DownEdge, Graph, UpEdge }
-import org.allenai.nlpstack.core.lemmatize._
-import org.allenai.nlpstack.core.postag._
+import org.allenai.nlpstack.core._
 
 import org.slf4j.LoggerFactory
 import spray.json._

@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
+import org.allenai.nlpstack.core.{ Tokenizer, Token }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.DeterministicTokenizer

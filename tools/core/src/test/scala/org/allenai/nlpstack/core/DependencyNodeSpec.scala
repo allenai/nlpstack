@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.parse
+package org.allenai.nlpstack.core
 
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.core.parse.graph.DependencyNode

@@ -1,9 +1,6 @@
 package org.allenai.nlpstack.cli
 
-import org.allenai.nlpstack.core.tokenize._
-import org.allenai.nlpstack.core.postag._
-import org.allenai.nlpstack.core.chunk._
-import org.allenai.nlpstack.core.parse._
+import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.chunk._
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.tokenize._

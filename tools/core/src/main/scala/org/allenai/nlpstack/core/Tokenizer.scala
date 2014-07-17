@@ -1,6 +1,4 @@
-package org.allenai.nlpstack.core.tokenize
-
-import org.allenai.nlpstack.core.Format
+package org.allenai.nlpstack.core
 
 /** A tokenizer takes a sentence string as input and
   * separates words (tokens) along word (token) boundaries.

@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.cli
 
 import org.allenai.nlpstack.core.srl._
-import org.allenai.nlpstack.core.parse.DependencyParser
+import org.allenai.nlpstack.core.DependencyParser
 
 abstract class SrlMain extends LineProcessor("srl") {
   def srl: Srl

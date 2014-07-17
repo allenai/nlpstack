@@ -1,9 +1,4 @@
-package org.allenai
-package nlpstack
-package core
-package postag
-
-import org.allenai.nlpstack.core.tokenize._
+package org.allenai.nlpstack.core
 
 import scala.collection.immutable
 
@@ -12,7 +7,7 @@ import scala.collection.immutable
   */
 abstract class Postagger {
   /* POS tag pre-tokenized text */
-  def postagTokenized(tokens: Seq[tokenize.Token]): Seq[PostaggedToken]
+  def postagTokenized(tokens: Seq[Token]): Seq[PostaggedToken]
 
   /* Tokenize and then POS tag text*/
   def postag(tokenizer: Tokenizer)(sentence: String): Seq[PostaggedToken] = {

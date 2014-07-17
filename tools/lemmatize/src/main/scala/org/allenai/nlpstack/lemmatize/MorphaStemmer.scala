@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.lemmatize
 
-import org.allenai.nlpstack.core.lemmatize.{ PostaggedStemmer, Stemmer }
+import org.allenai.nlpstack.core.{ PostaggedStemmer, Stemmer }
 
 import edu.washington.cs.knowitall.morpha.{ MorphaStemmer => MorphaStem }
 

@@ -1,9 +1,6 @@
-package org.allenai.nlpstack.core.parse
+package org.allenai.nlpstack.core
 
-import org.allenai.nlpstack.core.Format
 import org.allenai.nlpstack.core.parse.graph.DependencyGraph
-import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger }
-import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
 
 /** A trait for a tool that produces a dependency graph, such as the Stanford dependency parser.
   * Subclasses should override dependencyGraphPostagged.

@@ -1,13 +1,10 @@
 package org.allenai.nlpstack.parse
 
+import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
-import org.allenai.nlpstack.core.parse.{ DependencyParser }
-import org.allenai.nlpstack.core.postag.PostaggedToken
-import org.allenai.nlpstack.core.tokenize.Token
-import org.allenai.nlpstack.postag._
-import org.allenai.nlpstack.tokenize._
 
+import cc.factorie.app.nlp.Token
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
 import cc.factorie.app.nlp.parse.OntonotesTransitionBasedParser
 import cc.factorie.app.nlp.pos.PennPosTag

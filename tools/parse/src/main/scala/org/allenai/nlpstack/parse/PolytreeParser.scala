@@ -1,12 +1,10 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.common.Resource.using
+import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
-import org.allenai.nlpstack.core.parse.{ DependencyParser }
-import org.allenai.nlpstack.core.postag.PostaggedToken
-import org.allenai.nlpstack.postag.defaultPostagger
-import org.allenai.nlpstack.tokenize.defaultTokenizer
+import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.parsers.polyparser
 import org.allenai.parsers.polyparser.{ NexusToken, WordClusters }
 

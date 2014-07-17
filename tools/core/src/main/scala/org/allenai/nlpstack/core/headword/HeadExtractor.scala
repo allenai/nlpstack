@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.core.headword
 
-import org.allenai.nlpstack.core.postag.PostaggedToken
+import org.allenai.nlpstack.core.PostaggedToken
 
 trait HeadExtractor {
 

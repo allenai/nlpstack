@@ -1,7 +1,4 @@
-package org.allenai.nlpstack.core.chunk
-
-import org.allenai.nlpstack.core.postag.PostaggedToken
-import org.allenai.nlpstack.core.{ Format, HashCodeHelper }
+package org.allenai.nlpstack.core
 
 import spray.json._
 

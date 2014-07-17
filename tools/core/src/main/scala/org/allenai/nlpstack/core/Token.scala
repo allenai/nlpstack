@@ -1,7 +1,6 @@
-package org.allenai.nlpstack.core.tokenize
+package org.allenai.nlpstack.core
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.core.{ Format, HashCodeHelper }
 
 import spray.json._
 
