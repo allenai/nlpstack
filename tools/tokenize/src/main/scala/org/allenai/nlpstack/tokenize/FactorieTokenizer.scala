@@ -1,6 +1,5 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core
 import org.allenai.nlpstack.core.{ Tokenizer, Token }
 
 import cc.factorie.app.nlp._
@@ -17,7 +16,7 @@ class FactorieTokenizer extends Tokenizer {
     prereqs = Nil,
     tokenizer.postAttrs)
 
-  def tokenize(sentence: String): Seq[core.Token] = {
+  def tokenize(sentence: String): Seq[Token] = {
     val doc = pipeline.process(new Document(sentence))
 
     for (section <- doc.sections; token <- section.tokens)
