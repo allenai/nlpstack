@@ -6,6 +6,5 @@ jdk:
 cache:
   directories:
   - $HOME/.ivy2/cache
-env:
-  global:
-    - SBT_OPTS=-Xmx8G
+script:
+  - sbt -J-Xmx8G test
