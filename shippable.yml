@@ -6,8 +6,6 @@ jdk:
 cache:
   directories:
   - $HOME/.ivy2/cache
-before_install:
-  - rm -rvf creds
 env:
   global:
     - SBT_OPTS=-Xmx8G
