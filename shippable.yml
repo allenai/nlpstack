@@ -7,9 +7,7 @@ cache:
   directories:
   - $HOME/.ivy2/cache
 before_install:
-  - mkdir -p ~/.sbt/0.13
-  - echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"utility.allenai.org\", \"$NEXUS_USER\", \"$NEXUS_PASS\")" > ~/.sbt/0.13/allenai.sbt
+  - rm -rvf creds
 env:
   global:
     - SBT_OPTS=-Xmx8G
-    - secure: gR3jjpmPz28jmvOMfn6AIHyGNDMXGZRrYs8GcnKbrt7F2HyIWmPUg0OcvOR5Omw/GstW6fbdB8SCoWhDuaQOLZyx5JATv9m9Ui/ZqPeUXzMaYjOgOZVlkyKtx6BkUvRShd3GKmOdIZ9x/1IZtPGDD3biaA6xUN1p+kzvgxMBsmAo74dr/1wIuedyc6bntSA6aR3iHDprhg1QcJfkwjxHCWTnyjH6V46/btB/XryTOR/4YN9Tk/F3oiJHsTiIG61EIHqLsCq7jxX1O940f+T+zt18BHN/1mjOw+/dJfUIEaqRNaeY7fidbB67BUaANx95mu2GIFCxOnwaMDdxHx9pxA==
