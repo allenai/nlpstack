@@ -4,12 +4,6 @@ resolvers += "allenai nexus repository" at "http://utility.allenai.org:8081/nexu
 
 resolvers += "allenai nexus repository snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots"
 
-credentials += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "utility.allenai.org",
-  "travis",
-  System.getenv("NEXUS_PASS"))
-
 resolvers += Resolver.url(
   "allenai-bintray-sbt-plugins",
   url("http://dl.bintray.com/content/allenai/sbt-plugins"))(Resolver.ivyStylePatterns)

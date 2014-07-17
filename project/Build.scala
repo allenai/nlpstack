@@ -6,6 +6,10 @@ import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin._
 
+import scala.collection.JavaConverters._
+import java.io.{FileInputStream, IOException}
+import java.util.Properties
+
 object NlpstackBuild extends Build {
   var noopRepo = Some(Resolver.file("Unused Repository", file("target/unusedrepo")))
 
@@ -13,6 +17,51 @@ object NlpstackBuild extends Build {
       Seq(
         publishArtifact := false,
         publishTo := noopRepo)
+
+  def readProperties(file: File) : Option[Properties] = {
+    val properties = new Properties()
+    try {
+      // read the file
+      val input = new FileInputStream(file)
+      try {
+        properties.load(input)
+      } finally {
+        input.close()
+      }
+      Some(properties)
+    } catch {
+      case e: IOException => {
+        None
+      }
+    }
+  }
+
+  def propertiesToMap(properties: Properties) : Map[String, String] = {
+    val pnames = properties.stringPropertyNames.asScala
+    def makePropTuple(pname: String) : Tuple2[String, String] = {
+      (pname, properties.getProperty(pname))
+    }
+    pnames.map(makePropTuple(_)).toMap
+  }
+
+  def getCredentialTuple(map: Map[String, String]) : Option[Tuple2[String, String]] = {
+    for(
+      user <- map.get("NEXUS_USER");
+      password <- map.get("NEXUS_PASS")
+    ) yield (user, password)
+  }
+
+  def credentialsFromFile(file: File) : Option[Credentials] = {
+    for(
+      properties <- readProperties(file);
+      tuple <- getCredentialTuple(propertiesToMap(properties))
+    ) yield Credentials(
+      "Sonatype Nexus Repository Manager",
+      "utility.allenai.org",
+      tuple._1,
+      tuple._2
+    )
+  }
 
   lazy val root = Project(
     id = "nlpstack-root",
@@ -40,11 +89,7 @@ object NlpstackBuild extends Build {
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         "commons-io" % "commons-io" % "2.4"),
-      credentials += Credentials(
-        "Sonatype Nexus Repository Manager",
-        "utility.allenai.org",
-        "travis",
-        System.getenv("NEXUS_PASS")))
+      credentials ++= credentialsFromFile(new File("./creds/nexus.properties")).toSeq)
 
   lazy val tools = Project(
     id = "tools-root",
