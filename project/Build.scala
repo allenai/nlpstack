@@ -127,7 +127,7 @@ object NlpstackBuild extends Build {
         factorie,
         factoriePosModel,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(tokenize)
+  ).enablePlugins(TravisPublisherPlugin) dependsOn(tokenize, core)
 
   lazy val chunk = Project(
     id = "tools-chunk",
@@ -136,7 +136,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-chunk",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag)
+  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag, core)
 
   lazy val parse = Project(
     id = "tools-parse",
@@ -153,5 +153,13 @@ object NlpstackBuild extends Build {
         factorieParseModel,
         factorieWordnet,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag, tokenize)
+  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag, tokenize, core)
+
+  lazy val coref = Project(
+    id = "tools-coref",
+    base = file("tools/coref"),
+    settings = buildSettings ++ Seq(
+      name := "nlpstack-coref",
+      licenses := Seq(apache2))
+  ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
 }
