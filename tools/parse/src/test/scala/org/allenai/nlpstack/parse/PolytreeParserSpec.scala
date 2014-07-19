@@ -6,14 +6,16 @@ import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 class PolytreeParserSpec extends UnitSpec {
-  private def parseTreeString(text: String) = {
+  private def parseTree(text: String) = {
     val tokens = defaultTokenizer.tokenize(text)
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
 
     val parser = new PolytreeParser
-    val parseTree = parser.dependencyGraphPostagged(postaggedTokens)
+    parser.dependencyGraphPostagged(postaggedTokens)
+  }
 
-    DependencyGraph.multilineStringFormat.write(parseTree)
+  private def parseTreeString(text: String) = {
+    DependencyGraph.multilineStringFormat.write(parseTree(text))
   }
 
   /*
@@ -24,8 +26,10 @@ class PolytreeParserSpec extends UnitSpec {
    * suite.
    */
 
+  val pancake = "A waffle is like a pancake with a syrup trap."
+
   "PolytreeParserParser" should "correctly parse a simple sentence" in {
-    val parseTreeStr = parseTreeString("A waffle is like a pancake with a syrup trap.")
+    val parseTreeStr = parseTreeString(pancake)
     val expectedParseTreeStr =
       """|det(waffle-2, A-1)
          |nsubj(is-3, waffle-2)
@@ -61,5 +65,20 @@ class PolytreeParserSpec extends UnitSpec {
          |dep(refused-4, say-13)
          |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
+  }
+
+  it should "produce a parse tree that's collabsible" in {
+    val dependencies = parseTree(pancake).collapse
+    val expectedDependencies =
+      """|det(waffle-2, A-1)
+         |nsubj(is-3, waffle-2)
+         |root(ROOT-0, is-3)
+         |det(pancake-6, a-5)
+         |prep_like(is-3, pancake-6)
+         |det(trap-10, a-8)
+         |nn(trap-10, syrup-9)
+         |prep_with(is-3, trap-10)
+         |punct(is-3, .-11)""".stripMargin
+    assert(DependencyGraph.multilineStringFormat.write(dependencies) === expectedDependencies)
   }
 }
