@@ -45,7 +45,7 @@ class PolytreeParser extends DependencyParser {
       if parentIndex > 0;
       (childIndex, Symbol(label)) <- arclabels.filter(t => childIndices.contains(t._1))
     ) yield {
-      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label)
+      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toLowerCase)
     }
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
