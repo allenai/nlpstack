@@ -13,7 +13,7 @@ class PolytreeParser extends DependencyParser {
     new polyparser.GreedyTransitionParser(
       using(
         Thread.currentThread.getContextClassLoader.getResourceAsStream(
-          "org/allenai/polyparser-models/example1.poly.json.gz")) {
+          "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json.gz")) {
           polyparser.ClassifierBasedCostFunction.loadFromStream(_)
         })
 
