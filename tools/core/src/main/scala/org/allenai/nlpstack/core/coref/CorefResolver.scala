@@ -8,5 +8,5 @@ case class Referent[T <: Token](
   val mainReference: Option[T])
 
 abstract class CorefResolver[T <: Token] {
-  def resolveCoreferences(postaggedParse: (Seq[T], DependencyGraph)) : Seq[Referent[T]]
+  def resolveCoreferences(postaggedParse: (Seq[T], DependencyGraph)): Seq[Referent[T]]
 }
