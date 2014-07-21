@@ -13,7 +13,7 @@ class PolytreeParser extends DependencyParser {
     new polyparser.GreedyTransitionParser(
       using(
         Thread.currentThread.getContextClassLoader.getResourceAsStream(
-          "org/allenai/polyparser-models/example1.poly.json.gz")) {
+          "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json.gz")) {
           polyparser.ClassifierBasedCostFunction.loadFromStream(_)
         })
 
@@ -45,7 +45,7 @@ class PolytreeParser extends DependencyParser {
       if parentIndex > 0;
       (childIndex, Symbol(label)) <- arclabels.filter(t => childIndices.contains(t._1))
     ) yield {
-      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label)
+      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toLowerCase)
     }
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
