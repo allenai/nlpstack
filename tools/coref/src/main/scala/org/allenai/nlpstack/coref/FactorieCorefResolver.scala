@@ -8,5 +8,5 @@ class FactorieCorefResolver[T <: Token] extends CorefResolver[T] {
   def resolveCoreferences(postaggedParse: (Seq[T], DependencyGraph)) = {
     Seq()
   }
-
 }
+
