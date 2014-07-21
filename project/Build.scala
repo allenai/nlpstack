@@ -5,14 +5,16 @@ import Dependencies._
 import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin._
+import sbtrelease.ReleasePlugin._
 
 object NlpstackBuild extends Build {
   var noopRepo = Some(Resolver.file("Unused Repository", file("target/unusedrepo")))
 
   val aggregateSettings = Defaults.coreDefaultSettings ++
-      Seq(
-        publishArtifact := false,
-        publishTo := noopRepo)
+    releaseSettings ++
+    Seq(
+      publishArtifact := false,
+      publishTo := noopRepo)
 
   lazy val root = Project(
     id = "nlpstack-root",
@@ -25,6 +27,7 @@ object NlpstackBuild extends Build {
   val buildSettings =
     Revolver.settings ++
     Publish.settings ++
+    releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
