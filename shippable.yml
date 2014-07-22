@@ -8,4 +8,3 @@ cache:
   - $HOME/.ivy2/cache
 script:
   - sbt -J-Xmx8G test
-reset_minion: true
