@@ -12,7 +12,7 @@ class PolytreeParser extends DependencyParser {
   private val parser =
     new polyparser.GreedyTransitionParser(
       using(
-        Thread.currentThread.getContextClassLoader.getResourceAsStream(
+        this.getClass.getClassLoader.getResourceAsStream(
           "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json.gz")) {
           polyparser.ClassifierBasedCostFunction.loadFromStream(_)
         })
