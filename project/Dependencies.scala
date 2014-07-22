@@ -34,5 +34,4 @@ object Dependencies {
   val akkaVersion = "2.3.2"
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
-
 }

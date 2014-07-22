@@ -1,0 +1,11 @@
+language: scala
+scala:
+- 2.10.4
+jdk:
+- openjdk7
+cache:
+  directories:
+  - $HOME/.ivy2/cache
+script:
+  - sbt -J-Xmx8G test
+reset_minion: true
