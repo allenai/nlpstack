@@ -1,3 +1,0 @@
-[submodule "creds"]
-	path = creds
-	url = git@github.com:allenai/creds.git
