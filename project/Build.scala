@@ -163,6 +163,8 @@ object NlpstackBuild extends Build {
     base = file("tools/coref"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-coref",
-      licenses := Seq(apache2))
+      licenses := Seq(apache2),
+      libraryDependencies ++= Seq(
+        factorie))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
 }
