@@ -8,6 +8,6 @@ cache:
   - $HOME/.ivy2/cache
 before_install:
   - mkdir -p ~/.sbt/0.13
-  - time scp cred@utility.allenai.org:~/credentials.sbt ~/.sbt/0.13/
+  - scp cred@utility.allenai.org:~/credentials.sbt ~/.sbt/0.13/
 script:
   - sbt -J-Xmx8G test
