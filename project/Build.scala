@@ -166,6 +166,9 @@ object NlpstackBuild extends Build {
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         factorie,
-        factorieCorefModel))
+        factorieCorefModel,
+        factorieNerModel,
+        factorieLexicon,
+        factoriePhraseModel))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
 }

@@ -6,6 +6,7 @@ import org.allenai.nlpstack.core.parse.graph.DependencyGraph
 
 import cc.factorie.app.nlp.coref.{ WithinDocCoref, ParseStructuredCoref }
 import cc.factorie.app.nlp.lemma.WordNetLemmatizer
+import cc.factorie.app.nlp.ner.ConllChainNer
 import cc.factorie.app.nlp.parse.{ ParseTreeLabelDomain, ParseTree }
 import cc.factorie.app.nlp.pos.PennPosTag
 import cc.factorie.app.nlp.{ Sentence, Token => FactorieToken, Document }
@@ -41,6 +42,7 @@ class FactorieCorefResolver[T <: PostaggedToken] extends CorefResolver[T] {
     }
 
     // run the coreference analysis
+    ConllChainNer.process(factorieDoc)
     ParseStructuredCoref.process(factorieDoc)
 
     // translate the result into our format
