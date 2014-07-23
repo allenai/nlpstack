@@ -124,5 +124,3 @@ Once you have lemmatized tokens, you can build a new dependency graph with token
 ```
 val dependencyGraphWithTokenInfo = dependencyGraph.tokenized(lemmatizedTokens)
 ```
-
-[ ![Codeship Status for allenai/nlpstack](https://codeship.io/projects/01201100-edc7-0131-c6e7-6a40d349b728/status)](https://codeship.io/projects/26737)
