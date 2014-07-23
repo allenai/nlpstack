@@ -13,7 +13,7 @@ class PolytreeParser extends DependencyParser {
     new polyparser.GreedyTransitionParser(
       using(
         this.getClass.getClassLoader.getResourceAsStream(
-          "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json.gz")) {
+          "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json")) {
           polyparser.ClassifierBasedCostFunction.loadFromStream(_)
         })
 
@@ -24,13 +24,7 @@ class PolytreeParser extends DependencyParser {
         Some(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(token.postag, token.postag))),
         Some(token.postagSymbol))
     }
-    val polyTokensVector = NexusToken +: polyTokens.toVector
-    // Polyparser needs a nexus token in its initial state.
-    val initialState =
-      polyparser.TransitionParserState.initialState(polyTokensVector)
-    val transitionsOption = parser.parse(initialState)
-    val parseOption = transitionsOption.map(
-      polyparser.PolytreeParse.fromTransitions(polyTokensVector, _))
+    val parseOption = parser.parse(NexusToken +: polyTokens)
 
     val nodes = for (
       parse <- parseOption.toList;
