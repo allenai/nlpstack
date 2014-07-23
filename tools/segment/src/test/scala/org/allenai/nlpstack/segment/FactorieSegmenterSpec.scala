@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.segment
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.core.segment.Segment
+import org.allenai.nlpstack.core.Segment
 
 class FactorieSegmenterSpec extends UnitSpec {
   val sentencer = new FactorieSegmenter

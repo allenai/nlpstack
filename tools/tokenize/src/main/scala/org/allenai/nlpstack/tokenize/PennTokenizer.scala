@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.LineProcessor
-import org.allenai.nlpstack.core.tokenize.Tokenizer
+import org.allenai.nlpstack.core.Tokenizer
 
 import java.util.regex._
 
@@ -41,10 +40,4 @@ object PennTokenizer extends Tokenizer {
 
     Tokenizer.computeOffsets(split, sentence)
   }
-}
-
-object PennTokenizerMain extends LineProcessor("penn-tokenizer") {
-  val tokenizer = PennTokenizer
-  override def process(sentence: String) =
-    tokenizer.tokenize(sentence).mkString(" ")
 }

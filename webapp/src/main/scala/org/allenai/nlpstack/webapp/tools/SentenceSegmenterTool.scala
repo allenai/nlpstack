@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.core.segment._
+import org.allenai.nlpstack.core.Segment
 
 object SentenceSegmenterTool extends Tool("segment") {
   type Output = Seq[Segment]

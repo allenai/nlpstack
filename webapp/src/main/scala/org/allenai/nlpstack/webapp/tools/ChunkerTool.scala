@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.webapp.tools
 
-import org.allenai.nlpstack.core.Writer
-import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker }
+import org.allenai.nlpstack.core.{ ChunkedToken, Chunker, Writer }
 import org.allenai.nlpstack.webapp.Whatswrong._
 
 import java.awt.image.BufferedImage

@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.postag
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.core.postag.Postagger
+import org.allenai.nlpstack.core.Postagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 abstract class PostaggerSpec extends UnitSpec {

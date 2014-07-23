@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.postag
 
-import org.allenai.nlpstack.core.postag.{ PostaggedToken, Postagger, PostaggerMain }
-import org.allenai.nlpstack.core.tokenize.{ Token, Tokenizer }
+import org.allenai.nlpstack.core
+import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 import cc.factorie.app.nlp._
@@ -14,7 +14,7 @@ import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 class FactoriePostagger extends Postagger {
   private val tagger = OntonotesForwardPosTagger
 
-  override def postagTokenized(tokens: Seq[Token]): Seq[PostaggedToken] = {
+  override def postagTokenized(tokens: Seq[core.Token]): Seq[PostaggedToken] = {
     // translate the tokens into a Factorie document
     val factorieDoc = new Document(Tokenizer.originalText(tokens))
     val factorieTokens = tokens.map(
@@ -26,9 +26,4 @@ class FactoriePostagger extends Postagger {
       PostaggedToken(tagger.tokenAnnotationString(token), token.string, token.stringStart)
     }
   }
-}
-
-object FactoriePostaggerMain extends PostaggerMain {
-  override val tokenizer = defaultTokenizer
-  override val postagger = new FactoriePostagger()
 }

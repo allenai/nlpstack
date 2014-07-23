@@ -2,7 +2,7 @@ package org.allenai.nlpstack.core.parse.graph
 
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.graph.Graph.Edge
-import org.allenai.nlpstack.core.postag.PostaggedToken
+import org.allenai.nlpstack.core.PostaggedToken
 
 class JoinedDependencyGraph(vertices: Set[JoinedDependencyNode], edges: Set[Edge[JoinedDependencyNode]])
     extends Graph[JoinedDependencyNode](vertices, edges) {

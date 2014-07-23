@@ -5,25 +5,29 @@ import Dependencies._
 import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin._
+import sbtrelease.ReleasePlugin._
 
 object NlpstackBuild extends Build {
   var noopRepo = Some(Resolver.file("Unused Repository", file("target/unusedrepo")))
 
   val aggregateSettings = Defaults.coreDefaultSettings ++
-      Seq(
-        publishArtifact := false,
-        publishTo := noopRepo)
+    releaseSettings ++
+    Seq(
+      publishArtifact := false,
+      publishTo := noopRepo)
 
   lazy val root = Project(
     id = "nlpstack-root",
     base = file("."),
     settings = aggregateSettings).aggregate(
       tools,
-      webapp)
+      webapp,
+      cli)
 
   val buildSettings =
     Revolver.settings ++
     Publish.settings ++
+    releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
@@ -34,7 +38,7 @@ object NlpstackBuild extends Build {
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
               "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
-      libraryDependencies ++= testingLibraries,
+      libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -60,6 +64,18 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
+    settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
+      core,
+      lemmatize,
+      tokenize,
+      postag,
+      chunk,
+      parse,
+      segment)
+
+  lazy val cli = Project(
+    id = "cli",
+    base = file("cli"),
     settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
       core,
       lemmatize,
@@ -132,8 +148,8 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        "org.allenai" %% "polyparser-models" % "0.1-SNAPSHOT",
-        ("org.allenai" %% "polyparser" % "0.2"
+        "org.allenai" %% "polyparser-models" % "0.2-SNAPSHOT",
+        ("org.allenai" %% "polyparser" % "0.3"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,

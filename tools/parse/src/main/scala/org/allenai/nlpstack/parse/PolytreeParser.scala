@@ -1,12 +1,10 @@
 package org.allenai.nlpstack.parse
 
 import org.allenai.common.Resource.using
+import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
-import org.allenai.nlpstack.core.parse.{ DependencyParser, DependencyParserMain }
-import org.allenai.nlpstack.core.postag.PostaggedToken
-import org.allenai.nlpstack.postag.defaultPostagger
-import org.allenai.nlpstack.tokenize.defaultTokenizer
+import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.parsers.polyparser
 import org.allenai.parsers.polyparser.{ NexusToken, WordClusters }
 
@@ -14,8 +12,8 @@ class PolytreeParser extends DependencyParser {
   private val parser =
     new polyparser.GreedyTransitionParser(
       using(
-        Thread.currentThread.getContextClassLoader.getResourceAsStream(
-          "org/allenai/polyparser-models/example1.poly.json.gz")) {
+        this.getClass.getClassLoader.getResourceAsStream(
+          "org/allenai/polyparser-models/wsj.train.30.dstan3_4.dt.poly.json.gz")) {
           polyparser.ClassifierBasedCostFunction.loadFromStream(_)
         })
 
@@ -47,7 +45,7 @@ class PolytreeParser extends DependencyParser {
       if parentIndex > 0;
       (childIndex, Symbol(label)) <- arclabels.filter(t => childIndices.contains(t._1))
     ) yield {
-      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label)
+      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toLowerCase)
     }
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
@@ -56,10 +54,4 @@ class PolytreeParser extends DependencyParser {
 
     DependencyGraph(nodes.toSet, edges.toSet)
   }
-}
-
-object PolytreeParserMain extends DependencyParserMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val dependencyParser = new PolytreeParser
 }

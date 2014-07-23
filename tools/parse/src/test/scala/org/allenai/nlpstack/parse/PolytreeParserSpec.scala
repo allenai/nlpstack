@@ -6,14 +6,16 @@ import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 class PolytreeParserSpec extends UnitSpec {
-  private def parseTreeString(text: String) = {
+  private def parseTree(text: String) = {
     val tokens = defaultTokenizer.tokenize(text)
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
 
     val parser = new PolytreeParser
-    val parseTree = parser.dependencyGraphPostagged(postaggedTokens)
+    parser.dependencyGraphPostagged(postaggedTokens)
+  }
 
-    DependencyGraph.multilineStringFormat.write(parseTree)
+  private def parseTreeString(text: String) = {
+    DependencyGraph.multilineStringFormat.write(parseTree(text))
   }
 
   /*
@@ -24,20 +26,22 @@ class PolytreeParserSpec extends UnitSpec {
    * suite.
    */
 
+  val pancake = "A waffle is like a pancake with a syrup trap."
+
   "PolytreeParserParser" should "correctly parse a simple sentence" in {
-    val parseTreeStr = parseTreeString("A waffle is like a pancake with a syrup trap.")
+    val parseTreeStr = parseTreeString(pancake)
     val expectedParseTreeStr =
       """|det(waffle-2, A-1)
          |nsubj(is-3, waffle-2)
          |root(ROOT-0, is-3)
-         |adpmod(is-3, like-4)
+         |prep(is-3, like-4)
          |det(pancake-6, a-5)
-         |adpobj(like-4, pancake-6)
-         |adpmod(is-3, with-7)
+         |pobj(like-4, pancake-6)
+         |prep(is-3, with-7)
          |det(trap-10, a-8)
-         |compmod(trap-10, syrup-9)
-         |adpobj(with-7, trap-10)
-         |p(is-3, .-11)""".stripMargin
+         |nn(trap-10, syrup-9)
+         |pobj(with-7, trap-10)
+         |punct(is-3, .-11)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
 
@@ -47,19 +51,34 @@ class PolytreeParserSpec extends UnitSpec {
     val parseTreeStr = parseTreeString("Big investment banks refused to step up to the plate, traders say.")
     val expectedParseTreeStr =
       """|amod(banks-3, Big-1)
-         |compmod(banks-3, investment-2)
+         |nn(banks-3, investment-2)
          |nsubj(refused-4, banks-3)
          |root(ROOT-0, refused-4)
          |aux(step-6, to-5)
          |xcomp(refused-4, step-6)
          |prt(step-6, up-7)
-         |adpmod(step-6, to-8)
+         |prep(step-6, to-8)
          |det(plate-10, the-9)
-         |adpobj(to-8, plate-10)
-         |p(say-13, ,-11)
+         |pobj(to-8, plate-10)
+         |punct(say-13, ,-11)
          |nsubj(say-13, traders-12)
-         |ccomp(refused-4, say-13)
-         |p(refused-4, .-14)""".stripMargin
+         |dep(refused-4, say-13)
+         |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
+  }
+
+  it should "produce a parse tree that's collabsible" in {
+    val dependencies = parseTree(pancake).collapse
+    val expectedDependencies =
+      """|det(waffle-2, A-1)
+         |nsubj(is-3, waffle-2)
+         |root(ROOT-0, is-3)
+         |det(pancake-6, a-5)
+         |prep_like(is-3, pancake-6)
+         |det(trap-10, a-8)
+         |nn(trap-10, syrup-9)
+         |prep_with(is-3, trap-10)
+         |punct(is-3, .-11)""".stripMargin
+    assert(DependencyGraph.multilineStringFormat.write(dependencies) === expectedDependencies)
   }
 }

@@ -1,11 +1,7 @@
-package org.allenai.nlpstack
-package chunk
+package org.allenai.nlpstack.chunk
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.core.chunk.{ ChunkedToken, Chunker, ChunkerMain }
-import org.allenai.nlpstack.core.postag
-import org.allenai.nlpstack.postag.defaultPostagger
-import org.allenai.nlpstack.tokenize.defaultTokenizer
+import org.allenai.nlpstack.core.{ ChunkedToken, Chunker, PostaggedToken }
 
 import opennlp.tools.chunker.{ ChunkerME, ChunkerModel }
 
@@ -16,7 +12,7 @@ class OpenNlpChunker(val model: ChunkerModel) extends Chunker {
 
   val chunker = new ChunkerME(model)
 
-  def chunkPostagged(tokens: Seq[postag.PostaggedToken]): Seq[ChunkedToken] = {
+  def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
     val chunks = chunker.chunk(tokens.map(_.string).toArray, tokens.map(_.postag).toArray)
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
@@ -37,10 +33,4 @@ object OpenNlpChunker {
       new ChunkerModel(stream)
     }
   }
-}
-
-object OpenNlpChunkerMain extends ChunkerMain {
-  override lazy val tokenizer = defaultTokenizer
-  override lazy val postagger = defaultPostagger
-  override lazy val chunker = new OpenNlpChunker()
 }

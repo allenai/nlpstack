@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.segment
 
-import org.allenai.nlpstack.core.segment.{ Segment, Segmenter, SegmenterMain }
+import org.allenai.nlpstack.core.{ Segment, Segmenter }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.{ DeterministicSentenceSegmenter, DeterministicTokenizer }
@@ -29,8 +29,4 @@ class FactorieSegmenter extends Segmenter {
       new Segment(sentence.documentString, sentence.tokens(0).stringStart)
     }
   }
-}
-
-object FactorieSegmenterMain extends SegmenterMain {
-  val sentencer = new FactorieSegmenter()
 }
