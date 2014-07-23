@@ -165,6 +165,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-coref",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        factorie))
+        factorie,
+        factorieCorefModel))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
 }

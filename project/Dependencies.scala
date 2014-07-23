@@ -24,6 +24,7 @@ object Dependencies {
   val factoriePosModel = "cc.factorie.app.nlp.pos" % "OntonotesForwardPosTaggerModel" % "1.0"
   val factorieParseModel = "cc.factorie.app.nlp.parse" % "OntonotesTransitionBasedParserModel" % "1.0"
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
+  val factorieCorefModel = "cc.factorie.app.nlp.coref" % "ParseStructuredCorefModel" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
