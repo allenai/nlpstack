@@ -322,9 +322,9 @@ class Graph[T](
 
 object Graph {
   case class Edge[T](
-                      val source: T,
-                      val dest: T,
-                      val label: String) {
+      val source: T,
+      val dest: T,
+      val label: String) {
     def vertices = List(source, dest)
     override def toString = label + "(" + source + ", " + dest + ")"
   }
@@ -335,10 +335,10 @@ object Graph {
     override def write(from: Graph[T]): String = {
       val builder = new StringBuilder
       builder ++= "digraph G {\n"
-      for(vertex <- from.vertices) {
+      for (vertex <- from.vertices) {
         builder ++= quote(vertex.toString) + ";\n"
       }
-      for(edge <- from.edges) {
+      for (edge <- from.edges) {
         builder ++= quote(edge.source.toString) + " -> " + quote(edge.dest.toString) + " [label=\"" + edge.label + "\"];\n"
       }
       builder ++= "}\n"
