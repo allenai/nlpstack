@@ -12,7 +12,7 @@ class FactorieCorefResolverSpec extends UnitSpec {
 
   "FactorieCorefResolver" should "resolve coreferences" in {
 
-    val text = "Centaurs have two rib cages."
+    val text = "Our fake plants died because we did not pretend to water them."
     val tokens = defaultTokenizer.tokenize(text)
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
     val parseTree = defaultDependencyParser.dependencyGraphPostagged(postaggedTokens)
