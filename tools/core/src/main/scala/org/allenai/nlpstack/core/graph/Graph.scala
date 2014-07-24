@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.core.graph
 
+import org.allenai.nlpstack.core.Writer
 import org.allenai.nlpstack.core.graph.Graph.Edge
 
 import scala.Option.option2Iterable
@@ -321,10 +322,28 @@ class Graph[T](
 
 object Graph {
   case class Edge[T](
-      val source: T,
-      val dest: T,
-      val label: String) {
+                      val source: T,
+                      val dest: T,
+                      val label: String) {
     def vertices = List(source, dest)
     override def toString = label + "(" + source + ", " + dest + ")"
+  }
+
+  class dotFormat[T] extends Writer[Graph[T], String] {
+    private def quote(s: String) = "\"" + s + "\""
+
+    override def write(from: Graph[T]): String = {
+      val builder = new StringBuilder
+      builder ++= "digraph G {\n"
+      for(vertex <- from.vertices) {
+        builder ++= quote(vertex.toString) + ";\n"
+      }
+      for(edge <- from.edges) {
+        builder ++= quote(edge.source.toString) + " -> " + quote(edge.dest.toString) + " [label=\"" + edge.label + "\"];\n"
+      }
+      builder ++= "}\n"
+
+      builder.mkString
+    }
   }
 }
