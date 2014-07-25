@@ -10,9 +10,7 @@ import scala.Option.option2Iterable
   *
   * @author  Michael Schmitz
   */
-class Graph[T](
-    val vertices: Set[T],
-    val edges: Set[Edge[T]]) {
+class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
   require(vertices != null)
   require(edges != null)
 
