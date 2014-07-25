@@ -316,6 +316,22 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
   }
 
   def print(): Unit = print(System.out)
+
+  def toDot(): String = {
+    def quote(s: String) = "\"" + s.replace("\"", "\\\"") + "\""
+
+    val builder = new StringBuilder
+    builder ++= "digraph G {\n"
+    for (vertex <- vertices) {
+      builder ++= "%s;\n".format(quote(vertex.toString))
+    }
+    for (edge <- edges) {
+      builder ++= "%s -> %s [label=%s];\n".format(quote(edge.source.toString), quote(edge.dest.toString), quote(edge.label))
+    }
+    builder ++= "}\n"
+
+    builder.mkString
+  }
 }
 
 object Graph {
@@ -325,23 +341,5 @@ object Graph {
       val label: String) {
     def vertices = List(source, dest)
     override def toString = label + "(" + source + ", " + dest + ")"
-  }
-
-  class dotFormat[T] extends Writer[Graph[T], String] {
-    private def quote(s: String) = "\"" + s + "\""
-
-    override def write(from: Graph[T]): String = {
-      val builder = new StringBuilder
-      builder ++= "digraph G {\n"
-      for (vertex <- from.vertices) {
-        builder ++= quote(vertex.toString) + ";\n"
-      }
-      for (edge <- from.edges) {
-        builder ++= quote(edge.source.toString) + " -> " + quote(edge.dest.toString) + " [label=\"" + edge.label + "\"];\n"
-      }
-      builder ++= "}\n"
-
-      builder.mkString
-    }
   }
 }
