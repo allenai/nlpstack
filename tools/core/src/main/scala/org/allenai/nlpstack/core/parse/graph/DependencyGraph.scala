@@ -213,11 +213,32 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       new Graph[DependencyNode](graph.vertices, graph.edges ++ newEdges)
     }
 
+    def runStep(
+      transformation: Graph[DependencyNode] => Graph[DependencyNode],
+      graph: Graph[DependencyNode]
+    ) = {
+      //println(graph.toDot())
+
+      val newGraph = transformation(graph)
+
+      // if this transformation broke it, ignore the transformation
+      if(newGraph.vertices.count(newGraph.incoming(_).isEmpty) == 1)
+        newGraph
+      else
+        graph
+    }
+
+    def removeInvalidNodes(graph: Graph[DependencyNode]) =
+      new Graph[DependencyNode](
+        graph.vertices.filter(_.id >= 0),
+        graph.edges.filter(e => e.source.id >= 0 && e.dest.id >= 0))
+
     val graph =
-      edgifyPrepositions(
-        distributeConjunctions(
-          collapseJunctions(
-            collapseMultiwordPrepositions(this))))
+      runStep(removeInvalidNodes, (
+        runStep(edgifyPrepositions, (
+          runStep(distributeConjunctions, (
+            runStep(collapseJunctions, (
+              runStep(collapseMultiwordPrepositions, this)))))))))
 
     DependencyGraph(graph.vertices, graph.edges)
   }
