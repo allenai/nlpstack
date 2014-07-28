@@ -59,7 +59,8 @@ object NlpstackBuild extends Build {
       chunk,
       parse,
       segment,
-      core)
+      core,
+      coref)
 
   lazy val webapp = Project(
     id = "webapp",
