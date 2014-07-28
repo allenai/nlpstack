@@ -320,7 +320,7 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
 
   def isTree(): Boolean = {
     val potentialRoots = vertices.filter(incoming(_).isEmpty)
-    if(potentialRoots.size != 1)
+    if (potentialRoots.size != 1)
       return false
     val root = potentialRoots.head
 
@@ -328,14 +328,15 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
     val fringe = new mutable.Queue[T]
 
     fringe.enqueue(root)
-    while(fringe.nonEmpty) {
+    while (fringe.nonEmpty) {
       val node = fringe.dequeue()
 
-      if(visitedNodes contains node)
+      visitedNodes.fin
+      if (visitedNodes contains node)
         return false
       visitedNodes += node
 
-      fringe.enqueue(successors(node).toSeq:_*)
+      fringe.enqueue(successors(node).toSeq: _*)
     }
 
     visitedNodes.size == vertices.size
