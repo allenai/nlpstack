@@ -4,6 +4,7 @@ import org.allenai.nlpstack.core.Writer
 import org.allenai.nlpstack.core.graph.Graph.Edge
 
 import scala.Option.option2Iterable
+import scala.collection.mutable
 
 /** A graph representation where data is stored in vertices and edges are
   * represented with adjacency lists.
@@ -316,6 +317,29 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
   }
 
   def print(): Unit = print(System.out)
+
+  def isTree(): Boolean = {
+    val potentialRoots = vertices.filter(incoming(_).isEmpty)
+    if(potentialRoots.size != 1)
+      return false
+    val root = potentialRoots.head
+
+    val visitedNodes = new mutable.HashSet[T]
+    val fringe = new mutable.Queue[T]
+
+    fringe.enqueue(root)
+    while(fringe.nonEmpty) {
+      val node = fringe.dequeue()
+
+      if(visitedNodes contains node)
+        return false
+      visitedNodes += node
+
+      fringe.enqueue(successors(node).toSeq:_*)
+    }
+
+    visitedNodes.size == vertices.size
+  }
 
   def toDot(): String = {
     def quote(s: String) = "\"" + s.replace("\"", "\\\"") + "\""

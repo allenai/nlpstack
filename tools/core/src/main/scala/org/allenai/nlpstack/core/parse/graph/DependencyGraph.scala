@@ -213,21 +213,30 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       new Graph[DependencyNode](graph.vertices, graph.edges ++ newEdges)
     }
 
+      /** Runs a graph transformation and returns the result.
+        *
+        * After the transformation, it checks whether we still have a single
+        * root. If not, it returns the original, untransformed graph. */
     def runStep(
       transformation: Graph[DependencyNode] => Graph[DependencyNode],
       graph: Graph[DependencyNode]
     ) = {
+      // Uncomment for debugging
       //println(graph.toDot())
 
       val newGraph = transformation(graph)
 
-      // if this transformation broke it, ignore the transformation
-      if(newGraph.vertices.count(newGraph.incoming(_).isEmpty) == 1)
+      // if this transformation produced two root nodes, ignore the
+      // transformation
+      if(newGraph.isTree)
         newGraph
       else
         graph
     }
 
+    /** Removes nodes with a temporary id
+      *
+      * These nodes are sometimes left over from other processing steps. */
     def removeInvalidNodes(graph: Graph[DependencyNode]) =
       new Graph[DependencyNode](
         graph.vertices.filter(_.id >= 0),
