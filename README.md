@@ -27,18 +27,20 @@ is a dependency string format and a chunked sentence string format.
 2.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
 
     ```scala
-    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-core" % "0.2"
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-core" % "0.x"
 
-    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-parse" % "0.2"
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-parse" % "0.x"
 
-    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-postag" % "0.2"
+    libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-postag" % "0.x"
     ```
     As an option, you can define a function for the various nlpstack components, and use them like this:
     ```scala
-    def nlpstackModule(id: String) = "org.allenai.nlpstack" %% s"nlpstack-${id}" % "0.2"
+    def nlpstackModule(id: String) = "org.allenai.nlpstack" %% s"nlpstack-${id}" % "0.x"
 
     libraryDependencies += nlpstackModule("parse")
     ```
+    To find out what the latest version is, go [here](http://utility.allenai.org:8081/nexus/content/repositories/releases/org/allenai/nlpstack/nlpstack-core_2.10/), and use the latest one there.
+    
 3.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
 
     ```scala
