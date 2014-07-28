@@ -42,12 +42,7 @@ object NlpstackBuild extends Build {
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-        "commons-io" % "commons-io" % "2.4"),
-      credentials += Credentials(
-        "Sonatype Nexus Repository Manager",
-        "utility.allenai.org",
-        "travis",
-        System.getenv("NEXUS_PASS")))
+        "commons-io" % "commons-io" % "2.4"))
 
   lazy val tools = Project(
     id = "tools-root",
