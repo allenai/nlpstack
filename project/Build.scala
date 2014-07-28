@@ -79,7 +79,8 @@ object NlpstackBuild extends Build {
       postag,
       chunk,
       parse,
-      segment)
+      segment,
+      coref)
 
   lazy val core = Project(
     id = "tools-core",
