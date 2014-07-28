@@ -18,5 +18,10 @@ class FactorieCorefResolverSpec extends UnitSpec {
     val parseTree = defaultDependencyParser.dependencyGraphPostagged(postaggedTokens)
 
     val referents = resolver.resolveCoreferences((postaggedTokens, parseTree))
+
+    assert(referents.size == 2, referents)
+    assert(referents.forall(_.references.size == 2), referents)
+    val referredStrings = referents.map(_.references.map(_.string).sorted.mkString(" ")).toSet
+    assert(referredStrings === Set("Our we", "plants them"))
   }
 }
