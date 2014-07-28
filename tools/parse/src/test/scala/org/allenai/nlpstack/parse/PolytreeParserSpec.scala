@@ -66,19 +66,4 @@ class PolytreeParserSpec extends UnitSpec {
          |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
-
-  it should "produce a parse tree that's collabsible" in {
-    val dependencies = parseTree(pancake).collapse
-    val expectedDependencies =
-      """|det(waffle-2, A-1)
-         |nsubj(is-3, waffle-2)
-         |root(ROOT-0, is-3)
-         |det(pancake-6, a-5)
-         |prep_like(is-3, pancake-6)
-         |det(trap-10, a-8)
-         |nn(trap-10, syrup-9)
-         |prep_with(pancake-6, trap-10)
-         |punct(is-3, .-11)""".stripMargin
-    assert(DependencyGraph.multilineStringFormat.write(dependencies) === expectedDependencies)
-  }
 }

@@ -1,17 +1,17 @@
 package org.allenai.nlpstack.core.graph
 
+import org.allenai.nlpstack.core.Writer
 import org.allenai.nlpstack.core.graph.Graph.Edge
 
 import scala.Option.option2Iterable
+import scala.collection.mutable
 
 /** A graph representation where data is stored in vertices and edges are
   * represented with adjacency lists.
   *
   * @author  Michael Schmitz
   */
-class Graph[T](
-    val vertices: Set[T],
-    val edges: Set[Edge[T]]) {
+class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
   require(vertices != null)
   require(edges != null)
 
@@ -317,6 +317,28 @@ class Graph[T](
   }
 
   def print(): Unit = print(System.out)
+
+  def isTree(): Boolean = {
+    val rootCount = vertices.count(indegree(_) == 0)
+    val nodeCount = vertices.count(indegree(_) == 1)
+    rootCount == 1 && nodeCount == (vertices.size - 1)
+  }
+
+  def toDot(): String = {
+    def quote(s: String) = "\"" + s.replace("\"", "\\\"") + "\""
+
+    val builder = new StringBuilder
+    builder ++= "digraph G {\n"
+    for (vertex <- vertices) {
+      builder ++= "%s;\n".format(quote(vertex.toString))
+    }
+    for (edge <- edges) {
+      builder ++= "%s -> %s [label=%s];\n".format(quote(edge.source.toString), quote(edge.dest.toString), quote(edge.label))
+    }
+    builder ++= "}\n"
+
+    builder.mkString
+  }
 }
 
 object Graph {

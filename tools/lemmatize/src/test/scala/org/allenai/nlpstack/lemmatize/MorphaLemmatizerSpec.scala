@@ -6,7 +6,12 @@ class MorphaLemmatizerSpec extends UnitSpec {
   "lemmatizer" should "correctly lemmatize a word" in {
     val word = "ate"
     val lemma = MorphaStemmer.lemmatize(word)
-    lemma === "eat"
+    assert(lemma === "eat")
+  }
+
+  it should "not lemmatize a word with spaces" in {
+    val wordWithSpace = "29 1/2"
+    assert(MorphaStemmer.lemmatize(wordWithSpace) === wordWithSpace)
   }
 }
 
