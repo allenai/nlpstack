@@ -331,7 +331,6 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
     while (fringe.nonEmpty) {
       val node = fringe.dequeue()
 
-      visitedNodes.fin
       if (visitedNodes contains node)
         return false
       visitedNodes += node
