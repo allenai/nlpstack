@@ -18,7 +18,7 @@ is a dependency string format and a chunked sentence string format.
     ```
     The complete list of resolvers might look like this:
     ```scala
-    val Resolvers = Seq(
+    resolvers ++= Seq(
       "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
       "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
       "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public",
