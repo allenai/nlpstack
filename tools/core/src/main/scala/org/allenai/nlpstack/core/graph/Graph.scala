@@ -320,25 +320,27 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
 
   def isTree(): Boolean = {
     val potentialRoots = vertices.filter(incoming(_).isEmpty)
-    if (potentialRoots.size != 1)
-      return false
-    val root = potentialRoots.head
+    if (potentialRoots.size != 1) {
+      false
+    } else {
+      val root = potentialRoots.head
 
-    val visitedNodes = new mutable.HashSet[T]
-    val fringe = new mutable.Queue[T]
+      val visitedNodes = new mutable.HashSet[T]
+      val fringe = new mutable.Queue[T]
 
-    fringe.enqueue(root)
-    while (fringe.nonEmpty) {
-      val node = fringe.dequeue()
+      fringe.enqueue(root)
+      while (fringe.nonEmpty) {
+        val node = fringe.dequeue()
 
-      if (visitedNodes contains node)
-        return false
-      visitedNodes += node
+        if (visitedNodes contains node)
+          return false
+        visitedNodes += node
 
-      fringe.enqueue(successors(node).toSeq: _*)
+        fringe.enqueue(successors(node).toSeq: _*)
+      }
+
+      visitedNodes.size == vertices.size
     }
-
-    visitedNodes.size == vertices.size
   }
 
   def toDot(): String = {
