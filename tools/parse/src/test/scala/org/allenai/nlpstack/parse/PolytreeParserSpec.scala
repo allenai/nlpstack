@@ -62,7 +62,7 @@ class PolytreeParserSpec extends UnitSpec {
          |pobj(to-8, plate-10)
          |punct(say-13, ,-11)
          |nsubj(say-13, traders-12)
-         |parataxis(refused-4, say-13)
+         |ccomp(refused-4, say-13)
          |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
