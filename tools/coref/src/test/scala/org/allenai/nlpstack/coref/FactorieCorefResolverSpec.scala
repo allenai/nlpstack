@@ -8,7 +8,7 @@ import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.parse.defaultDependencyParser
 
 class FactorieCorefResolverSpec extends UnitSpec {
-  val resolver = new FactorieCorefResolver[PostaggedToken]
+  val resolver = new FactorieCorefResolver
 
   "FactorieCorefResolver" should "resolve coreferences" in {
 
@@ -20,7 +20,7 @@ class FactorieCorefResolverSpec extends UnitSpec {
     val referents = resolver.resolveCoreferences((postaggedTokens, parseTree))
 
     assert(referents.size == 2, referents)
-    assert(referents.forall(_.references.size == 2), referents)
+    assert(referents forall (_.references.size == 2), referents)
     val referredStrings = referents.map(_.references.map(_.string).sorted.mkString(" ")).toSet
     assert(referredStrings === Set("Our we", "plants them"))
   }

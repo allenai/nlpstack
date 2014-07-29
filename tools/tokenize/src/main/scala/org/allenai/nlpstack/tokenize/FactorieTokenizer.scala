@@ -1,8 +1,9 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.{ Tokenizer, Token }
+import org.allenai.nlpstack.core.{ Format, Tokenizer, Token }
+import org.allenai.nlpstack.tokenize.FactorieTokenizer.factorieFormat
 
-import cc.factorie.app.nlp._
+import cc.factorie.app.nlp.{ Document => FactorieDocument, Token => FactorieToken, DocumentAnnotatorPipeline, MutableDocumentAnnotatorMap }
 import cc.factorie.app.nlp.segment.DeterministicTokenizer
 
 class FactorieTokenizer extends Tokenizer {
@@ -17,9 +18,29 @@ class FactorieTokenizer extends Tokenizer {
     tokenizer.postAttrs)
 
   def tokenize(sentence: String): Seq[Token] = {
-    val doc = pipeline.process(new Document(sentence))
+    val doc = pipeline.process(new FactorieDocument(sentence))
 
-    for (section <- doc.sections; token <- section.tokens)
-      yield Token(token.string, token.stringStart)
+    factorieFormat.read(doc)
+  }
+}
+
+object FactorieTokenizer {
+  object factorieFormat extends Format[Seq[Token], FactorieDocument] {
+    override def read(from: FactorieDocument): Seq[Token] =
+      for (section <- from.sections; token <- section.tokens)
+        yield Token(token.string, token.stringStart)
+
+    override def write(from: Seq[Token]): FactorieDocument = {
+      val factorieDoc = new FactorieDocument(Tokenizer.originalText(from))
+      for (token <- from) {
+        // creating factorie tokens modifies the factorie document
+        val factorieToken = new FactorieToken(
+          factorieDoc,
+          token.offset,
+          token.offset + token.string.length)
+        factorieToken.attr += token
+      }
+      factorieDoc
+    }
   }
 }
