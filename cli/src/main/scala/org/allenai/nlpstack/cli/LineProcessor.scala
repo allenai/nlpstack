@@ -100,9 +100,9 @@ abstract class LineProcessor(name: String) {
     System.err.println(f"${duration.toUnit(SECONDS)}%1.2f s")
 
     // Don't close stdin or stdout. It messes up the sbt REPL if you do.
-    if(config.inputFile.isDefined)
+    if (config.inputFile.isDefined)
       source.close()
-    if(config.outputFile.isDefined)
+    if (config.outputFile.isDefined)
       writer.close()
   }
 }
