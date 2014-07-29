@@ -8,7 +8,7 @@ import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.parse.defaultDependencyParser
 
 class FactorieCorefResolverSpec extends UnitSpec {
-  val resolver = new FactorieCorefResolver[PostaggedToken]
+  val resolver = new FactorieCorefResolver
 
   "FactorieCorefResolver" should "resolve coreferences" in {
 
