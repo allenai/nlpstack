@@ -30,5 +30,5 @@ object FactorieCorefResolverMain extends CorefMain {
   override lazy val tokenizer = defaultTokenizer
   override lazy val postagger = defaultPostagger
   override lazy val dependencyParser = defaultDependencyParser
-  override lazy val corefResolver = new FactorieCorefResolver[PostaggedToken]
+  override lazy val corefResolver = new FactorieCorefResolver
 }
