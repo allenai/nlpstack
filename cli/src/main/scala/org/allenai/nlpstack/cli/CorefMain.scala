@@ -19,7 +19,7 @@ abstract class CorefMain extends LineProcessor("coref") {
   }
 
   override def process(line: String) = {
-    val tokens = tokenizer("I want to initialize the parser.")
+    val tokens = tokenizer(line)
     val postagged = postagger.postagTokenized(tokens)
     val parse = dependencyParser.dependencyGraphPostagged(postagged)
     corefResolver.resolveCoreferences((postagged, parse)).mkString
