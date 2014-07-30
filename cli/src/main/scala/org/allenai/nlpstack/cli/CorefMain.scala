@@ -22,8 +22,7 @@ abstract class CorefMain extends LineProcessor("coref") {
     val tokens = tokenizer(line)
     val postagged = postagger.postagTokenized(tokens)
     val parse = dependencyParser.dependencyGraphPostagged(postagged)
-    CorefResolver.multilineStringFormat.write(
-      corefResolver.resolveCoreferences((postagged, parse)))
+    corefResolver.resolveCoreferences((postagged, parse)).map(_.mkString).mkString("\n")
   }
 }
 
