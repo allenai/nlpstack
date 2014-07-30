@@ -4,7 +4,7 @@ import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.postag.FactoriePostagger.factorieFormat
 import org.allenai.nlpstack.tokenize.FactorieTokenizer
 
-import cc.factorie.app.nlp.{ Document => FactorieDocument, Token => FactorieToken }
+import cc.factorie.app.nlp.{ Document => FactorieDocument }
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
 import cc.factorie.app.nlp.pos.PennPosTag
 
