@@ -283,6 +283,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
     }
     new Graph[TokenDependencyNode](joinedNodes, joinedEdges)
   }
+
+  def nodeById(id: Int) = nodes.find(_.id == id)
 }
 
 object DependencyGraph {
