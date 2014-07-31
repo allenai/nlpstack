@@ -387,7 +387,6 @@ object DependencyGraph {
       pickledDeps.mkString(seperator)
     }
 
-    val nodeRegex = "\\s*\\((.*)\\)\\s*".r
     def read(pickled: String) = {
       import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
