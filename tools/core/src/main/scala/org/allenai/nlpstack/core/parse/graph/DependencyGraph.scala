@@ -283,6 +283,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
     }
     new Graph[TokenDependencyNode](joinedNodes, joinedEdges)
   }
+
+  def nodeById(id: Int) = nodes.find(_.id == id)
 }
 
 object DependencyGraph {
@@ -387,7 +389,6 @@ object DependencyGraph {
       pickledDeps.mkString(seperator)
     }
 
-    val nodeRegex = "\\s*\\((.*)\\)\\s*".r
     def read(pickled: String) = {
       import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
