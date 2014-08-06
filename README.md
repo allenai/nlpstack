@@ -112,8 +112,8 @@ The current version is in [version.sbt](version.sbt).
 ### Parsing API Details
 
 The example in "Getting Started" shows how to generate a
-[dependency graph](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/parse/graph/DependencyGraph.scala)
-from a sentence. The graph object itself contains [dependency nodes](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/parse/graph/DependencyNode.scala)
+[dependency graph](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/core/parse/graph/DependencyGraph.scala)
+from a sentence. The graph object itself contains [dependency nodes](https://github.com/allenai/nlpstack/blob/master/tools/core/src/main/scala/org/allenai/nlpstack/core/parse/graph/DependencyNode.scala)
 with integer IDs. These IDs can be used to index the original tokens given to the parser.
 
 If you want to have lemmatized token information, you'll want to run the tokens through a lemmatizer:
