@@ -20,7 +20,8 @@ object Dependencies {
     exclude("com.typesafe.akka", "akka-actor_2.10")
     exclude("org.scala-lang", "scala-reflect")
     exclude("com.thoughtworks.paranamer", "paranamer")
-    exclude("com.google.guava", "guava"))
+    exclude("com.google.guava", "guava")
+    exclude("junit", "junit"))
   val factoriePosModel = "cc.factorie.app.nlp.pos" % "OntonotesForwardPosTaggerModel" % "1.0"
   val factorieParseModel = "cc.factorie.app.nlp.parse" % "OntonotesTransitionBasedParserModel" % "1.0"
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
