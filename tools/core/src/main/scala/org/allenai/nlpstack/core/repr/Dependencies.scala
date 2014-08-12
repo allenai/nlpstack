@@ -1,10 +1,8 @@
-package org.allenai.repr.sentence
+package org.allenai.nlpstack.core.repr
 
-import org.allenai.nlpstack.tokenize.Token
-import org.allenai.nlpstack.postag.PostaggedToken
-import org.allenai.nlpstack.parse._
-import org.allenai.nlpstack.parse.graph._
-import org.allenai.nlpstack.graph.Graph.Edge
+import org.allenai.nlpstack.core.DependencyParser
+import org.allenai.nlpstack.core.graph.Graph.Edge
+import org.allenai.nlpstack.core.parse.graph.{ DependencyNode, DependencyGraph }
 
 trait JustDependencies {
   this: Sentence =>

@@ -1,7 +1,6 @@
-package org.allenai.nlpstack.repr.document
+package org.allenai.nlpstack.core.repr
 
-import org.allenai.nlpstack.segment._
-import org.allenai.repr.sentence._
+import org.allenai.nlpstack.core.Segmenter
 
 case class DocumentSentence[S <: Sentence](sentence: S, offset: Int)
 

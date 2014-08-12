@@ -1,9 +1,6 @@
-package org.allenai.repr.sentence
+package org.allenai.nlpstack.core.repr
 
-import org.allenai.nlpstack.tokenize._
-import org.allenai.nlpstack.postag._
-import org.allenai.nlpstack.chunk._
-import org.allenai.nlpstack.lemmatize._
+import org.allenai.nlpstack.core.Token
 
 trait TokensSupertrait {
   this: Sentence =>
@@ -22,7 +19,7 @@ trait Tokens extends TokensSupertrait {
 trait Tokenizer extends Tokens {
   this: Sentence =>
 
-  def tokenizer: org.allenai.nlpstack.tokenize.Tokenizer
+  def tokenizer: org.allenai.nlpstack.core.Tokenizer
 
   override lazy val tokens: Seq[Token] =
     tokenizer.tokenize(text)

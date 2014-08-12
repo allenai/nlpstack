@@ -1,4 +1,4 @@
-package org.allenai.repr.sentence
+package org.allenai.nlpstack.core.repr
 
 class Sentence(val text: String) {
   override def toString = s"Sentence($text)"

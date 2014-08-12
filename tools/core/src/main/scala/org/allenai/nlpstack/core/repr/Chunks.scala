@@ -1,7 +1,7 @@
-package org.allenai.repr.sentence
+package org.allenai.nlpstack.core.repr
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.chunk._
+import org.allenai.nlpstack.core.ChunkedToken
 
 trait ChunksSupertrait extends PostagsSupertrait {
   this: Sentence =>
@@ -9,7 +9,8 @@ trait ChunksSupertrait extends PostagsSupertrait {
   type token <: ChunkedToken
 
   def chunks: Seq[String] = tokens.map(_.chunk)
-  def chunkIntervals: Seq[(String, Interval)] = Chunker.intervals(tokens)
+  def chunkIntervals: Seq[(String, Interval)] =
+    org.allenai.nlpstack.core.Chunker.intervals(tokens)
 }
 
 trait Chunks extends ChunksSupertrait {
@@ -21,9 +22,9 @@ trait Chunks extends ChunksSupertrait {
 trait Chunker extends Chunks {
   this: Sentence =>
 
-  def tokenizer: org.allenai.nlpstack.tokenize.Tokenizer
-  def postagger: org.allenai.nlpstack.postag.Postagger
-  def chunker: org.allenai.nlpstack.chunk.Chunker
+  def tokenizer: org.allenai.nlpstack.core.Tokenizer
+  def postagger: org.allenai.nlpstack.core.Postagger
+  def chunker: org.allenai.nlpstack.core.Chunker
 
   override lazy val tokens: Seq[ChunkedToken] =
     chunker.chunk(tokenizer, postagger)(this.text)
