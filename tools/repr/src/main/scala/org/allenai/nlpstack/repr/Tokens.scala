@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.core.repr
+package org.allenai.nlpstack.repr
 
 import org.allenai.nlpstack.core.Token
 

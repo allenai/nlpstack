@@ -55,7 +55,8 @@ object NlpstackBuild extends Build {
       parse,
       segment,
       core,
-      coref)
+      coref,
+      repr)
 
   lazy val webapp = Project(
     id = "webapp",
@@ -169,4 +170,13 @@ object NlpstackBuild extends Build {
         factorieLexicon,
         factoriePhraseModel))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
+
+  lazy val repr = Project(
+    id = "tools-repr",
+    base = file("tools/repr"),
+    settings = buildSettings ++ Seq(
+      name := "nlpstack-repr",
+      licenses := Seq(apache2))
+  ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
 }
+
