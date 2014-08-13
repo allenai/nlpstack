@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.repr
+package org.allenai.nlpstack.core.repr
 
 class Document(val text: String) {
   override def toString = {

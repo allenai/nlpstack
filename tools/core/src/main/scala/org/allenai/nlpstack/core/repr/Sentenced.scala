@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.repr
+package org.allenai.nlpstack.core.repr
 
 import org.allenai.nlpstack.core.Segmenter
 
