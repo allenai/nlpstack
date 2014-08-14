@@ -51,9 +51,7 @@ object FactorieTokenizer {
   private val unclosedTagRegex = "<([^>]{100})".r
   def replaceUnclosedTag(s: String): String = {
     val replaced = unclosedTagRegex.replaceAllIn(s, m => " " + m.group(1))
-    if (replaced == s)
-      s
-    else // Have to do this repeatedly for the case of "foo << barbarbarbar..."
-      replaceUnclosedTag(replaced)
+    // Have to do this repeatedly for the case of "foo << barbarbarbar..."
+    if (replaced == s) s else replaceUnclosedTag(replaced)
   }
 }
