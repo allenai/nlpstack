@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.{ Format, Tokenizer, Token }
+import org.allenai.nlpstack.core.{ FactorieUtilities, Format, Tokenizer, Token }
 import org.allenai.nlpstack.tokenize.FactorieTokenizer.factorieFormat
 
 import cc.factorie.app.nlp.{ Document => FactorieDocument, Token => FactorieToken, DocumentAnnotatorPipeline, MutableDocumentAnnotatorMap }
@@ -20,7 +20,7 @@ class FactorieTokenizer extends Tokenizer {
   def tokenize(sentence: String): Seq[Token] = {
     val doc = pipeline.process(
       new FactorieDocument(
-        FactorieTokenizer.replaceUnclosedTag(sentence)))
+        FactorieUtilities.replaceUnclosedTag(sentence)))
 
     factorieFormat.read(doc)
   }
@@ -44,14 +44,5 @@ object FactorieTokenizer {
       }
       factorieDoc
     }
-  }
-
-  // Factorie's tokenizer crashes on unclosed XML tags. To work around this, we
-  // detect unclosed tags, and replace the opening < with a space.
-  private val unclosedTagRegex = "<([^>]{100})".r
-  def replaceUnclosedTag(s: String): String = {
-    val replaced = unclosedTagRegex.replaceAllIn(s, m => " " + m.group(1))
-    // Have to do this repeatedly for the case of "foo << barbarbarbar..."
-    if (replaced == s) s else replaceUnclosedTag(replaced)
   }
 }

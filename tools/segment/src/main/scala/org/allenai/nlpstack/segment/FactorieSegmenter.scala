@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.segment
 
-import org.allenai.nlpstack.core.{ Segment, Segmenter }
-import org.allenai.nlpstack.tokenize.FactorieTokenizer
+import org.allenai.nlpstack.core.{ FactorieUtilities, Segment, Segmenter }
 
 import cc.factorie.app.nlp._
 import cc.factorie.app.nlp.segment.{ DeterministicSentenceSegmenter, DeterministicTokenizer }
@@ -26,7 +25,7 @@ class FactorieSegmenter extends Segmenter {
   override def segment(document: String): Iterable[Segment] = {
     val doc = pipeline.process(
       new Document(
-        FactorieTokenizer.replaceUnclosedTag(document)))
+        FactorieUtilities.replaceUnclosedTag(document)))
 
     for (sentence <- doc.sentences) yield {
       new Segment(sentence.documentString, sentence.tokens(0).stringStart)
