@@ -17,22 +17,10 @@ class FactorieTokenizer extends Tokenizer {
     prereqs = Nil,
     tokenizer.postAttrs)
 
-  // Factorie's tokenizer crashes on unclosed XML tags. To work around this, we
-  // detect unclosed tags, and replace the opening < with a space.
-  private val unclosedTagRegex = "<([^>]{100})".r
-  private def replaceUnclosedTag(s: String): String = {
-    val replaced = unclosedTagRegex.replaceAllIn(s, m => " " + m.group(1))
-    if (replaced == s)
-      s
-    else
-      // Have to do this repeatedly for the case of "foo << barbarbarbar..."
-      replaceUnclosedTag(replaced)
-  }
-
   def tokenize(sentence: String): Seq[Token] = {
     val doc = pipeline.process(
       new FactorieDocument(
-        replaceUnclosedTag(sentence)))
+        FactorieTokenizer.replaceUnclosedTag(sentence)))
 
     factorieFormat.read(doc)
   }
@@ -56,5 +44,16 @@ object FactorieTokenizer {
       }
       factorieDoc
     }
+  }
+
+  // Factorie's tokenizer crashes on unclosed XML tags. To work around this, we
+  // detect unclosed tags, and replace the opening < with a space.
+  private val unclosedTagRegex = "<([^>]{100})".r
+  def replaceUnclosedTag(s: String): String = {
+    val replaced = unclosedTagRegex.replaceAllIn(s, m => " " + m.group(1))
+    if (replaced == s)
+      s
+    else // Have to do this repeatedly for the case of "foo << barbarbarbar..."
+      replaceUnclosedTag(replaced)
   }
 }
