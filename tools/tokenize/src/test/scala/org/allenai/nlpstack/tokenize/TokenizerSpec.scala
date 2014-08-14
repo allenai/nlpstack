@@ -95,14 +95,10 @@ abstract class TokenizerSpec extends UnitSpec {
   }
 
   it should "not throw an exception with unclosed tags" in {
-    val examples = Seq(
-      "ab <" + ("x" * 2000),
-      "ab <" + ("x" * 101),
-      "ab <" + ("x" * 100),
-      "ab <" + ("x" * 99),
-      "< foo < bar")
-
-    for (example <- examples)
-      tokenizerToTest.tokenize(example)
+    tokenizerToTest.tokenize("ab <" + ("x" * 2000))
+    tokenizerToTest.tokenize("ab <" + ("x" * 101))
+    tokenizerToTest.tokenize("ab <" + ("x" * 100))
+    tokenizerToTest.tokenize("ab <" + ("x" * 99))
+    tokenizerToTest.tokenize("< foo < bar")
   }
 }
