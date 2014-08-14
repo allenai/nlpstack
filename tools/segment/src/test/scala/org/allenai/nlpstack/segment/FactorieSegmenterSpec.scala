@@ -6,7 +6,8 @@ import org.allenai.nlpstack.core.Segment
 class FactorieSegmenterSpec extends UnitSpec {
   val sentencer = new FactorieSegmenter
   val document = "He went to work.  He bought a first-class suit. He ate a melon."
-  "chalk sentencer" should "properly segment" in {
+
+  "factorie sentencer" should "properly segment" in {
     val segments = sentencer.segment(document).toIndexedSeq
     assert(segments(0) === Segment("He went to work.", 0))
     assert(segments(1) === Segment("He bought a first-class suit.", 18))
