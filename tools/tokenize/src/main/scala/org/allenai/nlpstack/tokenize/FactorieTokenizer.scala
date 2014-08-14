@@ -17,8 +17,19 @@ class FactorieTokenizer extends Tokenizer {
     prereqs = Nil,
     tokenizer.postAttrs)
 
+  private val unclosedTagRegex = "<([^>]{100})".r
+  private def replaceUnclosedTag(s: String): String = {
+    val replaced = unclosedTagRegex.replaceAllIn(s, m => " " + m.group(1))
+    if (replaced == s)
+      s
+    else
+      replaceUnclosedTag(replaced)
+  }
+
   def tokenize(sentence: String): Seq[Token] = {
-    val doc = pipeline.process(new FactorieDocument(sentence))
+    val doc = pipeline.process(
+      new FactorieDocument(
+        replaceUnclosedTag(sentence)))
 
     factorieFormat.read(doc)
   }
