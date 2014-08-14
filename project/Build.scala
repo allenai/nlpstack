@@ -106,7 +106,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(factorie))
+      libraryDependencies ++= Seq(factorie, commonsIo % "test"))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
 
   lazy val segment = Project(
@@ -115,7 +115,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(factorie))
+      libraryDependencies ++= Seq(factorie, commonsIo % "test"))
   ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
 
   lazy val postag = Project(
