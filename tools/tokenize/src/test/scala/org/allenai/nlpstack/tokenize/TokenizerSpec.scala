@@ -95,10 +95,10 @@ abstract class TokenizerSpec extends UnitSpec {
   }
 
   it should "not throw an exception with unclosed tags" in {
-    tokenizerToTest.tokenize("ab <" + ("x" * 2000))
-    tokenizerToTest.tokenize("ab <" + ("x" * 101))
-    tokenizerToTest.tokenize("ab <" + ("x" * 100))
-    tokenizerToTest.tokenize("ab <" + ("x" * 99))
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (2000 / 4)))
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (100 / 4)) + "x") // 101 characters after the <
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (100 / 4))) // 100 characters after the <
+    tokenizerToTest.tokenize("ab <" + ("xxxxxxxx " * (99 / 9))) // 99 characters after the <
     tokenizerToTest.tokenize("< foo < bar")
   }
 }
