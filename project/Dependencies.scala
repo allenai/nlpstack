@@ -6,6 +6,7 @@ object Dependencies {
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
   val logbackClassic = "ch.qos.logback" % "logback-classic" % logbackVersion
   val loggingImplementations = Seq(logbackCore, logbackClassic)
+  val commonsIo = "commons-io" % "commons-io" % "2.4"
 
   val allenAiCommon = "org.allenai.common" %% "common" % "2014.04.28-SNAPSHOT"
   val allenAiTestkit = "org.allenai.common" %% "testkit" % "0.0.3-SNAPSHOT"

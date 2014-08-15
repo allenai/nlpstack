@@ -3,6 +3,8 @@ package org.allenai.nlpstack.tokenize
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.core.Tokenizer
 
+import org.apache.commons.io.IOUtils
+
 abstract class TokenizerSpec extends UnitSpec {
   def tokenizerToTest: Tokenizer
 
@@ -82,5 +84,21 @@ abstract class TokenizerSpec extends UnitSpec {
       val tokenizedString = tokenized.mkString("\n")
       assert(tokenizedString === expected)
     }
+  }
+
+  it should "not throw an exception for a long string" in {
+    val s =
+      IOUtils.toString(
+        this.getClass.getResourceAsStream("/org/allenai/nlpstack/tokenize/unclosed_tag_test.txt"),
+        "UTF-8")
+    tokenizerToTest.tokenize(s)
+  }
+
+  it should "not throw an exception with unclosed tags" in {
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (2000 / 4)))
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (100 / 4)) + "x") // 101 characters after the <
+    tokenizerToTest.tokenize("ab <" + ("xxx " * (100 / 4))) // 100 characters after the <
+    tokenizerToTest.tokenize("ab <" + ("xxxxxxxx " * (99 / 9))) // 99 characters after the <
+    tokenizerToTest.tokenize("< foo < bar")
   }
 }

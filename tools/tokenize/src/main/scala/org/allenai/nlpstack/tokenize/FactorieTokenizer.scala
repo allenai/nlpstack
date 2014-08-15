@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.tokenize
 
-import org.allenai.nlpstack.core.{ Format, Tokenizer, Token }
+import org.allenai.nlpstack.core.{ FactorieUtilities, Format, Tokenizer, Token }
 import org.allenai.nlpstack.tokenize.FactorieTokenizer.factorieFormat
 
 import cc.factorie.app.nlp.{ Document => FactorieDocument, Token => FactorieToken, DocumentAnnotatorPipeline, MutableDocumentAnnotatorMap }
@@ -18,7 +18,9 @@ class FactorieTokenizer extends Tokenizer {
     tokenizer.postAttrs)
 
   def tokenize(sentence: String): Seq[Token] = {
-    val doc = pipeline.process(new FactorieDocument(sentence))
+    val doc = pipeline.process(
+      new FactorieDocument(
+        FactorieUtilities.replaceUnclosedTag(sentence)))
 
     factorieFormat.read(doc)
   }
