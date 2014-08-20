@@ -228,7 +228,7 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
 
       // if this transformation produced two root nodes, ignore the
       // transformation
-      if (newGraph.isTree)
+      if (newGraph.vertices.count(newGraph.indegree(_) == 0) == 1)
         newGraph
       else
         graph

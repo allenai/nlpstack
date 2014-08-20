@@ -198,4 +198,28 @@ advmod(ran-4, away-5)"""
     assert(DependencyGraph.multilineStringFormat.write(uncollapsed.collapse) === expectedCollapsedString)
     assert(graphIsValid(uncollapsed.collapse))
   }
+
+  it should "allow collapsing output that's not a tree" in {
+    val uncollapsedString =
+      """|nsubj(enjoy-4, cats-1)
+         |cc(cats-1, and-2)
+         |conj(cats-1, dogs-3)
+         |root(ROOT-0, enjoy-4)
+         |det(arrow-6, an-5)
+         |dobj(enjoy-4, arrow-6)
+         |punct(enjoy-4, .-7)""".stripMargin
+    val uncollapsed = DependencyGraph.multilineStringFormat.read(uncollapsedString)
+
+    val expectedCollapsedString =
+      """|nsubj(enjoy-4, cats-1)
+         |conj_and(cats-1, dogs-3)
+         |nsubj(enjoy-4, dogs-3)
+         |root(ROOT-0, enjoy-4)
+         |det(arrow-6, an-5)
+         |dobj(enjoy-4, arrow-6)
+         |punct(enjoy-4, .-7)""".stripMargin
+
+    assert(DependencyGraph.multilineStringFormat.write(uncollapsed.collapse) === expectedCollapsedString)
+    assert(graphIsValid(uncollapsed.collapse))
+  }
 }
