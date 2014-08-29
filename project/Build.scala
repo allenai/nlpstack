@@ -147,7 +147,7 @@ object NlpstackBuild extends Build {
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         "org.allenai" %% "polyparser-models" % "0.3-SNAPSHOT",
-        ("org.allenai" %% "polyparser" % "2014.07.23-1"
+        ("org.allenai" %% "polyparser" % "2014.08.29-0"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,

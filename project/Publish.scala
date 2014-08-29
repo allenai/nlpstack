@@ -8,7 +8,7 @@ object Publish {
   lazy val settings = Seq(
     publishTo := {
       if(isSnapshot.value)
-        Some("snapshots" at nexus + "snapshots")
+        Some("AllenAI Nexus Repository Snapshots" at nexus + "snapshots")
       else
         Some("releases"  at nexus + "releases")
     })

@@ -1,14 +1,8 @@
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
 
-resolvers += "allenai nexus repository" at "http://utility.allenai.org:8081/nexus/content/repositories/releases"
+resolvers += "AllenAI Nexus Repository" at "http://utility.allenai.org:8081/nexus/content/repositories/releases"
 
-resolvers += "allenai nexus repository snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots"
-
-credentials += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "utility.allenai.org",
-  "travis",
-  System.getenv("NEXUS_PASS"))
+resolvers += "AllenAI Nexus Repository Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots"
 
 resolvers += Resolver.url(
   "allenai-bintray-sbt-plugins",
