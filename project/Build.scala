@@ -1,5 +1,4 @@
 import org.allenai.sbt.deploy._
-import org.allenai.sbt.travispublisher._
 
 import Dependencies._
 import sbt.Keys._
@@ -60,7 +59,7 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
+    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
       core,
       lemmatize,
       tokenize,
@@ -73,7 +72,7 @@ object NlpstackBuild extends Build {
   lazy val cli = Project(
     id = "cli",
     base = file("cli"),
-    settings = buildSettings).enablePlugins(DeployPlugin, TravisPublisherPlugin) dependsOn(
+    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
       core,
       lemmatize,
       tokenize,
@@ -86,7 +85,7 @@ object NlpstackBuild extends Build {
   lazy val core = Project(
     id = "tools-core",
     base = file("tools/core"),
-    settings = buildSettings).enablePlugins(TravisPublisherPlugin)
+    settings = buildSettings)
 
   lazy val lemmatize = Project(
     id = "tools-lemmatize",
@@ -98,7 +97,7 @@ object NlpstackBuild extends Build {
         "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")),
       libraryDependencies ++= Seq(clear,
         "edu.washington.cs.knowitall" % "morpha-stemmer" % "1.0.5"))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val tokenize = Project(
     id = "tools-tokenize",
@@ -107,7 +106,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-tokenize",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie, commonsIo % "test"))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val segment = Project(
     id = "tools-segment",
@@ -116,7 +115,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-segment",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie, commonsIo % "test"))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(core)
+  ) dependsOn(core)
 
   lazy val postag = Project(
     id = "tools-postag",
@@ -128,7 +127,7 @@ object NlpstackBuild extends Build {
         factorie,
         factoriePosModel,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(tokenize, core)
+  ) dependsOn(tokenize, core)
 
   lazy val chunk = Project(
     id = "tools-chunk",
@@ -137,7 +136,7 @@ object NlpstackBuild extends Build {
       name := "nlpstack-chunk",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag, core)
+  ) dependsOn(postag, core)
 
   lazy val parse = Project(
     id = "tools-parse",
@@ -154,7 +153,7 @@ object NlpstackBuild extends Build {
         factorieParseModel,
         factorieWordnet,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(postag, tokenize, core)
+  ) dependsOn(postag, tokenize, core)
 
   lazy val coref = Project(
     id = "tools-coref",
@@ -168,5 +167,5 @@ object NlpstackBuild extends Build {
         factorieNerModel,
         factorieLexicon,
         factoriePhraseModel))
-  ).enablePlugins(TravisPublisherPlugin) dependsOn(core, parse)
+  ) dependsOn(core, parse)
 }

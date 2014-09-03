@@ -14,8 +14,6 @@ addSbtPlugin("org.allenai.plugins" % "allenai-sbt-deploy" % "2014.07.03-0")
 
 addSbtPlugin("org.allenai.plugins" % "allenai-sbt-format" % "2014.07.03-0")
 
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-travis-publisher" % "2014.07.03-0")
-
 addSbtPlugin("org.allenai.plugins" % "allenai-sbt-version-injector" % "2014.07.03-0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.3")
