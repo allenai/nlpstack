@@ -23,4 +23,10 @@ class FactorieSegmenterSpec extends UnitSpec {
         "UTF-8")
     sentencer.segment(s)
   }
+
+  it should "not interpret dollar symbols as regex backreferences" in {
+    val s = "<" + "$2" + "x" * 98
+    sentencer.segment(s)
+  }
+
 }
