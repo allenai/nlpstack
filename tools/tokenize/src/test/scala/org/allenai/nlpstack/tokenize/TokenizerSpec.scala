@@ -101,4 +101,64 @@ abstract class TokenizerSpec extends UnitSpec {
     tokenizerToTest.tokenize("ab <" + ("xxxxxxxx " * (99 / 9))) // 99 characters after the <
     tokenizerToTest.tokenize("< foo < bar")
   }
+
+  it should "correctly deal with hyphens" in {
+    {
+      val ts = tokenizerToTest.tokenize("-1 is a small number")
+      assert(ts.length === 5)
+      assert(ts(0).string === "-1")
+      assert(ts(0).offset === 0)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("a space-based adventure")
+      assert(ts.length === 3)
+      assert(ts(1).string === "space-based")
+      assert(ts(1).offset === 2)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("rose- and sky-tinted glasses")
+      assert(ts.length === 4)
+      assert(ts(0).string === "rose-")
+      assert(ts(0).offset === 0)
+      assert(ts(2).string === "sky-tinted")
+      assert(ts(2).offset === 10)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("-")
+      assert(ts.length === 1)
+      assert(ts(0).string === "-")
+      assert(ts(0).offset === 0)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("don't go-")
+      assert(ts.length === 3)
+      assert(ts(2).string === "go-")
+      assert(ts(2).offset === 6)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("He said no - only to agree with me later.")
+      assert(ts.length === 11)
+      assert(ts(3).string === "-")
+      assert(ts(3).offset === 11)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("We're having a tête-à-tête in the conference room.")
+      assert(ts.length === 10)
+      assert(ts(4).string === "tête-à-tête")
+      assert(ts(4).offset === 15)
+    }
+
+    {
+      val ts = tokenizerToTest.tokenize("The score is -1-ish")
+      assert(ts.length === 4)
+      assert(ts(3).string === "-1-ish")
+      assert(ts(3).offset === 13)
+    }
+  }
 }
