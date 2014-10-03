@@ -13,7 +13,13 @@ class OpenNlpChunker(val model: ChunkerModel) extends Chunker {
   val chunker = new ChunkerME(model)
 
   def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
-    val chunks = chunker.chunk(tokens.map(_.string).toArray, tokens.map(_.postag).toArray)
+    // OpenNLP uses : as the postag for hyphens, but we use HYPH, so we change it back before
+    // sending it to the chunker.
+    val fixedTokens = tokens.map { t =>
+      if (t.string == "-") PostaggedToken(t, ":") else t
+    }
+
+    val chunks = chunker.chunk(tokens.map(_.string).toArray, fixedTokens.map(_.postag).toArray)
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
 }

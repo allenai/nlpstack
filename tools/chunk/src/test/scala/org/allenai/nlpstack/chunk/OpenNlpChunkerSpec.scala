@@ -9,7 +9,7 @@ class OpenNlpChunkerSpec extends UnitSpec {
   "chunker" should "correctly chunk an example sentence" in {
     val text = "This is a test of the OpenNlp chunker."
     val tokenizer = defaultTokenizer
-    val postagger = defaultPostagger
+    val postagger = new OpenNlpPostagger
     val chunker = new OpenNlpChunker
 
     val chunked = chunker.chunk(tokenizer, postagger)(text)
