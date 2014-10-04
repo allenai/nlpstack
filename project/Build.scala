@@ -126,6 +126,8 @@ object NlpstackBuild extends Build {
       libraryDependencies ++= Seq(
         factorie,
         factoriePosModel,
+        opennlp,
+        "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5",
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
   ) dependsOn(tokenize, core)
 
@@ -135,7 +137,12 @@ object NlpstackBuild extends Build {
     settings = buildSettings ++ Seq(
       name := "nlpstack-chunk",
       licenses := Seq(apache2),
-      libraryDependencies ++= Seq(opennlp, "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5" ))
+      libraryDependencies ++= Seq(
+        opennlp,
+        "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5",
+        "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5"))
+      // postag-models should be a transitive dependency from the postag project, but for some
+      // reason it's not brought in if it's not specified again here.
   ) dependsOn(postag, core)
 
   lazy val parse = Project(
