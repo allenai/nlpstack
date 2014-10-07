@@ -28,9 +28,68 @@ class FactorieTokenizer extends Tokenizer {
 
 object FactorieTokenizer {
   object factorieFormat extends Format[Seq[Token], FactorieDocument] {
-    override def read(from: FactorieDocument): Seq[Token] =
-      for (section <- from.sections; token <- section.tokens)
+    override def read(from: FactorieDocument): Seq[Token] = {
+      val result = for (section <- from.sections; token <- section.tokens)
         yield Token(token.string, token.stringStart)
+
+      // glue hyphenated words back together
+      def glueHyphenated(tokens: Seq[Token]): Seq[Token] = {
+        // special case bonanza
+        if (tokens.length < 2) {
+          tokens
+        } else {
+          val i = tokens.indexWhere(_.string == "-")
+          if (i >= 0) {
+            val hyphenToken = tokens(i)
+            i match {
+              case 0 =>
+                val nextToken = tokens(i + 1)
+                if (nextToken.offset == hyphenToken.offset + 1) {
+                  glueHyphenated(
+                    Token("-" + tokens(i + 1).string, hyphenToken.offset) +: tokens.drop(2))
+                } else {
+                  hyphenToken +: glueHyphenated(tokens.drop(1))
+                }
+
+              case x if x == tokens.length - 1 =>
+                val prevToken = tokens(i - 1)
+                if (prevToken.offset + prevToken.string.length == hyphenToken.offset) {
+                  tokens.dropRight(2) :+ Token(prevToken.string + "-", prevToken.offset)
+                } else {
+                  tokens
+                }
+
+              case _ =>
+                val prevToken = tokens(i - 1)
+                val nextToken = tokens(i + 1)
+                val prevTokenMatches =
+                  prevToken.offset + prevToken.string.length == hyphenToken.offset
+                val nextTokenMatches =
+                  hyphenToken.offset + 1 == nextToken.offset
+                if (prevTokenMatches && nextTokenMatches) {
+                  val combinedToken =
+                    Token(prevToken.string + "-" + nextToken.string, prevToken.offset)
+                  tokens.take(i - 1) ++ glueHyphenated(combinedToken +: tokens.drop(i + 2))
+                } else if (prevTokenMatches) {
+                  val combinedToken =
+                    Token(prevToken.string + "-", prevToken.offset)
+                  (tokens.take(i - 1) :+ combinedToken) ++ glueHyphenated(tokens.drop(i + 1))
+                } else if (nextTokenMatches) {
+                  val combinedToken =
+                    Token("-" + nextToken.string, hyphenToken.offset)
+                  tokens.take(i) ++ glueHyphenated(combinedToken +: tokens.drop(i + 2))
+                } else {
+                  tokens.take(i + 1) ++ glueHyphenated(tokens.drop(i + 1))
+                }
+            }
+          } else {
+            tokens
+          }
+        }
+      }
+
+      glueHyphenated(result)
+    }
 
     override def write(from: Seq[Token]): FactorieDocument = {
       val factorieDoc = new FactorieDocument(Tokenizer.originalText(from))
