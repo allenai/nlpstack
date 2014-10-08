@@ -41,6 +41,7 @@ object NlpstackBuild extends Build {
       dependencyOverrides ++= Set(
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+        slf4j,
         "commons-io" % "commons-io" % "2.4"))
 
   lazy val tools = Project(
@@ -152,8 +153,8 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        "org.allenai" %% "polyparser-models" % "0.3-SNAPSHOT",
-        ("org.allenai" %% "polyparser" % "2014.08.29-0"
+        "org.allenai" %% "polyparser-models" % "0.7",
+        ("org.allenai" %% "polyparser" % "2014.10.07-0"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,
