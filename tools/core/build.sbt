@@ -9,5 +9,3 @@ libraryDependencies ++= Seq(
     slf4j,
     // for remotes
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0")
-
-dependencyOverrides ++= Set("org.slf4j" % "slf4j-api" % "1.7.6")
