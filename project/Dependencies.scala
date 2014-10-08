@@ -1,8 +1,8 @@
 import sbt._
 
 object Dependencies {
-  val slf4j = "org.slf4j" % "slf4j-api" % "1.7.6"
-  val logbackVersion = "1.1.1"
+  val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
+  val logbackVersion = "1.1.2"
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
   val logbackClassic = "ch.qos.logback" % "logback-classic" % logbackVersion
   val loggingImplementations = Seq(logbackCore, logbackClassic)
