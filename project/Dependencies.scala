@@ -8,8 +8,9 @@ object Dependencies {
   val loggingImplementations = Seq(logbackCore, logbackClassic)
   val commonsIo = "commons-io" % "commons-io" % "2.4"
 
-  val allenAiCommon = "org.allenai.common" %% "common-core" % "2014.08.28-0"
-  val allenAiTestkit = "org.allenai.common" %% "common-testkit" % "2014.08.28-2"
+  val allenAiCore = "org.allenai.common" %% "common-core" % "2014.10.10-0"
+  val allenAiTestkit = "org.allenai.common" %% "common-testkit" % "2014.10.10-0"
+  val allenAiDatastore = "org.allenai.common" %% "common-datastore" % "2014.10.10-0"
 
   val clearGroup = "com.clearnlp"
   val clearVersion = "2.0.2"

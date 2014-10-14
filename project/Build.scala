@@ -42,7 +42,8 @@ object NlpstackBuild extends Build {
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         slf4j,
-        "commons-io" % "commons-io" % "2.4"))
+        "commons-io" % "commons-io" % "2.4",
+        allenAiCore))
 
   lazy val tools = Project(
     id = "tools-root",
