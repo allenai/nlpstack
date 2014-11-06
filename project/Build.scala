@@ -1,4 +1,7 @@
+import org.allenai.sbt.core.CoreSettings
 import org.allenai.sbt.deploy._
+import org.allenai.sbt.webapp.WebappPlugin
+import org.allenai.sbt.webservice.WebServicePlugin
 
 import Dependencies._
 import sbt.Keys._
@@ -25,7 +28,7 @@ object NlpstackBuild extends Build {
 
   val buildSettings =
     Revolver.settings ++
-    Publish.settings ++
+    CoreSettings.publishToRepos.ai2.publicRepo ++
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
@@ -55,7 +58,7 @@ object NlpstackBuild extends Build {
       parse,
       segment,
       core,
-      coref)
+      coref).enablePlugins(WebappPlugin)
 
   lazy val webapp = Project(
     id = "webapp",
