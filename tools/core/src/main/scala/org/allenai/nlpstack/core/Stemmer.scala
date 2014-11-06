@@ -37,5 +37,6 @@ object Stemmer {
 
   /** Remove special characters and lowercase the string. */
   def normalize(word: String) = Stemmer.remove.replaceAllIn(
-    word.trim.toLowerCase, "")
+    word.trim.toLowerCase, ""
+  )
 }

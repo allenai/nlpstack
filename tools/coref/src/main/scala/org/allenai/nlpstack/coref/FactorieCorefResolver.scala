@@ -32,7 +32,8 @@ class FactorieCorefResolver extends CorefResolver[PostaggedToken] {
         if (entity.canonicalMention == null)
           None
         else
-          Some(token2node(entity.canonicalMention.phrase.headToken)))
+          Some(token2node(entity.canonicalMention.phrase.headToken))
+      )
     }).toSeq
   }
 }

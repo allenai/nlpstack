@@ -14,7 +14,8 @@ object TokenizerTool extends Tool("tokenize") with StringFormat {
   override def process(section: String) = Impl.tokenizer(section)
   override def visualize(output: Output) = {
     Seq(
-      implicitly[Writer[Output, BufferedImage]].write(output))
+      implicitly[Writer[Output, BufferedImage]].write(output)
+    )
   }
   override def stringFormat = Tokenizer.multilineStringFormat
 }

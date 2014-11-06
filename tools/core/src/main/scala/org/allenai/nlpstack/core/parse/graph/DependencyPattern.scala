@@ -121,7 +121,8 @@ object DependencyPattern {
     */
   def create(bipath: Bipath[TokenDependencyNode]) = new Pattern[TokenDependencyNode](
     bipath.path.map(dedge => DependencyEdgeMatcher(dedge)),
-    new TokenDependencyNodeMatcher(bipath.path.head.start) :: bipath.path.map(dedge => new TokenDependencyNodeMatcher(dedge.end)))
+    new TokenDependencyNodeMatcher(bipath.path.head.start) :: bipath.path.map(dedge => new TokenDependencyNodeMatcher(dedge.end))
+  )
 
   @deprecated("Use stringFormat instead.", "2.4.5")
   def deserialize(string: String)(implicit lemmatizer: Stemmer): DependencyPattern =

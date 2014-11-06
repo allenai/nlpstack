@@ -104,7 +104,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
 
                   val text = joinVertices.iterator.map(_.string).mkString(" ")
                   new Graph[DependencyNode](
-                    extraEdges ++ graph.edges.filterNot(_.vertices exists (removeVertices contains _))).map(vertex =>
+                    extraEdges ++ graph.edges.filterNot(_.vertices exists (removeVertices contains _))
+                  ).map(vertex =>
                     if (vertex == prep.dest) new DependencyNode(-1, text) // these nodes are only temporary
                     else vertex)
                 }
@@ -189,7 +190,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
             dedge.edge.label == "nsubjpass" ||
             dedge.dir == Direction.Down && (
               // distribute "to" in: "I want to swim and eat cherries"
-              dedge.edge.label == "aux") ||
+              dedge.edge.label == "aux"
+            ) ||
               dedge.dir == Direction.Up && (
                 dedge.edge.label == "advmod" ||
                 dedge.edge.label == "amod" ||
@@ -198,7 +200,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
                 dedge.edge.label == "rcmod" ||
                 dedge.edge.label == "ccomp" ||
                 dedge.edge.label == "xcomp" ||
-                (dedge.edge.label startsWith "prep")));
+                (dedge.edge.label startsWith "prep")
+              ));
           if !(vertices contains dedge.end);
           v <- vertices;
           newEdge = dedge match {
@@ -220,7 +223,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       */
     def runStep(
       transformation: Graph[DependencyNode] => Graph[DependencyNode],
-      graph: Graph[DependencyNode]) = {
+      graph: Graph[DependencyNode]
+    ) = {
       // Uncomment for debugging
       //println(graph.toDot())
 
@@ -241,14 +245,19 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
     def removeInvalidNodes(graph: Graph[DependencyNode]) =
       new Graph[DependencyNode](
         graph.vertices.filter(_.id >= 0),
-        graph.edges.filter(e => e.source.id >= 0 && e.dest.id >= 0))
+        graph.edges.filter(e => e.source.id >= 0 && e.dest.id >= 0)
+      )
 
     val graph =
       runStep(removeInvalidNodes, (
         runStep(edgifyPrepositions, (
           runStep(distributeConjunctions, (
             runStep(collapseJunctions, (
-              runStep(collapseMultiwordPrepositions, this)))))))))
+              runStep(collapseMultiwordPrepositions, this)
+            ))
+          ))
+        ))
+      ))
 
     DependencyGraph(graph.vertices, graph.edges)
   }
@@ -268,7 +277,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
     val joinedEdges = this.edges map { edge =>
       edge.copy(
         source = JoinedDependencyNode.from(edge.source),
-        dest = JoinedDependencyNode.from(edge.dest))
+        dest = JoinedDependencyNode.from(edge.dest)
+      )
     }
     new JoinedDependencyGraph(joinedNodes, joinedEdges)
   }
@@ -279,7 +289,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
     val joinedEdges = this.edges map { edge =>
       edge.copy(
         source = from(edge.source),
-        dest = from(edge.dest))
+        dest = from(edge.dest)
+      )
     }
     new Graph[TokenDependencyNode](joinedNodes, joinedEdges)
   }
@@ -332,7 +343,8 @@ object DependencyGraph {
       JsObject(
         "label" -> JsString(edge.label),
         "source" -> edge.source.toJson,
-        "dest" -> edge.dest.toJson)
+        "dest" -> edge.dest.toJson
+      )
     }
 
     def read(value: JsValue): Edge[DependencyNode] = {
@@ -371,7 +383,8 @@ object DependencyGraph {
         new Edge[DependencyNode](
           new DependencyNode(0, "ROOT"),
           root.copy(id = root.id + 1),
-          "root")
+          "root"
+        )
       }
 
       // increment all dependency node ids
@@ -379,7 +392,8 @@ object DependencyGraph {
         graph.dependencies.map { dep =>
           dep.copy(
             source = dep.source.copy(id = dep.source.id + 1),
-            dest = dep.dest.copy(id = dep.dest.id + 1))
+            dest = dep.dest.copy(id = dep.dest.id + 1)
+          )
         }
 
       // serialize dependencies on first line
@@ -405,7 +419,8 @@ object DependencyGraph {
         (allDeps filterNot (dep => rootDep exists (_ == dep))).map(dep =>
           dep.copy(
             source = dep.source.copy(id = dep.source.id - 1),
-            dest = dep.dest.copy(id = dep.dest.id - 1)))(scala.collection.breakOut)
+            dest = dep.dest.copy(id = dep.dest.id - 1)
+          ))(scala.collection.breakOut)
 
       val root = rootDep map (rootDep => rootDep.dest.copy(id = rootDep.dest.id - 1))
 

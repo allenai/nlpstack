@@ -17,7 +17,8 @@ trait ToolService extends HttpService with SprayJsonSupport {
     PostaggerTool,
     ChunkerTool,
     DependencyParserTool,
-    CorefTool)
+    CorefTool
+  )
 
   // format: OFF
   val toolRoute =

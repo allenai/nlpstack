@@ -15,7 +15,8 @@ object CorefTool extends Tool("coref") with StringFormat {
   override def info =
     ToolInfo(
       Impl.coref.getClass.getSimpleName,
-      "Our fake plants died because we did not pretend to water them.")
+      "Our fake plants died because we did not pretend to water them."
+    )
   override def split(input: String) = input split "\n"
   override def process(section: String) = {
     val tokens = Impl.tokenizer(section)

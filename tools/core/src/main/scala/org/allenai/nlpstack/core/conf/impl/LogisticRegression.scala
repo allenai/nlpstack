@@ -17,7 +17,8 @@ import java.net.URL
 class LogisticRegression[T](
     featureSet: FeatureSet[T, Double],
     val featureWeights: Map[String, Double],
-    val intercept: Double) extends ConfidenceFunction[T](featureSet) {
+    val intercept: Double
+) extends ConfidenceFunction[T](featureSet) {
 
   featureSet.featureNames.foreach { name =>
     require(featureWeights.keySet.contains(name), "No weight for feature: " + name)

@@ -13,7 +13,8 @@ class Match[T](
     val bipath: Bipath[T],
     /** the pattern groups in the match */
     val nodeGroups: Map[String, Match.NodeGroup[T]],
-    val edgeGroups: Map[String, Match.EdgeGroup[T]]) {
+    val edgeGroups: Map[String, Match.EdgeGroup[T]]
+) {
   // extend Object
   override def toString = bipath.toString + ": " + nodeGroups.toString + " and " + edgeGroups.toString
 

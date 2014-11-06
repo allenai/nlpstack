@@ -9,7 +9,8 @@ import java.util.regex.Pattern
 
 case class Referent(
   val references: Seq[DependencyNode],
-  val mainReference: Option[DependencyNode])
+  val mainReference: Option[DependencyNode]
+)
 
 abstract class CorefResolver[T <: Token] {
   def resolveCoreferences(postaggedParse: (Seq[T], DependencyGraph)): Seq[Referent]
