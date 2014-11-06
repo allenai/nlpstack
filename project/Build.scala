@@ -1,6 +1,5 @@
 import org.allenai.sbt.core.CoreSettings
 import org.allenai.sbt.deploy._
-import org.allenai.sbt.webapp.WebappPlugin
 import org.allenai.sbt.webservice.WebServicePlugin
 
 import Dependencies._
@@ -62,20 +61,21 @@ object NlpstackBuild extends Build {
       parse,
       segment,
       core,
-      coref).enablePlugins(WebappPlugin)
+      coref)
 
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
-      core,
-      lemmatize,
-      tokenize,
-      postag,
-      chunk,
-      parse,
-      segment,
-      coref)
+    settings = buildSettings).enablePlugins(DeployPlugin).enablePlugins(WebServicePlugin)
+      .dependsOn(
+        core,
+        lemmatize,
+        tokenize,
+        postag,
+        chunk,
+        parse,
+        segment,
+        coref)
 
   lazy val cli = Project(
     id = "cli",

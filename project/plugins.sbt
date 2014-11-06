@@ -7,4 +7,5 @@ addSbtPlugin("org.allenai.plugins" % "allenai-sbt-release" % ai2PluginsVersion)
 
 addSbtPlugin("org.allenai.plugins" % "allenai-sbt-deploy" % ai2PluginsVersion)
 
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-webapp" % ai2PluginsVersion)
+// TODO: Move to webapp plugin
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-web-service" % ai2PluginsVersion)
