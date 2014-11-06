@@ -17,6 +17,6 @@ libraryDependencies ++= Seq(
 
 dependencyOverrides ++= Set(
   "org.scala-lang" % "scala-library" % "2.10.4",
-  "org.slf4j" % "slf4j-api" % "1.7.6")
+  slf4j)
 
 mappings in Universal ++= directory(baseDirectory.value / "public")
