@@ -12,7 +12,9 @@ class PolytreeParser extends DependencyParser {
   private val parser =
     using(
       this.getClass.getClassLoader.getResourceAsStream(
-        "org/allenai/polyparser-models/ThomasJefferson.poly.json")) {
+        "org/allenai/polyparser-models/ThomasJefferson.poly.json"
+      )
+    ) {
         Parser.loadParser(_)
       }
 

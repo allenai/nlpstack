@@ -20,12 +20,15 @@ class FactorieSegmenter extends Segmenter {
   private val pipeline = DocumentAnnotatorPipeline(
     map = map.toMap,
     prereqs = Nil,
-    segmenter.postAttrs)
+    segmenter.postAttrs
+  )
 
   override def segment(document: String): Iterable[Segment] = {
     val doc = pipeline.process(
       new Document(
-        FactorieUtilities.replaceUnclosedTag(document)))
+        FactorieUtilities.replaceUnclosedTag(document)
+      )
+    )
 
     for (sentence <- doc.sentences) yield {
       new Segment(sentence.documentString, sentence.tokens(0).stringStart)

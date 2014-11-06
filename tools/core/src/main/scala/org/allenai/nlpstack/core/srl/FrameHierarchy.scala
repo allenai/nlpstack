@@ -30,8 +30,11 @@ object FrameHierarchy {
                 // all child nodes are in the inferiors of the relation
                 (child.nodes.forall(inferiors contains _)) &&
                 // relations are connected by ccomp
-                (dgraph.neighbors(frame.relation.node,
-                  dedge => dedge.dir == Direction.Down && dedge.edge.label == "ccomp").contains(child.relation.node)))
+                (dgraph.neighbors(
+                  frame.relation.node,
+                  dedge => dedge.dir == Direction.Down && dedge.edge.label == "ccomp"
+                ).contains(child.relation.node))
+              )
           }
           index -> children.map(_._2).toSet
       }.toMap

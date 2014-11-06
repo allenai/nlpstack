@@ -1,15 +1,13 @@
 import sbt._
+import org.allenai.sbt.core.CoreDependencies
 
-object Dependencies {
+object Dependencies extends CoreDependencies {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
   val logbackVersion = "1.1.2"
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
   val logbackClassic = "ch.qos.logback" % "logback-classic" % logbackVersion
   val loggingImplementations = Seq(logbackCore, logbackClassic)
   val commonsIo = "commons-io" % "commons-io" % "2.4"
-
-  val allenAiCommon = "org.allenai.common" %% "common-core" % "2014.08.28-0"
-  val allenAiTestkit = "org.allenai.common" %% "common-testkit" % "2014.08.28-2"
 
   val clearGroup = "com.clearnlp"
   val clearVersion = "2.0.2"
@@ -32,12 +30,6 @@ object Dependencies {
   val factoriePhraseModel = "cc.factorie.app.nlp.phrase" % "OntonotesPhraseEntityTypeLabelerModel" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
-
-  val scopt = "com.github.scopt" %% "scopt" % "3.2.0"
-  val typesafeConfig = "com.typesafe" % "config" % "1.2.0"
-
-  val sprayVersion = "1.3.1"
-  val akkaVersion = "2.3.2"
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 }

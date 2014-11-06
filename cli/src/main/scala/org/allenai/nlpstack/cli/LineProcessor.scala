@@ -24,7 +24,8 @@ abstract class LineProcessor(name: String) {
     port: Int = typesafeConfig.getInt(s"nlpstack.tools.$name.defaultPort"),
     outputFile: Option[File] = None,
     inputFile: Option[File] = None,
-    parallel: Boolean = false)
+    parallel: Boolean = false
+  )
 
   val parser = new scopt.OptionParser[Config](name) {
     // server config

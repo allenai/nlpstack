@@ -13,7 +13,8 @@ abstract class PostaggerSpec extends UnitSpec {
        |large-scale assault. A small one-man fighter should be able to
        |penetrate the outer defense.""".stripMargin,
     """|Pardon me for asking, sir, but what good are snub fighters going to be
-       |against that?""".stripMargin)
+       |against that?""".stripMargin
+  )
 
   protected def taggedTexts = Seq(
     """|The 0 DT
@@ -79,7 +80,8 @@ abstract class PostaggerSpec extends UnitSpec {
        |be 68 VB
        |against 71 IN
        |that 79 DT
-       |? 83 .""".stripMargin)
+       |? 83 .""".stripMargin
+  )
 
   "postagger implementation" should "correctly postag two example sentences" in {
     for ((text, expected) <- texts zip taggedTexts) {

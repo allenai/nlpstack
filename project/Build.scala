@@ -1,4 +1,6 @@
+import org.allenai.sbt.core.CoreSettings
 import org.allenai.sbt.deploy._
+import org.allenai.sbt.webservice.WebServicePlugin
 
 import Dependencies._
 import sbt.Keys._
@@ -25,7 +27,7 @@ object NlpstackBuild extends Build {
 
   val buildSettings =
     Revolver.settings ++
-    Publish.settings ++
+    CoreSettings.publishToRepos.ai2.publicRepo ++
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
@@ -39,6 +41,10 @@ object NlpstackBuild extends Build {
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
+        "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
+        "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
+        "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.3",
+        "commons-codec" % "commons-codec" % "1.9",
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         slf4j,
@@ -60,15 +66,16 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
-      core,
-      lemmatize,
-      tokenize,
-      postag,
-      chunk,
-      parse,
-      segment,
-      coref)
+    settings = buildSettings).enablePlugins(DeployPlugin).enablePlugins(WebServicePlugin)
+      .dependsOn(
+        core,
+        lemmatize,
+        tokenize,
+        postag,
+        chunk,
+        parse,
+        segment,
+        coref)
 
   lazy val cli = Project(
     id = "cli",
@@ -154,7 +161,7 @@ object NlpstackBuild extends Build {
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         "org.allenai" %% "polyparser-models" % "0.8",
-        ("org.allenai" %% "polyparser" % "2014.10.09-0"
+        ("org.allenai" %% "polyparser" % "2014.11.05-0"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,

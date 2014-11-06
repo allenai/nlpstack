@@ -14,7 +14,8 @@ abstract class TokenizerSpec extends UnitSpec {
        |large-scale assault. A small one-man fighter should be able to
        |penetrate the outer defense.""".stripMargin,
     """|Pardon me for asking, sir, but what good are snub fighters going to be
-       |against that?""".stripMargin)
+       |against that?""".stripMargin
+  )
 
   val tokenizedTestSentences = Seq(
     """|The 0
@@ -76,7 +77,8 @@ abstract class TokenizerSpec extends UnitSpec {
        |be 68
        |against 71
        |that 79
-       |? 83""".stripMargin)
+       |? 83""".stripMargin
+  )
 
   "tokenizer implementation" should "correctly tokenize two example sentences" in {
     for ((text, expected) <- testSentences zip tokenizedTestSentences) {
@@ -90,7 +92,8 @@ abstract class TokenizerSpec extends UnitSpec {
     val s =
       IOUtils.toString(
         this.getClass.getResourceAsStream("/org/allenai/nlpstack/tokenize/unclosed_tag_test.txt"),
-        "UTF-8")
+        "UTF-8"
+      )
     tokenizerToTest.tokenize(s)
   }
 

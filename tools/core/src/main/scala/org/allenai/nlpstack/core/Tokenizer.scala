@@ -49,9 +49,11 @@ object Tokenizer {
     val builder = new StringBuilder()
 
     for (token <- tokens) {
-      require(token.offset >= startOffset,
+      require(
+        token.offset >= startOffset,
         "Token must have offset >= startOffset. " +
-          "Given offset=" + token.offset + ", startOffset=" + startOffset)
+          "Given offset=" + token.offset + ", startOffset=" + startOffset
+      )
       builder.append(" " * (token.offset - builder.length - startOffset))
       require(token.offset - startOffset == builder.length, "Token " + token + " is out of order.")
       builder.append(token.string)

@@ -29,7 +29,8 @@ object FactorieParser {
 
       def pis2node(positionInSentence: Int) =
         nodes.find(_.id == positionInSentence).getOrElse(
-          sys.error("No token with PIS " + positionInSentence))
+          sys.error("No token with PIS " + positionInSentence)
+        )
       // Since the number of tokens in the sentence will be small most of the
       // time, we don't need to optimize with a map that would do this lookup
       // quicker.
@@ -39,7 +40,8 @@ object FactorieParser {
         new Graph.Edge[DependencyNode](
           parentNode,
           childNode,
-          t.parseLabel.categoryValue)
+          t.parseLabel.categoryValue
+        )
       }
 
       require(from.sentenceCount == 1)
@@ -56,7 +58,8 @@ object FactorieParser {
       val sentence = new FactorieSentence(
         factorieDoc.asSection,
         0,
-        factorieDoc.tokenCount)
+        factorieDoc.tokenCount
+      )
       val factorieParse = sentence.attr.getOrElseUpdate(new ParseTree(sentence))
       for (vertex <- from._2.vertices) {
         val incomingEdges = from._2.incoming(vertex)
