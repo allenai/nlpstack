@@ -24,7 +24,8 @@ class OpenNlpPostaggerSpec extends PostaggerSpec {
        |be 68 VB
        |against 71 IN
        |that 79 DT
-       |? 83 .""".stripMargin)
+       |? 83 .""".stripMargin
+  )
 
   val taggerToTest = new OpenNlpPostagger
 }

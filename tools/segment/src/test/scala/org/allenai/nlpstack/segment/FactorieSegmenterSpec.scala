@@ -20,7 +20,8 @@ class FactorieSegmenterSpec extends UnitSpec {
     val s =
       IOUtils.toString(
         this.getClass.getResourceAsStream("/org/allenai/nlpstack/segment/unclosed_tag_test.txt"),
-        "UTF-8")
+        "UTF-8"
+      )
     sentencer.segment(s)
   }
 

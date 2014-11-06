@@ -23,7 +23,9 @@ class ChunkerSpec extends UnitSpec {
         "(NP,[6, 10))",
         "(PP,{10})",
         "(NP,[11, 13))",
-        "(O,{13})"))
+        "(O,{13})"
+      )
+    )
   }
 
   it should "join of" in {
