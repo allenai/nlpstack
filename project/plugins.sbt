@@ -1,19 +1,11 @@
-addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
+lazy val ai2PluginsVersion = "2014.11.05-0"
 
-resolvers += "AllenAI Nexus Repository" at "http://utility.allenai.org:8081/nexus/content/repositories/releases"
+// will be added to all projects automatically:
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-core-settings" % ai2PluginsVersion)
 
-resolvers += "AllenAI Nexus Repository Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots"
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-release" % ai2PluginsVersion)
 
-resolvers += Resolver.url(
-  "allenai-bintray-sbt-plugins",
-  url("http://dl.bintray.com/content/allenai/sbt-plugins"))(Resolver.ivyStylePatterns)
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-deploy" % ai2PluginsVersion)
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "0.7.1")
-
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-deploy" % "2014.07.03-0")
-
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-format" % "2014.07.03-0")
-
-addSbtPlugin("org.allenai.plugins" % "allenai-sbt-version-injector" % "2014.07.03-0")
-
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.3")
+// TODO: Move to webapp plugin
+addSbtPlugin("org.allenai.plugins" % "allenai-sbt-web-service" % ai2PluginsVersion)

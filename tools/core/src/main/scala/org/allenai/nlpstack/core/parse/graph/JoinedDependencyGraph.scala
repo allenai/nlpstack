@@ -30,8 +30,10 @@ class JoinedDependencyGraph(vertices: Set[JoinedDependencyNode], edges: Set[Edge
       if (nodes.isEmpty) throw new IllegalArgumentException("argument nodes empty")
       val sorted = nodes.toList.sortBy(_.ids.head)
       sorted.sliding(2).foreach { l =>
-        require((l.head.span distance l.last.span) == 2,
-          "two nodes to merge don't have a distance of 2 (distance is " + (l.head.span distance l.last.span) + "): " + l.mkString(", "))
+        require(
+          (l.head.span distance l.last.span) == 2,
+          "two nodes to merge don't have a distance of 2 (distance is " + (l.head.span distance l.last.span) + "): " + l.mkString(", ")
+        )
       }
       val strings = (for (i <- sorted.iterator.map(_.string); p <- List("of", i)) yield p).drop(1).toSeq
       val ids = sorted.flatMap(_.ids).sorted

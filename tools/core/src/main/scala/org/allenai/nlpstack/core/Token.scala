@@ -47,7 +47,8 @@ object Token {
   implicit object tokenJsonFormat extends RootJsonFormat[Token] {
     def write(t: Token) = JsObject(
       "string" -> JsString(t.string),
-      "offset" -> JsNumber(t.offset))
+      "offset" -> JsNumber(t.offset)
+    )
 
     def read(value: JsValue) = value.asJsObject.getFields("string", "offset") match {
       case Seq(JsString(string), JsNumber(offset)) =>

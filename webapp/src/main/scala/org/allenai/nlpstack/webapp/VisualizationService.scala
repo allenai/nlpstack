@@ -15,7 +15,8 @@ trait VisualizationService extends HttpService {
     TokenizerTool,
     PostaggerTool,
     ChunkerTool,
-    DependencyParserTool)
+    DependencyParserTool
+  )
 
   // format: OFF
   val visualizationRoute =

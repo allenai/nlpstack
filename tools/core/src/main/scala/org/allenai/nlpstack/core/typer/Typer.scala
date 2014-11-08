@@ -33,5 +33,6 @@ object Type {
     val name: String,
     val source: String,
     val tokenInterval: Interval,
-    val text: String) extends Type
+    val text: String
+  ) extends Type
 }

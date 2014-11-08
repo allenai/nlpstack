@@ -25,7 +25,8 @@ object Dependency {
       new Dependency(
         DependencyNode.stringFormat.read(source),
         DependencyNode.stringFormat.read(dest),
-        label)
+        label
+      )
     } catch {
       case e: Throwable => throw new Dependency.SerializationException("could not deserialize dependency: " + pickled, e)
     }

@@ -43,7 +43,8 @@ object Postagger {
     "thru", "throughout", "thruout", "till", "times", "to", "toward",
     "towards", "under", "underneath", "unlike", "until", "up", "upon",
     "versus", "vs.", "v.", "via", "vice", "with", "within", "without",
-    "worth")
+    "worth"
+  )
 
   val complexPrepositions = immutable.Set(
     "according to", "ahead of", "apart from", "as for", "as of", "as per",
@@ -52,7 +53,8 @@ object Postagger {
     "left of", "near to", "next to", "on to", "out from", "out of",
     "outside of", "owing to", "prior to", "pursuant to", "regardless of",
     "right of", "subsequent to", "thanks to", "that of", "up to",
-    "where as", "as far as", "as well as")
+    "where as", "as far as", "as well as"
+  )
 
   val prepositions = simplePrepositions ++ complexPrepositions
 

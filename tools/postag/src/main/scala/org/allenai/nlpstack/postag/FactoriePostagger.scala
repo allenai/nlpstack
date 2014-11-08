@@ -33,7 +33,8 @@ object FactoriePostagger {
       from.tokens.map(t => PostaggedToken(
         tagger.tokenAnnotationString(t),
         t.string,
-        t.stringStart)).toSeq
+        t.stringStart
+      )).toSeq
 
     override def write(from: Seq[PostaggedToken]): FactorieDocument = {
       val factorieDoc = FactorieTokenizer.factorieFormat.write(from)

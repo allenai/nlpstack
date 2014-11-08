@@ -79,7 +79,8 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
 
   /* create a new graph where a function is applied to all nodes. */
   def map[U](f: T => U) = new Graph(
-    this.edges.map(edge => new Edge(f(edge.source), f(edge.dest), edge.label)))
+    this.edges.map(edge => new Edge(f(edge.source), f(edge.dest), edge.label))
+  )
 
   /* collapse all edges where the supplied predicate is true. */
   def collapse(collapsable: E => Boolean)(implicit merge: Traversable[T] => T): G = {
@@ -155,7 +156,8 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
   /* all `DirectedEdge`s leaving or coming into this vertex. */
   def dedges(vertex: T): Set[DirectedEdge[T]] =
     outgoing(vertex).map(new DownEdge(_): DirectedEdge[T]).union(
-      incoming(vertex).map(new UpEdge(_): DirectedEdge[T])).toSet
+      incoming(vertex).map(new UpEdge(_): DirectedEdge[T])
+    ).toSet
 
   /** all vertices seperated from `v` by a single edge that
     * satisfied `pred`.
@@ -345,7 +347,8 @@ object Graph {
   case class Edge[T](
       val source: T,
       val dest: T,
-      val label: String) {
+      val label: String
+  ) {
     def vertices = List(source, dest)
     override def toString = label + "(" + source + ", " + dest + ")"
   }

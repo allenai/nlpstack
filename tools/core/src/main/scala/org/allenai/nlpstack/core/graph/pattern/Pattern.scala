@@ -11,7 +11,8 @@ import org.allenai.nlpstack.core.graph.{ Bipath, DirectedEdge, Graph }
   */
 class Pattern[T](
     /** a list of matchers, alternating between `NodeMatcher`s and `EdgeMatcher`s. */
-    val matchers: List[Matcher[T]]) extends Function[Graph[T], List[Match[T]]] {
+    val matchers: List[Matcher[T]]
+) extends Function[Graph[T], List[Match[T]]] {
 
   require(matchers != null)
 
@@ -58,11 +59,13 @@ class Pattern[T](
 
   /** Find all matches of this pattern in the graph starting at `vertex`. */
   def apply(graph: Graph[T], vertex: T): List[Match[T]] = {
-    def rec(matchers: List[Matcher[T]],
+    def rec(
+      matchers: List[Matcher[T]],
       vertex: T,
       edges: List[DirectedEdge[T]],
       nodeGroups: List[(String, Match.NodeGroup[T])],
-      edgeGroups: List[(String, Match.EdgeGroup[T])]): List[Match[T]] = matchers match {
+      edgeGroups: List[(String, Match.EdgeGroup[T])]
+    ): List[Match[T]] = matchers match {
 
       case (m: CaptureNodeMatcher[_]) :: xs =>
         m.matchText(vertex).map(text => rec(xs, vertex, edges, (m.alias, Match.NodeGroup(vertex, text)) :: nodeGroups, edgeGroups)).getOrElse(List())

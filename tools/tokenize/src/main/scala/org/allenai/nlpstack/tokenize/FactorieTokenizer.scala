@@ -15,12 +15,15 @@ class FactorieTokenizer extends Tokenizer {
   private val pipeline = DocumentAnnotatorPipeline(
     map = map.toMap,
     prereqs = Nil,
-    tokenizer.postAttrs)
+    tokenizer.postAttrs
+  )
 
   def tokenize(sentence: String): Seq[Token] = {
     val doc = pipeline.process(
       new FactorieDocument(
-        FactorieUtilities.replaceUnclosedTag(sentence)))
+        FactorieUtilities.replaceUnclosedTag(sentence)
+      )
+    )
 
     factorieFormat.read(doc)
   }
@@ -39,7 +42,8 @@ object FactorieTokenizer {
         val factorieToken = new FactorieToken(
           factorieDoc,
           token.offset,
-          token.offset + token.string.length)
+          token.offset + token.string.length
+        )
         factorieToken.attr += token
       }
       factorieDoc

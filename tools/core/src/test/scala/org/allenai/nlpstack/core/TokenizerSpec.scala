@@ -41,7 +41,8 @@ class TokenizerSpecTest extends UnitSpec {
     val tokens = Seq(
       new Token("large-scale", 0),
       new Token("large", 0),
-      new Token("scale", 6))
+      new Token("scale", 6)
+    )
 
     a[IllegalArgumentException] should be thrownBy {
       Tokenizer.originalText(tokens, 10)

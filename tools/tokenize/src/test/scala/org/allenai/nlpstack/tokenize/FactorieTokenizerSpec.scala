@@ -68,7 +68,8 @@ class FactorieTokenizerSpec extends TokenizerSpec {
        |be 68
        |against 71
        |that 79
-       |? 83""".stripMargin)
+       |? 83""".stripMargin
+  )
 
   val tokenizerToTest = new FactorieTokenizer
 }
