@@ -1,7 +1,9 @@
 import sbt._
-import org.allenai.sbt.core.CoreDependencies
+import org.allenai.plugins.CoreDependencies
 
 object Dependencies extends CoreDependencies {
+  val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2"
+
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
   val logbackVersion = "1.1.2"
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
@@ -15,8 +17,8 @@ object Dependencies extends CoreDependencies {
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3"
     exclude("net.sf.jwordnet", "jwnl"))
 
-  val factorie = ("cc.factorie" % "factorie" % "1.0"
-    exclude("com.typesafe.akka", "akka-actor_2.10")
+  val factorie = ("cc.factorie" %% "factorie" % "1.1"
+    exclude("com.typesafe.akka", "akka-actor_2.11")
     exclude("org.scala-lang", "scala-reflect")
     exclude("com.thoughtworks.paranamer", "paranamer")
     exclude("com.google.guava", "guava")
@@ -31,5 +33,5 @@ object Dependencies extends CoreDependencies {
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
-  val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
+  val apache2 = "Apache 2.0 " -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
 }

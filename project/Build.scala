@@ -1,6 +1,5 @@
-import org.allenai.sbt.core.CoreSettings
-import org.allenai.sbt.deploy._
-import org.allenai.sbt.webservice.WebServicePlugin
+import org.allenai.plugins._
+import org.allenai.plugins.archetypes._
 
 import Dependencies._
 import sbt.Keys._
@@ -27,20 +26,22 @@ object NlpstackBuild extends Build {
 
   val buildSettings =
     Revolver.settings ++
-    CoreSettings.publishToRepos.ai2.publicRepo ++
+    CoreRepositories.PublishTo.ai2Public ++
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
-      scalaVersion := "2.10.4",
+      scalaVersion := "2.11.4",
       scalacOptions ++= Seq("-Xlint", "-deprecation", "-feature"),
       conflictManager := ConflictManager.strict,
       resolvers ++= Seq(
               "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-              "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
+              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
+        "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
+        "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
+        "org.apache.commons" % "commons-compress" % "1.8",
         "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
         "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.3",
@@ -160,8 +161,9 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        "org.allenai" %% "polyparser-models" % "0.8",
-        ("org.allenai" %% "polyparser" % "2014.11.05-0"
+        //TODO(schmmd): these were erroneously deployed with crossPaths := true
+        "org.allenai" % "polyparser-models_2.10" % "0.8",
+        ("org.allenai" %% "polyparser" % "2014.11.20-0-SNAPSHOT"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,
