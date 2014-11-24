@@ -30,7 +30,7 @@ object NlpstackBuild extends Build {
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
-      scalaVersion := "2.11.4",
+      scalaVersion := "2.10.4",
       scalacOptions ++= Seq("-Xlint", "-deprecation", "-feature"),
       conflictManager := ConflictManager.strict,
       resolvers ++= Seq(
@@ -39,8 +39,10 @@ object NlpstackBuild extends Build {
               "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"),
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
+        /* 2.11 dependencies
         "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
         "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
+        */
         "org.apache.commons" % "commons-compress" % "1.8",
         "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
@@ -163,7 +165,7 @@ object NlpstackBuild extends Build {
       libraryDependencies ++= Seq(
         //TODO(schmmd): these were erroneously deployed with crossPaths := true
         "org.allenai" % "polyparser-models_2.10" % "0.8",
-        ("org.allenai" %% "polyparser" % "2014.11.20-0-SNAPSHOT"
+        ("org.allenai" %% "polyparser" % "2014.11.05-0"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,

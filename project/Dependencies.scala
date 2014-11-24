@@ -2,7 +2,9 @@ import sbt._
 import org.allenai.plugins.CoreDependencies
 
 object Dependencies extends CoreDependencies {
+  /** 2.11 dependency
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2"
+  */
 
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
   val logbackVersion = "1.1.2"
