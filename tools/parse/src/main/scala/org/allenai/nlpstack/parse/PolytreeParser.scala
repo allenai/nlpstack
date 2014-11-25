@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse
 
-import org.allenai.common.Resource.using
-import org.allenai.datastore.{Datastores, Datastore}
+import org.allenai.datastore.Datastores
 import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
@@ -14,8 +13,8 @@ class PolytreeParser extends DependencyParser with Datastores {
     polyparser.Parser.loadParser(publicFile("PolyParserModel.poly.json", 1).toString)
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
-    val polyTokens = tokens.map(t => PolyToken.create(t.string, t.postag))
-    val parseOption = parser.parse(PolySentence(NexusToken +: polyTokens))
+    // throw away postags
+    val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
 
     val nodes = for (
       parse <- parseOption.toList;
