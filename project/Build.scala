@@ -1,6 +1,5 @@
-import org.allenai.sbt.core.CoreSettings
-import org.allenai.sbt.deploy._
-import org.allenai.sbt.webservice.WebServicePlugin
+import org.allenai.plugins.CoreRepositories
+import org.allenai.plugins.archetypes._
 
 import Dependencies._
 import sbt.Keys._
@@ -26,8 +25,7 @@ object NlpstackBuild extends Build {
       cli)
 
   val buildSettings =
-    Revolver.settings ++
-    CoreSettings.publishToRepos.ai2.publicRepo ++
+    Revolver.settings ++ CoreRepositories.PublishTo.ai2Public ++
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
@@ -66,7 +64,7 @@ object NlpstackBuild extends Build {
   lazy val webapp = Project(
     id = "webapp",
     base = file("webapp"),
-    settings = buildSettings).enablePlugins(DeployPlugin).enablePlugins(WebServicePlugin)
+    settings = buildSettings).enablePlugins(WebappPlugin)
       .dependsOn(
         core,
         lemmatize,
@@ -80,7 +78,7 @@ object NlpstackBuild extends Build {
   lazy val cli = Project(
     id = "cli",
     base = file("cli"),
-    settings = buildSettings).enablePlugins(DeployPlugin) dependsOn(
+    settings = buildSettings) dependsOn(
       core,
       lemmatize,
       tokenize,
@@ -160,14 +158,14 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        "org.allenai" %% "polyparser-models" % "0.8",
-        ("org.allenai" %% "polyparser" % "2014.11.05-0"
+        ("org.allenai" %% "polyparser" % "2014.11.24-2"
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,
         factorieParseModel,
         factorieWordnet,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value))
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+        "org.allenai" %% "datastore" % "2014.11.24-0"))
   ) dependsOn(postag, tokenize, core)
 
   lazy val coref = Project(
