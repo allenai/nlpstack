@@ -1,5 +1,5 @@
 import sbt._
-import org.allenai.sbt.core.CoreDependencies
+import org.allenai.plugins.CoreDependencies
 
 object Dependencies extends CoreDependencies {
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
