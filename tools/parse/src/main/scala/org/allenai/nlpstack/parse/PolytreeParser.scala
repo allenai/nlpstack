@@ -10,7 +10,7 @@ import org.allenai.parsers.polyparser
 
 class PolytreeParser extends DependencyParser with Datastores {
   private val parser =
-    polyparser.Parser.loadParser(publicFile("PolyParserModel.poly.json", 1).toString)
+    polyparser.Parser.loadParser(publicFile("PolyParserModel.poly.json", 2).toString)
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // throw away postags
