@@ -45,6 +45,8 @@ object NlpstackBuild extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "org.scala-lang" % "scala-library" % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+        typesafeConfig,
+        allenAiCommon,
         slf4j,
         "commons-io" % "commons-io" % "2.4"))
 

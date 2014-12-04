@@ -1,0 +1,19 @@
+{
+  "name": "nlpstack-webapp",
+  "version": "0.0.0",
+  "description": "Webapp for shocasing nlpstack technologies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allenai/nlpstack"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/allenai/nlpstack/issues"
+  },
+  "homepage": "https://github.com/allenai/nlpstack"
+}
