@@ -5,7 +5,7 @@ import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
 import org.allenai.nlpstack.core.PostaggedToken
-import org.allenai.parsers.core.{NexusToken, Sentence => PolySentence, Token => PolyToken}
+import org.allenai.parsers.core.{ NexusToken, Sentence => PolySentence, Token => PolyToken }
 import org.allenai.parsers.polyparser
 
 class PolytreeParser extends DependencyParser with Datastores {
