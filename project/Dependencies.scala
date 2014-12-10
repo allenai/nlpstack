@@ -15,7 +15,7 @@ object Dependencies extends CoreDependencies {
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3"
     exclude("net.sf.jwordnet", "jwnl"))
 
-  val factorie = ("cc.factorie" % "factorie" % "1.0"
+  val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
     exclude("com.typesafe.akka", "akka-actor_2.10")
     exclude("org.scala-lang", "scala-reflect")
     exclude("com.thoughtworks.paranamer", "paranamer")
