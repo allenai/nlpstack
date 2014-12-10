@@ -30,7 +30,6 @@ object NlpstackBuild extends Build {
     Seq(
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
-      scalacOptions ++= Seq("-Xlint", "-deprecation", "-feature"),
       conflictManager := ConflictManager.strict,
       resolvers ++= Seq(
               "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
