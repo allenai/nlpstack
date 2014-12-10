@@ -32,9 +32,7 @@ object NlpstackBuild extends Build {
       scalaVersion := "2.10.4",
       conflictManager := ConflictManager.strict,
       resolvers ++= Seq(
-              "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
               "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-              "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
               "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"),
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
