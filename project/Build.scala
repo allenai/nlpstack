@@ -42,11 +42,8 @@ object NlpstackBuild extends Build {
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
         "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.3",
         "commons-codec" % "commons-codec" % "1.9",
-        "org.scala-lang" % "scala-library" % scalaVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         typesafeConfig,
         allenAiCommon,
-        slf4j,
         "commons-io" % "commons-io" % "2.4"))
 
   lazy val tools = Project(
