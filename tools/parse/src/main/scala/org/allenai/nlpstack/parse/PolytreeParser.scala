@@ -5,16 +5,26 @@ import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
 import org.allenai.nlpstack.core.PostaggedToken
-import org.allenai.parsers.core.{NexusToken, Sentence => PolySentence, Token => PolyToken}
-import org.allenai.parsers.polyparser
+import org.allenai.nlpstack.parse.poly.polyparser
 
-class PolytreeParser extends DependencyParser with Datastores {
+/** Wrapper for the polyparser using the DependencyParser interface.
+  *
+  * @param modelFile (optional) specify a local model file for the parser
+  */
+class PolytreeParser(modelFile: Option[String] = None) extends DependencyParser with Datastores {
   private val parser =
-    polyparser.Parser.loadParser(publicFile("PolyParserModel.poly.json", 2).toString)
+    polyparser.Parser.loadParser(
+      modelFile match {
+        case Some(filename) => filename
+        case None => publicFile("PolyParserModel.poly.json", 3).toString
+      }
+    )
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // throw away postags
     val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
+
+    parseOption foreach println
 
     val nodes = for (
       parse <- parseOption.toList;
