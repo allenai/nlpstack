@@ -16,15 +16,13 @@ class PolytreeParser(modelFile: Option[String] = None) extends DependencyParser 
     polyparser.Parser.loadParser(
       modelFile match {
         case Some(filename) => filename
-        case None => publicFile("PolyParserModel.poly.json", 3).toString
+        case None => publicFile("PolyParserModel.poly.json", 4).toString
       }
     )
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     // throw away postags
     val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
-
-    parseOption foreach println
 
     val nodes = for (
       parse <- parseOption.toList;

@@ -163,6 +163,7 @@ object NlpstackBuild extends Build {
         factorie,
         factorieParseModel,
         factorieWordnet,
+        scopt,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         "org.allenai" %% "datastore" % "2014.11.24-0"))
   ) dependsOn(postag, tokenize, core)
