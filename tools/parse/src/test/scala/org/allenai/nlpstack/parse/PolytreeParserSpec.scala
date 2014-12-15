@@ -6,11 +6,12 @@ import org.allenai.nlpstack.postag.defaultPostagger
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 
 class PolytreeParserSpec extends UnitSpec {
+
+  lazy val parser = new PolytreeParser
+
   private def parseTree(text: String) = {
     val tokens = defaultTokenizer.tokenize(text)
     val postaggedTokens = defaultPostagger.postagTokenized(tokens)
-
-    val parser = new PolytreeParser
     parser.dependencyGraphPostagged(postaggedTokens)
   }
 
