@@ -11,9 +11,9 @@ import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence, NexusToken
 
 object Parser {
 
-  def createDefaultParser(parserConfig: ParserConfiguration): TransitionParser = {
-    new RerankingTransitionParser(parserConfig)
-  }
+  //def createDefaultParser(parserConfig: ParserConfiguration): TransitionParser = {
+  //  new RerankingTransitionParser(parserConfig)
+  //}
 
   /** Loads a parser from its file.
     *
@@ -21,7 +21,7 @@ object Parser {
     * @return the parser initialized from the file
     */
   def loadParser(filename: String): TransitionParser = {
-    createDefaultParser(ParserConfiguration.load(filename))
+    TransitionParser.load(filename)
   }
 
   /** Loads a parser from an InputStream of a models file
@@ -29,7 +29,7 @@ object Parser {
     * @return the parser initialized from the input stream
     */
   def loadParser(inputStream: InputStream): TransitionParser = {
-    createDefaultParser(ParserConfiguration.loadFromStream(inputStream))
+    TransitionParser.loadFromStream(inputStream)
   }
 
   private val tokenizer = defaultTokenizer

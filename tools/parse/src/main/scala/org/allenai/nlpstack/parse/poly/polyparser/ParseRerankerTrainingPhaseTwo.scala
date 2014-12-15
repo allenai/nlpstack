@@ -41,16 +41,20 @@ object ParseRerankerTrainingPhaseTwo {
         "JsObject.")
     }
     val incompleteRerankingFunction = jsValue.convertTo[RerankingFunction]
-    val parserConfig: ParserConfiguration = ParserConfiguration.load(clArgs.parserConfigFilename)
-
     val linearModel = LinearModel.loadLinearModel(clArgs.coefficientFilename)
-    incompleteRerankingFunction match {
-      case linearRerankingFunction: LinearParseRerankingFunction =>
+
+    val parser: TransitionParser = TransitionParser.load(clArgs.parserConfigFilename)
+
+
+    (incompleteRerankingFunction, parser) match {
+      case (linearRerankingFunction: LinearParseRerankingFunction, rerankingParser: RerankingTransitionParser) =>
         val completeRerankingFunction: RerankingFunction =
           linearRerankingFunction.copy(linearModel = Some(linearModel))
-        val newParserConfig = parserConfig.copy(rerankingFunction = completeRerankingFunction,
+        val newParserConfig = rerankingParser.config.copy(
+          rerankingFunction = completeRerankingFunction,
           parsingNbestSize = 5)
-        ParserConfiguration.save(newParserConfig, clArgs.outputParserConfigFilename)
+        TransitionParser.save(RerankingTransitionParser(newParserConfig),
+          clArgs.outputParserConfigFilename)
       case _ =>
         println("WARNING: nothing written")
     }

@@ -15,7 +15,7 @@ private case class PRTPOCommandLine(nbestFilenames: String = "",
 object ParseRerankerTrainingPhaseOne {
 
   def main(args: Array[String]) {
-    val optionParser = new OptionParser[PRTPOCommandLine]("ParseFile") {
+    val optionParser = new OptionParser[PRTPOCommandLine]("ParseRerankerTrainingPhaseOne") {
       opt[String]('n', "nbestfiles") required () valueName ("<file>") action
         { (x, c) => c.copy(nbestFilenames = x) } text ("the file containing the nbest lists")
       opt[String]('g', "goldfile") required () valueName ("<file>") action

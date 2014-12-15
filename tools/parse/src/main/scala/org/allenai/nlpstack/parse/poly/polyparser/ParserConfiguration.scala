@@ -28,9 +28,10 @@ object ParserConfiguration {
     *
     * This will automatically append ".poly.json" to the specified prefix.
     *
-    * @param parserConfig the configuration to save
+    * param parserConfig the configuration to save
     * @param modelFilePrefix the file to save the configuration to
     */
+  /*
   def save(parserConfig: ParserConfiguration, modelFilePrefix: String): Unit = {
     val jsObj = parserConfig.toJson
     val writer = new PrintWriter(new File(modelFilePrefix + ".poly.json"))
@@ -40,12 +41,14 @@ object ParserConfiguration {
       writer.close()
     }
   }
+  */
 
   /** Load a parser configuration from a file.
     *
-    * @param filename the file contains the serialized parser configuration
+    * param filename the file contains the serialized parser configuration
     * @return the initialized parser configuration
     */
+  /*
   def load(filename: String): ParserConfiguration = {
     using(new File(filename).toURI.toURL.openStream()) { loadFromStream }
   }
@@ -71,4 +74,5 @@ object ParserConfiguration {
     }
     jsVal.convertTo[ParserConfiguration]
   }
+  */
 }

@@ -9,14 +9,19 @@ import org.allenai.nlpstack.parse.poly.polyparser
 
 /** Wrapper for the polyparser using the DependencyParser interface.
   *
-  * @param modelFile (optional) specify a local model file for the parser
+  * @param modelFile filename for the parser model
+  * @param modelVersion version of the parser model
+  * @param useLocalFile if false, then the model file is found on the datastore
   */
-class PolytreeParser(modelFile: Option[String] = None) extends DependencyParser with Datastores {
-  private val parser =
+class PolytreeParser(modelFile: String = "PolyParserModel.poly.json",
+  modelVersion: Int = 5, useLocalFile: Boolean = false) extends DependencyParser with Datastores {
+
+  val parser =
     polyparser.Parser.loadParser(
-      modelFile match {
-        case Some(filename) => filename
-        case None => publicFile("PolyParserModel.poly.json", 4).toString
+      if(useLocalFile) {
+        modelFile
+      } else {
+        publicFile(modelFile, modelVersion).toString
       }
     )
 

@@ -60,18 +60,22 @@ object NbestParser {
           ConllX(true), clArgs.dataSource)
       })
 
-    val origParserConfig: ParserConfiguration = ParserConfiguration.load(clArgs.configFilename)
-    val parserConfig = origParserConfig.copy(parsingNbestSize = clArgs.nbestSize)
-    val baseParser: NbestParser = new NbestParser(parserConfig)
-
-    val candidateParses: Iterator[ParsePool] = {
-      sentenceSource.sentenceIterator map {
-        sentence => ParsePool(baseParser.parse(sentence, Set()) map { case (parse, cost) =>
-          (PolytreeParse.arcInverterStanford(parse), cost)
-        })
-      }
+    val parser: TransitionParser = TransitionParser.load(clArgs.configFilename)
+    parser match {
+      case rerankingParser: RerankingTransitionParser =>
+        val parserConfig = rerankingParser.config.copy(parsingNbestSize = clArgs.nbestSize)
+        val baseParser: NbestParser = new NbestParser(parserConfig)
+        val candidateParses: Iterator[ParsePool] = {
+          sentenceSource.sentenceIterator map {
+            sentence => ParsePool(baseParser.parse(sentence, Set()) map { case (parse, cost) =>
+              (PolytreeParse.arcInverterStanford(parse), cost)
+            })
+          }
+        }
+        FileBasedParsePoolSource.writePools(candidateParses, clArgs.outputFilename)
+      case _ =>
+        println("Cannot do n-best parsing without RerankingTransitionParser")
     }
-    FileBasedParsePoolSource.writePools(candidateParses, clArgs.outputFilename)
   }
 }
 

@@ -106,9 +106,10 @@ object Training {
     val parsingNbestSize = 5
     val parserConfig = ParserConfiguration(parsingCostFunction,
       BaseCostRerankingFunction, parsingNbestSize)
-    ParserConfiguration.save(parserConfig, config.outputPath)
+    val parser = RerankingTransitionParser(parserConfig)
+    TransitionParser.save(parser, config.outputPath)
 
-    ParseFile.fullParseEvaluation(parserConfig, config.testPath, ConllX(true),
+    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
       config.dataSource, ParseFile.defaultOracleNbest)
   }
 }

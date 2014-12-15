@@ -8,10 +8,10 @@ import org.allenai.nlpstack.parse.poly.fsm._
   *
   * @param config configuration object for the parser
   */
-class RerankingTransitionParser(val config: ParserConfiguration) extends TransitionParser {
+case class RerankingTransitionParser(val config: ParserConfiguration) extends TransitionParser {
 
-  val baseParser: NbestSearch = new NbestSearch(config.parsingCostFunction)
-  val reranker: Reranker = new Reranker(config.rerankingFunction)
+  @transient val baseParser: NbestSearch = new NbestSearch(config.parsingCostFunction)
+  @transient val reranker: Reranker = new Reranker(config.rerankingFunction)
 
   def parse(sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set()): Option[PolytreeParse] = {
