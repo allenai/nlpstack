@@ -16,8 +16,7 @@ trait ToolService extends HttpService with SprayJsonSupport {
     TokenizerTool,
     PostaggerTool,
     ChunkerTool,
-    DependencyParserTool,
-    CorefTool
+    DependencyParserTool
   )
 
   // format: OFF

@@ -2,6 +2,8 @@ import sbt._
 import org.allenai.plugins.CoreDependencies
 
 object Dependencies extends CoreDependencies {
+  val datastore = "org.allenai" %% "datastore" % "2014.12.03-1"
+
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.7"
   val logbackVersion = "1.1.2"
   val logbackCore = "ch.qos.logback" % "logback-core" % logbackVersion
@@ -21,13 +23,7 @@ object Dependencies extends CoreDependencies {
     exclude("com.thoughtworks.paranamer", "paranamer")
     exclude("com.google.guava", "guava")
     exclude("junit", "junit"))
-  val factoriePosModel = "cc.factorie.app.nlp.pos" % "OntonotesForwardPosTaggerModel" % "1.0"
-  val factorieParseModel = "cc.factorie.app.nlp.parse" % "OntonotesTransitionBasedParserModel" % "1.0"
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
-  val factorieLexicon = "cc.factorie.app.nlp" % "lexicon" % "1.0"
-  val factorieCorefModel = "cc.factorie.app.nlp.coref" % "ParseStructuredCorefModel" % "1.0"
-  val factorieNerModel = "cc.factorie.app.nlp.ner" % "ConllChainNerModel" % "1.0"
-  val factoriePhraseModel = "cc.factorie.app.nlp.phrase" % "OntonotesPhraseEntityTypeLabelerModel" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 

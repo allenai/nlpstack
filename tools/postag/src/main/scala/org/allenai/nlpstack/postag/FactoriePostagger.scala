@@ -3,6 +3,7 @@ package org.allenai.nlpstack.postag
 import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.postag.FactoriePostagger.factorieFormat
 import org.allenai.nlpstack.tokenize.FactorieTokenizer
+import org.allenai.datastore.Datastore
 
 import cc.factorie.app.nlp.{ Document => FactorieDocument }
 import cc.factorie.app.nlp.pos.OntonotesForwardPosTagger
@@ -26,7 +27,12 @@ class FactoriePostagger extends Postagger {
 }
 
 object FactoriePostagger {
-  private val tagger = OntonotesForwardPosTagger
+  private val tagger =
+    new OntonotesForwardPosTagger(
+      Datastore.filePath(
+        "cc.factorie.app.nlp.pos",
+        "OntonotesForwardPosTagger.factorie",
+        1).toUri.toURL)
 
   object factorieFormat extends Format[Seq[PostaggedToken], FactorieDocument] {
     override def read(from: FactorieDocument): Seq[PostaggedToken] =

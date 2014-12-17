@@ -41,7 +41,8 @@ object NlpstackBuild extends Build {
         typesafeConfig,
         allenAiCommon,
         "commons-io" % "commons-io" % "2.4",
-        "org.apache.commons" % "commons-compress" % "1.8"))
+        "org.apache.commons" % "commons-compress" % "1.8",
+        datastore))
 
   lazy val tools = Project(
     id = "tools-root",
@@ -53,8 +54,7 @@ object NlpstackBuild extends Build {
       chunk,
       parse,
       segment,
-      core,
-      coref)
+      core)
 
   lazy val webapp = Project(
     id = "webapp",
@@ -67,8 +67,7 @@ object NlpstackBuild extends Build {
         postag,
         chunk,
         parse,
-        segment,
-        coref)
+        segment)
 
   lazy val cli = Project(
     id = "cli",
@@ -80,8 +79,7 @@ object NlpstackBuild extends Build {
       postag,
       chunk,
       parse,
-      segment,
-      coref)
+      segment)
 
   lazy val core = Project(
     id = "tools-core",
@@ -126,8 +124,8 @@ object NlpstackBuild extends Build {
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         factorie,
-        factoriePosModel,
         opennlp,
+        datastore,
         "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5",
         "org.scala-lang" % "scala-reflect" % scalaVersion.value))
   ) dependsOn(tokenize, core)
@@ -157,23 +155,7 @@ object NlpstackBuild extends Build {
           exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
           exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,
-        factorieParseModel,
-        factorieWordnet,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-        "org.allenai" %% "datastore" % "2014.11.24-0"))
+        datastore))
   ) dependsOn(postag, tokenize, core)
-
-  lazy val coref = Project(
-    id = "tools-coref",
-    base = file("tools/coref"),
-    settings = buildSettings ++ Seq(
-      name := "nlpstack-coref",
-      licenses := Seq(apache2),
-      libraryDependencies ++= Seq(
-        factorie,
-        factorieCorefModel,
-        factorieNerModel,
-        factorieLexicon,
-        factoriePhraseModel))
-  ) dependsOn(core, parse)
 }

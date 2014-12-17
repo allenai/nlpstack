@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.parse
 
+import org.allenai.datastore.Datastore
 import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
@@ -13,15 +14,28 @@ class FactorieParser extends DependencyParser {
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
     val factorieDoc = FactoriePostagger.factorieFormat.write(tokens)
 
-    WordNetLemmatizer.process(factorieDoc)
+    FactorieParser.wordNetLemmatizer.process(factorieDoc)
     val sentence = new FactorieSentence(factorieDoc.asSection, 0, factorieDoc.tokenCount)
-    OntonotesTransitionBasedParser.process(sentence)
+    FactorieParser.parser.process(sentence)
 
     FactorieParser.factorieFormat.read(factorieDoc)._2
   }
 }
 
 object FactorieParser {
+  val wordNetLemmatizer =
+    new WordNetLemmatizer(
+      Datastore.directoryPath(
+        "cc.factorie.app.nlp",
+        "WordNet",
+        1).toFile)
+  val parser =
+    new OntonotesTransitionBasedParser(
+      Datastore.filePath(
+        "cc.factorie.app.nlp.parse",
+        "OntonotesTransitionBasedParser.factorie",
+        1).toUri.toURL)
+
   object factorieFormat extends Format[(Seq[PostaggedToken], DependencyGraph), FactorieDocument] {
     override def read(from: FactorieDocument): (Seq[PostaggedToken], DependencyGraph) = {
       val nodes = from.tokens.map(t =>
