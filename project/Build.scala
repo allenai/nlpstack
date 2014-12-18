@@ -151,11 +151,9 @@ object NlpstackBuild extends Build {
       name := "nlpstack-parse",
       licenses := Seq(apache2),
       libraryDependencies ++= Seq(
-        ("org.allenai" %% "polyparser" % "2014.12.04-1"
-          exclude("org.allenai.nlpstack", "nlpstack-postag_2.10")
-          exclude("org.allenai.nlpstack", "nlpstack-tokenize_2.10")),
         factorie,
+        scopt,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-        datastore))
+        "org.allenai" %% "datastore" % "2014.11.24-0"))
   ) dependsOn(postag, tokenize, core)
 }
