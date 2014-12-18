@@ -1,5 +1,4 @@
 import com.typesafe.sbt.SbtPgp.autoImportImpl._
-import org.allenai.plugins.CoreRepositories
 import org.allenai.plugins.CoreSettingsPlugin.autoImport._
 import org.allenai.plugins.archetypes._
 
