@@ -31,7 +31,6 @@ object NlpstackBuild extends Build {
       organization := "org.allenai.nlpstack",
       scalaVersion := "2.10.4",
       conflictManager := ConflictManager.strict,
-      resolvers += "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
       dependencyOverrides ++= Set(
         "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
