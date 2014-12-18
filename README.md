@@ -13,7 +13,7 @@ is a dependency string format and a chunked sentence string format.
 
 ## Getting started
 
-2.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
+1.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
 
     ```scala
     libraryDependencies += "org.allenai.nlpstack" %% "nlpstack-core" % "0.x"
@@ -29,7 +29,7 @@ is a dependency string format and a chunked sentence string format.
     libraryDependencies += nlpstackModule("parse")
     ```
 
-3.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
+2.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
 
     ```scala
     import org.allenai.nlpstack.tokenize.defaultTokenizer
