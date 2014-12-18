@@ -1,4 +1,6 @@
+import com.typesafe.sbt.SbtPgp.autoImportImpl._
 import org.allenai.plugins.CoreRepositories
+import org.allenai.plugins.CoreSettingsPlugin.autoImport._
 import org.allenai.plugins.archetypes._
 
 import Dependencies._
@@ -25,13 +27,31 @@ object NlpstackBuild extends Build {
       cli)
 
   val buildSettings =
-    Revolver.settings ++ CoreRepositories.PublishTo.ai2Public ++
+    Revolver.settings ++
     releaseSettings ++
     Seq(
       organization := "org.allenai.nlpstack",
-      scalaVersion := "2.10.4",
+      crossScalaVersions := Seq("2.10.4"),
+      scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
+      publishMavenStyle := true,
+      publishArtifact in Test := false,
+      pomIncludeRepository := { _ => false },
+      licenses := Seq("Apache 2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+      homepage := Some(url("https://github.com/allenai/nlpstack")),
+      scmInfo := Some(ScmInfo(
+        url("https://github.com/allenai/nlpstack"),
+        "https://github.com/allenai/nlpstack.git")),
       conflictManager := ConflictManager.strict,
       libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
+      ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
+      pomExtra :=
+        <developers>
+          <developer>
+            <id>allenai-dev-role</id>
+            <name>Paul Allen Institute for Artificial Intelligence</name>
+            <email>dev-role@allenai.org</email>
+          </developer>
+        </developers>,
       dependencyOverrides ++= Set(
         "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
@@ -41,7 +61,8 @@ object NlpstackBuild extends Build {
         allenAiCommon,
         "commons-io" % "commons-io" % "2.4",
         "org.apache.commons" % "commons-compress" % "1.8",
-        datastore))
+        datastore),
+      PublishTo.sonatype)
 
   lazy val tools = Project(
     id = "tools-root",
@@ -90,7 +111,7 @@ object NlpstackBuild extends Build {
     base = file("tools/lemmatize"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-lemmatize",
-      licenses := Seq(
+      licenses ++= Seq(
         "Academic License (for original lex files)" -> url("http://www.informatics.sussex.ac.uk/research/groups/nlp/carroll/morph.tar.gz"),
         "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")),
       libraryDependencies ++= Seq(clear,
@@ -102,7 +123,6 @@ object NlpstackBuild extends Build {
     base = file("tools/tokenize"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
-      licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie, commonsIo % "test"))
   ) dependsOn(core)
 
@@ -111,7 +131,6 @@ object NlpstackBuild extends Build {
     base = file("tools/segment"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
-      licenses := Seq(apache2),
       libraryDependencies ++= Seq(factorie, commonsIo % "test"))
   ) dependsOn(core)
 
@@ -120,7 +139,6 @@ object NlpstackBuild extends Build {
     base = file("tools/postag"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-postag",
-      licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         factorie,
         opennlp,
@@ -134,7 +152,6 @@ object NlpstackBuild extends Build {
     base = file("tools/chunk"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-chunk",
-      licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         opennlp,
         "edu.washington.cs.knowitall" % "opennlp-chunk-models" % "1.5",
@@ -148,7 +165,6 @@ object NlpstackBuild extends Build {
     base = file("tools/parse"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-parse",
-      licenses := Seq(apache2),
       libraryDependencies ++= Seq(
         factorie,
         scopt,
