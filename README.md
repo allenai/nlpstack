@@ -13,19 +13,6 @@ is a dependency string format and a chunked sentence string format.
 
 ## Getting started
 
-1.  NLPStack uses Factorie for a lot of things. Unfortunately, Factorie is not on Maven Central. To make it available to your project, you have to add it to your resolvers with this line:
-
-    ```scala
-    "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"
-    ```
-    The complete list of resolvers might look like this:
-    ```scala
-    resolvers ++= Seq(
-      "AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
-      "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
-      "IESL Releases" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public",
-      Resolver.sonatypeRepo("snapshots"))
-    ```
 2.  Add NLPStack to your dependencies. NLPStack comes as a collection of multiple tools (see below). To declare dependencies, you can use this code in your Build.scala file:
 
     ```scala
@@ -41,8 +28,7 @@ is a dependency string format and a chunked sentence string format.
 
     libraryDependencies += nlpstackModule("parse")
     ```
-    To find out what the latest version is, go [here](http://utility.allenai.org:8081/nexus/content/repositories/releases/org/allenai/nlpstack/nlpstack-core_2.10/), and use the latest one there.
-    
+
 3.  Start using NLPStack. Here is a quick code snippet that parses a sentence:
 
     ```scala
