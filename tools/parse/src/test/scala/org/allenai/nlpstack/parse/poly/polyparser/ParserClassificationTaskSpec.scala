@@ -60,9 +60,10 @@ class ParserClassificationTaskSpec extends UnitSpec {
     taskIdentifier.toJson.convertTo[TaskIdentifier] shouldBe taskIdentifier
   }
 
+
   "Calling TaskConjunctionIdentifier's apply" should "return the proper conjunction" in {
     val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(
-      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)))
+      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)), None)
     taskIdentifier(state1) shouldBe
       Some(TaskConjunction(List(ApplicabilitySignature(true, false, true, true),
         StateRefProperty(BufferRef(0), 'cpos, "prep"))))
@@ -70,7 +71,8 @@ class ParserClassificationTaskSpec extends UnitSpec {
 
   "Serializing a TaskConjunctionIdentifier" should "preserve it" in {
     val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(
-      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)))
+      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)), None)
     taskIdentifier.toJson.convertTo[TaskIdentifier] shouldBe taskIdentifier
   }
+
 }

@@ -100,42 +100,6 @@ abstract class FSMTrainingVectorSource(taskIdentifier: TaskIdentifier,
         }
     }
   }
-
-  /*
-  protected def generateTasks(marbleBlock: MarbleBlock): List[ClassificationTask] = {
-    //TODO: shouldn't this be sculpture?
-    transitionSystem.guidedCostFunction(marbleBlock) match {
-      case Some(costFunction) =>
-        val search = new GreedySearch(costFunction)
-        val initialState = transitionSystem.initialState(marbleBlock)
-        initialState flatMap { initState => search.find(initState, Set()) } match {
-          case Some(walk) => generateTasksHelper(walk.steps map {
-            _.transition
-          },
-            initialState, List()).reverse
-          case None => List()
-        }
-      case None => List()
-    }
-  }
-
-  @tailrec private def generateTasksHelper(transitions: Seq[StateTransition],
-    initState: Option[State],
-    tasksSoFar: List[ClassificationTask]): List[ClassificationTask] = {
-
-    initState match {
-      case None => tasksSoFar
-      case Some(initialState) =>
-        val task = taskIdentifier(initialState)
-        if (transitions.isEmpty) {
-          tasksSoFar
-        } else {
-          generateTasksHelper(transitions.tail, (transitions.head)(initState), //TODO: task.get?
-            task.get +: tasksSoFar)
-        }
-    }
-  }
-  */
 }
 
 object FSMTrainingVectorSource {

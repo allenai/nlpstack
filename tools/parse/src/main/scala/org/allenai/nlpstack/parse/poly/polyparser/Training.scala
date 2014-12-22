@@ -72,16 +72,15 @@ object Training {
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
     val taskIdentifier: TaskIdentifier = {
-      val taskTreeQualifyingCount = 5000
-      val taskTree = TaskTree.learnTaskTree(
-        Vector(
+      val taskActivationThreshold = 5000
+      TaskConjunctionIdentifier.learn(
+        List(
           ApplicabilitySignatureIdentifier,
           StateRefPropertyIdentifier(BufferRef(0), 'factorieCpos),
           StateRefPropertyIdentifier(StackRef(0), 'factorieCpos),
           StateRefPropertyIdentifier(BufferRef(0), 'factoriePos)),
-        new GoldParseSource(trainingSource, transitionSystem).getStateIterator,
-        taskTreeQualifyingCount)
-      TaskTreeIdentifier(taskTree)
+        new GoldParseSource(trainingSource, transitionSystem),
+        taskActivationThreshold)
     }
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =

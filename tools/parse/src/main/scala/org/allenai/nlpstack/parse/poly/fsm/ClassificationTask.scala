@@ -69,6 +69,10 @@ case class TaskConjunction(val tasks: Seq[ClassificationTask]) extends Classific
   }
 }
 
+object TaskConjunction {
+  implicit val jsFormat = jsonFormat1(TaskConjunction.apply)
+}
+
 /** A TaskIdentifier identifies the ClassificationTask required to determine the next transition
   * from a given parser state.
   */
@@ -89,7 +93,7 @@ object TaskIdentifier {
       jsonFormat2(StateRefPropertyIdentifier.apply).pack("type" -> "StateRefPropertyIdentifier")
 
     implicit val taskConjunctionIdentifierFormat =
-      jsonFormat1(TaskConjunctionIdentifier.apply).pack("type" -> "TaskConjunctionIdentifier")
+      jsonFormat2(TaskConjunctionIdentifier.apply).pack("type" -> "TaskConjunctionIdentifier")
 
     implicit val taskTreeIdentifierFormat =
       jsonFormat1(TaskTreeIdentifier.apply).pack("type" -> "TaskTreeIdentifier")
@@ -122,19 +126,76 @@ object TaskIdentifier {
   * @param taskIdentifiers the task identifiers you want to conjoin
   */
 case class TaskConjunctionIdentifier(
-    taskIdentifiers: List[TaskIdentifier]) extends TaskIdentifier {
+    taskIdentifiers: List[TaskIdentifier],
+    activeTaskConjuncts: Option[Set[ClassificationTask]]) extends TaskIdentifier {
 
   override def apply(state: State): Option[ClassificationTask] = {
-    val optTasks: Seq[Option[ClassificationTask]] = taskIdentifiers map {
-      case taskIdentifier =>
-        taskIdentifier(state)
-    }
+    val optTasks: Seq[Option[ClassificationTask]] = taskIdentifiers map { _(state) }
     if (optTasks.contains(None)) {
       None
     } else {
-      Some(TaskConjunction(optTasks map { optTask => optTask.get }))
+      val tasks: Seq[ClassificationTask] = optTasks.flatten
+      val possibleTaskConjuncts = (0 to tasks.size) map { i => TaskConjunction(tasks.take(i)) }
+      activeTaskConjuncts match {
+        case Some(activeTConjuncts) =>
+          (possibleTaskConjuncts filter { conjunct =>
+            activeTConjuncts.contains(conjunct)
+          }).lastOption
+        case None =>
+          possibleTaskConjuncts.lastOption
+      }
     }
   }
+}
+
+object TaskConjunctionIdentifier {
+
+  def learn(taskIdentifiers: List[TaskIdentifier], goldStates: StateSource,
+    qualifyingCount: Int): TaskConjunctionIdentifier = {
+
+    val taskConjunctionIdentifiers: Seq[TaskConjunctionIdentifier] =
+      (0 to taskIdentifiers.size) map { i =>
+        TaskConjunctionIdentifier(taskIdentifiers.take(i), None)
+      }
+
+    // get task tree node histogram: each gold parser state corresponds to a node of the full task
+    // tree; in the following lines, we want to count how many parser states correspond to each
+    // task tree node, then we filter out the tasks that do not have a qualifying number of
+    // corresponding gold states
+    val classificationTasks: Iterator[ClassificationTask] = for {
+      parserState <- goldStates.getStateIterator
+      taskConjunctionIdentifier <- taskConjunctionIdentifiers
+    } yield (taskConjunctionIdentifier(parserState).get)
+    var taskCounts: Map[ClassificationTask, Int] = Map[ClassificationTask, Int]()
+    classificationTasks foreach { task =>
+      taskCounts = taskCounts.updated(task, 1 + taskCounts.getOrElse(task, 0))
+    }
+    //val taskCounts: Map[ClassificationTask, Int] = classificationTasks.toList groupBy
+    //  { x => x } mapValues { x => x.size }
+    val filteredTasks: Set[ClassificationTask] = (taskCounts filter
+      { case (task, count) => (count >= qualifyingCount) }).keySet
+
+    val activatedTasks: Iterator[ClassificationTask] = goldStates.getStateIterator map { state =>
+      val stateTasks: Seq[ClassificationTask] = taskConjunctionIdentifiers flatMap { identifier =>
+        identifier(state)
+      }
+      val filteredStateTasks = stateTasks filter { task => filteredTasks.contains(task) }
+      filteredStateTasks.last
+    }
+    var activatedTaskCounts: Map[ClassificationTask, Int] = Map[ClassificationTask, Int]()
+    activatedTasks foreach { task =>
+      activatedTaskCounts = activatedTaskCounts.updated(task, 1 + activatedTaskCounts.getOrElse(task, 0))
+    }
+    //val activatedTaskCounts: Map[ClassificationTask, Int] = activatedTasks.toList groupBy
+    //  { x => x } mapValues { x => x.size }
+    val finalTasks: Set[ClassificationTask] = ((activatedTaskCounts filter
+      { case (task, count) =>
+        (count >= qualifyingCount)
+      }).keySet) union Set(TaskConjunction(Seq()))
+
+    TaskConjunctionIdentifier(taskIdentifiers, Some(finalTasks))
+  }
+
 }
 
 /** A TaskTree can be viewed as a tree-structured TaskConjunctionIdentifier. Recall that a
@@ -145,7 +206,7 @@ case class TaskConjunctionIdentifier(
   * (i.e. TaskConjunction(List())). Otherwise, it will compute the ClassificationTask returned
   * by applying the TaskIdentifier to the state. If this task is not contained in its children
   * map, then it will associate the state with TaskConjunction(List(ident)). Otherwise it will
-  * recursive call the child TaskTree on the state, and accumulate a TaskConjunction.
+  * recursively call the child TaskTree on the state, and accumulate a TaskConjunction.
   *
   * @param baseIdentifier the (optional) TaskIdentifier associated with this tree
   * @param children a mapping from ClassificationTasks (in the range of `baseIdentifier`) to
@@ -170,11 +231,9 @@ case class TaskTree(baseIdentifier: Option[TaskIdentifier],
     *
     * @param state the parser state of interest for .identifyTaskConjunction
     * @return the constructor argument for TaskConjunction
-    * ß    *
     * TODO: double-check correctness
     */
-  @tailrec
-  private final def getTaskList(state: State,
+  @tailrec private final def getTaskList(state: State,
     tasksSoFar: Seq[ClassificationTask]): Seq[ClassificationTask] = {
 
     baseIdentifier match {
@@ -242,6 +301,7 @@ object TaskTree {
     taskTrees.getOrElse(List(), new TaskTree(None, List()))
   }
 }
+
 
 /** This is a wrapper for TaskTree that implements the TaskIdentifier interface.
   *
