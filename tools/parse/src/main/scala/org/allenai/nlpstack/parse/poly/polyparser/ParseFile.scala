@@ -87,13 +87,20 @@ object ParseFile {
 
     parser match {
       case rerankingParser: RerankingTransitionParser =>
+        MistakeAnalyzer(rerankingParser.config.parsingCostFunction, parseSource,
+          rerankingParser.config.parsingCostFunction.transitionSystem).enumerate()
+      case _ =>
+        println("Must use RerankingTransitionParser to do oracle parsing.")
+    }
+    parser match {
+      case rerankingParser: RerankingTransitionParser =>
         val oracleRerankingFunction: RerankingFunction =
           OracleRerankingFunction(parseSource.parseIterator)
         val oracleParserConfig = ParserConfiguration(rerankingParser.config.parsingCostFunction,
           //parserConfig.labelingCostFunction,
           oracleRerankingFunction, oracleNbestSize)
-        val parser = RerankingTransitionParser(oracleParserConfig)
-        parseTestSet(parser, parseSource)
+        val oracleParser = RerankingTransitionParser(oracleParserConfig)
+        parseTestSet(oracleParser, parseSource)
       case _ =>
         println("Must use RerankingTransitionParser to do oracle parsing.")
     }

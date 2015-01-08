@@ -27,6 +27,10 @@ case class FeatureVectors(featureVectors: IndexedSeq[FeatureVector]) {
   def numAttributes: Int = {
     featureVectors.headOption map { _.numAttributes } getOrElse { 0 }
   }
+
+  @transient lazy val allLabels: Seq[Int] = {
+    (featureVectors flatMap { fv => fv.label }).toSet.toSeq
+  }
 }
 
 private object FeatureVectors {

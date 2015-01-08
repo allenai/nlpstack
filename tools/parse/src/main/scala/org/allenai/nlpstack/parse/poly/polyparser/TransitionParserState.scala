@@ -64,7 +64,7 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
 
   override def toString: String = {
     (stack map (sentence.tokens(_).word.name)).reverse.mkString(" ") + " ||| " +
-      sentence.tokens.lift(bufferPosition)
+      (sentence.tokens.lift(bufferPosition) map { _.word.name }).getOrElse("END")
   }
 
   def asSculpture: Option[Sculpture] = {

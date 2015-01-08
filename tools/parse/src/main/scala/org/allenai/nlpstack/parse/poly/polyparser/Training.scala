@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.decisiontree.{OneVersusAllTrainer, ProbabilisticClassifierTrainer, RandomForestTrainer, DecisionTreeTrainer}
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
-import org.allenai.nlpstack.parse.poly.polyparser.labeler.ParseLabelerTransitionSystem
 import scopt.OptionParser
 
 private case class ParserTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
@@ -68,9 +68,11 @@ object Training {
       }
     }
 
-    println("Training task tree.")
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
+
+    /*
+    println("Training task tree.")
     val taskIdentifier: TaskIdentifier = {
       val taskActivationThreshold = 5000
       TaskConjunctionIdentifier.learn(
@@ -82,6 +84,8 @@ object Training {
         new GoldParseSource(trainingSource, transitionSystem),
         taskActivationThreshold)
     }
+    */
+    val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
     //  config.baseModelPath match {
@@ -93,22 +97,39 @@ object Training {
     val baseCostFunction = None // TODO: fix this
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
+    println(s"Number of training vectors: ${trainingVectorSource.getVectorIterator.size}")
+    var transitionHistogram = Map[StateTransition, Int]()
+    trainingVectorSource.getVectorIterator foreach { case trainingVector =>
+      transitionHistogram = transitionHistogram.updated(trainingVector.transition,
+        1 + transitionHistogram.getOrElse(trainingVector.transition, 0))
+    }
+    val transitionCounts = transitionHistogram.toSeq sortBy { case (transition, count) => count }
+    transitionCounts foreach { case (transition, count) =>
+      println(s"$transition: $count")
+    }
+
+    //val classifierTrainer: ProbabilisticClassifierTrainer = new RandomForestTrainer(0, 10, 100)
+    //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
+    val classifierTrainer: ProbabilisticClassifierTrainer =
+      new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val parsingCostFunction: StateCostFunction = {
       val trainer =
-        new DTCostFunctionTrainer(taskIdentifier, transitionSystem, trainingVectorSource,
+        new DTCostFunctionTrainer(classifierTrainer,
+          taskIdentifier, transitionSystem, trainingVectorSource,
           baseCostFunction)
       trainer.costFunction
     }
 
-
-    println("Saving models.")
     val parsingNbestSize = 5
     val parserConfig = ParserConfiguration(parsingCostFunction,
       BaseCostRerankingFunction, parsingNbestSize)
     val parser = RerankingTransitionParser(parserConfig)
-    TransitionParser.save(parser, config.outputPath)
 
     ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
-      config.dataSource, ParseFile.defaultOracleNbest)
+      config.dataSource, 5)
+
+    println("Saving models.")
+    TransitionParser.save(parser, config.outputPath)
+
   }
 }

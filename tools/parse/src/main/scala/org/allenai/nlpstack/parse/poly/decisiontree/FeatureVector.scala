@@ -33,12 +33,16 @@ sealed trait FeatureVector {
   /** number of attributes */
   def numAttributes: Int
 
+  def nonzeroAttributes: Iterator[Int]
+
   /** gets value of attribute
     *
     * @param index attribute index
     * @return attribute value
     */
   def getAttribute(index: Int): Int
+
+  def relabel(label: Int): FeatureVector
 }
 
 /** Instance with sparse binary attributes
@@ -58,6 +62,14 @@ case class SparseVector(override val label: Option[Int], override val numAttribu
       0
     }
   }
+
+  override def nonzeroAttributes: Iterator[Int] = {
+    trueAttributes.iterator
+  }
+
+  override def relabel(newLabel: Int): FeatureVector = {
+    copy(label = Some(newLabel))
+  }
 }
 
 /** Instance with arbitrary integral attributes
@@ -73,5 +85,11 @@ case class DenseVector(override val label: Option[Int],
   override def getAttribute(i: Int): Int = {
     require(i < numAttributes)
     attributes(i)
+  }
+
+  override def nonzeroAttributes: Iterator[Int] = ???
+
+  override def relabel(newLabel: Int): FeatureVector = {
+    copy(label = Some(newLabel))
   }
 }

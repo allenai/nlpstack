@@ -365,7 +365,8 @@ object PolytreeParse {
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
     val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
-      row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase))).toMap
+      row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase)
+      )).toMap
     //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
     //  row(breadcrumbPos).toInt), Symbol(
     //    WordClusters.ptbToUniversalPosTag(row(iFinePos).toUpperCase)))).toMap

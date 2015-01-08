@@ -1,23 +1,18 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import org.allenai.nlpstack.parse.poly.decisiontree.{
-  DecisionTree,
-  DecisionTreeTrainer,
-  SparseVector,
-  FeatureVector => DTFeatureVector,
-  FeatureVectors => DTFeatureVectors
-}
+import org.allenai.nlpstack.parse.poly.decisiontree.{FeatureVector => DTFeatureVector, FeatureVectors => DTFeatureVectors, _}
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
 import scala.collection.immutable.HashSet
 
-/** A DecisionTreeClassifier wraps the [[org.allenai.nlpstack.parse.poly.decisiontree]] implementation
+/** An EmbeddedClassifier wraps a
+  * [[org.allenai.nlpstack.parse.poly.decisiontree.ProbabilisticClassifier]] implementation
   * to provide a classifier interface that maps Transitions to probabilities.
   *
-  * @param decisionTree the underlying decision tree
+  * @param classifier the underlying decision tree
   * @param featureNameMap a list of the feature indices followed by their names
   */
-case class DecisionTreeClassifier(decisionTree: DecisionTree,
+case class EmbeddedClassifier(classifier: ProbabilisticClassifier,
     transitions: IndexedSeq[StateTransition],
     featureNameMap: Seq[(Int, FeatureName)],
     numFeatures: Int) extends TransitionClassifier {
@@ -29,11 +24,11 @@ case class DecisionTreeClassifier(decisionTree: DecisionTree,
     }).toMap
 
   override def classify(featureVector: FeatureVector): StateTransition = {
-    transitions(decisionTree.classify(createDTFeatureVector(featureVector)))
+    transitions(classifier.classify(createDTFeatureVector(featureVector)))
   }
 
   override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Double] = {
-    val dist: Map[Int, Double] = decisionTree.distributionForInstance(
+    val dist: Map[Int, Double] = classifier.distributionForInstance(
       createDTFeatureVector(featureVector))
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
 
@@ -71,7 +66,8 @@ case class DecisionTreeClassifier(decisionTree: DecisionTree,
   *
   * @param trainingVectorSource a source of training vectors
   */
-class DTCostFunctionTrainer(taskIdentifier: TaskIdentifier,
+class DTCostFunctionTrainer(classifierTrainer: ProbabilisticClassifierTrainer,
+  taskIdentifier: TaskIdentifier,
   transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource,
   baseCostFunction: Option[StateCostFunction])
     extends StateCostFunctionTrainer(taskIdentifier, transitionSystem, trainingVectorSource) {
@@ -95,14 +91,14 @@ class DTCostFunctionTrainer(taskIdentifier: TaskIdentifier,
         progressCounter += 1
         val vectors: DTFeatureVectors = createDTFeatureVectors(trainingVectors.iterator)
         println("Now training.")
-        val inducedDecisionTree: DecisionTree = DecisionTreeTrainer(vectors)
+        val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
         val featureMap: Seq[(Int, FeatureName)] =
           featureNames.zipWithIndex filter { case (_, featIndex) =>
-            inducedDecisionTree.allAttributes.contains(featIndex)
+            inducedClassifier.allAttributes.contains(featIndex)
           } map { case (feat, featIndex) =>
             (featIndex, feat)
           }
-        val result = (task, new DecisionTreeClassifier(inducedDecisionTree,
+        val result = (task, new EmbeddedClassifier(inducedClassifier,
           transitions, featureMap, featureNames.size))
         result
       }
