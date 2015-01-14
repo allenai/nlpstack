@@ -1,8 +1,11 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.decisiontree.{
+  ProbabilisticClassifierTrainer,
+  DecisionTreeTrainer
+}
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
-import org.allenai.nlpstack.parse.poly.polyparser.labeler.ParseLabelerTransitionSystem
 import scopt.OptionParser
 
 private case class ParserTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
@@ -96,12 +99,13 @@ object Training {
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
+    val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
     val parsingCostFunction: StateCostFunction = {
       val trainer =
-        new DTCostFunctionTrainer(taskIdentifier, transitionSystem, trainingVectorSource,
-          baseCostFunction)
+        new DTCostFunctionTrainer(classifierTrainer, taskIdentifier, transitionSystem,
+          trainingVectorSource, baseCostFunction)
       trainer.costFunction
     }
 
