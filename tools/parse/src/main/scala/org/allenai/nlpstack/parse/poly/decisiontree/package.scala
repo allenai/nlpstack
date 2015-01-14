@@ -6,7 +6,7 @@ package org.allenai.nlpstack.parse.poly
   * Use the companion object to build the tree.
   * Then use [[org.allenai.nlpstack.parse.poly.decisiontree.DecisionTree.classify( )]]
   * or
-  * [[org.allenai.nlpstack.parse.poly.decisiontree.DecisionTree.distributionForInstance( )]]
+  * [[org.allenai.nlpstack.parse.poly.decisiontree.DecisionTree.outcomeDistribution( )]]
   * to do prediction.
   *
   * The tree takes data in the form of

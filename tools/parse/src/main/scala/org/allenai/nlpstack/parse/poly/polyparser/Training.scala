@@ -73,7 +73,7 @@ object Training {
       }
     }
 
-    println("Training task tree.")
+    println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
     val taskIdentifier: TaskIdentifier = {

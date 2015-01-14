@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import scala.collection.mutable
-import scala.compat.Platform
 import scala.util.Random
 
 /** Internal class of DecisionTreeTrainer.
@@ -19,10 +18,10 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
   // Maps each possible value of the splitAttribute to a child node
   private val childrenMap = mutable.HashMap[Int, Node]()
 
-  // Memoizes the most probable choice at this node (after .choice has already been called).
-  private var memoizedChoice: Option[Int] = None
+  // Memoizes the most probable outcome at this node (after .outcome has already been called).
+  private var memoizedOutcome: Option[Int] = None
 
-  // Maps each choice to the number of validation vectors assigned that choice.
+  // Maps each outcome to the number of validation vectors assigned that outcome.
   private val validationCounts = mutable.HashMap[Int, Int]().withDefaultValue(0)
 
   /** The children of this node. */
@@ -35,14 +34,14 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     Iterable(this) ++ (children flatMap { (n: Node) => n.nodes })
   }
 
-  /** The most probable choice at this node. As a side effect, this sets the memoizedChoice field
+  /** The most probable outcome at this node. As a side effect, this sets the memoizedOutcome field
     * if currently unset.
     */
-  def choice: Int = {
+  def outcome: Int = {
     require(data.isDefined)
-    memoizedChoice getOrElse {
-      memoizedChoice = Some(categoryCounts.toList.maxBy(_._2)._1)
-      memoizedChoice.get
+    memoizedOutcome getOrElse {
+      memoizedOutcome = Some(outcomeCounts.toList.maxBy(_._2)._1)
+      memoizedOutcome.get
     }
   }
 
@@ -55,7 +54,7 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     if (isLeaf) {
       false
     } else {
-      val featVal = inst.getAttribute(splittingAttribute.get)
+      val featVal = inst.getFeature(splittingAttribute.get)
       childrenMap.contains(featVal)
     }
   }
@@ -68,7 +67,7 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     */
   def next(inst: FeatureVector): Node = {
     require(hasNext(inst))
-    val featVal = inst.getAttribute(splittingAttribute.get)
+    val featVal = inst.getFeature(splittingAttribute.get)
     childrenMap(featVal)
   }
 
@@ -77,13 +76,13 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     childrenMap.isEmpty
   }
 
-  /** Returns the choice counts for this node.
+  /** Returns the outcome counts for this node.
     *
-    * @return histogram of choices according to training data
+    * @return histogram of outcomes according to training data
     */
-  def categoryCounts: Map[Int, Int] = {
+  def outcomeCounts: Map[Int, Int] = {
     require(data.isDefined)
-    featureVectorSubset.groupBy(data.get.featureVectors(_).label.get) mapValues {
+    featureVectorSubset.groupBy(data.get.featureVectors(_).outcome.get) mapValues {
       l => l.size
     }
   }
@@ -106,23 +105,21 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     childrenMap(attributeValue) = child
   }
 
-  def toDecisionTree(categories: Iterable[Int] = categoryCounts.keys): DecisionTree = {
+  def toDecisionTree(outcomes: Iterable[Int] = outcomeCounts.keys): DecisionTree = {
     val nodeToId: Map[Node, Int] = nodes.zipWithIndex.toMap
-    // add prior counts
-    //val priorCounts = categories.toList.map(_ -> 1).toMap
     val dtChild: IndexedSeq[Seq[(Int, Int)]] = nodes.toIndexedSeq map { node =>
       (node.childrenMap.toMap mapValues { c => nodeToId(c) }).toSeq
     }
     val dtSplittingAttribute: IndexedSeq[Option[Int]] = nodes.toIndexedSeq map { node =>
       node.splittingAttribute
     }
-    val dtCategoryCounts: IndexedSeq[Seq[(Int, Int)]] = nodes.toIndexedSeq map { node =>
-      (node.categoryCounts map { //++ priorCounts map {
+    val dtOutcomeCounts: IndexedSeq[Seq[(Int, Int)]] = nodes.toIndexedSeq map { node =>
+      (node.outcomeCounts map {
         case (k, v) =>
-          k -> (v + node.categoryCounts.getOrElse(k, 0))
+          k -> (v + node.outcomeCounts.getOrElse(k, 0))
       }).toSeq
     }
-    new DecisionTree(categories, dtChild, dtSplittingAttribute, dtCategoryCounts)
+    new DecisionTree(outcomes, dtChild, dtSplittingAttribute, dtOutcomeCounts)
   }
 
   /** Stores a validation vector at this node.
@@ -130,9 +127,9 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     * @param validationVector the feature vector to store
     */
   def addValidationVector(validationVector: FeatureVector): Unit = {
-    require(validationVector.label.isDefined)
-    val validationVectorChoice: Int = validationVector.label.get
-    validationCounts(validationVectorChoice) += 1
+    require(validationVector.outcome.isDefined)
+    val validationVectorOutcome: Int = validationVector.outcome.get
+    validationCounts(validationVectorOutcome) += 1
   }
 
   /** Removes all children from this node. */
@@ -147,7 +144,7 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
   def pruningImprovement: Int = numCorrectValidationVectorsIfPruned - numCorrectValidationVectors
 
   private def numCorrectValidationVectorsIfPruned: Int = {
-    validationCounts(choice)
+    validationCounts(outcome)
   }
 
   private var numCorrectValidationVectorsMemoized: Option[Int] = None
@@ -219,17 +216,17 @@ class DecisionTreeTrainer(
     attributesExaminedPerNode: Int): Node = {
 
     val root = new Node(Some(data), featureVectorSubset,
-      (0 to data.numAttributes - 1).toIndexedSeq)
+      (0 to data.numFeatures - 1).toIndexedSeq)
     val stack = mutable.Stack[Node]()
     stack.push(root)
     while (stack.nonEmpty) {
       // nodes on the stack are newly created
       val node = stack.pop()
       // detects termination conditions: if no more attributes are available to split on, or
-      // all remaining feature vectors are labeled with the same choice
+      // all remaining feature vectors are labeled with the same outcome
       if (!(node.attributeSubset.isEmpty ||
-        node.featureVectorSubset.forall(data.featureVectors(_).label ==
-          data.featureVectors(node.featureVectorSubset.head).label))) {
+        node.featureVectorSubset.forall(data.featureVectors(_).outcome ==
+          data.featureVectors(node.featureVectorSubset.head).outcome))) {
 
         val (attributesToExamine, attributesToIgnore) = {
           val shuffled = Random.shuffle(node.attributeSubset)
@@ -246,7 +243,7 @@ class DecisionTreeTrainer(
           val (bestAttr, _) = infoGainByAttr maxBy { case (_, gain) => gain }
           node.setAttribute(bestAttr)
           val subsets = node.featureVectorSubset groupBy {
-            j => data.featureVectors(j).getAttribute(bestAttr)
+            j => data.featureVectors(j).getFeature(bestAttr)
           }
           val childAttributeSubset = {
             val nonzeroAttrs = infoGainByAttr map { case (attr, _) => attr }
@@ -321,15 +318,15 @@ class DecisionTreeTrainer(
       data.featureVectors(_)
     }
     val overallOutcomeHistogram: Map[Int, Int] = (featureVectorSubstream map { featureVector =>
-      featureVector.label.get
+      featureVector.outcome.get
     }) groupBy { x => x } mapValues { x => x.size }
     val unsplitEntropy = computeEntropy(overallOutcomeHistogram)
     // by far the most expensive step
     val omnibusEnumeration: Seq[(Int, Int, Int)] = (for {
-      featureVector <- featureVectorSubstream if featureVector.label != None
-      attr <- featureVector.nonzeroAttributes if attributeSubset.contains(attr)
+      featureVector <- featureVectorSubstream if featureVector.outcome != None
+      attr <- featureVector.nonzeroFeatures if attributeSubset.contains(attr)
     } yield {
-      (attr, featureVector.getAttribute(attr), featureVector.label.get)
+      (attr, featureVector.getFeature(attr), featureVector.outcome.get)
     })
     val omnibusHistogram: Map[(Int, Int, Int), Int] = omnibusEnumeration groupBy { x =>
       x
@@ -382,7 +379,7 @@ class DecisionTreeTrainer(
       attribute <- attributeSubset
     } yield {
       val vectorsByAttributeValue: Map[Int, Seq[FeatureVector]] =
-        featureVectorSubstream groupBy { x => x.getAttribute(attribute) }
+        featureVectorSubstream groupBy { x => x.getFeature(attribute) }
       val result = unsplitEntropy - ((vectorsByAttributeValue.values map { x =>
         x.size * computeOutcomeEntropy(x)
       }).sum / featureVectorSubset.size)
@@ -393,17 +390,16 @@ class DecisionTreeTrainer(
 
   /** Computes the entropy of the outcome distribution of a set of feature vectors.
     *
-    * The two arguments describe a set of FeatureVector objects, each of which is labeled with a
-    * choice. The normalized histogram of the choice frequencies is a probability distribution.
+    * The argument provides a stream of FeatureVector objects, each of which is labeled with an
+    * outcome. The normalized histogram of the outcome frequencies is a probability distribution.
     * This function returns the entropy of that distribution.
     *
-    * param data a pointer to a large indexed set of feature vectors
-    * param featureVectorSubset the subset of feature vector indices that interest us
-    * @return the entropy of the choice distribution, as described above
+    * @param featureVectorSubstream the sequence of feature vectors that interest us
+    * @return the entropy of the outcome distribution, as described above
     */
   private def computeOutcomeEntropy(featureVectorSubstream: Seq[FeatureVector]) = {
     val outcomeHistogram: Map[Int, Int] =
-      featureVectorSubstream groupBy { _.label.get } mapValues { _.size }
+      featureVectorSubstream groupBy { _.outcome.get } mapValues { _.size }
     computeEntropy(outcomeHistogram)
   }
 

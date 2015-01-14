@@ -24,74 +24,80 @@ private object FeatureVector {
   }
 }
 
-/** A feature vector with integral features and label. */
+/** A feature vector with integral features and outcome. */
 sealed trait FeatureVector {
 
-  /** label of instance */
-  def label: Option[Int]
+  /** The outcome of this feature vector. */
+  def outcome: Option[Int]
 
-  /** number of attributes */
-  def numAttributes: Int
-
-  def nonzeroAttributes: Iterator[Int]
-
-  /** gets value of attribute
+  /** Returns a copy of this feature vector, associated with a different outcome.
     *
-    * @param index attribute index
-    * @return attribute value
+    * @param outcome the new desired outcome
+    * @return a copy of this feature vector, associated with a different outcome.
     */
-  def getAttribute(index: Int): Int
+  def modifyOutcome(outcome: Int): FeatureVector
 
-  def relabel(label: Int): FeatureVector
+  /** The number of features in this feature vector. */
+  def numFeatures: Int
+
+  /** Returns an iterator over all non-zero features in this feature vector. */
+  def nonzeroFeatures: Iterator[Int]
+
+  /** Gets the value of the specified feature.
+    *
+    * @param index the feature index
+    * @return the feature value
+    */
+  def getFeature(index: Int): Int
 }
 
-/** Instance with sparse binary attributes
+/** A SparseVector is a feature vector with sparse binary features.
   *
-  * @param label label of instance
-  * @param numAttributes number of attributes
-  * @param trueAttributes which attributes have value 1
+  * @param outcome the outcome of the feature vector
+  * @param numFeatures the number of features
+  * @param trueFeatures the set of features with value 1
   */
-case class SparseVector(override val label: Option[Int], override val numAttributes: Int,
-    trueAttributes: Set[Int]) extends FeatureVector {
+case class SparseVector(override val outcome: Option[Int], override val numFeatures: Int,
+    trueFeatures: Set[Int]) extends FeatureVector {
 
-  override def getAttribute(i: Int): Int = {
-    require(i < numAttributes)
-    if (trueAttributes.contains(i)) {
+  override def getFeature(i: Int): Int = {
+    require(i < numFeatures)
+    if (trueFeatures.contains(i)) {
       1
     } else {
       0
     }
   }
 
-  override def nonzeroAttributes: Iterator[Int] = {
-    trueAttributes.iterator
+  override def nonzeroFeatures: Iterator[Int] = {
+    trueFeatures.iterator
   }
 
-  override def relabel(newLabel: Int): FeatureVector = {
-    copy(label = Some(newLabel))
+  override def modifyOutcome(newLabel: Int): FeatureVector = {
+    copy(outcome = Some(newLabel))
   }
 }
 
-/** Instance with arbitrary integral attributes
+/** A DenseVector is a feature vector with arbitrary integral features.
   *
-  * @param label label of instance
-  * @param attributes value of each attribute
+  * @param outcome the outcome of the feature vector
+  * @param features the value of each feature
   */
 case class DenseVector(
-    override val label: Option[Int],
-    attributes: IndexedSeq[Int]
+    override val outcome: Option[Int],
+    features: IndexedSeq[Int]
 ) extends FeatureVector {
 
-  def numAttributes: Int = attributes.size
+  def numFeatures: Int = features.size
 
-  override def getAttribute(i: Int): Int = {
-    require(i < numAttributes)
-    attributes(i)
+  override def getFeature(i: Int): Int = {
+    require(i < numFeatures)
+    features(i)
   }
 
-  override def nonzeroAttributes: Iterator[Int] = ???
+  override def nonzeroFeatures: Iterator[Int] = ???
 
-  override def relabel(newLabel: Int): FeatureVector = {
-    copy(label = Some(newLabel))
+  override def modifyOutcome(newLabel: Int): FeatureVector = {
+    copy(outcome = Some(newLabel))
   }
 }
