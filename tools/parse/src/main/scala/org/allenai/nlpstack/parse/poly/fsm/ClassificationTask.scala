@@ -155,7 +155,7 @@ case class TaskConjunctionIdentifier(
 object TaskConjunctionIdentifier {
 
   def learn(taskIdentifiers: List[TaskIdentifier], goldStates: StateSource,
-    qualifyingCount: Int): TaskConjunctionIdentifier = {
+    activationThreshold: Int): TaskConjunctionIdentifier = {
 
     val taskConjunctionIdentifiers: Seq[TaskConjunctionIdentifier] =
       (0 to taskIdentifiers.size) map { i =>
@@ -174,10 +174,8 @@ object TaskConjunctionIdentifier {
     classificationTasks foreach { task =>
       taskCounts = taskCounts.updated(task, 1 + taskCounts.getOrElse(task, 0))
     }
-    //val taskCounts: Map[ClassificationTask, Int] = classificationTasks.toList groupBy
-    //  { x => x } mapValues { x => x.size }
     val filteredTasks: Set[ClassificationTask] = (taskCounts filter
-      { case (task, count) => (count >= qualifyingCount) }).keySet
+      { case (task, count) => (count >= activationThreshold) }).keySet
 
     val activatedTasks: Iterator[ClassificationTask] = goldStates.getStateIterator map { state =>
       val stateTasks: Seq[ClassificationTask] = taskConjunctionIdentifiers flatMap { identifier =>
@@ -190,17 +188,14 @@ object TaskConjunctionIdentifier {
     activatedTasks foreach { task =>
       activatedTaskCounts = activatedTaskCounts.updated(task, 1 + activatedTaskCounts.getOrElse(task, 0))
     }
-    //val activatedTaskCounts: Map[ClassificationTask, Int] = activatedTasks.toList groupBy
-    //  { x => x } mapValues { x => x.size }
     val finalTasks: Set[ClassificationTask] = ((activatedTaskCounts filter
       {
         case (task, count) =>
-          (count >= qualifyingCount)
+          (count >= activationThreshold)
       }).keySet) union Set(TaskConjunction(Seq()))
 
     TaskConjunctionIdentifier(taskIdentifiers, Some(finalTasks))
   }
-
 }
 
 /** A TaskTree can be viewed as a tree-structured TaskConjunctionIdentifier. Recall that a
@@ -212,6 +207,8 @@ object TaskConjunctionIdentifier {
   * by applying the TaskIdentifier to the state. If this task is not contained in its children
   * map, then it will associate the state with TaskConjunction(List(ident)). Otherwise it will
   * recursively call the child TaskTree on the state, and accumulate a TaskConjunction.
+  *
+  * TODO: remove this code once all dependent models are gone
   *
   * @param baseIdentifier the (optional) TaskIdentifier associated with this tree
   * @param children a mapping from ClassificationTasks (in the range of `baseIdentifier`) to
