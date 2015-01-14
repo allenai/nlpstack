@@ -8,10 +8,10 @@ trait ProbabilisticClassifier {
 
   /** Gets the probability distribution over outcomes.
     *
-    * @param inst instance to find distribution of
+    * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(inst: FeatureVector): Map[Int, Double]
+  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double]
 
   /** Classifies an feature vector.
     *

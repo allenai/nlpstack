@@ -9,15 +9,15 @@ import scala.collection.mutable
   * Each data structure is an indexed sequence of properties. The ith element of each sequence
   * is the property of node i of the decision tree.
   *
-  * @param child stores the children of each node (as a map from attribute values to node ids)
-  * @param splittingAttribute stores the attribute that each node splits on; can be None for leaf
+  * @param child stores the children of each node (as a map from feature values to node ids)
+  * @param splittingFeature stores the feature that each node splits on; can be None for leaf
   * nodes
   * @param outcomeHistograms for each node, stores a map of outcomes to their frequency of
   * appearance at that node (i.e. how many times a training vector with
   * that outcome makes it to this node during classification)
   */
 case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int)]],
-  splittingAttribute: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Seq[(Int, Int)]])
+  splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Seq[(Int, Int)]])
     extends ProbabilisticClassifier {
 
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
@@ -27,7 +27,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
       val currentPath = pathMap(decisionTreeNode)
       for ((featureValue, decisionTreeChild) <- child(decisionTreeNode)) {
         pathMap = pathMap + (decisionTreeChild ->
-          (currentPath :+ Tuple2(splittingAttribute(decisionTreeNode).get, featureValue)))
+          (currentPath :+ Tuple2(splittingFeature(decisionTreeNode).get, featureValue)))
       }
     }
     Range(0, child.size) map { node => pathMap(node) }
@@ -47,21 +47,21 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     topoList.reverse
   }
 
-  /** Gets probability distribution of label.
+  /** Gets a probability distribution over possible outcomes..
     *
-    * @param inst instance to find distribution of
-    * @return probability distribution of label according to training data
+    * @param featureVector feature vector to compute the distribution for
+    * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(inst: FeatureVector): Map[Int, Double] = {
-    distribution(findDecisionPoint(inst))
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+    distribution(findDecisionPoint(featureVector))
   }
 
-  def outcomeHistogram(inst: FeatureVector): Map[Int, Int] = {
-    outcomeHistogramMap(findDecisionPoint(inst))
+  def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
+    outcomeHistogramMap(findDecisionPoint(featureVector))
   }
 
-  /** All attributes used in the decision tree. */
-  override def allFeatures: Set[Int] = splittingAttribute.flatten.toSet
+  /** All features used in the decision tree. */
+  override def allFeatures: Set[Int] = splittingFeature.flatten.toSet
 
   /** Map versions of the argument parameters (only included because Spray/JSON was not working
     * with maps for reasons unclear to me).
@@ -91,27 +91,29 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     }
   }
 
-  /** From a particular node, chooses the correct child according to the instance
-    * and its splitting attribute (if there is one).
+  /** From a particular node, chooses the correct child according to the feature vector
+    * and the node's splitting feature (if there is one).
     *
     * @param nodeId the id of the node
-    * @param inst the instance
+    * @param featureVector the feature vector
     * @return the node id of the correct child (if there is one)
     */
-  protected def selectChild(nodeId: Int, inst: FeatureVector): Option[Int] = {
-    splittingAttribute(nodeId) flatMap { attr => childMap(nodeId).get(inst.getFeature(attr)) }
+  protected def selectChild(nodeId: Int, featureVector: FeatureVector): Option[Int] = {
+    splittingFeature(nodeId) flatMap { feature =>
+      childMap(nodeId).get(featureVector.getFeature(feature))
+    }
   }
 
-  /** Finds the "decision point" of the specified instance. This is the node for which no
-    * child covers the instance.
+  /** Finds the "decision point" of the specified feature vector. This is the node for which no
+    * child covers the feature vector.
     *
-    * @param inst instance to classify
-    * @return the node the instance is classified into
+    * @param featureVector feature vector to classify
+    * @return the decision tree node that the feature vector is classified into
     */
-  @tailrec protected final def findDecisionPoint(inst: FeatureVector, nodeId: Int = 0): Int = {
-    selectChild(nodeId, inst) match {
+  @tailrec protected final def findDecisionPoint(featureVector: FeatureVector, nodeId: Int = 0): Int = {
+    selectChild(nodeId, featureVector) match {
       case None => nodeId
-      case Some(child) => findDecisionPoint(inst, child)
+      case Some(child) => findDecisionPoint(featureVector, child)
     }
   }
 
@@ -119,9 +121,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
   def print(featureNames: Vector[String], outcomeNames: Vector[String], nodeId: Int = 0,
     tabbing: String = ""): Unit = {
 
-    splittingAttribute(nodeId) match {
-      case Some(attr) =>
-        println(tabbing + featureNames(attr))
+    splittingFeature(nodeId) match {
+      case Some(feature) =>
+        println(tabbing + featureNames(feature))
         childMap(nodeId).get(1) match {
           case Some(child) =>
             print(featureNames, outcomeNames, child, tabbing + "  ")

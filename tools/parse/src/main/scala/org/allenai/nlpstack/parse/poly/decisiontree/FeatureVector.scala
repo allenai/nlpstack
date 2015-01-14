@@ -13,7 +13,7 @@ private object FeatureVector {
 
   implicit object FeatureVectorJsonFormat extends JsonFormat[FeatureVector] {
 
-    override def write(inst: FeatureVector): JsValue = inst match {
+    override def write(featureVector: FeatureVector): JsValue = featureVector match {
       case dense: DenseVector => dense.toJson
       case sparse: SparseVector => sparse.toJson
     }
