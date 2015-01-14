@@ -1,9 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.decisiontree.{
-  ProbabilisticClassifierTrainer,
-  DecisionTreeTrainer
-}
+import org.allenai.nlpstack.parse.poly.decisiontree.{ RandomForestTrainer, OneVersusAllTrainer, ProbabilisticClassifierTrainer, DecisionTreeTrainer }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
@@ -76,20 +73,7 @@ object Training {
     println("Training task tree.")
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
-    val taskIdentifier: TaskIdentifier = {
-      val taskActivationThreshold = 5000
-      TaskConjunctionIdentifier.learn(
-        List(
-          ApplicabilitySignatureIdentifier,
-          StateRefPropertyIdentifier(BufferRef(0), 'factorieCpos),
-          StateRefPropertyIdentifier(StackRef(0), 'factorieCpos),
-          StateRefPropertyIdentifier(BufferRef(0), 'factoriePos)
-        ),
-        new GoldParseSource(trainingSource, transitionSystem),
-        taskActivationThreshold
-      )
-    }
-    //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
+    val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
     //  config.baseModelPath match {
@@ -99,7 +83,9 @@ object Training {
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
-    val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
+    //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
+    val classifierTrainer: ProbabilisticClassifierTrainer =
+      new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
     val parsingCostFunction: StateCostFunction = {
