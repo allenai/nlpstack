@@ -11,8 +11,10 @@ import spray.json.DefaultJsonProtocol._
 case class FeatureVectors(featureVectors: IndexedSeq[FeatureVector]) {
 
   // The number of attributes must be the same for all feature vectors.
-  require((featureVectors map { _.numAttributes }).toSet.size <= 1,
-    "the number of attributes must be the same for all feature vectors")
+  require(
+    (featureVectors map { _.numAttributes }).toSet.size <= 1,
+    "the number of attributes must be the same for all feature vectors"
+  )
 
   /** Gets the number of feature vectors.
     *
@@ -28,6 +30,7 @@ case class FeatureVectors(featureVectors: IndexedSeq[FeatureVector]) {
     featureVectors.headOption map { _.numAttributes } getOrElse { 0 }
   }
 
+  /** Gets a uniqued sequence of all labels associated with feature vectors in this set. */
   @transient lazy val allLabels: Seq[Int] = {
     (featureVectors flatMap { fv => fv.label }).toSet.toSeq
   }

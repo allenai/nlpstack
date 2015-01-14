@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.decisiontree.{OneVersusAllTrainer, ProbabilisticClassifierTrainer, RandomForestTrainer, DecisionTreeTrainer}
+import org.allenai.nlpstack.parse.poly.decisiontree.{ OneVersusAllTrainer, ProbabilisticClassifierTrainer, RandomForestTrainer, DecisionTreeTrainer }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
@@ -16,13 +16,13 @@ object Training {
     * Usage: Training [options]
     *
     * -t <file> | --train <file>
-    *  the path to the training file (in ConllX format)
+    * the path to the training file (in ConllX format)
     * -o <file> | --output <file>
-    *  where to direct the output files
+    * where to direct the output files
     * -x <file> | --test <file>
-    *  the path to the test file (in ConllX format)
+    * the path to the test file (in ConllX format)
     * -d <file> | --datasource <file>
-    *  the location of the data ('datastore','local')
+    * the location of the data ('datastore','local')
     *
     * @param args command-line arguments (specified above)
     */
@@ -54,12 +54,14 @@ object Training {
 
     val trainingSource: PolytreeParseSource =
       MultiPolytreeParseSource(config.trainingPath.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(path,
-          ConllX(true), config.dataSource)
+        InMemoryPolytreeParseSource.getParseSource(
+          path,
+          ConllX(true), config.dataSource
+        )
       })
 
     val clusters: Seq[BrownClusters] = {
-      if(config.clustersPath != "") {
+      if (config.clustersPath != "") {
         config.clustersPath.split(",") map { path =>
           BrownClusters.fromLiangFormat(path)
         }
@@ -99,13 +101,17 @@ object Training {
       transitionSystem, baseCostFunction)
     println(s"Number of training vectors: ${trainingVectorSource.getVectorIterator.size}")
     var transitionHistogram = Map[StateTransition, Int]()
-    trainingVectorSource.getVectorIterator foreach { case trainingVector =>
-      transitionHistogram = transitionHistogram.updated(trainingVector.transition,
-        1 + transitionHistogram.getOrElse(trainingVector.transition, 0))
+    trainingVectorSource.getVectorIterator foreach {
+      case trainingVector =>
+        transitionHistogram = transitionHistogram.updated(
+          trainingVector.transition,
+          1 + transitionHistogram.getOrElse(trainingVector.transition, 0)
+        )
     }
     val transitionCounts = transitionHistogram.toSeq sortBy { case (transition, count) => count }
-    transitionCounts foreach { case (transition, count) =>
-      println(s"$transition: $count")
+    transitionCounts foreach {
+      case (transition, count) =>
+        println(s"$transition: $count")
     }
 
     //val classifierTrainer: ProbabilisticClassifierTrainer = new RandomForestTrainer(0, 10, 100)
@@ -114,15 +120,19 @@ object Training {
       new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val parsingCostFunction: StateCostFunction = {
       val trainer =
-        new DTCostFunctionTrainer(classifierTrainer,
+        new DTCostFunctionTrainer(
+          classifierTrainer,
           taskIdentifier, transitionSystem, trainingVectorSource,
-          baseCostFunction)
+          baseCostFunction
+        )
       trainer.costFunction
     }
 
-    val parsingNbestSize = 5
-    val parserConfig = ParserConfiguration(parsingCostFunction,
-      BaseCostRerankingFunction, parsingNbestSize)
+    val parsingNbestSize = 15
+    val parserConfig = ParserConfiguration(
+      parsingCostFunction,
+      BaseCostRerankingFunction, parsingNbestSize
+    )
     val parser = RerankingTransitionParser(parserConfig)
 
     ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
