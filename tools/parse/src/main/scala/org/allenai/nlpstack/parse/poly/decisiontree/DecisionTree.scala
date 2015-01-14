@@ -2,6 +2,7 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 
 import spray.json.DefaultJsonProtocol._
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 /** Immutable decision tree for integer-valued features and categories.
   *
@@ -10,27 +11,48 @@ import scala.annotation.tailrec
   *
   * @param child stores the children of each node (as a map from attribute values to node ids)
   * @param splittingAttribute stores the attribute that each node splits on; can be None for leaf
-  *  nodes
+  * nodes
   * @param categoryCounts for each node, stores a map of categories to their frequency of
-  *  appearance at that node (i.e. how many times a training vector with
-  *  that category makes it to this node during classification)
+  * appearance at that node (i.e. how many times a training vector with
+  * that category makes it to this node during classification)
   */
-case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
-    splittingAttribute: IndexedSeq[Option[Int]], categoryCounts: IndexedSeq[Seq[(Int, Int)]]) {
+case class DecisionTree(categories: Iterable[Int], child: IndexedSeq[Seq[(Int, Int)]],
+  splittingAttribute: IndexedSeq[Option[Int]], categoryCounts: IndexedSeq[Seq[(Int, Int)]])
+    extends ProbabilisticClassifier {
 
-  /** Classifies an instance.
-    *
-    * @param inst instance to classify
-    * @return predicted label
-    */
-  def classify(inst: FeatureVector): Int = mostProbableCategory(findDecisionPoint(inst))
+  @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
+    var pathMap = Map[Int, Seq[(Int, Int)]]()
+    pathMap = pathMap + (0 -> Seq[(Int, Int)]())
+    for (decisionTreeNode <- topologicalOrder) {
+      val currentPath = pathMap(decisionTreeNode)
+      for ((featureValue, decisionTreeChild) <- child(decisionTreeNode)) {
+        pathMap = pathMap + (decisionTreeChild ->
+          (currentPath :+ Tuple2(splittingAttribute(decisionTreeNode).get, featureValue)))
+      }
+    }
+    Range(0, child.size) map { node => pathMap(node) }
+  }
+
+  @transient lazy val topologicalOrder: Seq[Int] = {
+    val stack = mutable.Stack[Int]()
+    var topoList = Seq[Int]()
+    stack.push(0)
+    while (stack.nonEmpty) {
+      val node = stack.pop()
+      topoList = node +: topoList
+      for ((_, childId) <- child(node)) {
+        stack.push(childId)
+      }
+    }
+    topoList.reverse
+  }
 
   /** Gets probability distribution of label.
     *
     * @param inst instance to find distribution of
     * @return probability distribution of label according to training data
     */
-  def distributionForInstance(inst: FeatureVector): Map[Int, Double] = {
+  override def distributionForInstance(inst: FeatureVector): Map[Int, Double] = {
     distribution(findDecisionPoint(inst))
   }
 
@@ -39,18 +61,18 @@ case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
   }
 
   /** All attributes used in the decision tree. */
-  @transient lazy val allAttributes: Set[Int] = splittingAttribute.flatten.toSet
+  override def allAttributes: Set[Int] = splittingAttribute.flatten.toSet
 
   /** Map versions of the argument parameters (only included because Spray/JSON was not working
     * with maps for reasons unclear to me).
     */
-  @transient val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
-  @transient val categoryCountsMap: IndexedSeq[Map[Int, Int]] = categoryCounts map { cc =>
+  @transient private val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
+  @transient private val categoryCountsMap: IndexedSeq[Map[Int, Int]] = categoryCounts map { cc =>
     cc.toMap
   }
 
   /** The most probable category at each node of the decision tree. */
-  @transient val mostProbableCategory: IndexedSeq[Int] = categoryCounts map { cc =>
+  @transient private val mostProbableCategory: IndexedSeq[Int] = categoryCounts map { cc =>
     (cc maxBy { _._2 })._1
   }
 
@@ -60,11 +82,12 @@ case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
     * the distribution is Laplacian-smoothed assuming one count for each label
     * in the training data.
     */
-  @transient val distribution: IndexedSeq[Map[Int, Double]] = {
+  @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
     categoryCountsMap map { cc =>
-      val normalizer: Double = cc.values.sum
-      require(normalizer > 0d)
-      cc mapValues { _ / normalizer }
+      val priorCounts = categories.toList.map(_ -> 1).toMap // add-one smoothing
+      (ProbabilisticClassifier.normalizeDistribution(
+        (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
+      )).toMap
     }
   }
 
@@ -75,7 +98,7 @@ case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
     * @param inst the instance
     * @return the node id of the correct child (if there is one)
     */
-  def selectChild(nodeId: Int, inst: FeatureVector): Option[Int] = {
+  protected def selectChild(nodeId: Int, inst: FeatureVector): Option[Int] = {
     splittingAttribute(nodeId) flatMap { attr => childMap(nodeId).get(inst.getAttribute(attr)) }
   }
 
@@ -85,7 +108,7 @@ case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
     * @param inst instance to classify
     * @return the node the instance is classified into
     */
-  @tailrec final def findDecisionPoint(inst: FeatureVector, nodeId: Int = 0): Int = {
+  @tailrec protected final def findDecisionPoint(inst: FeatureVector, nodeId: Int = 0): Int = {
     selectChild(nodeId, inst) match {
       case None => nodeId
       case Some(child) => findDecisionPoint(inst, child)
@@ -113,9 +136,8 @@ case class DecisionTree(child: IndexedSeq[Seq[(Int, Int)]],
         println(tabbing + categoryNames(mostProbableCategory(nodeId)))
     }
   }
-
 }
 
 object DecisionTree {
-  implicit val dtFormat = jsonFormat3(DecisionTree.apply)
+  implicit val dtFormat = jsonFormat4(DecisionTree.apply)
 }
