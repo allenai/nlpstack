@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Sentence, NexusToken, Token}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm._
 import spray.json._
 
@@ -9,14 +9,15 @@ class ParserClassificationTaskSpec extends UnitSpec {
   // scalastyle:off
 
   /** This represents the following parser state:
+    * format: OFF
     *
     *   ---------
     *   |        |
     *   |        V
     * NEXUS_0  saw_2  a_3  white_4  cat_5 |||  with_6  a_7  telescope_8
-    *            |
-    *            V
-    *
+    *           |
+    *           V
+    *          we_1
     */
   val state1: TransitionParserState = TransitionParserState(
     stack = Vector(5, 4, 3, 2, 0),
@@ -28,7 +29,9 @@ class ParserClassificationTaskSpec extends UnitSpec {
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
         Token('white), Token('cat), Token('with, Map('cpos -> Set('prep))), Token('a),
         Token('telescope))),
-      IndexedSeq()))
+      IndexedSeq()
+    )
+  )
 
   "Serializing a ApplicabilitySignature" should "preserve it" in {
     val applicabilitySig: ClassificationTask = ApplicabilitySignature(true, false, false, true)
@@ -62,15 +65,20 @@ class ParserClassificationTaskSpec extends UnitSpec {
 
   "Calling TaskConjunctionIdentifier's apply" should "return the proper conjunction" in {
     val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(
-      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)))
+      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)
+    ), None)
     taskIdentifier(state1) shouldBe
-      Some(TaskConjunction(List(ApplicabilitySignature(true, false, true, true),
-        StateRefProperty(BufferRef(0), 'cpos, "prep"))))
+      Some(TaskConjunction(List(
+        ApplicabilitySignature(true, false, true, true),
+        StateRefProperty(BufferRef(0), 'cpos, "prep")
+      )))
   }
 
   "Serializing a TaskConjunctionIdentifier" should "preserve it" in {
     val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(
-      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)))
+      ApplicabilitySignatureIdentifier, StateRefPropertyIdentifier(BufferRef(0), 'cpos)
+    ), None)
     taskIdentifier.toJson.convertTo[TaskIdentifier] shouldBe taskIdentifier
   }
+
 }

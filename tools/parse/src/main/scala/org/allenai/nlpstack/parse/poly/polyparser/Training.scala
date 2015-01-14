@@ -16,13 +16,13 @@ object Training {
     * Usage: Training [options]
     *
     * -t <file> | --train <file>
-    *  the path to the training file (in ConllX format)
+    * the path to the training file (in ConllX format)
     * -o <file> | --output <file>
-    *  where to direct the output files
+    * where to direct the output files
     * -x <file> | --test <file>
-    *  the path to the test file (in ConllX format)
+    * the path to the test file (in ConllX format)
     * -d <file> | --datasource <file>
-    *  the location of the data ('datastore','local')
+    * the location of the data ('datastore','local')
     *
     * @param args command-line arguments (specified above)
     */
@@ -54,12 +54,14 @@ object Training {
 
     val trainingSource: PolytreeParseSource =
       MultiPolytreeParseSource(config.trainingPath.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(path,
-          ConllX(true), config.dataSource)
+        InMemoryPolytreeParseSource.getParseSource(
+          path,
+          ConllX(true), config.dataSource
+        )
       })
 
     val clusters: Seq[BrownClusters] = {
-      if(config.clustersPath != "") {
+      if (config.clustersPath != "") {
         config.clustersPath.split(",") map { path =>
           BrownClusters.fromLiangFormat(path)
         }
@@ -72,17 +74,19 @@ object Training {
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
     val taskIdentifier: TaskIdentifier = {
-      val taskTreeQualifyingCount = 5000
-      val taskTree = TaskTree.learnTaskTree(
-        Vector(
+      val taskActivationThreshold = 5000
+      TaskConjunctionIdentifier.learn(
+        List(
           ApplicabilitySignatureIdentifier,
           StateRefPropertyIdentifier(BufferRef(0), 'factorieCpos),
           StateRefPropertyIdentifier(StackRef(0), 'factorieCpos),
-          StateRefPropertyIdentifier(BufferRef(0), 'factoriePos)),
-        new GoldParseSource(trainingSource, transitionSystem).getStateIterator,
-        taskTreeQualifyingCount)
-      TaskTreeIdentifier(taskTree)
+          StateRefPropertyIdentifier(BufferRef(0), 'factoriePos)
+        ),
+        new GoldParseSource(trainingSource, transitionSystem),
+        taskActivationThreshold
+      )
     }
+    //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
     //  config.baseModelPath match {
@@ -101,11 +105,12 @@ object Training {
       trainer.costFunction
     }
 
-
     println("Saving models.")
     val parsingNbestSize = 5
-    val parserConfig = ParserConfiguration(parsingCostFunction,
-      BaseCostRerankingFunction, parsingNbestSize)
+    val parserConfig = ParserConfiguration(
+      parsingCostFunction,
+      BaseCostRerankingFunction, parsingNbestSize
+    )
     val parser = RerankingTransitionParser(parserConfig)
     TransitionParser.save(parser, config.outputPath)
 
