@@ -1,5 +1,18 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
+/** The OneVersusAll implements multi-outcome classification as a set of binary classifiers.
+  *
+  * A ProbabilisticClassifier is associated with each outcome. Suppose there are three
+  * outcomes: 0, 1, 2. Then the constructor would take a sequence of three classifiers
+  * as its argument: [(0,A), (1,B), (2,C)]. To compute the outcome distribution for
+  * a new feature vector v, the OneVersusAll would normalize:
+  *
+  * [ A.outcomeDistribution(v)(1), B.outcomeDistribution(v)(1), C.outcomeDistribution(v)(1) ]
+  *
+  * i.e. the probability of 1 (true) according to binary classifiers A, B, and C.
+  *
+  * @param binaryClassifiers the binary classifier associated with each outcome
+  */
 case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
     extends ProbabilisticClassifier {
 
@@ -12,6 +25,7 @@ case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
     ProbabilisticClassifier.normalizeDistribution(unnormalizedDist).toMap
   }
 
+  /** All features used by at least one of the binary subclassifiers. */
   override def allFeatures: Set[Int] = {
     binaryClassifiers map {
       case (_, classifier) =>
@@ -20,6 +34,11 @@ case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
   }
 }
 
+/** A OneVersusAllTrainer trains a OneVersusAll using a base ProbabilisticClassifierTrainer to
+  * train one binary classifiers per outcome.
+  *
+  * @param baseTrainer the trainer to use for training the binary classifiers
+  */
 class OneVersusAllTrainer(baseTrainer: ProbabilisticClassifierTrainer)
     extends ProbabilisticClassifierTrainer {
 
