@@ -37,7 +37,7 @@ case class EmbeddedClassifier(
   }
 
   override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Double] = {
-    val dist: Map[Int, Double] = classifier.distributionForInstance(
+    val dist: Map[Int, Double] = classifier.outcomeDistribution(
       createDTFeatureVector(featureVector)
     )
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
@@ -109,7 +109,7 @@ class DTCostFunctionTrainer(
         val featureMap: Seq[(Int, FeatureName)] =
           featureNames.zipWithIndex filter {
             case (_, featIndex) =>
-              inducedClassifier.allAttributes.contains(featIndex)
+              inducedClassifier.allFeatures.contains(featIndex)
           } map {
             case (feat, featIndex) =>
               (featIndex, feat)

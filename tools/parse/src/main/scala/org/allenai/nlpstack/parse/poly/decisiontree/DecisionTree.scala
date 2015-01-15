@@ -4,20 +4,20 @@ import spray.json.DefaultJsonProtocol._
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-/** Immutable decision tree for integer-valued features and categories.
+/** Immutable decision tree for integer-valued features and outcomes.
   *
   * Each data structure is an indexed sequence of properties. The ith element of each sequence
   * is the property of node i of the decision tree.
   *
-  * @param child stores the children of each node (as a map from attribute values to node ids)
-  * @param splittingAttribute stores the attribute that each node splits on; can be None for leaf
+  * @param child stores the children of each node (as a map from feature values to node ids)
+  * @param splittingFeature stores the feature that each node splits on; can be None for leaf
   * nodes
-  * @param categoryCounts for each node, stores a map of categories to their frequency of
+  * @param outcomeHistograms for each node, stores a map of outcomes to their frequency of
   * appearance at that node (i.e. how many times a training vector with
-  * that category makes it to this node during classification)
+  * that outcome makes it to this node during classification)
   */
-case class DecisionTree(categories: Iterable[Int], child: IndexedSeq[Seq[(Int, Int)]],
-  splittingAttribute: IndexedSeq[Option[Int]], categoryCounts: IndexedSeq[Seq[(Int, Int)]])
+case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int)]],
+  splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Seq[(Int, Int)]])
     extends ProbabilisticClassifier {
 
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
@@ -27,7 +27,7 @@ case class DecisionTree(categories: Iterable[Int], child: IndexedSeq[Seq[(Int, I
       val currentPath = pathMap(decisionTreeNode)
       for ((featureValue, decisionTreeChild) <- child(decisionTreeNode)) {
         pathMap = pathMap + (decisionTreeChild ->
-          (currentPath :+ Tuple2(splittingAttribute(decisionTreeNode).get, featureValue)))
+          (currentPath :+ Tuple2(splittingFeature(decisionTreeNode).get, featureValue)))
       }
     }
     Range(0, child.size) map { node => pathMap(node) }
@@ -47,93 +47,95 @@ case class DecisionTree(categories: Iterable[Int], child: IndexedSeq[Seq[(Int, I
     topoList.reverse
   }
 
-  /** Gets probability distribution of label.
+  /** Gets a probability distribution over possible outcomes..
     *
-    * @param inst instance to find distribution of
-    * @return probability distribution of label according to training data
+    * @param featureVector feature vector to compute the distribution for
+    * @return probability distribution of outcomes according to training data
     */
-  override def distributionForInstance(inst: FeatureVector): Map[Int, Double] = {
-    distribution(findDecisionPoint(inst))
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+    distribution(findDecisionPoint(featureVector))
   }
 
-  def categoryCounts(inst: FeatureVector): Map[Int, Int] = {
-    categoryCountsMap(findDecisionPoint(inst))
+  def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
+    outcomeHistogramMap(findDecisionPoint(featureVector))
   }
 
-  /** All attributes used in the decision tree. */
-  override def allAttributes: Set[Int] = splittingAttribute.flatten.toSet
+  /** All features used in the decision tree. */
+  override def allFeatures: Set[Int] = splittingFeature.flatten.toSet
 
   /** Map versions of the argument parameters (only included because Spray/JSON was not working
     * with maps for reasons unclear to me).
     */
   @transient private val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
-  @transient private val categoryCountsMap: IndexedSeq[Map[Int, Int]] = categoryCounts map { cc =>
+  @transient private val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] = outcomeHistograms map { cc =>
     cc.toMap
   }
 
-  /** The most probable category at each node of the decision tree. */
-  @transient private val mostProbableCategory: IndexedSeq[Int] = categoryCounts map { cc =>
+  /** The most probable outcome at each node of the decision tree. */
+  @transient private val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
     (cc maxBy { _._2 })._1
   }
 
-  /** The probability distribution over categories for each node of the decision tree.
+  /** The probability distribution over outcomes for each node of the decision tree.
     *
     * If this tree was trained with [[DecisionTreeTrainer]], then
     * the distribution is Laplacian-smoothed assuming one count for each label
     * in the training data.
     */
   @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
-    categoryCountsMap map { cc =>
-      val priorCounts = categories.toList.map(_ -> 1).toMap // add-one smoothing
+    outcomeHistogramMap map { cc =>
+      val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
       (ProbabilisticClassifier.normalizeDistribution(
         (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
       )).toMap
     }
   }
 
-  /** From a particular node, chooses the correct child according to the instance
-    * and its splitting attribute (if there is one).
+  /** From a particular node, chooses the correct child according to the feature vector
+    * and the node's splitting feature (if there is one).
     *
     * @param nodeId the id of the node
-    * @param inst the instance
+    * @param featureVector the feature vector
     * @return the node id of the correct child (if there is one)
     */
-  protected def selectChild(nodeId: Int, inst: FeatureVector): Option[Int] = {
-    splittingAttribute(nodeId) flatMap { attr => childMap(nodeId).get(inst.getAttribute(attr)) }
+  protected def selectChild(nodeId: Int, featureVector: FeatureVector): Option[Int] = {
+    splittingFeature(nodeId) flatMap { feature =>
+      childMap(nodeId).get(featureVector.getFeature(feature))
+    }
   }
 
-  /** Finds the "decision point" of the specified instance. This is the node for which no
-    * child covers the instance.
+  /** Finds the "decision point" of the specified feature vector. This is the node for which no
+    * child covers the feature vector.
     *
-    * @param inst instance to classify
-    * @return the node the instance is classified into
+    * @param featureVector feature vector to classify
+    * @return the decision tree node that the feature vector is classified into
     */
-  @tailrec protected final def findDecisionPoint(inst: FeatureVector, nodeId: Int = 0): Int = {
-    selectChild(nodeId, inst) match {
+  @tailrec protected final def findDecisionPoint(featureVector: FeatureVector, nodeId: Int = 0): Int = {
+    selectChild(nodeId, featureVector) match {
       case None => nodeId
-      case Some(child) => findDecisionPoint(inst, child)
+      case Some(child) => findDecisionPoint(featureVector, child)
     }
   }
 
   /** Prints the decision tree to stdout. */
-  def print(featureNames: Vector[String], categoryNames: Vector[String], nodeId: Int = 0,
+  def print(featureNames: Vector[String], outcomeNames: Vector[String], nodeId: Int = 0,
     tabbing: String = ""): Unit = {
 
-    splittingAttribute(nodeId) match {
-      case Some(attr) =>
-        println(tabbing + featureNames(attr))
+    splittingFeature(nodeId) match {
+      case Some(feature) =>
+        println(tabbing + featureNames(feature))
         childMap(nodeId).get(1) match {
           case Some(child) =>
-            print(featureNames, categoryNames, child, tabbing + "  ")
+            print(featureNames, outcomeNames, child, tabbing + "  ")
           case None => println(tabbing + "  +")
         }
         childMap(nodeId).get(0) match {
           case Some(child) =>
-            print(featureNames, categoryNames, child, tabbing + "  ")
+            print(featureNames, outcomeNames, child, tabbing + "  ")
           case None => println(tabbing + "  -")
         }
       case None =>
-        println(tabbing + categoryNames(mostProbableCategory(nodeId)))
+        println(tabbing + outcomeNames(mostProbableOutcome(nodeId)))
     }
   }
 }

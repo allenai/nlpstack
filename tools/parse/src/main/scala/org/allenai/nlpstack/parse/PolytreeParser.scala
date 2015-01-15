@@ -13,12 +13,14 @@ import org.allenai.nlpstack.parse.poly.polyparser
   * @param modelVersion version of the parser model
   * @param useLocalFile if false, then the model file is found on the datastore
   */
-class PolytreeParser(modelFile: String = "PolyParserModel.poly.json",
-  modelVersion: Int = 5, useLocalFile: Boolean = false) extends DependencyParser with Datastores {
+class PolytreeParser(
+    modelFile: String = "PolyParserModel.poly.json",
+    modelVersion: Int = 6, useLocalFile: Boolean = false
+) extends DependencyParser with Datastores {
 
   val parser =
     polyparser.Parser.loadParser(
-      if(useLocalFile) {
+      if (useLocalFile) {
         modelFile
       } else {
         publicFile(modelFile, modelVersion).toString

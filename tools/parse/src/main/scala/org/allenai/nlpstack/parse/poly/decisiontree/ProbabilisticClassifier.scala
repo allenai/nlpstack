@@ -6,25 +6,25 @@ import spray.json._
 
 trait ProbabilisticClassifier {
 
-  /** Gets the probability distribution over labels.
+  /** Gets the probability distribution over outcomes.
     *
-    * @param inst instance to find distribution of
-    * @return probability distribution of label according to training data
+    * @param featureVector feature vector to find outcome distribution for
+    * @return probability distribution of outcomes according to training data
     */
-  def distributionForInstance(inst: FeatureVector): Map[Int, Double]
+  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double]
 
-  /** Classifies an instance.
+  /** Classifies an feature vector.
     *
-    * @param inst instance to classify
-    * @return predicted label
+    * @param featureVector feature vector to classify
+    * @return predicted outcome
     */
-  def classify(inst: FeatureVector): Int = {
-    val (bestClass, bestProb) = distributionForInstance(inst) maxBy { case (_, prob) => prob }
+  def classify(featureVector: FeatureVector): Int = {
+    val (bestClass, bestProb) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
     bestClass
   }
 
-  /** All attributes used by the classifier. */
-  def allAttributes: Set[Int]
+  /** All features used by the classifier. */
+  def allFeatures: Set[Int]
 }
 
 object ProbabilisticClassifier {
@@ -64,8 +64,8 @@ object ProbabilisticClassifier {
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
     require(normalizer > 0d)
     unnormalizedDist map {
-      case (category, unnormalized) =>
-        (category, unnormalized / normalizer)
+      case (outcome, unnormalized) =>
+        (outcome, unnormalized / normalizer)
     }
   }
 
