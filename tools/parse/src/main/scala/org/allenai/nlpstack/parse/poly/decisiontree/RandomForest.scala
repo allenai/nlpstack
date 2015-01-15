@@ -2,29 +2,28 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 
 import spray.json.DefaultJsonProtocol._
 
-case class RandomForest(allCategories: Seq[Int], decisionTrees: Seq[DecisionTree])
+case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     extends ProbabilisticClassifier {
 
-  //println("decision rules:")
-  //decisionRules.sortBy { -_._2 } filter { _._2 > 0.02 } foreach println
+  println("decision rules:")
+  decisionRules.sortBy { -_._2 } filter { _._2 > 0.02 } foreach println
 
-  override def distributionForInstance(inst: FeatureVector): Map[Int, Double] = {
-    val summedCategoryCounts = decisionTrees map { decisionTree =>
-      decisionTree.classify(inst)
+  def outcomeDistribution2(featureVector: FeatureVector): Map[Int, Double] = {
+    val outcomeHistogram = decisionTrees map { decisionTree =>
+      decisionTree.classify(featureVector)
     } groupBy { x => x } mapValues { v => v.size }
-    RandomForest.convertFrequenciesToDistribution(summedCategoryCounts)
+    RandomForest.convertFrequenciesToDistribution(outcomeHistogram)
   }
 
-  def distributionForInstance2(inst: FeatureVector): Map[Int, Double] = {
-    val summedCategoryCounts: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
-      decisionTree.categoryCounts(inst).toSeq
+  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+    val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
+      decisionTree.outcomeHistogram(featureVector).toSeq
     } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
-    RandomForest.convertFrequenciesToDistribution(summedCategoryCounts)
+    RandomForest.convertFrequenciesToDistribution(summedOutcomeHistograms)
   }
 
-  /** All attributes used in the decision tree. */
-  override def allAttributes: Set[Int] = {
-    (decisionTrees map { _.allAttributes }) reduce { (x, y) => x ++ y }
+  override def allFeatures: Set[Int] = {
+    (decisionTrees map { _.allFeatures }) reduce { (x, y) => x ++ y }
   }
 
   @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Double)] = {
@@ -45,13 +44,13 @@ object RandomForest {
 }
 
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-    attributesExaminedPerNode: Int) extends ProbabilisticClassifierTrainer {
+    featuresExaminedPerNode: Int) extends ProbabilisticClassifierTrainer {
 
   override def apply(data: FeatureVectors): ProbabilisticClassifier = {
 
-    val dtTrainer = new DecisionTreeTrainer(validationPercentage, attributesExaminedPerNode)
+    val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode)
     RandomForest(
-      data.allLabels,
+      data.allOutcomes,
       Range(0, numDecisionTrees) flatMap { _ =>
         dtTrainer(data) match {
           case dt: DecisionTree => Some(dt)
