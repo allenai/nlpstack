@@ -35,20 +35,21 @@ object TransitionClassifier {
     * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
     */
   implicit object TransitionClassifierJsonFormat extends RootJsonFormat[TransitionClassifier] {
-    implicit val decisionTreeClassifierFormat =
-      jsonFormat4(DecisionTreeClassifier.apply).pack("type" -> "DecisionTreeClassifier")
+    implicit val embeddedClassifierFormat =
+      jsonFormat4(EmbeddedClassifier.apply).pack("type" -> "EmbeddedClassifier")
     //implicit val adaptiveDecisionTreeClassifierFormat =
     //  jsonFormat4(AdaptiveDecisionTreeClassifier.apply).pack(
     //    "type" -> "AdaptiveDecisionTreeClassifier")
 
     def write(classifier: TransitionClassifier): JsValue = classifier match {
-      case dtClassifier: DecisionTreeClassifier => dtClassifier.toJson
+      case embClassifier: EmbeddedClassifier => embClassifier.toJson
       //case adtClassifier: AdaptiveDecisionTreeClassifier => adtClassifier.toJson
       case x => deserializationError(s"Cannot serialize this classifier type: $x")
     }
 
     def read(value: JsValue): TransitionClassifier = value.asJsObject.unpackWith(
-      decisionTreeClassifierFormat)
+      embeddedClassifierFormat
+    )
     //adaptiveDecisionTreeClassifierFormat)
   }
 }
