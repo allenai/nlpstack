@@ -29,7 +29,7 @@ object NlpstackBuild extends Build {
     Revolver.settings ++
     releaseSettings ++
     Seq(
-      javaOptions += s"-Dlogback.configurationFile=/Users/michael/hack/github/allenai/aristo/conf/logback-test.xml",
+      javaOptions += s"-Dlogback.configurationFile=${file(".")}/conf/logback-test.xml",
       fork := true,
       organization := "org.allenai.nlpstack",
       crossScalaVersions := Seq("2.11.5"),
