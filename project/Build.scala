@@ -30,7 +30,7 @@ object NlpstackBuild extends Build {
     releaseSettings ++
     Seq(
       javaOptions += s"-Dlogback.configurationFile=/Users/michael/hack/github/allenai/aristo/conf/logback-test.xml",
-      fork in test := true,
+      fork := true,
       organization := "org.allenai.nlpstack",
       crossScalaVersions := Seq("2.11.5"),
       scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
