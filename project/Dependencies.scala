@@ -11,6 +11,8 @@ object Dependencies extends CoreDependencies {
   val loggingImplementations = Seq(logbackCore, logbackClassic)
   val commonsIo = "commons-io" % "commons-io" % "2.4"
 
+  val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
+
   val clearGroup = "com.clearnlp"
   val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
@@ -18,7 +20,6 @@ object Dependencies extends CoreDependencies {
     exclude("net.sf.jwordnet", "jwnl"))
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
-    exclude("com.typesafe.akka", "akka-actor_2.10")
     exclude("org.scala-lang", "scala-reflect")
     exclude("com.thoughtworks.paranamer", "paranamer")
     exclude("com.google.guava", "guava")

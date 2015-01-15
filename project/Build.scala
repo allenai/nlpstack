@@ -29,8 +29,10 @@ object NlpstackBuild extends Build {
     Revolver.settings ++
     releaseSettings ++
     Seq(
+      javaOptions += s"-Dlogback.configurationFile=/Users/michael/hack/github/allenai/aristo/conf/logback-test.xml",
+      fork in test := true,
       organization := "org.allenai.nlpstack",
-      crossScalaVersions := Seq("2.10.4"),
+      crossScalaVersions := Seq("2.11.5"),
       scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
       publishMavenStyle := true,
       publishArtifact in Test := false,
@@ -52,9 +54,12 @@ object NlpstackBuild extends Build {
           </developer>
         </developers>,
       dependencyOverrides ++= Set(
+        "org.scala-lang.modules" % "scala-parser-combinators_2.11" % "1.0.2",
+        "org.scala-lang" % "scala-reflect" % "2.11.5",
         "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
         "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.3",
+        "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.2",
         "commons-codec" % "commons-codec" % "1.9",
         typesafeConfig,
         allenAiCommon,
