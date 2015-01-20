@@ -61,11 +61,18 @@ object ProbabilisticClassifier {
   }
 
   def normalizeDistribution(unnormalizedDist: Seq[(Int, Double)]): Seq[(Int, Double)] = {
+    require(unnormalizedDist.nonEmpty, ".normalizeDistribution cannot be called on an empty seq")
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
-    require(normalizer > 0d)
-    unnormalizedDist map {
-      case (outcome, unnormalized) =>
-        (outcome, unnormalized / normalizer)
+    if (normalizer > 0d) {
+      unnormalizedDist map {
+        case (outcome, unnormalized) =>
+          (outcome, unnormalized / normalizer)
+      }
+    } else {
+      unnormalizedDist map {
+        case (outcome, _) =>
+          (outcome, 1.0 / unnormalizedDist.length)
+      }
     }
   }
 

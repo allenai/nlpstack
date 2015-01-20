@@ -11,6 +11,9 @@ package org.allenai.nlpstack.parse.poly.decisiontree
   *
   * i.e. the probability of 1 (true) according to binary classifiers A, B, and C.
   *
+  * QUESTION(MH): is this the best way to normalize these, or would it be better to normalize
+  * by summing the logs and then re-applying the exponential operation?
+  *
   * @param binaryClassifiers the binary classifier associated with each outcome
   */
 case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
@@ -20,7 +23,7 @@ case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
     val unnormalizedDist: Seq[(Int, Double)] =
       binaryClassifiers map {
         case (outcome, classifier) =>
-          (outcome, classifier.outcomeDistribution(featureVector).getOrElse(1, 0.0000001))
+          (outcome, classifier.outcomeDistribution(featureVector).getOrElse(1, 0.0))
       }
     ProbabilisticClassifier.normalizeDistribution(unnormalizedDist).toMap
   }
@@ -57,4 +60,3 @@ class OneVersusAllTrainer(baseTrainer: ProbabilisticClassifierTrainer)
     OneVersusAll(binaryClassifiers)
   }
 }
-
