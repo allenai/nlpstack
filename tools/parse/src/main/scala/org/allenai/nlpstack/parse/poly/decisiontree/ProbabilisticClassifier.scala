@@ -60,6 +60,14 @@ object ProbabilisticClassifier {
     )
   }
 
+  /** Normalizes an unnormalized distribution over integers.
+    *
+    * If the sum of the original masses is zero, then this will return a uniform distribution
+    * over the domain.
+    *
+    * @param unnormalizedDist a map from integers to probability mass (not necessarily normalized)
+    * @return the normalized version of the argument distribution
+    */
   def normalizeDistribution(unnormalizedDist: Seq[(Int, Double)]): Seq[(Int, Double)] = {
     require(unnormalizedDist.nonEmpty, ".normalizeDistribution cannot be called on an empty seq")
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
