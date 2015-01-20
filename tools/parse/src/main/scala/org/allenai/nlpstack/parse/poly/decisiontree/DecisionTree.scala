@@ -9,6 +9,7 @@ import scala.collection.mutable
   * Each data structure is an indexed sequence of properties. The ith element of each sequence
   * is the property of node i of the decision tree.
   *
+  * @param outcomes all possible outcomes for the decision tree
   * @param child stores the children of each node (as a map from feature values to node ids)
   * @param splittingFeature stores the feature that each node splits on; can be None for leaf
   * nodes

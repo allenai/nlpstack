@@ -11,6 +11,8 @@ import spray.json.DefaultJsonProtocol._
 case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     extends ProbabilisticClassifier {
 
+  require(decisionTrees.nonEmpty, "Cannot initialize a RandomForest with zero decision trees")
+
   /** Each decision gets a single vote about the outcome. The produced distribution is the
     * normalized histogram of the votes.
     *
@@ -85,7 +87,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     RandomForest(
       data.allOutcomes,
       Range(0, numDecisionTrees) flatMap { _ =>
-        dtTrainer(data) match {
+        dtTrainer(data.getBag) match {
           case dt: DecisionTree => Some(dt)
           case _ => None
         }
