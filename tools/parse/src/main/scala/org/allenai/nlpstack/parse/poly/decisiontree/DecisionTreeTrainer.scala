@@ -194,10 +194,8 @@ class DecisionTreeTrainer(
       val shuffledFeatures = Random.shuffle((0 to n - 1).toIndexedSeq)
       (shuffledFeatures.drop(nTrain), shuffledFeatures.take(nTrain))
     }
-    println("Growing tree.")
     val root = growTree(data, trainingSubset, featuresExaminedPerNode)
     if (validationSubset.nonEmpty) {
-      println("Pruning tree.")
       pruneTree(data, validationSubset, root)
     }
     root.toDecisionTree()

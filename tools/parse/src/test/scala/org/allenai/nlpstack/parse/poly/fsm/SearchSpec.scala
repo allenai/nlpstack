@@ -62,7 +62,6 @@ case object Backward extends StateTransition {
     'E -> 'D, 'F -> 'E, 'G -> 'F, 'H -> 'G)
 }
 
-
 case object AlphabetBlockTransitionSystem extends TransitionSystem {
   def initialState(marbleBlock: MarbleBlock): Option[State] = {
     marbleBlock match {
@@ -105,5 +104,4 @@ class SearchSpec extends UnitSpec {
     val nbestSearch: NbestSearch = new NbestSearch(AlphabetBlockCostFunction1)
     //println(nbestSearch.find(initialState, 5))
   }
-
 }

@@ -41,31 +41,46 @@ object ProbabilisticClassifier {
 
     implicit val decisionTreeFormat =
       jsonFormat4(DecisionTree.apply).pack("type" -> "DecisionTree")
-    //implicit val randomForestFormat =
-    //  jsonFormat2(RandomForest.apply).pack(
-    //    "type" -> "RandomForest"
-    //  )
-    //implicit val oneVersusAllFormat =
-    //  jsonFormat1(OneVersusAll.apply).pack("type" -> "OneVersusAll")
+    implicit val randomForestFormat =
+      jsonFormat2(RandomForest.apply).pack(
+        "type" -> "RandomForest"
+      )
+    implicit val oneVersusAllFormat =
+      jsonFormat1(OneVersusAll.apply).pack("type" -> "OneVersusAll")
 
     def write(classifier: ProbabilisticClassifier): JsValue = classifier match {
       case decisionTree: DecisionTree => decisionTree.toJson
-      //case randomForest: RandomForest => randomForest.toJson
-      //case oneVersusAll: OneVersusAll => oneVersusAll.toJson
+      case randomForest: RandomForest => randomForest.toJson
+      case oneVersusAll: OneVersusAll => oneVersusAll.toJson
       case x => deserializationError(s"Cannot serialize this classifier type: $x")
     }
 
     def read(value: JsValue): ProbabilisticClassifier = value.asJsObject.unpackWith(
-      decisionTreeFormat //, randomForestFormat, oneVersusAllFormat
+      decisionTreeFormat, randomForestFormat, oneVersusAllFormat
     )
   }
 
+  /** Normalizes an unnormalized distribution over integers.
+    *
+    * If the sum of the original masses is zero, then this will return a uniform distribution
+    * over the domain.
+    *
+    * @param unnormalizedDist a map from integers to probability mass (not necessarily normalized)
+    * @return the normalized version of the argument distribution
+    */
   def normalizeDistribution(unnormalizedDist: Seq[(Int, Double)]): Seq[(Int, Double)] = {
+    require(unnormalizedDist.nonEmpty, ".normalizeDistribution cannot be called on an empty seq")
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
-    require(normalizer > 0d)
-    unnormalizedDist map {
-      case (outcome, unnormalized) =>
-        (outcome, unnormalized / normalizer)
+    if (normalizer > 0d) {
+      unnormalizedDist map {
+        case (outcome, unnormalized) =>
+          (outcome, unnormalized / normalizer)
+      }
+    } else {
+      unnormalizedDist map {
+        case (outcome, _) =>
+          (outcome, 1.0 / unnormalizedDist.length)
+      }
     }
   }
 
