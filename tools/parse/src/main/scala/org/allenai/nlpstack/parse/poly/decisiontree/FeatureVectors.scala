@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import scala.util.Random
 import spray.json.DefaultJsonProtocol._
+import scala.util.Random
 
 /** FeatureVectors is a convenience container for feature vectors.
   *
@@ -45,7 +45,7 @@ case class FeatureVectors(featureVectors: IndexedSeq[FeatureVector]) {
     val bag = Range(0, this.numVectors) map { x =>
       Random.nextInt(this.numVectors)
     }
-    FeatureVectors(bag map { x => featureVectors(x) })
+    FeatureVectors(bag map featureVectors)
   }
 
 }

@@ -74,7 +74,8 @@ object RandomForest {
   * selected features to consider at each node
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-    featuresExaminedPerNode: Int) extends ProbabilisticClassifierTrainer {
+  featuresExaminedPerNode: Int, useBagging: Boolean = false)
+    extends ProbabilisticClassifierTrainer {
 
   /** Induces a RandomForest from a set of feature vectors.
     *
@@ -87,7 +88,11 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     RandomForest(
       data.allOutcomes,
       Range(0, numDecisionTrees) flatMap { _ =>
-        dtTrainer(data.getBag) match {
+        val trainingData = useBagging match {
+          case true => data.getBag
+          case false => data
+        }
+        dtTrainer(trainingData) match {
           case dt: DecisionTree => Some(dt)
           case _ => None
         }

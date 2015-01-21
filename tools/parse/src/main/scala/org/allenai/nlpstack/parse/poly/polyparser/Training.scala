@@ -85,7 +85,7 @@ object Training {
     val baseCostFunction = None // TODO: fix this
     //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
     val classifierTrainer: ProbabilisticClassifierTrainer =
-      new OneVersusAllTrainer(new RandomForestTrainer(0, 20, 100))
+      new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
     val parsingCostFunction: StateCostFunction = {
