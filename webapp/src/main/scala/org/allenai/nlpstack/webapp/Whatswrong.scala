@@ -98,9 +98,9 @@ object Whatswrong {
       render(inst)
     }
   }
-  implicit def writeChunkSeq2Graphic[Token] = writeSeq2Graphic(tokenizeChunk)
-  implicit def writePostagSeq2Graphic[PostaggedToken] = writeSeq2Graphic(tokenizePostag)
-  implicit def writeTokenSeq2Graphic[ChunkedToken] = writeSeq2Graphic(tokenizeToken)
+  implicit def writeChunkSeq2Graphic[TToken] = writeSeq2Graphic(tokenizeChunk)
+  implicit def writePostagSeq2Graphic[TPostaggedToken] = writeSeq2Graphic(tokenizePostag)
+  implicit def writeTokenSeq2Graphic[TChunkedToken] = writeSeq2Graphic(tokenizeToken)
   implicit def writeGraph2Graphic = new Writer[DependencyGraph, BufferedImage] {
     val renderer = new SingleSentenceRenderer()
     override def write(graph: DependencyGraph): BufferedImage = {

@@ -1,5 +1,4 @@
 import Dependencies._
-import com.typesafe.sbt.SbtNativePackager.NativePackagerHelper._
 
 name := "nlpstack-cli"
 
@@ -8,8 +7,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   sprayCan,
   sprayRouting,
-  // config
-  typesafeConfig) ++ loggingImplementations
+  typesafeConfig)
 
-dependencyOverrides ++= Set(
-  slf4j)
+addLoggingDependencies(libraryDependencies)

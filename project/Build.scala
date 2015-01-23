@@ -43,7 +43,7 @@ object NlpstackBuild extends Build {
         url("https://github.com/allenai/nlpstack"),
         "https://github.com/allenai/nlpstack.git")),
       conflictManager := ConflictManager.strict,
-      libraryDependencies ++= testingLibraries ++ loggingImplementations.map(_ % "test"),
+      libraryDependencies ++= testingLibraries,
       ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
       pomExtra :=
         <developers>
@@ -54,18 +54,9 @@ object NlpstackBuild extends Build {
           </developer>
         </developers>,
       dependencyOverrides ++= Set(
-        "org.scala-lang.modules" % "scala-parser-combinators_2.11" % "1.0.2",
-        "org.scala-lang" % "scala-reflect" % "2.11.5",
-        "com.fasterxml.jackson.core" % "jackson-core" % "2.2.3",
-        "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
-        "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.3",
-        "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.2",
+        parserCombinators,
         "commons-codec" % "commons-codec" % "1.9",
-        typesafeConfig,
-        allenAiCommon,
-        "commons-io" % "commons-io" % "2.4",
-        "org.apache.commons" % "commons-compress" % "1.8",
-        datastore),
+        "org.apache.commons" % "commons-compress" % "1.8"),
       PublishTo.sonatype)
 
   lazy val tools = Project(
@@ -118,7 +109,8 @@ object NlpstackBuild extends Build {
       licenses ++= Seq(
         "Academic License (for original lex files)" -> url("http://www.informatics.sussex.ac.uk/research/groups/nlp/carroll/morph.tar.gz"),
         "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")),
-      libraryDependencies ++= Seq(clear,
+      libraryDependencies ++= Seq(
+        clear,
         "edu.washington.cs.knowitall" % "morpha-stemmer" % "1.0.5"))
   ) dependsOn(core)
 
@@ -147,8 +139,7 @@ object NlpstackBuild extends Build {
         factorie,
         opennlp,
         datastore,
-        "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5",
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value))
+        "edu.washington.cs.knowitall" % "opennlp-postag-models" % "1.5"))
   ) dependsOn(tokenize, core)
 
   lazy val chunk = Project(
@@ -172,7 +163,6 @@ object NlpstackBuild extends Build {
       libraryDependencies ++= Seq(
         factorie,
         scopt,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-        "org.allenai" %% "datastore" % "2014.11.24-0"))
+        datastore))
   ) dependsOn(postag, tokenize, core)
 }

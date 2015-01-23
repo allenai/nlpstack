@@ -360,7 +360,7 @@ object DependencyGraph {
 
   implicit object dependencyGraphJsonFormat extends RootJsonFormat[DependencyGraph] {
     def write(graph: DependencyGraph): JsValue = {
-      JsArray(graph.edges.toList map (_.toJson))
+      JsArray(graph.edges.toVector map (_.toJson))
     }
 
     def read(value: JsValue): DependencyGraph = value match {

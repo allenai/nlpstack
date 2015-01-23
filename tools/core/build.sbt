@@ -7,6 +7,10 @@ licenses := Seq(apache2)
 libraryDependencies ++= Seq(
     parserCombinators,
     allenAiCommon,
-    slf4j,
     // for remotes
-    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0")
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.2")
+
+dependencyOverrides ++= Set(
+  "org.scala-lang.modules" %% "scala-xml" % "1.0.2")
+
+addLoggingDependencies(libraryDependencies)
