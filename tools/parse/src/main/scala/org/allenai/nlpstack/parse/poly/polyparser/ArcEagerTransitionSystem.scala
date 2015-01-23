@@ -109,36 +109,8 @@ case class ArcEagerTransitionSystem(
       }
       case requestedArc: RequestedArc =>
         ArcEagerTransitionSystem.requestedArcInterpretation(requestedArc)
-      case ForbiddenArcLabel(token1, token2, _) =>
-        TransitionSystem.trivialConstraint
-      //ArcEagerTransitionSystem.requestedArcInterpretation(RequestedArc(token1, token2))
-      /* ignore for now
-      case RequestedCpos(tokenIndex, cpos) => { (state: State, transition: StateTransition) =>
-        state match {
-          case tpState: TransitionParserState =>
-            (StackRef(0)(tpState).headOption, BufferRef(0)(tpState).headOption) match {
-              case (Some(stackTop), Some(bufferTop)) =>
-                if (stackTop == tokenIndex) {
-                  transition match {
-                    case ArcEagerLeftArc(cposOther) if cposOther != cpos => true
-                    case ArcEagerInvertedLeftArc(cposOther) if cposOther != cpos => true
-                    case _ => false
-                  }
-                } else if (bufferTop == tokenIndex) {
-                  transition match {
-                    case ArcEagerRightArc(cposOther) if cposOther != cpos => true
-                    case ArcEagerInvertedRightArc(cposOther) if cposOther != cpos => true
-                    case _ => false
-                  }
-                } else {
-                  false
-                }
-              case _ => false
-            }
-          case _ => false
-        }
-      }
-      */
+      case forbiddenArcLabel: ForbiddenArcLabel =>
+        ArcEagerTransitionSystem.forbiddenArcLabelInterpretation(forbiddenArcLabel)
       case _ => TransitionSystem.trivialConstraint
     }
   }
@@ -192,6 +164,57 @@ case object ArcEagerTransitionSystem {
                       bufferTop == tokenB &&
                       requestedArc.arcLabel != None &&
                       requestedArc.arcLabel.get != alabel)
+                case _ => false
+              }
+            case _ => false
+          }
+        case _ => false
+      }
+    }
+  }
+
+  def forbiddenArcLabelInterpretation(
+    forbiddenArcLabel: ForbiddenArcLabel
+  ): ((State, StateTransition) => Boolean) = {
+
+    val tokenA: Int = List(forbiddenArcLabel.token1, forbiddenArcLabel.token2).min
+    val tokenB: Int = List(forbiddenArcLabel.token1, forbiddenArcLabel.token2).max
+    (state: State, transition: StateTransition) => {
+      state match {
+        case tpState: TransitionParserState =>
+          (StackRef(0)(tpState).headOption, BufferRef(0)(tpState).headOption) match {
+            case (Some(stackTop), Some(bufferTop)) =>
+              transition match {
+                case ArcEagerShift => (bufferTop == tokenB) && !tpState.areNeighbors(tokenA, tokenB)
+                case ArcEagerRightArc(alabel) =>
+                  (bufferTop == tokenB &&
+                    !tpState.areNeighbors(tokenA, tokenB) &&
+                    stackTop != tokenA) ||
+                    (stackTop == tokenA &&
+                      bufferTop == tokenB &&
+                      forbiddenArcLabel.arcLabel == alabel)
+                case ArcEagerInvertedRightArc(alabel) =>
+                  (bufferTop == tokenB &&
+                    !tpState.areNeighbors(tokenA, tokenB) &&
+                    stackTop != tokenA) ||
+                    (stackTop == tokenA &&
+                      bufferTop == tokenB &&
+                      forbiddenArcLabel.arcLabel == alabel)
+                case ArcEagerReduce => (stackTop == tokenA) && !tpState.areNeighbors(tokenA, tokenB)
+                case ArcEagerLeftArc(alabel) =>
+                  (stackTop == tokenA &&
+                    !tpState.areNeighbors(tokenA, tokenB) &&
+                    bufferTop != tokenB) ||
+                    (stackTop == tokenA &&
+                      bufferTop == tokenB &&
+                      forbiddenArcLabel.arcLabel == alabel)
+                case ArcEagerInvertedLeftArc(alabel) =>
+                  (stackTop == tokenA &&
+                    !tpState.areNeighbors(tokenA, tokenB) &&
+                    bufferTop != tokenB) ||
+                    (stackTop == tokenA &&
+                      bufferTop == tokenB &&
+                      forbiddenArcLabel.arcLabel == alabel)
                 case _ => false
               }
             case _ => false

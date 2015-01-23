@@ -64,8 +64,6 @@ class ParserConstraintsSpec extends UnitSpec {
       interpretation2(state1, ArcEagerLeftArc('foo)) shouldBe false
     }
 
-  // TODO: add more unit tests for ForbiddenArcLabel
-
   "Calling RequestedArc's .apply" should "return true if we shift node B and A and B aren't yet" +
     "neighbors" in {
       val constraint = RequestedArc(0, 5, None)
@@ -164,5 +162,27 @@ class ParserConstraintsSpec extends UnitSpec {
     interpretation(state1, ArcEagerInvertedLeftArc('bar)) shouldBe true
     interpretation(state1, ArcEagerRightArc('bar)) shouldBe true
     interpretation(state1, ArcEagerInvertedRightArc('bar)) shouldBe true
+  }
+
+  "Calling ForbiddenArcLabel's .apply" should "return true if we draw an arc between " +
+    "A and B with the forbidden label" in {
+
+    val constraint = ForbiddenArcLabel(2, 5, 'foo)
+    val interpretation = arcEagerSystem.interpretConstraint(constraint)
+    interpretation(state1, ArcEagerLeftArc('foo)) shouldBe true
+    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe true
+    interpretation(state1, ArcEagerRightArc('foo)) shouldBe true
+    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe true
+  }
+
+  it should "return false if we draw an arc between " +
+    "A and B with some non-forbidden label" in {
+
+    val constraint = ForbiddenArcLabel(2, 5, 'bar)
+    val interpretation = arcEagerSystem.interpretConstraint(constraint)
+    interpretation(state1, ArcEagerLeftArc('foo)) shouldBe false
+    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe false
+    interpretation(state1, ArcEagerRightArc('foo)) shouldBe false
+    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe false
   }
 }
