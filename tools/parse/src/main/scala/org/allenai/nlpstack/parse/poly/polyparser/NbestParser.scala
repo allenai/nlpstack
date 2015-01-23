@@ -8,9 +8,11 @@ import spray.json._
 
 import scopt.OptionParser
 
-private case class NbestParserCommandLine(configFilename: String = "",
+private case class NbestParserCommandLine(
+  configFilename: String = "",
   inputFilename: String = "", inputFileFormat: String = "", outputFilename: String = "",
-  nbestSize: Int = NbestParser.defaultNbestSize, dataSource: String = "")
+  nbestSize: Int = NbestParser.defaultNbestSize, dataSource: String = ""
+)
 
 object NbestParser {
   val defaultNbestSize: Int = 10
@@ -40,13 +42,13 @@ object NbestParser {
           "to parse")
       opt[String]('d', "datasource") required () valueName ("<file>") action
         { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
-        "('datastore','local')") validate { x =>
-        if (Set("datastore", "local").contains(x)) {
-          success
-        } else {
-          failure(s"unsupported data source: ${x}")
-        }
-      }
+          "('datastore','local')") validate { x =>
+            if (Set("datastore", "local").contains(x)) {
+              success
+            } else {
+              failure(s"unsupported data source: ${x}")
+            }
+          }
       opt[String]('o', "output") required () valueName ("<file>") action
         { (x, c) => c.copy(outputFilename = x) } text ("where to direct the nbest lists")
       opt[Int]('n', "nbestsize") required () valueName ("<int>") action
@@ -56,8 +58,10 @@ object NbestParser {
     val clArgs: NbestParserCommandLine = optionParser.parse(args, NbestParserCommandLine()).get
     val sentenceSource: PolytreeParseSource =
       MultiPolytreeParseSource(clArgs.inputFilename.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(path,
-          ConllX(true), clArgs.dataSource)
+        InMemoryPolytreeParseSource.getParseSource(
+          path,
+          ConllX(true), clArgs.dataSource
+        )
       })
 
     val parser: TransitionParser = TransitionParser.load(clArgs.configFilename)
@@ -67,9 +71,11 @@ object NbestParser {
         val baseParser: NbestParser = new NbestParser(parserConfig)
         val candidateParses: Iterator[ParsePool] = {
           sentenceSource.sentenceIterator map {
-            sentence => ParsePool(baseParser.parse(sentence, Set()) map { case (parse, cost) =>
-              (PolytreeParse.arcInverterStanford(parse), cost)
-            })
+            sentence =>
+              ParsePool(baseParser.parse(sentence, Set()) map {
+                case (parse, cost) =>
+                  (PolytreeParse.arcInverterStanford(parse), cost)
+              })
           }
         }
         FileBasedParsePoolSource.writePools(candidateParses, clArgs.outputFilename)
@@ -88,20 +94,26 @@ class NbestParser(config: ParserConfiguration) {
   val baseParser: NbestSearch = new NbestSearch(config.parsingCostFunction)
   val reranker: Reranker = new Reranker(config.rerankingFunction)
 
-  def parse(sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()): Set[(PolytreeParse, Double)] = {
+  def parse(
+    sentence: Sentence,
+    constraints: Set[TransitionConstraint] = Set()
+  ): Set[(PolytreeParse, Double)] = {
 
     val optNbestList: Option[NbestList] =
-      config.parsingCostFunction.transitionSystem.initialState(sentence) map { initState =>
+      config.parsingCostFunction.transitionSystem.initialState(
+        sentence,
+        constraints.toSeq
+      ) map { initState =>
         baseParser.find(initState, config.parsingNbestSize, constraints)
       }
     val unlabeledParses: Iterable[(PolytreeParse, Double)] = optNbestList match {
       case None => Set()
-      case Some(nbestList) => nbestList.scoredSculptures flatMap { case (sculpture, cost)  =>
-        sculpture match {
-          case parse: PolytreeParse => Some((parse, cost))
-          case _ => None
-        }
+      case Some(nbestList) => nbestList.scoredSculptures flatMap {
+        case (sculpture, cost) =>
+          sculpture match {
+            case parse: PolytreeParse => Some((parse, cost))
+            case _ => None
+          }
       }
     }
     unlabeledParses.toSet

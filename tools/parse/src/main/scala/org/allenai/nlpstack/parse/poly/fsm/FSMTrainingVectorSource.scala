@@ -60,7 +60,7 @@ abstract class FSMTrainingVectorSource(
     transitionSystem.guidedCostFunction(marbleBlock) match {
       case Some(costFunction) =>
         val search = new GreedySearch(costFunction)
-        val initialState = transitionSystem.initialState(marbleBlock)
+        val initialState = transitionSystem.initialState(marbleBlock, Seq())
         initialState flatMap { initState => search.find(initState, Set()) } match {
           case Some(walk) => generateVectorsHelper(
             walk.steps map {

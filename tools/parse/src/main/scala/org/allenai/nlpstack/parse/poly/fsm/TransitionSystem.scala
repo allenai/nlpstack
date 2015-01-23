@@ -7,7 +7,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 trait TransitionSystem {
-  def initialState(marbleBlock: MarbleBlock): Option[State]
+  def initialState(marbleBlock: MarbleBlock, constraints: Seq[TransitionConstraint]): Option[State]
   def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction]
   val feature: StateFeature
   def toSculpture(state: State): Option[Sculpture]

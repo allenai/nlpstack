@@ -14,7 +14,11 @@ object ParseLabel {
 }
 
 case object ParseLabelerTransitionSystem extends TransitionSystem {
-  def initialState(marbleBlock: MarbleBlock): Option[State] = {
+  def initialState(
+    marbleBlock: MarbleBlock,
+    constraints: Seq[TransitionConstraint]
+  ): Option[State] = {
+
     marbleBlock match {
       case parse: PolytreeParse =>
         Some(ParseLabelerState(parse, Map(), DepthFirstParseNodeSuccessor(parse)(Some(0))))
@@ -43,7 +47,8 @@ case object ParseLabelerTransitionSystem extends TransitionSystem {
   }
 
   override def interpretConstraint(
-    constraint: TransitionConstraint): ((State, StateTransition) => Boolean) = {
+    constraint: TransitionConstraint
+  ): ((State, StateTransition) => Boolean) = {
 
     constraint match {
       case ForbiddenArcLabel(token1, token2, arcLabel) => {
@@ -102,9 +107,11 @@ case class AddNodeLabel(label: ParseLabel) extends StateTransition {
     state match {
       case Some(labelerState: ParseLabelerState) =>
         labelerState.nextNodeToParse map { node =>
-          ParseLabelerState(labelerState.parse,
+          ParseLabelerState(
+            labelerState.parse,
             labelerState.labels.updated(node, label),
-            DepthFirstParseNodeSuccessor(labelerState.parse)(labelerState.nextNodeToParse))
+            DepthFirstParseNodeSuccessor(labelerState.parse)(labelerState.nextNodeToParse)
+          )
         }
       case _ => None
     }
@@ -114,8 +121,10 @@ case class AddNodeLabel(label: ParseLabel) extends StateTransition {
   override val name: String = s"Label[${label}]"
 }
 
-class GuidedCostFunctionForLabeler(goldParse: PolytreeParse,
-    override val transitionSystem: TransitionSystem) extends StateCostFunction {
+class GuidedCostFunctionForLabeler(
+    goldParse: PolytreeParse,
+    override val transitionSystem: TransitionSystem
+) extends StateCostFunction {
 
   override def apply(state: State): Map[StateTransition, Double] = {
     state match {
@@ -135,7 +144,8 @@ case class DepthFirstParseNodeSuccessor(parse: PolytreeParse) extends ParseNodeS
 
   private val successors: Map[Option[Int], Option[Int]] =
     ((parse.depthFirstPreorder map { x => Some(x) }).zipAll(
-      parse.depthFirstPreorder.tail map { x => Some(x) }, None, None)).toMap
+      parse.depthFirstPreorder.tail map { x => Some(x) }, None, None
+    )).toMap
 
   override def apply(nodeIndex: Option[Int]): Option[Int] = {
     successors.getOrElse(nodeIndex, None)
@@ -189,8 +199,10 @@ abstract class ParseLabelerStateFeature extends StateFeature {
 
 case object SiblingFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     state.parse.siblings(nextNodeToParse).toSeq flatMap { sibling =>
       getMappings(state, sibling)
@@ -207,14 +219,17 @@ case object SiblingFeature extends ParseLabelerStateFeature {
       FeatureName(List('siblingArcLabel, state.labels.get(sibling) match {
         case Some(label) => label.sym
         case _ => 'noArcLabel
-      })) -> 1.0)
+      })) -> 1.0
+    )
   }
 }
 
 case object ChildrenFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     state.parse.gretels.getOrElse(nextNodeToParse, List()) flatMap { child =>
       getMappings(state, child)
@@ -227,33 +242,40 @@ case object ChildrenFeature extends ParseLabelerStateFeature {
       FeatureName(List('childPos, token.getDeterministicProperty('factoriePos)))
         -> 1.0,
       FeatureName(List('childCpos, token.getDeterministicProperty('cpos)))
-        -> 1.0)
+        -> 1.0
+    )
   }
 }
 
 case object NextNodeFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     val token = state.parse.tokens(nextNodeToParse)
     Seq(
       FeatureName(List('nextNodePos, token.getDeterministicProperty('factoriePos)))
         -> 1.0,
       FeatureName(List('nextNodeCpos, token.getDeterministicProperty('cpos)))
-        -> 1.0)
+        -> 1.0
+    )
   }
 }
 
 case object BreadcrumbFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     val breadcrumb: Int = state.parse.breadcrumb(nextNodeToParse)
     if (breadcrumb < 0) {
       Seq(
-        FeatureName(List('noBreadcrumb)) -> 1.0)
+        FeatureName(List('noBreadcrumb)) -> 1.0
+      )
     } else {
       val token = state.parse.tokens(breadcrumb)
       Seq(
@@ -264,15 +286,18 @@ case object BreadcrumbFeature extends ParseLabelerStateFeature {
         FeatureName(List('crumbPos, token.getDeterministicProperty('factoriePos)))
           -> 1.0,
         FeatureName(List('crumbCpos, token.getDeterministicProperty('cpos)))
-          -> 1.0)
+          -> 1.0
+      )
     }
   }
 }
 
 case object GrandcrumbFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     val grandcrumb: Int =
       if (state.parse.breadcrumb(nextNodeToParse) >= 0) {
@@ -282,7 +307,8 @@ case object GrandcrumbFeature extends ParseLabelerStateFeature {
       }
     if (grandcrumb < 0) {
       Seq(
-        FeatureName(List('noGrandcrumb)) -> 1.0)
+        FeatureName(List('noGrandcrumb)) -> 1.0
+      )
     } else {
       val token = state.parse.tokens(grandcrumb)
       Seq(
@@ -293,15 +319,18 @@ case object GrandcrumbFeature extends ParseLabelerStateFeature {
         FeatureName(List('grandcrumbPos, token.getDeterministicProperty('factoriePos)))
           -> 1.0,
         FeatureName(List('grandcrumbCpos, token.getDeterministicProperty('cpos)))
-          -> 1.0)
+          -> 1.0
+      )
     }
   }
 }
 
 case object RelativeCposFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     state.parse.relativeCposMap(nextNodeToParse) match {
       case ((isLeft, cposSymbol), count) =>
@@ -313,14 +342,21 @@ case object RelativeCposFeature extends ParseLabelerStateFeature {
 
 case object LastWordFeature extends ParseLabelerStateFeature {
 
-  override def applyHelper(state: ParseLabelerState,
-    nextNodeToParse: Int): Seq[(FeatureName, Double)] = {
+  override def applyHelper(
+    state: ParseLabelerState,
+    nextNodeToParse: Int
+  ): Seq[(FeatureName, Double)] = {
 
     Seq(
-      FeatureName(List('lastWordIsQuestionMark,
-        Symbol((state.parse.sentence.tokens.last.word == '?).toString))) -> 1.0,
-      FeatureName(List('lastWordIsPeriod,
-        Symbol((state.parse.sentence.tokens.last.word == Symbol(".")).toString))) -> 1.0)
+      FeatureName(List(
+        'lastWordIsQuestionMark,
+        Symbol((state.parse.sentence.tokens.last.word == '?).toString)
+      )) -> 1.0,
+      FeatureName(List(
+        'lastWordIsPeriod,
+        Symbol((state.parse.sentence.tokens.last.word == Symbol(".")).toString)
+      )) -> 1.0
+    )
   }
 }
 
@@ -374,10 +410,12 @@ case object RootPathNodeFeature extends StateFeature {
         FeatureVector(plState.nextNodeToParse match {
           case Some(nodeIndex) =>
             val rootPath = plState.parse.paths(nodeIndex)
-            Seq(FeatureName(List('rootPathNode,
+            Seq(FeatureName(List(
+              'rootPathNode,
               Symbol((rootPath.tail map { link =>
                 plState.labels(link).sym
-              }).mkString(">>")))) -> 1.0)
+              }).mkString(">>"))
+            )) -> 1.0)
           case None =>
             Seq()
         })

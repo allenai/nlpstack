@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{InputStream, File, PrintWriter}
+import java.io.{ InputStream, File, PrintWriter }
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.parse.poly.core.{Token, NexusToken, Sentence, Util}
+import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence, Util }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import org.allenai.common.json._
 import spray.json.DefaultJsonProtocol._
@@ -18,20 +18,26 @@ abstract class TransitionParser {
     *
     * @param sentence the sentence you want to parse
     * @param constraints a set of ParserConstraint objects, which constrain the choices the parser
-    *              may make
+    * may make
     * @return the "best" list of Transitions you should apply to the initial state (or None if
-    *   a parse failure occurs)
+    * a parse failure occurs)
     */
-  def parse(sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()): Option[PolytreeParse]
+  def parse(
+    sentence: Sentence,
+    constraints: Set[TransitionConstraint] = Set()
+  ): Option[PolytreeParse]
 
-  def parseStringSequence(tokens: Seq[String],
-    constraints: Set[TransitionConstraint] = Set()): Option[PolytreeParse] = {
+  def parseStringSequence(
+    tokens: Seq[String],
+    constraints: Set[TransitionConstraint] = Set()
+  ): Option[PolytreeParse] = {
 
     // note that we invert this back into a rooted tree for this function, since that's what's
     // expected by nlpstack
-    parse(Sentence((NexusToken +: (tokens map { tok => Token(Symbol(tok))})).toIndexedSeq),
-      constraints) map { x => PolytreeParse.arcInverterStanford(x) }
+    parse(
+      Sentence((NexusToken +: (tokens map { tok => Token(Symbol(tok)) })).toIndexedSeq),
+      constraints
+    ) map { x => PolytreeParse.arcInverterStanford(x) }
   }
 }
 
@@ -79,7 +85,7 @@ object TransitionParser {
 
   /** Load a parser from a file.
     *
-    * param filename the file contains the serialized parser
+    * @param filename the file contains the serialized parser
     * @return the initialized parser
     */
   def load(filename: String): TransitionParser = {
@@ -107,6 +113,5 @@ object TransitionParser {
     }
     jsVal.convertTo[TransitionParser]
   }
-
 }
 
