@@ -18,12 +18,13 @@ case class GoldParseSource(goldParses: PolytreeParseSource, transitionSystem: Tr
   }
 
   private def convertToTransitionParserStates(
-    goldParse: PolytreeParse): Seq[State] = {
+    goldParse: PolytreeParse
+  ): Seq[State] = {
 
     transitionSystem.guidedCostFunction(goldParse) match {
       case Some(costFunc) =>
         val search = new GreedySearch(costFunc)
-        val initialState = transitionSystem.initialState(goldParse.sentence)
+        val initialState = transitionSystem.initialState(goldParse.sentence, Seq())
 
         val bestWalk: Option[Walk] = initialState flatMap { initState =>
           search.find(initState, Set())
@@ -54,10 +55,12 @@ case class GoldParseSource(goldParses: PolytreeParseSource, transitionSystem: Tr
   * @param transitionSystem the transition system to use (for generating states)
   * @param baseCostFunction a trained cost function to adapt (optional)
   */
-case class GoldParseTrainingVectorSource(goldParses: PolytreeParseSource,
+case class GoldParseTrainingVectorSource(
+  goldParses: PolytreeParseSource,
   taskIdentifier: TaskIdentifier,
   transitionSystem: TransitionSystem,
-  baseCostFunction: Option[StateCostFunction] = None)
+  baseCostFunction: Option[StateCostFunction] = None
+)
     extends FSMTrainingVectorSource(taskIdentifier, transitionSystem, baseCostFunction) {
 
   def getVectorIterator: Iterator[FSMTrainingVector] = {

@@ -63,7 +63,11 @@ case object Backward extends StateTransition {
 }
 
 case object AlphabetBlockTransitionSystem extends TransitionSystem {
-  def initialState(marbleBlock: MarbleBlock): Option[State] = {
+  def initialState(
+    marbleBlock: MarbleBlock,
+    constraints: Seq[TransitionConstraint]
+  ): Option[State] = {
+
     marbleBlock match {
       case block: AlphabetBlock => Some(block)
       case _ => None
@@ -98,7 +102,8 @@ case object AlphabetBlockCostFunction1 extends StateCostFunction {
 class SearchSpec extends UnitSpec {
 
   "NostalgicSearch.getPromisingWalks" should "return the right answer" in {
-    val initialState: State = AlphabetBlockTransitionSystem.initialState(AlphabetBlock('B)).get
+    val initialState: State =
+      AlphabetBlockTransitionSystem.initialState(AlphabetBlock('B), Seq()).get
     val search: NostalgicSearch = new NostalgicSearch(AlphabetBlockCostFunction1, 10000)
     //println(search.getPromisingWalks(Walk(initialState, Seq()), 0.0))
     val nbestSearch: NbestSearch = new NbestSearch(AlphabetBlockCostFunction1)

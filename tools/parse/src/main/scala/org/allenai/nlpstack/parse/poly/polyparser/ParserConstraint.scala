@@ -12,7 +12,7 @@ import org.allenai.nlpstack.parse.poly.fsm.{ TransitionConstraint }
   */
 case class ForbiddenEdge(token1: Int, token2: Int) extends TransitionConstraint
 
-/** A ForbiddenArcLabel constraints designates a transition as illegal if it would directly
+/** A ForbiddenArcLabel constraint designates a transition as illegal if it would directly
   * create an arc (in either direction) with the specified label between the tokens at the given
   * indices. It also implicitly creates a RequestedArc constraint for the specified arc
   * (basically it says that we DO want an arc between the specified indices, just not with this
@@ -42,4 +42,11 @@ case class ForbiddenArcLabel(token1: Int, token2: Int,
 case class RequestedArc(token1: Int, token2: Int,
   arcLabel: Option[Symbol] = None) extends TransitionConstraint
 
+/** A RequestedCpos constraint specifies the coarse part-of-speech tag of a particular token.
+  * This means that in the returned parse, the 'cpos property for that token will correspond
+  * to the requested coarse tag.
+  *
+  * @param tokenIndex index of the desired token
+  * @param cpos desired coarse tag for the token
+  */
 case class RequestedCpos(tokenIndex: Int, cpos: Symbol) extends TransitionConstraint
