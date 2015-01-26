@@ -15,9 +15,6 @@ object Dependencies extends CoreDependencies {
     exclude("net.sf.jwordnet", "jwnl"))
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
-    exclude("org.scala-lang", "scala-reflect")
-    exclude("com.thoughtworks.paranamer", "paranamer")
-    exclude("com.google.guava", "guava")
     exclude("junit", "junit"))
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
