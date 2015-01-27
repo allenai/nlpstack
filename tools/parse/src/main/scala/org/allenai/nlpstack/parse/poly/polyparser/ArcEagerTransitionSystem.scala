@@ -16,7 +16,8 @@ case class ArcEagerTransitionSystem(
     TokenPropertyFeature('brown0),
     //TokenPropertyFeature('lexical),
     //SuffixFeature(WordClusters.suffixes.toSeq),
-    KeywordFeature(ArcEagerTransitionSystem.keywords)
+    KeywordFeature(Set())
+  //KeywordFeature(ArcEagerTransitionSystem.keywords)
   ))
 
   override def initialState(
