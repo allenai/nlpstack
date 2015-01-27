@@ -15,7 +15,8 @@ object Dependencies extends CoreDependencies {
     exclude("net.sf.jwordnet", "jwnl"))
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
-    exclude("junit", "junit"))
+    exclude("junit", "junit")
+    exclude("commons-logging", "commons-logging"))
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")

@@ -9,5 +9,3 @@ javaOptions += "-Xmx2G"
 javaOptions += "-XX:ReservedCodeCacheSize=512M"
 
 fork in test := true
-
-addLoggingDependencies(libraryDependencies)
