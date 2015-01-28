@@ -64,6 +64,14 @@ object StateRef {
         JsObject(stackRightGretelsRefFormat.write(stackRightGretelsRef).asJsObject.fields +
           ("type" -> JsString("StackRightGretelsRef")))
       }
+      case stackLeftGretelRef: StackLeftGretelRef => {
+        JsObject(stackLeftGretelRefFormat.write(stackLeftGretelRef).asJsObject.fields +
+          ("type" -> JsString("StackLeftGretelRef")))
+      }
+      case stackRightGretelRef: StackRightGretelRef => {
+        JsObject(stackRightGretelRefFormat.write(stackRightGretelRef).asJsObject.fields +
+          ("type" -> JsString("StackRightGretelRef")))
+      }
       case bufferGretelsRef: BufferGretelsRef => {
         JsObject(bufferGretelsRefFormat.write(bufferGretelsRef).asJsObject.fields +
           ("type" -> JsString("BufferGretelsRef")))
@@ -80,6 +88,10 @@ object StateRef {
         JsObject(bufferRightGretelsRefFormat.write(bufferRightGretelsRef).asJsObject.fields +
           ("type" -> JsString("BufferRightGretelsRef")))
       }
+      case bufferLeftGretelRef: BufferLeftGretelRef => {
+        JsObject(bufferLeftGretelRefFormat.write(bufferLeftGretelRef).asJsObject.fields +
+          ("type" -> JsString("BufferLeftGretelRef")))
+      }
     }
 
     def read(value: JsValue): StateRef = value match {
@@ -95,10 +107,13 @@ object StateRef {
         case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
         case JsString("StackLeftGretelsRef") => stackLeftGretelsRefFormat.read(value)
         case JsString("StackRightGretelsRef") => stackRightGretelsRefFormat.read(value)
+        case JsString("StackLeftGretelRef") => stackLeftGretelRefFormat.read(value)
+        case JsString("StackRightGretelRef") => stackRightGretelRefFormat.read(value)
         case JsString("BufferGretelsRef") => bufferGretelsRefFormat.read(value)
         case JsString("BufferChildrenRef") => bufferChildrenRefFormat.read(value)
         case JsString("BufferLeftGretelsRef") => bufferLeftGretelsRefFormat.read(value)
         case JsString("BufferRightGretelsRef") => bufferRightGretelsRefFormat.read(value)
+        case JsString("BufferLeftGretelRef") => bufferLeftGretelRefFormat.read(value)
         case x => deserializationError(s"Invalid identifier for StateRef: $x")
       }
       case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
@@ -112,10 +127,13 @@ object StateRef {
   val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] = jsonFormat1(StackChildrenRef.apply)
   val stackLeftGretelsRefFormat: RootJsonFormat[StackLeftGretelsRef] = jsonFormat1(StackLeftGretelsRef.apply)
   val stackRightGretelsRefFormat: RootJsonFormat[StackRightGretelsRef] = jsonFormat1(StackRightGretelsRef.apply)
+  val stackLeftGretelRefFormat: RootJsonFormat[StackLeftGretelRef] = jsonFormat2(StackLeftGretelRef.apply)
+  val stackRightGretelRefFormat: RootJsonFormat[StackRightGretelRef] = jsonFormat2(StackRightGretelRef.apply)
   val bufferGretelsRefFormat: RootJsonFormat[BufferGretelsRef] = jsonFormat1(BufferGretelsRef.apply)
   val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] = jsonFormat1(BufferChildrenRef.apply)
   val bufferLeftGretelsRefFormat: RootJsonFormat[BufferLeftGretelsRef] = jsonFormat1(BufferLeftGretelsRef.apply)
   val bufferRightGretelsRefFormat: RootJsonFormat[BufferRightGretelsRef] = jsonFormat1(BufferRightGretelsRef.apply)
+  val bufferLeftGretelRefFormat: RootJsonFormat[BufferLeftGretelRef] = jsonFormat2(BufferLeftGretelRef.apply)
 }
 
 /** A StackRef is a StateRef (see above) whose apply operation returns the `index`th element of
@@ -166,7 +184,6 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("stackGretelRef" + index)
 }
 
-
 case class StackChildrenRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
 
@@ -177,7 +194,6 @@ case class StackChildrenRef(val index: Int) extends StateRef {
   @transient
   override val name: Symbol = Symbol("stackChildrenRef" + index)
 }
-
 
 case class StackLeftGretelsRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackLeftGretelsRef must be a nonnegative integer")
@@ -207,6 +223,38 @@ case class StackRightGretelsRef(val index: Int) extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("stackRightGretelRef" + index)
+}
+
+case class StackLeftGretelRef(val stackIndex: Int, val gretelIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the stackIndex of a StackLeftGretelRef must be a nonnegative integer")
+  require(stackIndex >= 0, "the gretelIndex of a StackLeftGretelRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    StackRef(stackIndex)(state) flatMap { nodeIndex =>
+      (state.getGretels(nodeIndex) filter { gretel =>
+        gretel < nodeIndex
+      }).toSeq.sorted.lift(gretelIndex)
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol(s"stack${stackIndex}LeftGretelRef${gretelIndex}")
+}
+
+case class StackRightGretelRef(val stackIndex: Int, val gretelIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the stackIndex of a StackRightGretelRef must be a nonnegative integer")
+  require(stackIndex >= 0, "the gretelIndex of a StackRightGretelRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    StackRef(stackIndex)(state) flatMap { nodeIndex =>
+      (state.getGretels(nodeIndex) filter { gretel =>
+        gretel > nodeIndex
+      }).toSeq.sortBy(x => -x).lift(gretelIndex)
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol(s"stack${stackIndex}RightGretelRef${gretelIndex}")
 }
 
 case class BufferGretelsRef(val index: Int) extends StateRef {
@@ -259,6 +307,23 @@ case class BufferRightGretelsRef(val index: Int) extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("bufferRightGretelRef" + index)
+}
+
+case class BufferLeftGretelRef(val bufferIndex: Int, val gretelIndex: Int) extends StateRef {
+  require(bufferIndex >= 0, "the stackIndex of a BufferLeftGretelRef must be a nonnegative integer")
+  require(bufferIndex >= 0, "the gretelIndex of a BufferLeftGretelRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
+      (state.getGretels(nodeIndex) filter { gretel =>
+        gretel < nodeIndex
+      }).toSeq.sorted.lift(gretelIndex)
+    }
+
+  }
+
+  @transient
+  override val name: Symbol = Symbol(s"buffer${bufferIndex}LeftGretelRef${gretelIndex}")
 }
 
 /** A BreadcrumbRef is a StateRef (see above) whose apply operation returns the breadcrumb of

@@ -118,6 +118,10 @@ class DTCostFunctionTrainer(
           inducedClassifier,
           transitions, featureMap, featureNames.size
         ))
+        inducedClassifier match {
+          case dt: DecisionTree => dt.print(featureNames.toVector map { _.toString }, transitions.toVector map { _.toString })
+          case _ =>
+        }
         result
       }
     }).toMap

@@ -16,6 +16,7 @@ case class ArcEagerTransitionSystem(
     TokenPropertyFeature('brown0),
     //TokenPropertyFeature('lexical),
     //SuffixFeature(WordClusters.suffixes.toSeq),
+    //KeywordFeature(Set())
     KeywordFeature(ArcEagerTransitionSystem.keywords)
   ))
 
@@ -231,16 +232,24 @@ case object ArcEagerTransitionSystem {
 
   def constructDefaultFeature(keywords: Set[Symbol]): StateFeature = {
     val features = List(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2),
+        BufferRef(0), BufferRef(1), BufferRef(2),
         StackGretelsRef(0), StackGretelsRef(1), BreadcrumbRef(0), StackLeftGretelsRef(0),
         StackRightGretelsRef(1), BufferGretelsRef(0))),
+      //new OfflineBinaryTokenFeature(BufferRef(0), StackRef(0)),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
+      new OfflineTokenFeature(StackRef(2)),
       new OfflineTokenFeature(BufferRef(0)),
       new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(StackGretelsRef(0)),
-      new OfflineTokenFeature(StackGretelsRef(1)),
-      new OfflineTokenFeature(BufferGretelsRef(0)),
+      new OfflineTokenFeature(BufferRef(2)),
+      new OfflineTokenFeature(StackLeftGretelRef(0, 0)),
+      new OfflineTokenFeature(StackLeftGretelRef(0, 1)),
+      new OfflineTokenFeature(StackRightGretelRef(0, 0)),
+      new OfflineTokenFeature(StackRightGretelRef(0, 1)),
+      new OfflineTokenFeature(BufferLeftGretelRef(0, 0)),
+      new OfflineTokenFeature(BufferLeftGretelRef(0, 1)),
+      //new OfflineTokenFeature(BufferGretelsRef(0)),
       new OfflineTokenFeature(BreadcrumbRef(0)),
       new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
       new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))

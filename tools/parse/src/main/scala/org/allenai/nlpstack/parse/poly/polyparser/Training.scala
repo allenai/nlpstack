@@ -76,14 +76,18 @@ object Training {
     //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
     val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
-    //val baseCostFunction: Option[ClassifierBasedCostFunction] =
-    //  config.baseModelPath match {
-    //    case "" => None
-    //    case _ => Some(ClassifierBasedCostFunction.load(config.baseModelPath))
-    //  }
+    val baseCostFunction: Option[StateCostFunction] =
+      (config.baseModelPath match {
+        case "" => None
+        case _ => Some(TransitionParser.load(config.baseModelPath))
+      }) map { parser =>
+        parser match {
+          case rerankingParser: RerankingTransitionParser =>
+            rerankingParser.baseParser.baseParser.costFunction
+        }
+      }
 
     println("Training parser.")
-    val baseCostFunction = None // TODO: fix this
     //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)

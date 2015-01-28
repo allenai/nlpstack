@@ -1,21 +1,23 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Sentence, Token}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, Token }
 import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.fsm.{State, StateFeature}
-import org.allenai.nlpstack.parse.poly.ml.{FeatureVector, FeatureName}
+import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 class TokenFeatureTagger(tokenFeatures: Seq[TokenFeature]) {
 
   def tag(sentence: Sentence): AnnotatedSentence = {
-    AnnotatedSentence(sentence,
+    AnnotatedSentence(
+      sentence,
       Range(0, sentence.size) map { tokenIndex =>
         FeatureVector(tokenFeatures flatMap { feature =>
           feature(sentence, tokenIndex)
         })
-      })
+      }
+    )
   }
 }
 
@@ -72,14 +74,15 @@ object TokenFeature {
         case "TokenPositionFeature" => TokenPositionFeature
         case x => deserializationError(s"Invalid identifier for TokenFeature: $x")
       }
-      case jsObj: JsObject => jsObj.unpackWith(tokenPropertyFeatureFormat,
+      case jsObj: JsObject => jsObj.unpackWith(
+        tokenPropertyFeatureFormat,
         keywordFeatureFormat,
-        suffixFeatureFormat, prefixFeatureFormat)
+        suffixFeatureFormat, prefixFeatureFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
     }
   }
 }
-
 
 /** The WordFeature maps a token to its word representation.
   *
@@ -96,7 +99,6 @@ case object WordFeature extends TokenFeature {
     }
   }
 
-
 }
 
 /** The TokenPropertyFeature maps a token to one of its properties.
@@ -105,7 +107,7 @@ case object WordFeature extends TokenFeature {
   *
   */
 case class TokenPropertyFeature(property: Symbol)
-  extends TokenFeature {
+    extends TokenFeature {
 
   @transient val featureName: Symbol = 'tokProp
 
@@ -131,7 +133,7 @@ case class KeywordFeature(keywords: Set[Symbol]) extends TokenFeature {
   override def apply(sentence: Sentence, tokenIndex: Int): Seq[(FeatureName, Double)] = {
     getTokenSequence(sentence, tokenIndex) flatMap { token =>
       val word = Symbol(token.word.name.toLowerCase)
-      if (keywords.contains(word)) {
+      if (keywords.isEmpty || keywords.contains(word)) {
         Seq(FeatureName(List(featureName, token.word)) -> 1.0)
       } else {
         Seq[(FeatureName, Double)]()
@@ -186,7 +188,6 @@ case class PrefixFeature(keyprefixes: Seq[Symbol]) extends TokenFeature {
   }
 }
 
-
 case object TokenPositionFeature extends TokenFeature {
 
   @transient val featureName = 'tokenPosition
@@ -196,14 +197,15 @@ case object TokenPositionFeature extends TokenFeature {
   @transient val hasSecondLastSymbol = 'secondLast
   @transient val hasLastSymbol = 'last
 
-  override def apply(sentence: Sentence, tokenIndex: Int): Seq[(FeatureName, Double)]= {
+  override def apply(sentence: Sentence, tokenIndex: Int): Seq[(FeatureName, Double)] = {
     val indexProperties: Seq[Symbol] =
       Seq(
-        if(tokenIndex == 0) Some(hasNexusSymbol) else None,
-        if(tokenIndex == 1) Some(hasFirstSymbol) else None,
-        if(tokenIndex == 2) Some(hasSecondSymbol) else None,
-        if(tokenIndex == sentence.size - 2) Some(hasSecondLastSymbol) else None,
-        if(tokenIndex == sentence.size - 1) Some(hasLastSymbol) else None).flatten
+        if (tokenIndex == 0) Some(hasNexusSymbol) else None,
+        if (tokenIndex == 1) Some(hasFirstSymbol) else None,
+        if (tokenIndex == 2) Some(hasSecondSymbol) else None,
+        if (tokenIndex == sentence.size - 2) Some(hasSecondLastSymbol) else None,
+        if (tokenIndex == sentence.size - 1) Some(hasLastSymbol) else None
+      ).flatten
     indexProperties map { property =>
       FeatureName(List(featureName, property)) -> 1.0
     }
