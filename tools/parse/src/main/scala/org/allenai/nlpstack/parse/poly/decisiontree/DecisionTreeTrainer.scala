@@ -194,7 +194,9 @@ class DecisionTreeTrainer(
       val shuffledFeatures = Random.shuffle((0 to n - 1).toIndexedSeq)
       (shuffledFeatures.drop(nTrain), shuffledFeatures.take(nTrain))
     }
+    println("Growing")
     val root = growTree(data, trainingSubset, featuresExaminedPerNode)
+    println("Pruning")
     if (validationSubset.nonEmpty) {
       pruneTree(data, validationSubset, root)
     }
@@ -226,6 +228,7 @@ class DecisionTreeTrainer(
         node.featureVectorSubset.forall(data.featureVectors(_).outcome ==
           data.featureVectors(node.featureVectorSubset.head).outcome))) {
 
+        // optimize
         val (featuresToExamine, featuresToIgnore) = {
           val shuffled = Random.shuffle(node.featureSubset)
           (shuffled.take(featuresExaminedPerNode), shuffled.drop(featuresExaminedPerNode))

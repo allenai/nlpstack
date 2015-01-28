@@ -85,7 +85,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   override def apply(data: FeatureVectors): ProbabilisticClassifier = {
 
     val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode)
-    RandomForest(
+    val result = RandomForest(
       data.allOutcomes,
       Range(0, numDecisionTrees) flatMap { _ =>
         val trainingData = useBagging match {
@@ -98,5 +98,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
         }
       }
     )
+    println("Done training random forest")
+    result
   }
 }

@@ -1,7 +1,12 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import org.allenai.nlpstack.parse.poly.polyparser.{TokenCardinalityFeature, OfflineTokenFeature, TokenTransformFeature}
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  TokenCardinalityFeature,
+  OfflineTokenFeature,
+  OfflineBinaryTokenFeature,
+  TokenTransformFeature
+}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -27,6 +32,9 @@ object StateFeature {
       case tsFeature: OfflineTokenFeature =>
         JsObject(offlineTokenFeatureFormat.write(tsFeature).asJsObject.fields +
           ("type" -> JsString("OfflineTokenFeature")))
+      case obFeature: OfflineBinaryTokenFeature =>
+        JsObject(offlineBinaryTokenFeatureFormat.write(obFeature).asJsObject.fields +
+          ("type" -> JsString("OfflineBinaryTokenFeature")))
       case tcFeature: TokenCardinalityFeature =>
         JsObject(tokenCardinalityFeatureFormat.write(tcFeature).asJsObject.fields +
           ("type" -> JsString("TokenCardinalityFeature")))
@@ -39,6 +47,7 @@ object StateFeature {
       case JsObject(values) => values("type") match {
         case JsString("TokenTransformFeature") => tokenTransformFeatureFormat.read(value)
         case JsString("OfflineTokenFeature") => offlineTokenFeatureFormat.read(value)
+        case JsString("OfflineBinaryTokenFeature") => offlineBinaryTokenFeatureFormat.read(value)
         case JsString("TokenCardinalityFeature") => tokenCardinalityFeatureFormat.read(value)
         case JsString("FeatureUnion") => featureUnionFormat.read(value)
         case x => deserializationError(s"Invalid identifier for TransitionParserFeature: $x")
@@ -51,6 +60,8 @@ object StateFeature {
     jsonFormat2(TokenTransformFeature.apply)
   val offlineTokenFeatureFormat: RootJsonFormat[OfflineTokenFeature] =
     jsonFormat1(OfflineTokenFeature.apply)
+  val offlineBinaryTokenFeatureFormat: RootJsonFormat[OfflineBinaryTokenFeature] =
+    jsonFormat2(OfflineBinaryTokenFeature.apply)
   val tokenCardinalityFeatureFormat: RootJsonFormat[TokenCardinalityFeature] =
     jsonFormat1(TokenCardinalityFeature.apply)
   val featureUnionFormat: RootJsonFormat[FeatureUnion] = jsonFormat1(FeatureUnion.apply)

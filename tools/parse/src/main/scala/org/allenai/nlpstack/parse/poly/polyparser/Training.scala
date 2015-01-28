@@ -92,6 +92,7 @@ object Training {
       new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
+    (trainingVectorSource.getVectorIterator) map { x => x.featureVector } foreach println
     val parsingCostFunction: StateCostFunction = {
       val trainer =
         new DTCostFunctionTrainer(classifierTrainer, taskIdentifier, transitionSystem,
