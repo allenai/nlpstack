@@ -45,18 +45,21 @@ object ProbabilisticClassifier {
       jsonFormat2(RandomForest.apply).pack(
         "type" -> "RandomForest"
       )
+    implicit val perceptronFormat =
+      jsonFormat2(Perceptron.apply).pack("type" -> "Perceptron")
     implicit val oneVersusAllFormat =
       jsonFormat1(OneVersusAll.apply).pack("type" -> "OneVersusAll")
 
     def write(classifier: ProbabilisticClassifier): JsValue = classifier match {
       case decisionTree: DecisionTree => decisionTree.toJson
       case randomForest: RandomForest => randomForest.toJson
+      case perceptron: Perceptron => perceptron.toJson
       case oneVersusAll: OneVersusAll => oneVersusAll.toJson
       case x => deserializationError(s"Cannot serialize this classifier type: $x")
     }
 
     def read(value: JsValue): ProbabilisticClassifier = value.asJsObject.unpackWith(
-      decisionTreeFormat, randomForestFormat, oneVersusAllFormat
+      decisionTreeFormat, randomForestFormat, perceptronFormat, oneVersusAllFormat
     )
   }
 

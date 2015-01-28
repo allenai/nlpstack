@@ -15,8 +15,10 @@ trait Search {
 class GreedySearch(costFunction: StateCostFunction) extends Search {
   private val baseParser = new NostalgicSearch(costFunction, qualifyingCostDelta = 10000)
 
-  override def find(initialState: State,
-    constraints: Set[TransitionConstraint]): Option[Walk] = {
+  override def find(
+    initialState: State,
+    constraints: Set[TransitionConstraint]
+  ): Option[Walk] = {
 
     baseParser.completeWalk(Walk(initialState, Seq()), 0.0, constraints)
   }
@@ -57,11 +59,14 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
     }
   }
 
-  @tailrec protected final def parseRecursive(initState: Option[State],
+  @tailrec protected final def parseRecursive(
+    initState: Option[State],
     costSoFar: Double, stepsSoFar: Seq[WalkStep], mementosSoFar: Seq[ScoredWalk],
     constraints: Set[TransitionConstraint],
-    constraintEncountered: Boolean): (Seq[ScoredWalk], Boolean) = {
+    constraintEncountered: Boolean
+  ): (Seq[ScoredWalk], Boolean) = {
 
+    println(initState)
     initState match {
       case None => (mementosSoFar, constraintEncountered)
       case Some(initialState) if initialState.isFinal =>
@@ -71,6 +76,7 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
         val transitionCosts: List[(StateTransition, Double)] =
           costFunction(initialState).toList sortBy { x => x._2 }
 
+        println(s"Original: $transitionCosts")
         // Filter out transitions that are disallowed by transition and parser constraints.
         val applicableTransitionCosts = transitionCosts filter {
           case (transition, _) => transition(initState) != None
@@ -91,14 +97,19 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
                 constraintInterpretation(initialState, transition)
               }).contains(true)
           }
+        println(filteredTransitionCosts)
         val promisingTransitions: List[(StateTransition, Double)] =
           collectPromisingTransitions(filteredTransitionCosts)
         promisingTransitions.headOption match {
           case Some((bestTransition, bestCost)) =>
             val runnerupWalks: Seq[ScoredWalk] = promisingTransitions.tail map {
-              case (transition, cost) => ScoredWalk(Walk(initialState,
-                stepsSoFar :+ WalkStep(initialState, transition)),
-                costSoFar + cost)
+              case (transition, cost) => ScoredWalk(
+                Walk(
+                  initialState,
+                  stepsSoFar :+ WalkStep(initialState, transition)
+                ),
+                costSoFar + cost
+              )
             }
             this.parseRecursive(bestTransition(initState), costSoFar + bestCost,
               stepsSoFar :+ WalkStep(initialState, bestTransition),
@@ -110,7 +121,8 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
   }
 
   private def collectPromisingTransitions(
-    transitionCosts: List[(StateTransition, Double)]): List[(StateTransition, Double)] = {
+    transitionCosts: List[(StateTransition, Double)]
+  ): List[(StateTransition, Double)] = {
 
     transitionCosts.headOption match {
       case Some((_, minCost)) =>

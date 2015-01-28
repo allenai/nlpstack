@@ -39,22 +39,25 @@ object StateCostFunction {
     }
 
     def read(value: JsValue): StateCostFunction = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFormat)
+      classifierBasedCostFunctionFormat
+    )
   }
 }
 
-case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
+case class ClassifierBasedCostFunction(
+  taskIdentifier: TaskIdentifier,
   transitionSystem: TransitionSystem, transitions: IndexedSeq[StateTransition],
   taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
   featureNames: List[FeatureName],
-  baseCostFunction: Option[StateCostFunction] = None)
+  baseCostFunction: Option[StateCostFunction] = None
+)
     extends StateCostFunction {
 
   @transient
   lazy val taskClassifiers = taskClassifierList.toMap
 
   override def apply(state: State): Map[StateTransition, Double] = {
-    transitionCosts(state, 0.0)
+    transitionCosts(state, Double.MinValue)
   }
 
   /** Returns a distribution over all possible transitions, according to the classifier associated
@@ -68,11 +71,13 @@ case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
     *
     * @param state the parser state
     * @param minProb only include transitions in the returned map if their
-    *         probability is greater than this bound
+    * probability is greater than this bound
     * @return a map from transitions to their probabilities
     */
-  private def transitionDistribution(state: State,
-    minProb: Double): Map[StateTransition, Double] = {
+  private def transitionDistribution(
+    state: State,
+    minProb: Double
+  ): Map[StateTransition, Double] = {
 
     taskIdentifier(state) match {
       case Some(task) =>
@@ -119,13 +124,15 @@ case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
     *
     * @param state the parser state
     * @param minProb only include transitions in the returned map if their
-    *         probability is greater than this bound
+    * probability is greater than this bound
     * @return a map from transitions to negative log of their neprobabilities
     */
-  private def transitionCosts(state: State,
-    minProb: Double): Map[StateTransition, Double] = {
+  private def transitionCosts(
+    state: State,
+    minProb: Double
+  ): Map[StateTransition, Double] = {
 
-    transitionDistribution(state, minProb) mapValues (-Math.log(_))
+    transitionDistribution(state, minProb) mapValues (-_) //(-Math.log(_))
   }
 
 }

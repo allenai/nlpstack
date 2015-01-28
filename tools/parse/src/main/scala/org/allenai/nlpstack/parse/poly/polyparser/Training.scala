@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.decisiontree.{ RandomForestTrainer, OneVersusAllTrainer, ProbabilisticClassifierTrainer, DecisionTreeTrainer }
+import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
@@ -73,6 +73,7 @@ object Training {
     println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
+    //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
     val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
@@ -84,10 +85,11 @@ object Training {
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
     //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
-    val classifierTrainer: ProbabilisticClassifierTrainer =
-      new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
       transitionSystem, baseCostFunction)
+    val classifierTrainer: ProbabilisticClassifierTrainer =
+      new PerceptronTrainer(15, FSMTrainingVectorSource.collectTransitions(trainingVectorSource).size)
+    //  new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val parsingCostFunction: StateCostFunction = {
       val trainer =
         new DTCostFunctionTrainer(classifierTrainer, taskIdentifier, transitionSystem,
