@@ -40,10 +40,12 @@ import org.allenai.nlpstack.postag.defaultPostagger
   * @param children the set of children of each token in the polytree
   * @param arclabels the set of labeled neighbors of each token in the undirected tree
   */
-case class PolytreeParse(val sentence: Sentence,
+case class PolytreeParse(
+    val sentence: Sentence,
     val breadcrumb: Vector[Int],
     val children: Vector[Set[Int]],
-    val arclabels: Vector[Set[(Int, Symbol)]]) extends MarbleBlock with Sculpture {
+    val arclabels: Vector[Set[(Int, Symbol)]]
+) extends MarbleBlock with Sculpture {
   require(breadcrumb(0) == -1)
   require(sentence.size == breadcrumb.size)
   require(sentence.size == children.size)
@@ -60,7 +62,7 @@ case class PolytreeParse(val sentence: Sentence,
     (for {
       (x, y) <- children.zipWithIndex
       z <- x
-    } yield (z, y)) groupBy(_._1) mapValues { x => (x map { _._2 }).toSeq.sorted }
+    } yield (z, y)) groupBy (_._1) mapValues { x => (x map { _._2 }).toSeq.sorted }
   }
 
   /** Maps a set of token indices (the set should contain exactly two elements) to the label
@@ -176,26 +178,33 @@ case class PolytreeParse(val sentence: Sentence,
     val allNodes: IndexedSeq[DirectedGraphNode] = {
       val internalNodes: Seq[DirectedGraphNode] = Range(1, breadcrumb.size) map { index =>
         DirectedGraphNode(Map(
-          ConstituencyParse.constituencyLabelName -> breadcrumbArcLabel(index).name))
+          ConstituencyParse.constituencyLabelName -> breadcrumbArcLabel(index).name
+        ))
       }
       val leafNodes: Seq[DirectedGraphNode] = Range(1, breadcrumb.size) map { index =>
-        DirectedGraphNode(Map(ConstituencyParse.wordLabelName -> sentence.tokens(index).word.name,
-          ConstituencyParse.constituencyLabelName -> ConstituencyParse.headLabel))
+        DirectedGraphNode(Map(
+          ConstituencyParse.wordLabelName -> sentence.tokens(index).word.name,
+          ConstituencyParse.constituencyLabelName -> ConstituencyParse.headLabel
+        ))
       }
       val nexusNode: DirectedGraphNode =
         DirectedGraphNode(Map(ConstituencyParse.constituencyLabelName ->
           ConstituencyParse.nexusLabel))
       nexusNode +:
-        ((internalNodes zip leafNodes) flatMap { case (x,y) => List(x,y) }).toIndexedSeq
+        ((internalNodes zip leafNodes) flatMap { case (x, y) => List(x, y) }).toIndexedSeq
     }
     val allEdges: IndexedSeq[Seq[DirectedGraphEdge]] = {
       val internalEdges: Seq[DirectedGraphEdge] = Range(1, breadcrumb.size) map { index =>
-        DirectedGraphEdge(math.max(0,(2 * breadcrumb(index)) - 1),
-          (2 * index) - 1, Map())
+        DirectedGraphEdge(
+          math.max(0, (2 * breadcrumb(index)) - 1),
+          (2 * index) - 1, Map()
+        )
       }
       val leafEdges: Seq[DirectedGraphEdge] = Range(1, breadcrumb.size) map { index =>
-        DirectedGraphEdge((2 * index) - 1,
-          2 * index, Map())
+        DirectedGraphEdge(
+          (2 * index) - 1,
+          2 * index, Map()
+        )
       }
       val edgeMap = (internalEdges ++ leafEdges) groupBy { edge => edge.from }
       Range(0, allNodes.size) map { nodeIndex =>
@@ -213,8 +222,10 @@ case class PolytreeParse(val sentence: Sentence,
   }
 
   @tailrec
-  private def relativeCposMapHelper(nodesToProcess: Iterable[Int],
-    result: Map[Int, ((Boolean, Symbol), Int)]): Map[Int, ((Boolean, Symbol), Int)] = {
+  private def relativeCposMapHelper(
+    nodesToProcess: Iterable[Int],
+    result: Map[Int, ((Boolean, Symbol), Int)]
+  ): Map[Int, ((Boolean, Symbol), Int)] = {
 
     nodesToProcess.headOption match {
       case None => result
@@ -227,8 +238,10 @@ case class PolytreeParse(val sentence: Sentence,
           case (gretelLabel, index) =>
             myGretelLabels.take(index).count(_ == gretelLabel)
         }
-        relativeCposMapHelper(nodesToProcess.tail,
-          result ++ (myGretels zip (myGretelLabels zip myGretelLabelFreq)).toMap)
+        relativeCposMapHelper(
+          nodesToProcess.tail,
+          result ++ (myGretels zip (myGretelLabels zip myGretelLabelFreq)).toMap
+        )
     }
   }
 
@@ -248,7 +261,8 @@ object PolytreeParse {
     fileFormat match {
       case conllx: ConllX => fromConllX(filename, conllx.useGoldPOSTags, conllx.makePoly)
       case x => throw new ClassCastException(
-        s"File format $x is not supported by PolytreeParse.fromFile")
+        s"File format $x is not supported by PolytreeParse.fromFile"
+      )
     }
   }
 
@@ -278,7 +292,7 @@ object PolytreeParse {
 
     val rawIter =
       fromConllHelper(Source.fromFile(filename).getLines, useGoldPosTags = useGoldPosTags).iterator
-    if(makePoly) {
+    if (makePoly) {
       rawIter map { x => PolytreeParse.arcInverterStanford(x) }
     } else {
       rawIter
@@ -290,8 +304,10 @@ object PolytreeParse {
     * @param outputFilename where to direct the parses
     * @param parses the parse objects to iterate over
     */
-  def writeParsesAsConllX(outputFilename: String,
-    parses: Iterator[Option[PolytreeParse]]): Unit = {
+  def writeParsesAsConllX(
+    outputFilename: String,
+    parses: Iterator[Option[PolytreeParse]]
+  ): Unit = {
 
     val writer = new PrintWriter(new File(outputFilename))
     try {
@@ -306,8 +322,10 @@ object PolytreeParse {
     }
   }
 
-  private def fromConllHelper(fileLines: Iterator[String],
-    useGoldPosTags: Boolean): Stream[PolytreeParse] = {
+  private def fromConllHelper(
+    fileLines: Iterator[String],
+    useGoldPosTags: Boolean
+  ): Stream[PolytreeParse] = {
 
     val (nextParseLines, rest) = fileLines.span(_.nonEmpty)
     constructFromConllString(nextParseLines, useGoldPosTags) #:: (if (rest.hasNext) {
@@ -323,8 +341,10 @@ object PolytreeParse {
     })
   }
 
-  private def constructFromConllString(conllLines: Iterator[String],
-    useGoldPosTags: Boolean): PolytreeParse = {
+  private def constructFromConllString(
+    conllLines: Iterator[String],
+    useGoldPosTags: Boolean
+  ): PolytreeParse = {
 
     val rows: List[Array[String]] = (for {
       line <- conllLines
@@ -340,8 +360,10 @@ object PolytreeParse {
     val sentence: Sentence = {
       Sentence(if (useGoldPosTags) {
         (NexusToken +: (rows map { row =>
-          Token(Symbol(row(1)), Token.createProperties1(row(1),
-            WordClusters.ptbToUniversalPosTag.get(row(iFinePos))))
+          Token(Symbol(row(1)), Token.createProperties1(
+            row(1),
+            WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
+          ))
         })).toVector
       } else {
         val words: Seq[String] = (rows map { row => row(1) }).toSeq
@@ -364,11 +386,12 @@ object PolytreeParse {
     val neighbors: Vector[Set[Int]] = ((0 to (taggedSentence.tokens.size - 1)) map { i =>
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
-    val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
-      row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase))).toMap
+    val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
+      row(0).toInt,
+      row(breadcrumbPos).toInt
+    ), Symbol("NONE"))).toMap
     //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
-    //  row(breadcrumbPos).toInt), Symbol(
-    //    WordClusters.ptbToUniversalPosTag(row(iFinePos).toUpperCase)))).toMap
+    //  row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase))).toMap
     val arcLabels: Vector[Set[(Int, Symbol)]] = for {
       (neighborSet, i) <- neighbors.zipWithIndex
     } yield for {
@@ -377,7 +400,6 @@ object PolytreeParse {
     } yield (neighbor, arcLabelByTokenPair(Set(i, neighbor)))
     PolytreeParse(taggedSentence, breadcrumb, children, arcLabels)
   }
-
 
   /** Returns an iterator that iterates over all of the words (as strings) that exist in
     * the argument parses, in order.
