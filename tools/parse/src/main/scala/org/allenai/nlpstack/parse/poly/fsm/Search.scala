@@ -66,7 +66,6 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
     constraintEncountered: Boolean
   ): (Seq[ScoredWalk], Boolean) = {
 
-    println(initState)
     initState match {
       case None => (mementosSoFar, constraintEncountered)
       case Some(initialState) if initialState.isFinal =>
@@ -76,7 +75,6 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
         val transitionCosts: List[(StateTransition, Double)] =
           costFunction(initialState).toList sortBy { x => x._2 }
 
-        println(s"Original: $transitionCosts")
         // Filter out transitions that are disallowed by transition and parser constraints.
         val applicableTransitionCosts = transitionCosts filter {
           case (transition, _) => transition(initState) != None
@@ -97,7 +95,6 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
                 constraintInterpretation(initialState, transition)
               }).contains(true)
           }
-        println(filteredTransitionCosts)
         val promisingTransitions: List[(StateTransition, Double)] =
           collectPromisingTransitions(filteredTransitionCosts)
         promisingTransitions.headOption match {

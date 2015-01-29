@@ -69,7 +69,37 @@ case class OfflineBinaryTokenFeature(val stateRef1: StateRef, val stateRef2: Sta
     }
   }
 
-  override def toString: String = s"offlineTokenFeature.${stateRef1.name}.${stateRef2.name}"
+  override def toString: String = s"offlineBinaryTokenFeature.${stateRef1.name}.${stateRef2.name}"
+}
+
+case class OfflineTernaryTokenFeature(
+  val stateRef1: StateRef,
+  val stateRef2: StateRef, val stateRef3: StateRef
+)
+    extends StateFeature {
+
+  override def apply(state: State): FeatureVector = {
+    state match {
+      case tpState: TransitionParserState =>
+        FeatureVector(
+          for {
+            tokenIndex1 <- stateRef1(tpState).toSeq
+            origFeatureVectorMapping1 <- tpState.annotatedSentence.annotation(tokenIndex1).values
+            tokenIndex2 <- stateRef2(tpState).toSeq
+            origFeatureVectorMapping2 <- tpState.annotatedSentence.annotation(tokenIndex2).values
+            tokenIndex3 <- stateRef3(tpState).toSeq
+            origFeatureVectorMapping3 <- tpState.annotatedSentence.annotation(tokenIndex3).values
+          } yield {
+            val newFeatureName = (stateRef1.name +: (origFeatureVectorMapping1._1).symbols) ++
+              (stateRef2.name +: (origFeatureVectorMapping2._1).symbols) ++
+              (stateRef3.name +: (origFeatureVectorMapping3._1).symbols)
+            FeatureName(newFeatureName) -> 1.0
+          }
+        )
+    }
+  }
+
+  override def toString: String = s"offlineTernaryTokenFeature.${stateRef1.name}.${stateRef2.name}.${stateRef3.name}"
 }
 
 case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])

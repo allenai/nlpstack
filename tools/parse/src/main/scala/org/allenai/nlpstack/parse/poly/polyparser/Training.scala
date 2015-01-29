@@ -73,8 +73,8 @@ object Training {
     println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
       ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
-    //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
-    val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
+    val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
+    //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 
     val baseCostFunction: Option[StateCostFunction] =
       (config.baseModelPath match {

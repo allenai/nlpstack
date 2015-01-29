@@ -386,12 +386,14 @@ object PolytreeParse {
     val neighbors: Vector[Set[Int]] = ((0 to (taggedSentence.tokens.size - 1)) map { i =>
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
-    //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
-    //  row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase))).toMap
     val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
       row(0).toInt,
       row(breadcrumbPos).toInt
-    ), Symbol("NONE"))).toMap
+    ), Symbol(row(arcLabelPos).toUpperCase))).toMap
+    //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
+    //  row(0).toInt,
+    //  row(breadcrumbPos).toInt
+    //), Symbol("NONE"))).toMap
     val arcLabels: Vector[Set[(Int, Symbol)]] = for {
       (neighborSet, i) <- neighbors.zipWithIndex
     } yield for {

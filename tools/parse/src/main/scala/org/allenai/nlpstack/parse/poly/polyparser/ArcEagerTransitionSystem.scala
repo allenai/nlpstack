@@ -232,11 +232,16 @@ case object ArcEagerTransitionSystem {
 
   def constructDefaultFeature(keywords: Set[Symbol]): StateFeature = {
     val features = List(
+      new ConstantFeature('bias),
       new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2),
         BufferRef(0), BufferRef(1), BufferRef(2),
         StackGretelsRef(0), StackGretelsRef(1), BreadcrumbRef(0), StackLeftGretelsRef(0),
         StackRightGretelsRef(1), BufferGretelsRef(0))),
-      //new OfflineBinaryTokenFeature(BufferRef(0), StackRef(0)),
+      new OfflineBinaryTokenFeature(BufferRef(0), StackRef(0)),
+      new OfflineBinaryTokenFeature(BufferRef(0), BufferRef(1)),
+      new OfflineBinaryTokenFeature(StackRef(0), BufferRef(1)),
+      //new OfflineBinaryTokenFeature(StackRef(0), BreadcrumbRef(0)),
+      new OfflineTernaryTokenFeature(StackRef(0), BufferRef(0), BufferRef(1)),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
       new OfflineTokenFeature(StackRef(2)),
