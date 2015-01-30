@@ -54,6 +54,17 @@ case class PolytreeParse(
   @transient
   val tokens: Seq[Token] = sentence.tokens
 
+  /** Return the set of gretels for a particular token.
+    *
+    * Definition: if x is the breadcrumb of y, then y is a gretel of x.
+    *
+    * @param token the token (index) for which we want to identify the gretels
+    * @return the gretels of the specified token
+    */
+  def getGretels(token: Int): Set[Int] = {
+    gretels.getOrElse(token, Vector[Int]()).toSet
+  }
+
   /** If x is the breadcrumb of y, then y is a gretel of x. */
   @transient lazy val gretels: Map[Int, Vector[Int]] = breadcrumb.zipWithIndex groupBy
     { _._1 } mapValues { x => x map { _._2 } }
@@ -386,12 +397,14 @@ object PolytreeParse {
     val neighbors: Vector[Set[Int]] = ((0 to (taggedSentence.tokens.size - 1)) map { i =>
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
+    //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
+    //  row(0).toInt,
+    //  row(breadcrumbPos).toInt
+    //), Symbol("NONE"))).toMap
     val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
       row(0).toInt,
       row(breadcrumbPos).toInt
-    ), Symbol("NONE"))).toMap
-    //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(row(0).toInt,
-    //  row(breadcrumbPos).toInt), Symbol(row(arcLabelPos).toUpperCase))).toMap
+    ), Symbol(row(arcLabelPos).toUpperCase))).toMap
     val arcLabels: Vector[Set[(Int, Symbol)]] = for {
       (neighborSet, i) <- neighbors.zipWithIndex
     } yield for {

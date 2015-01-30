@@ -4,6 +4,24 @@ import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
+/** An ArcHybridTransitionSystem has three transition operators: Shift, RightArc, and LeftArc.
+  *
+  * The Shift operator behaves the same as in the ArcEagerTransitionSystem:
+  * it pops the next buffer item and pushes it onto the stack.
+  *
+  * The RightArc operator creates an arc from the second element of the stack to the top element
+  * of the stack, then pops the top of the stack.
+  *
+  * The LeftArc operator creates an arc from the next buffer item to the top element
+  * of the stack, then pops the top of the stack.
+  *
+  * An important property of the ArcHybridTransitionSystem is that the only element that can
+  * get a breadcrumb via an operator is the top of the stack. Thus the stack top is the "focal
+  * point" of this transition system.
+  *
+  * @param feature the features to use
+  * @param brownClusters an optional set of Brown clusters to use
+  */
 case class ArcHybridTransitionSystem(
     feature: StateFeature = ArcHybridTransitionSystem.defaultFeature,
     brownClusters: Seq[BrownClusters] = Seq()
@@ -33,14 +51,14 @@ case class ArcHybridTransitionSystem(
       val taggedSentence = sent.taggedWithFactorie
         .taggedWithBrownClusters(brownClusters)
       val augmentedSentence = tokenFeatureTagger.tag(taggedSentence)
-      new TransitionParserState(Vector(0), 1, Map(0 -> -1), Map(), Map(), augmentedSentence)
+      new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), augmentedSentence)
     }
   }
 
   override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
     goldObj match {
       case parse: PolytreeParse =>
-        Some(new ArcEagerGuidedCostFunction(parse, this))
+        Some(new ArcHybridGuidedCostFunction(parse, this))
       case _ => None
     }
 
@@ -68,9 +86,9 @@ case object ArcHybridTransitionSystem {
 
   def constructDefaultFeature(keywords: Set[Symbol]): StateFeature = {
     val features = List(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
-        StackGretelsRef(0), StackGretelsRef(1), BreadcrumbRef(0), StackLeftGretelsRef(0),
-        StackRightGretelsRef(1), BufferGretelsRef(0))),
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0), BufferRef(1),
+        StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
+        StackRightGretelsRef(0), BufferGretelsRef(0))),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
       new OfflineTokenFeature(BufferRef(0)),
@@ -78,7 +96,6 @@ case object ArcHybridTransitionSystem {
       new OfflineTokenFeature(StackGretelsRef(0)),
       new OfflineTokenFeature(StackGretelsRef(1)),
       new OfflineTokenFeature(BufferGretelsRef(0)),
-      new OfflineTokenFeature(BreadcrumbRef(0)),
       new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
       new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
     )
@@ -90,13 +107,22 @@ case object ArcHybridTransitionSystem {
 case object ArcHybridShift extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    (state.bufferPosition + 1 < state.sentence.size)
+    (state.bufferPosition < state.sentence.size) &&
+      !(state.bufferPosition == 0 && state.stack.nonEmpty)
   }
 
   override def advanceState(state: TransitionParserState): State = {
+    val nextBufferPosition =
+      if (state.bufferPosition == 0) {
+        state.sentence.size
+      } else if (state.bufferPosition == state.sentence.size - 1) {
+        0
+      } else {
+        state.bufferPosition + 1
+      }
     state.copy(
       stack = state.bufferPosition +: state.stack,
-      bufferPosition = state.bufferPosition + 1
+      bufferPosition = nextBufferPosition
     )
   }
 
@@ -111,7 +137,7 @@ case object ArcHybridShift extends TransitionParserStateTransition {
 case class ArcHybridLeftArc(val label: Symbol) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerLeftArc.applicable(state)
+    ArcHybridLeftArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -144,28 +170,28 @@ object ArcHybridLeftArc {
 /** The ArcHybridRightArc operator creates an arc from the stack's second element to the stack top
   * and then performs a Reduce.
   *
-  * TODO: NOT DONE
-  *
   * @param label the label to attach to the created arc
   */
 case class ArcHybridRightArc(val label: Symbol) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerRightArc.applicable(state)
+    ArcHybridRightArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
-    val stackHeadChildren: Set[Int] =
-      state.children.getOrElse(state.stack.head, Set.empty[Int])
-    state.copy(
-      stack = state.bufferPosition +: state.stack,
-      bufferPosition = state.bufferPosition + 1,
-      breadcrumb = state.breadcrumb + (state.bufferPosition -> state.stack.head),
+    val stackFirst = state.stack.head
+    val stackSecond = state.stack.tail.head
+    val stackSecondChildren: Set[Int] =
+      state.children.getOrElse(stackSecond, Set.empty[Int])
+    val result = state.copy(
+      stack = state.stack.tail,
+      breadcrumb = state.breadcrumb + (stackFirst -> stackSecond),
       children = state.children +
-      (state.stack.head -> (stackHeadChildren + state.bufferPosition)),
+      (stackSecond -> (stackSecondChildren + stackFirst)),
       arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
+      (Set(stackFirst, stackSecond) -> label)
     )
+    result
   }
 
   @transient
@@ -176,17 +202,13 @@ object ArcHybridRightArc {
   def applicable(state: State): Boolean = {
     state match {
       case tpState: TransitionParserState =>
-        // second conjunction means: if we only have one token left in the buffer, then all
-        // stack tokens better already have breadcrumbs if we want to shift
-        (tpState.bufferPosition < tpState.sentence.size) && tpState.stack.nonEmpty &&
-          (tpState.bufferPosition + 1 < tpState.sentence.size ||
-            tpState.stack.forall(tpState.breadcrumb.contains(_)))
+        tpState.stack.size >= 2
       case _ => false
     }
   }
 }
 
-/** The ArcEagerGuidedCostFunction uses a gold parse tree to make deterministic decisions
+/** The ArcHybridGuidedCostFunction uses a gold parse tree to make deterministic decisions
   * about which transition to apply in any given state. Since the decision is uniquely determined
   * by the gold parse, the returned map will have only a single mapping that assigns zero cost
   * to the correct transition (all other transitions therefore have an implicit cost of infinity).
@@ -199,37 +221,33 @@ class ArcHybridGuidedCostFunction(
 ) extends StateCostFunction {
 
   override def apply(state: State): Map[StateTransition, Double] = {
-    state match {
+    val result: Map[StateTransition, Double] = state match {
       case tpState: TransitionParserState =>
-        require(tpState.stack.nonEmpty)
-        if (tpState.bufferIsEmpty) {
-          Map(ArcEagerReduce -> 0)
-        } else if (parse.breadcrumb(tpState.bufferPosition) == tpState.stack.head) {
-          val arcLabel = parse.arcLabelByEndNodes(Set(tpState.stack.head, tpState.bufferPosition))
-          //val arcLabel = parse.tokens(tpState.bufferPosition).getProperty('cpos).head
-          if (parse.children(tpState.stack.head).contains(tpState.bufferPosition)) {
-            Map(ArcEagerRightArc(arcLabel) -> 0)
-          } else {
-            Map(ArcEagerInvertedRightArc(arcLabel) -> 0)
-          }
-        } else if (parse.breadcrumb(tpState.stack.head) == tpState.bufferPosition) {
-          val arcLabel = parse.arcLabelByEndNodes(Set(tpState.stack.head, tpState.bufferPosition))
-          //val arcLabel = parse.tokens(tpState.stack.head).getProperty('cpos).head
-          if (parse.children(tpState.bufferPosition).contains(tpState.stack.head)) {
-            Map(ArcEagerLeftArc(arcLabel) -> 0)
-          } else {
-            Map(ArcEagerInvertedLeftArc(arcLabel) -> 0)
-          }
-        } else if (tpState.stack.tail forall (!parse.areNeighbors(_, tpState.bufferPosition))) {
-          // once we shift the next buffer item, we will no longer be able to attach it to anything
-          // currently on the stack; therefore only shift if it has no remaining neighbors on the
-          // stack (note: the previous checks have already established that it is not neighbors
-          // with the stack head, so no need to check that again)
-          Map(ArcEagerShift -> 0)
+        require(!tpState.isFinal)
+        if (tpState.stack.isEmpty) {
+          Map(ArcHybridShift -> 0)
+        } else if (tpState.bufferIsEmpty) {
+          Map()
         } else {
-          Map(ArcEagerReduce -> 0)
+          val stackFirst = tpState.stack.head
+          val bufferFirst = tpState.bufferPosition
+          if (parse.breadcrumb(stackFirst) == bufferFirst) {
+            val arclabel = parse.arcLabelByEndNodes(Set(stackFirst, bufferFirst))
+            Map(ArcHybridLeftArc(arclabel) -> 0)
+          } else if (tpState.stack.size < 2) {
+            Map(ArcHybridShift -> 0)
+          } else {
+            val stackSecond = tpState.stack.tail.head
+            if (parse.breadcrumb(stackFirst) == stackSecond &&
+              parse.getGretels(stackFirst) == tpState.getGretels(stackFirst)) {
+              val arclabel = parse.arcLabelByEndNodes(Set(stackFirst, stackSecond))
+              Map(ArcHybridRightArc(arclabel) -> 0)
+            } else {
+              Map(ArcHybridShift -> 0)
+            }
+          }
         }
     }
+    result
   }
 }
-

@@ -72,8 +72,10 @@ object Training {
 
     println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
-      ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
-    val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
+      ArcHybridTransitionSystem(ArcHybridTransitionSystem.defaultFeature, clusters)
+    //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
+    val taskIdentifier: TaskIdentifier = HybridApplicabilitySignatureIdentifier
+    //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
     //  config.baseModelPath match {
@@ -94,17 +96,17 @@ object Training {
           trainingVectorSource, baseCostFunction)
       trainer.costFunction
     }
-
-    println("Saving models.")
     val parsingNbestSize = 5
     val parserConfig = ParserConfiguration(
       parsingCostFunction,
       BaseCostRerankingFunction, parsingNbestSize
     )
     val parser = RerankingTransitionParser(parserConfig)
-    TransitionParser.save(parser, config.outputPath)
 
     ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
       config.dataSource, ParseFile.defaultOracleNbest)
+
+    println("Saving models.")
+    TransitionParser.save(parser, config.outputPath)
   }
 }
