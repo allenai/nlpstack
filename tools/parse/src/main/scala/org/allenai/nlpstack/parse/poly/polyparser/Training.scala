@@ -71,8 +71,9 @@ object Training {
     }
 
     println("Determining task identifier.")
-    val transitionSystem: TransitionSystem =
 
+    val transitionSystem: TransitionSystem =
+      //ArcEagerTransitionSystem(ArcEagerTransitionSystem.defaultFeature, clusters)
       ArcHybridTransitionSystem(ArcHybridTransitionSystem.defaultFeature, clusters)
     //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
     //val taskIdentifier: TaskIdentifier = HybridApplicabilitySignatureIdentifier
