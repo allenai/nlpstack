@@ -12,10 +12,11 @@ object Dependencies extends CoreDependencies {
   val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3"
-    exclude("net.sf.jwordnet", "jwnl"))
+    exclude ("net.sf.jwordnet", "jwnl"))
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
-    exclude("junit", "junit"))
+    exclude ("junit", "junit")
+    exclude ("commons-logging", "commons-logging"))
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")

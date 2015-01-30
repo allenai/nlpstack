@@ -98,7 +98,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
         }
       }
     )
-    println("Done training random forest")
+    println("Completed random forest training.")
     result
   }
 }
