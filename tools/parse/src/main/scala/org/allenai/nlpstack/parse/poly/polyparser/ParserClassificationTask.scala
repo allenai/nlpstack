@@ -20,8 +20,10 @@ case class StateRefProperty(val stateRef: StateRef, val property: Symbol,
   * to the coarse part-of-speech tag of a particular word of the state (as identified by a
   * StateRef).
   */
-case class StateRefPropertyIdentifier(stateRef: StateRef,
-    property: Symbol) extends TaskIdentifier {
+case class StateRefPropertyIdentifier(
+    stateRef: StateRef,
+    property: Symbol
+) extends TaskIdentifier {
 
   override def apply(state: State): Option[ClassificationTask] = {
     state match {
@@ -36,7 +38,6 @@ case class StateRefPropertyIdentifier(stateRef: StateRef,
     }
   }
 }
-
 
 /** The ApplicabilitySignature is a ClassificationTask for which we are trying to predict
   * the next transition, given that only a subset of possible transitions are applicable.
@@ -63,12 +64,28 @@ case class ApplicabilitySignature(val shift: Boolean, val reduce: Boolean, val l
 }
 
 /** The ApplicabilitySignatureIdentifier identifies the ClassificationTask of a parser state
-  * according to the state's applicability signature.
+  * according to the state's applicability signature (for an ArcEager transition system).
   */
 object ApplicabilitySignatureIdentifier extends TaskIdentifier {
   override def apply(state: State): Option[ClassificationTask] = {
-    Some(ApplicabilitySignature(StateTransition.applicable(ArcEagerShift, Some(state)),
+    Some(ApplicabilitySignature(
+      StateTransition.applicable(ArcEagerShift, Some(state)),
       StateTransition.applicable(ArcEagerReduce, Some(state)),
-      ArcEagerLeftArc.applicable(state), ArcEagerRightArc.applicable(state)))
+      ArcEagerLeftArc.applicable(state), ArcEagerRightArc.applicable(state)
+    ))
   }
 }
+
+/** The HybridApplicabilitySignatureIdentifier identifies the ClassificationTask of a parser state
+  * according to the state's applicability signature (for an ArcHybrid transition system).
+  */
+object HybridApplicabilitySignatureIdentifier extends TaskIdentifier {
+  override def apply(state: State): Option[ClassificationTask] = {
+    Some(ApplicabilitySignature(
+      StateTransition.applicable(ArcHybridShift, Some(state)),
+      false,
+      ArcHybridLeftArc.applicable(state), ArcHybridRightArc.applicable(state)
+    ))
+  }
+}
+
