@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
+import org.allenai.nlpstack.parse.poly.core.Util
+
 import scala.collection.mutable
 import scala.util.Random
 
@@ -9,7 +11,7 @@ import scala.util.Random
   * @param featureVectorSubset the subset of feature vector indices that interests us
   * @param featureSubset the subset of feature indices to consider
   */
-private class Node(private var data: Option[FeatureVectors], val featureVectorSubset: Seq[Int],
+private class Node(private var data: Option[FeatureVectorSource], val featureVectorSubset: Seq[Int],
     val featureSubset: Seq[Int]) {
 
   // The feature to split on, at this node.
@@ -82,7 +84,7 @@ private class Node(private var data: Option[FeatureVectors], val featureVectorSu
     */
   def outcomeCounts: Map[Int, Int] = {
     require(data.isDefined)
-    featureVectorSubset.groupBy(data.get.featureVectors(_).outcome.get) mapValues {
+    featureVectorSubset.groupBy(data.get.getNthVector(_).outcome.get) mapValues {
       l => l.size
     }
   }
@@ -186,8 +188,7 @@ class DecisionTreeTrainer(
     * @param data training and validation data
     * @return the induced decision tree
     */
-  override def apply(data: FeatureVectors): ProbabilisticClassifier = {
-
+  override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
     val (trainingSubset, validationSubset) = {
       val n = data.numVectors
       val nTrain = Math.round(n.toFloat * validationPercentage).toInt
@@ -210,7 +211,7 @@ class DecisionTreeTrainer(
     * information gain at each node
     * @return the final decision tree (before any pruning occurs)
     */
-  private def growTree(data: FeatureVectors, featureVectorSubset: Seq[Int],
+  private def growTree(data: FeatureVectorSource, featureVectorSubset: Seq[Int],
     featuresExaminedPerNode: Int): Node = {
 
     val root = new Node(Some(data), featureVectorSubset,
@@ -223,8 +224,8 @@ class DecisionTreeTrainer(
       // detects termination conditions: if no more features are available to split on, or
       // all remaining feature vectors are labeled with the same outcome
       if (!(node.featureSubset.isEmpty ||
-        node.featureVectorSubset.forall(data.featureVectors(_).outcome ==
-          data.featureVectors(node.featureVectorSubset.head).outcome))) {
+        node.featureVectorSubset.forall(data.getNthVector(_).outcome ==
+          data.getNthVector(node.featureVectorSubset.head).outcome))) {
 
         val (featuresToExamine, featuresToIgnore) = {
           val shuffled = Random.shuffle(node.featureSubset)
@@ -241,7 +242,7 @@ class DecisionTreeTrainer(
           val (bestFeature, _) = infoGainByFeature maxBy { case (_, gain) => gain }
           node.setFeature(bestFeature)
           val subsets = node.featureVectorSubset groupBy {
-            j => data.featureVectors(j).getFeature(bestFeature)
+            j => data.getNthVector(j).getFeature(bestFeature)
           }
           val childFeatureSubset = {
             val nonzeroFeatures = infoGainByFeature map { case (feature, _) => feature }
@@ -269,10 +270,10 @@ class DecisionTreeTrainer(
     * @param featureVectorSubset the subset of feature vector indices that interest us
     * @param root the root of the decision tree we want to prune
     */
-  private def pruneTree(data: FeatureVectors, featureVectorSubset: Seq[Int], root: Node) {
+  private def pruneTree(data: FeatureVectorSource, featureVectorSubset: Seq[Int], root: Node) {
     // distributes validation data to the relevant decision tree nodes
     for (vectorIndex <- featureVectorSubset) {
-      val featureVector = data.featureVectors(vectorIndex)
+      val featureVector = data.getNthVector(vectorIndex)
       var cur = root
       cur.addValidationVector(featureVector)
       while (cur.hasNext(featureVector)) {
@@ -300,14 +301,14 @@ class DecisionTreeTrainer(
     }
   }
 
-  private def computeInformationGainUnoptimized(data: FeatureVectors, featureVectorSubset: Seq[Int],
+  private def computeInformationGainUnoptimized(data: FeatureVectorSource, featureVectorSubset: Seq[Int],
     featureSubset: Seq[Int]): Seq[(Int, Double)] = {
 
     require(featureVectorSubset.nonEmpty)
     require(featureSubset.nonEmpty)
 
     val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map {
-      data.featureVectors(_)
+      data.getNthVector(_)
     }
     val unsplitEntropy = computeOutcomeEntropy(featureVectorSubstream)
     val informationGainByFeatureValue: Iterable[Double] = for {

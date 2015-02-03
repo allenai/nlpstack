@@ -39,18 +39,28 @@ object ClassificationTask {
     implicit val taskConjunctionFormat =
       jsonFormat1(TaskConjunction.apply).pack("type" -> "TaskConjunction")
 
+    implicit val simpleTaskFormat =
+      jsonFormat1(SimpleTask.apply).pack("type" -> "SimpleTask")
+
     def write(task: ClassificationTask): JsValue = task match {
       case appSignature: ApplicabilitySignature => appSignature.toJson
       case stateRefProperty: StateRefProperty => stateRefProperty.toJson
       case taskConjunction: TaskConjunction => taskConjunction.toJson
+      case simpleTask: SimpleTask => simpleTask.toJson
     }
 
     def read(value: JsValue): ClassificationTask = value.asJsObject.unpackWith(
       applicabilitySignatureFormat,
       stateRefPropertyFormat,
-      taskConjunctionFormat
+      taskConjunctionFormat,
+      simpleTaskFormat
     )
   }
+}
+
+case class SimpleTask(val taskName: String) extends ClassificationTask {
+  @transient
+  override val filenameFriendlyName: String = s"$taskName"
 }
 
 /** The TaskConjunction is a conjunction of ClassificationTasks.
@@ -100,6 +110,8 @@ object TaskIdentifier {
       case ApplicabilitySignatureIdentifier => JsString("ApplicabilitySignatureIdentifier")
       case HybridApplicabilitySignatureIdentifier =>
         JsString("HybridApplicabilitySignatureIdentifier")
+      case HybridTaskIdentifier =>
+        JsString("HybridTaskIdentifier")
       case stateRefPropertyIdentifier: StateRefPropertyIdentifier =>
         stateRefPropertyIdentifier.toJson
       case taskIdentifier: TaskConjunctionIdentifier => taskIdentifier.toJson
@@ -109,6 +121,7 @@ object TaskIdentifier {
       case JsString(typeid) => typeid match {
         case "ApplicabilitySignatureIdentifier" => ApplicabilitySignatureIdentifier
         case "HybridApplicabilitySignatureIdentifier" => HybridApplicabilitySignatureIdentifier
+        case "HybridTaskIdentifier" => HybridApplicabilitySignatureIdentifier
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
@@ -118,6 +131,15 @@ object TaskIdentifier {
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }
+}
+
+/** The SimpleTaskIdentifier identifies all states as the same SimpleTask.
+  *
+  * @param taskName the name of the task
+  */
+case class SimpleTaskIdentifier(taskName: String) extends TaskIdentifier {
+
+  override def apply(state: State): Option[ClassificationTask] = Some(SimpleTask(taskName))
 }
 
 /** The TaskConjunctionIdentifier allows you to create a TaskIdentifier by conjoining

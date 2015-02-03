@@ -38,24 +38,28 @@ case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
 }
 
 /** A OneVersusAllTrainer trains a OneVersusAll using a base ProbabilisticClassifierTrainer to
-  * train one binary classifiers per outcome.
+  * train one binary classifier per outcome.
   *
   * @param baseTrainer the trainer to use for training the binary classifiers
   */
 class OneVersusAllTrainer(baseTrainer: ProbabilisticClassifierTrainer)
     extends ProbabilisticClassifierTrainer {
 
-  override def apply(data: FeatureVectors): ProbabilisticClassifier = {
-    val binaryClassifiers = data.allOutcomes.toSet.toSeq map { outcome: Int =>
-      val mappedVectors = data.featureVectors map { featureVector =>
-        featureVector.modifyOutcome(
-          featureVector.outcome match {
-            case Some(x) if x == outcome => 1
-            case _ => 0
-          }
-        )
-      }
-      (outcome, baseTrainer(FeatureVectors(mappedVectors)))
+  override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
+    val uniqueOutcomes = data.allOutcomes.toSet.toSeq
+    val binaryClassifiers = uniqueOutcomes.zipWithIndex map {
+      case (outcome: Int, outcomeIndex) =>
+        val mappedVectorSource =
+          RemappedFeatureVectorSource(data, { x: Int =>
+            if (x == outcome) {
+              1
+            } else {
+              0
+            }
+          })
+        println(s"Training subclassifier ${outcomeIndex + 1} of ${uniqueOutcomes.size}.")
+        val result = (outcome, baseTrainer(mappedVectorSource))
+        result
     }
     OneVersusAll(binaryClassifiers)
   }

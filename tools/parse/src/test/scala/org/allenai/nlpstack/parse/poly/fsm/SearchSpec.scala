@@ -74,6 +74,8 @@ case object AlphabetBlockTransitionSystem extends TransitionSystem {
     }
   }
 
+  override val taskIdentifier: TaskIdentifier = new SimpleTaskIdentifier("alpha")
+
   def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] = None
 
   val feature: StateFeature = FeatureUnion(Seq())

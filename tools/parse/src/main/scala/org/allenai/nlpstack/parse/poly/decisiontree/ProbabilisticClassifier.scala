@@ -91,4 +91,4 @@ object ProbabilisticClassifier {
   }
 }
 
-trait ProbabilisticClassifierTrainer extends (FeatureVectors => ProbabilisticClassifier)
+trait ProbabilisticClassifierTrainer extends (FeatureVectorSource => ProbabilisticClassifier)

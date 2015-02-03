@@ -6,7 +6,8 @@ import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
 case class ArcEagerTransitionSystem(
     feature: StateFeature = ArcEagerTransitionSystem.defaultFeature,
-    brownClusters: Seq[BrownClusters] = Seq()
+    brownClusters: Seq[BrownClusters] = Seq(),
+    taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 ) extends TransitionSystem {
 
   @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(

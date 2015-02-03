@@ -79,7 +79,7 @@ object TransitionParser {
     */
   def save(parser: TransitionParser, modelFilePrefix: String): Unit = {
     Resource.using(new PrintWriter(new File(modelFilePrefix + ".poly.json"))) { writer =>
-      writer.println(parser.toJson.prettyPrint)
+      writer.println(parser.toJson.compactPrint)
     }
   }
 
@@ -100,8 +100,8 @@ object TransitionParser {
     System.gc()
     val memoryAfterLoading: Double = Runtime.getRuntime.totalMemory -
       Runtime.getRuntime.freeMemory()
-    println("Parser memory footprint: %.2f GB".format((memoryAfterLoading - initialMemory)
-      / Math.pow(2.0, 30.0)))
+    println("Parser memory footprint: %.1f MB".format((memoryAfterLoading - initialMemory)
+      / Math.pow(10.0, 6.0)))
     result
   }
 

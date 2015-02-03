@@ -31,7 +31,7 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
 }
 
 case class OfflineTokenFeature(val stateRef: StateRef)
-  extends StateFeature {
+    extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
     state match {
@@ -40,15 +40,32 @@ case class OfflineTokenFeature(val stateRef: StateRef)
           for {
             tokenIndex <- stateRef(tpState).toSeq
             origFeatureVectorMapping <- tpState.annotatedSentence.annotation(tokenIndex).values
-          } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0)
+          } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
+        )
     }
   }
 
   override def toString: String = s"offlineTokenFeature.${stateRef.name}"
 }
 
+case object PreviousLinkDirection extends StateFeature {
+  override def apply(state: State): FeatureVector = {
+    state match {
+      case tpState: TransitionParserState =>
+        tpState.previousLink match {
+          case Some((crumb, gretel)) => FeatureVector(
+            Seq(FeatureName(List('prevLink, Symbol((crumb < gretel).toString))) -> 1.0)
+          )
+          case None => FeatureVector(Seq())
+        }
+    }
+  }
+
+  override def toString: String = s"prevLink"
+}
+
 case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
-  extends StateFeature {
+    extends StateFeature {
 
   @transient val featureName = 'tokenCardinality
 
@@ -61,10 +78,10 @@ case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
         FeatureVector(
           featureNames map { featureName =>
             (featureName, 1.0)
-          })
+          }
+        )
     }
   }
 
   override def toString: String = s"tokenCardinalityFeature"
 }
-

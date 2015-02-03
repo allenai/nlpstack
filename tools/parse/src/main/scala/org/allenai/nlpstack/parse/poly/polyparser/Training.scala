@@ -74,7 +74,7 @@ object Training {
     val transitionSystem: TransitionSystem =
       ArcHybridTransitionSystem(ArcHybridTransitionSystem.defaultFeature, clusters)
     //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
-    val taskIdentifier: TaskIdentifier = HybridApplicabilitySignatureIdentifier
+    //val taskIdentifier: TaskIdentifier = HybridApplicabilitySignatureIdentifier
     //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
 
     //val baseCostFunction: Option[ClassifierBasedCostFunction] =
@@ -88,11 +88,13 @@ object Training {
     //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
-    val trainingVectorSource = new GoldParseTrainingVectorSource(trainingSource, taskIdentifier,
-      transitionSystem, baseCostFunction)
+    val trainingVectorSource = new GoldParseTrainingVectorSource(
+      trainingSource,
+      transitionSystem, baseCostFunction
+    )
     val parsingCostFunction: StateCostFunction = {
       val trainer =
-        new DTCostFunctionTrainer(classifierTrainer, taskIdentifier, transitionSystem,
+        new DTCostFunctionTrainer(classifierTrainer, transitionSystem,
           trainingVectorSource, baseCostFunction)
       trainer.costFunction
     }
@@ -103,10 +105,10 @@ object Training {
     )
     val parser = RerankingTransitionParser(parserConfig)
 
-    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
-      config.dataSource, ParseFile.defaultOracleNbest)
-
     println("Saving models.")
     TransitionParser.save(parser, config.outputPath)
+
+    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
+      config.dataSource, ParseFile.defaultOracleNbest)
   }
 }

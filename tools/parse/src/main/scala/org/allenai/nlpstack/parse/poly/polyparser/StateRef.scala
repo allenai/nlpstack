@@ -36,6 +36,8 @@ object StateRef {
     def write(stateRef: StateRef): JsValue = stateRef match {
       case LastRef => JsString("LastRef")
       case FirstRef => JsString("FirstRef")
+      case PreviousLinkCrumbRef => JsString("PreviousLinkCrumbRef")
+      case PreviousLinkGretelRef => JsString("PreviousLinkGretelRef")
       case stackRef: StackRef => {
         JsObject(stackRefFormat.write(stackRef).asJsObject.fields +
           ("type" -> JsString("StackRef")))
@@ -86,6 +88,8 @@ object StateRef {
       case JsString(typeid) => typeid match {
         case "LastRef" => LastRef
         case "FirstRef" => FirstRef
+        case "PreviousLinkCrumbRef" => PreviousLinkCrumbRef
+        case "PreviousLinkGretelRef" => PreviousLinkGretelRef
       }
       case JsObject(values) => values("type") match {
         case JsString("StackRef") => stackRefFormat.read(value)
@@ -166,7 +170,6 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("stackGretelRef" + index)
 }
 
-
 case class StackChildrenRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
 
@@ -177,7 +180,6 @@ case class StackChildrenRef(val index: Int) extends StateRef {
   @transient
   override val name: Symbol = Symbol("stackChildrenRef" + index)
 }
-
 
 case class StackLeftGretelsRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackLeftGretelsRef must be a nonnegative integer")
@@ -279,6 +281,32 @@ case class BreadcrumbRef(val index: Int) extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("crumbRef" + index)
+}
+
+case object PreviousLinkCrumbRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    state.previousLink match {
+      case Some((crumb, _)) => Seq(crumb)
+      case None => Seq()
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkCrumb")
+}
+
+case object PreviousLinkGretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    state.previousLink match {
+      case Some((_, gretel)) => Seq(gretel)
+      case None => Seq()
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkGretel")
 }
 
 /** A LastRef is a StateRef (see above) whose apply operation returns the final element of

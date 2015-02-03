@@ -82,15 +82,20 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
       ArcHybridShift,
-      ArcHybridLeftArc('det),
+      ArcHybridLeftArc(),
+      LeftLabelArc('det),
       ArcHybridShift,
-      ArcHybridLeftArc('nsubj),
+      ArcHybridLeftArc(),
+      LeftLabelArc('nsubj),
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
-      ArcHybridRightArc('pobj),
-      ArcHybridRightArc('prep),
-      ArcHybridLeftArc('root),
+      ArcHybridRightArc(),
+      RightLabelArc('pobj),
+      ArcHybridRightArc(),
+      RightLabelArc('prep),
+      ArcHybridLeftArc(),
+      LeftLabelArc('root),
       ArcHybridShift
     ))
   }
@@ -104,11 +109,15 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
-      ArcHybridRightArc('b2c),
-      ArcHybridRightArc('a2b),
+      ArcHybridRightArc(),
+      RightLabelArc('b2c),
+      ArcHybridRightArc(),
+      RightLabelArc('a2b),
       ArcHybridShift,
-      ArcHybridRightArc('a2d),
-      ArcHybridLeftArc('n2a),
+      ArcHybridRightArc(),
+      RightLabelArc('a2d),
+      ArcHybridLeftArc(),
+      LeftLabelArc('n2a),
       ArcHybridShift
     ))
   }

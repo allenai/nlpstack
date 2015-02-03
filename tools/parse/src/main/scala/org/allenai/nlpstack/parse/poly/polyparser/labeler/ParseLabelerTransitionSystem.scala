@@ -14,6 +14,9 @@ object ParseLabel {
 }
 
 case object ParseLabelerTransitionSystem extends TransitionSystem {
+
+  val taskIdentifier = ???
+
   def initialState(
     marbleBlock: MarbleBlock,
     constraints: Seq[TransitionConstraint]

@@ -4,6 +4,50 @@ import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
+object ArcHybridModes {
+  val TRANSITION: Int = 0
+  val LEFTLABEL: Int = 1
+  val RIGHTLABEL: Int = 2
+}
+
+/** The HybridApplicabilitySignatureIdentifier identifies the ClassificationTask of a parser state
+  * according to the state's applicability signature (for an ArcHybrid transition system).
+  */
+object HybridApplicabilitySignatureIdentifier extends TaskIdentifier {
+  override def apply(state: State): Option[ClassificationTask] = {
+    Some(ApplicabilitySignature(
+      StateTransition.applicable(ArcHybridShift, Some(state)),
+      false,
+      StateTransition.applicable(ArcHybridLeftArc('NONE), Some(state)),
+      StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
+    ))
+  }
+}
+
+object HybridTaskIdentifier extends TaskIdentifier {
+  override def apply(state: State): Option[ClassificationTask] = {
+    state match {
+      case tpState: TransitionParserState =>
+        tpState.parserMode match {
+          case ArcHybridModes.TRANSITION =>
+            Some(ApplicabilitySignature(
+              StateTransition.applicable(ArcHybridShift, Some(state)),
+              false,
+              StateTransition.applicable(ArcHybridLeftArc('NONE), Some(state)),
+              StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
+            ))
+          case ArcHybridModes.LEFTLABEL =>
+            Some(SimpleTask("leftlabel"))
+          case ArcHybridModes.RIGHTLABEL =>
+            Some(SimpleTask("rightlabel"))
+          //Some(ApplicabilitySignature(false, false, false, false))
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+}
+
 /** An ArcHybridTransitionSystem has three transition operators: Shift, RightArc, and LeftArc.
   *
   * The Shift operator behaves the same as in the ArcEagerTransitionSystem:
@@ -26,6 +70,9 @@ case class ArcHybridTransitionSystem(
     feature: StateFeature = ArcHybridTransitionSystem.defaultFeature,
     brownClusters: Seq[BrownClusters] = Seq()
 ) extends TransitionSystem {
+
+  @transient
+  override val taskIdentifier: TaskIdentifier = HybridTaskIdentifier
 
   @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
     TokenPositionFeature,
@@ -51,7 +98,8 @@ case class ArcHybridTransitionSystem(
       val taggedSentence = sent.taggedWithFactorie
         .taggedWithBrownClusters(brownClusters)
       val augmentedSentence = tokenFeatureTagger.tag(taggedSentence)
-      new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), augmentedSentence)
+      new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), augmentedSentence,
+        None, ArcHybridModes.TRANSITION)
     }
   }
 
@@ -87,15 +135,19 @@ case object ArcHybridTransitionSystem {
   def constructDefaultFeature(keywords: Set[Symbol]): StateFeature = {
     val features = List(
       new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0), BufferRef(1),
+        PreviousLinkCrumbRef, PreviousLinkGretelRef,
         StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
         StackRightGretelsRef(0), BufferGretelsRef(0))),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
       new OfflineTokenFeature(BufferRef(0)),
       new OfflineTokenFeature(BufferRef(1)),
+      new OfflineTokenFeature(PreviousLinkCrumbRef),
+      new OfflineTokenFeature(PreviousLinkGretelRef),
       new OfflineTokenFeature(StackGretelsRef(0)),
       new OfflineTokenFeature(StackGretelsRef(1)),
       new OfflineTokenFeature(BufferGretelsRef(0)),
+      //PreviousLinkDirection,
       new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
       new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
     )
@@ -107,7 +159,8 @@ case object ArcHybridTransitionSystem {
 case object ArcHybridShift extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    (state.bufferPosition < state.sentence.size) &&
+    state.parserMode == ArcHybridModes.TRANSITION &&
+      (state.bufferPosition < state.sentence.size) &&
       !(state.bufferPosition == 0 && state.stack.nonEmpty)
   }
 
@@ -134,10 +187,10 @@ case object ArcHybridShift extends TransitionParserStateTransition {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcHybridLeftArc(val label: Symbol) extends TransitionParserStateTransition {
+case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcHybridLeftArc.applicable(state)
+    (state.parserMode == ArcHybridModes.TRANSITION) && ArcHybridLeftArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -149,7 +202,9 @@ case class ArcHybridLeftArc(val label: Symbol) extends TransitionParserStateTran
       children = state.children +
       (state.bufferPosition -> (bufferPositionChildren + state.stack.head)),
       arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
+      (Set(state.stack.head, state.bufferPosition) -> label),
+      previousLink = Some((state.bufferPosition, state.stack.head)),
+      parserMode = ArcHybridModes.LEFTLABEL
     )
   }
 
@@ -172,10 +227,10 @@ object ArcHybridLeftArc {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcHybridRightArc(val label: Symbol) extends TransitionParserStateTransition {
+case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcHybridRightArc.applicable(state)
+    (state.parserMode == ArcHybridModes.TRANSITION) && ArcHybridRightArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -189,7 +244,9 @@ case class ArcHybridRightArc(val label: Symbol) extends TransitionParserStateTra
       children = state.children +
       (stackSecond -> (stackSecondChildren + stackFirst)),
       arcLabels = state.arcLabels +
-      (Set(stackFirst, stackSecond) -> label)
+      (Set(stackFirst, stackSecond) -> label),
+      previousLink = Some((stackSecond, stackFirst)),
+      parserMode = ArcHybridModes.RIGHTLABEL
     )
     result
   }
@@ -208,6 +265,54 @@ object ArcHybridRightArc {
   }
 }
 
+/** The LabelArc operator labels the most recently created arc. */
+case class LeftLabelArc(val label: Symbol) extends TransitionParserStateTransition {
+
+  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
+    state.parserMode == ArcHybridModes.LEFTLABEL
+  }
+
+  override def advanceState(state: TransitionParserState): State = {
+    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
+    state.previousLink match {
+      case Some((crumb, gretel)) =>
+        state.copy(
+          arcLabels = state.arcLabels +
+          (Set(crumb, gretel) -> label),
+          parserMode = ArcHybridModes.TRANSITION
+        )
+      case _ => ???
+    }
+  }
+
+  @transient
+  override val name: String = s"LtLbl[${label.name}]"
+}
+
+/** The LabelArc operator labels the most recently created arc. */
+case class RightLabelArc(val label: Symbol) extends TransitionParserStateTransition {
+
+  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
+    state.parserMode == ArcHybridModes.RIGHTLABEL
+  }
+
+  override def advanceState(state: TransitionParserState): State = {
+    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
+    state.previousLink match {
+      case Some((crumb, gretel)) =>
+        state.copy(
+          arcLabels = state.arcLabels +
+          (Set(crumb, gretel) -> label),
+          parserMode = ArcHybridModes.TRANSITION
+        )
+      case _ => ???
+    }
+  }
+
+  @transient
+  override val name: String = s"RtLbl[${label.name}]"
+}
+
 /** The ArcHybridGuidedCostFunction uses a gold parse tree to make deterministic decisions
   * about which transition to apply in any given state. Since the decision is uniquely determined
   * by the gold parse, the returned map will have only a single mapping that assigns zero cost
@@ -224,7 +329,15 @@ class ArcHybridGuidedCostFunction(
     val result: Map[StateTransition, Double] = state match {
       case tpState: TransitionParserState =>
         require(!tpState.isFinal)
-        if (tpState.stack.isEmpty) {
+        if (tpState.parserMode == ArcHybridModes.LEFTLABEL) {
+          val (crumb, gretel) = tpState.previousLink.get
+          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          Map(LeftLabelArc(arclabel) -> 0)
+        } else if (tpState.parserMode == ArcHybridModes.RIGHTLABEL) {
+          val (crumb, gretel) = tpState.previousLink.get
+          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          Map(RightLabelArc(arclabel) -> 0)
+        } else if (tpState.stack.isEmpty) {
           Map(ArcHybridShift -> 0)
         } else if (tpState.bufferIsEmpty) {
           Map()
@@ -232,16 +345,14 @@ class ArcHybridGuidedCostFunction(
           val stackFirst = tpState.stack.head
           val bufferFirst = tpState.bufferPosition
           if (parse.breadcrumb(stackFirst) == bufferFirst) {
-            val arclabel = parse.arcLabelByEndNodes(Set(stackFirst, bufferFirst))
-            Map(ArcHybridLeftArc(arclabel) -> 0)
+            Map(ArcHybridLeftArc() -> 0)
           } else if (tpState.stack.size < 2) {
             Map(ArcHybridShift -> 0)
           } else {
             val stackSecond = tpState.stack.tail.head
             if (parse.breadcrumb(stackFirst) == stackSecond &&
               parse.getGretels(stackFirst) == tpState.getGretels(stackFirst)) {
-              val arclabel = parse.arcLabelByEndNodes(Set(stackFirst, stackSecond))
-              Map(ArcHybridRightArc(arclabel) -> 0)
+              Map(ArcHybridRightArc() -> 0)
             } else {
               Map(ArcHybridShift -> 0)
             }

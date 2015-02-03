@@ -17,7 +17,6 @@ case class FSMTrainingVector(task: ClassificationTask, transition: StateTransiti
 }
 
 abstract class FSMTrainingVectorSource(
-    taskIdentifier: TaskIdentifier,
     transitionSystem: TransitionSystem,
     baseCostFunction: Option[StateCostFunction]
 ) {
@@ -83,7 +82,7 @@ abstract class FSMTrainingVectorSource(
     initState match {
       case None => trainingVectorsSoFar
       case Some(initialState) =>
-        val task = taskIdentifier(initialState)
+        val task = transitionSystem.taskIdentifier(initialState)
         //val featureVector = transitionSystem.feature(initialState)
         if (transitions.isEmpty) {
           trainingVectorsSoFar
