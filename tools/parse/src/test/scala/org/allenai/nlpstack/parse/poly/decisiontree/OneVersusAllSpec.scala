@@ -54,8 +54,13 @@ class OneVersusAllSpec extends UnitSpec {
     ))
 
   "OneVersusAll.outcomeDistribution" should "return the right answer" in {
-    classifier.outcomeDistribution(new SparseVector(outcome = None, numFeatures = 5,
-      trueFeatures = Set(1, 2))) shouldBe Map(0 -> 0.3, 1 -> 0.4, 2 -> 0.3)
+    val outcomeDist = classifier.outcomeDistribution(new SparseVector(
+      outcome = None,
+      numFeatures = 5, trueFeatures = Set(1, 2)
+    ))
+    outcomeDist(0) shouldBe 0.3 +- 0.001
+    outcomeDist(1) shouldBe 0.4 +- 0.001
+    outcomeDist(2) shouldBe 0.3 +- 0.001
   }
 
   it should "return a uniform distribution if all subclassifiers return zero" in {

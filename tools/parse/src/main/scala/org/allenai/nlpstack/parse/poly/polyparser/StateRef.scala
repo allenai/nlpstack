@@ -38,6 +38,8 @@ object StateRef {
       case FirstRef => JsString("FirstRef")
       case PreviousLinkCrumbRef => JsString("PreviousLinkCrumbRef")
       case PreviousLinkGretelRef => JsString("PreviousLinkGretelRef")
+      case PreviousLinkCrumbGretelRef => JsString("PreviousLinkCrumbGretelRef")
+      case PreviousLinkGrandgretelRef => JsString("PreviousLinkGrandgretelRef")
       case stackRef: StackRef => {
         JsObject(stackRefFormat.write(stackRef).asJsObject.fields +
           ("type" -> JsString("StackRef")))
@@ -90,6 +92,8 @@ object StateRef {
         case "FirstRef" => FirstRef
         case "PreviousLinkCrumbRef" => PreviousLinkCrumbRef
         case "PreviousLinkGretelRef" => PreviousLinkGretelRef
+        case "PreviousLinkCrumbGretelRef" => PreviousLinkCrumbGretelRef
+        case "PreviousLinkGrandgretelRef" => PreviousLinkGrandgretelRef
       }
       case JsObject(values) => values("type") match {
         case JsString("StackRef") => stackRefFormat.read(value)
@@ -296,6 +300,16 @@ case object PreviousLinkCrumbRef extends StateRef {
   override val name: Symbol = Symbol("prevLinkCrumb")
 }
 
+case object PreviousLinkCrumbGretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    PreviousLinkCrumbRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkCrumbGretel")
+}
+
 case object PreviousLinkGretelRef extends StateRef {
 
   override def apply(state: TransitionParserState): Seq[Int] = {
@@ -307,6 +321,16 @@ case object PreviousLinkGretelRef extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("prevLinkGretel")
+}
+
+case object PreviousLinkGrandgretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    PreviousLinkGretelRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkGrandgretel")
 }
 
 /** A LastRef is a StateRef (see above) whose apply operation returns the final element of

@@ -108,9 +108,7 @@ object TaskIdentifier {
 
     def write(taskIdentifier: TaskIdentifier): JsValue = taskIdentifier match {
       case ApplicabilitySignatureIdentifier => JsString("ApplicabilitySignatureIdentifier")
-      case HybridApplicabilitySignatureIdentifier =>
-        JsString("HybridApplicabilitySignatureIdentifier")
-      case HybridTaskIdentifier =>
+      case ArcHybridTaskIdentifier =>
         JsString("HybridTaskIdentifier")
       case stateRefPropertyIdentifier: StateRefPropertyIdentifier =>
         stateRefPropertyIdentifier.toJson
@@ -120,8 +118,7 @@ object TaskIdentifier {
     def read(value: JsValue): TaskIdentifier = value match {
       case JsString(typeid) => typeid match {
         case "ApplicabilitySignatureIdentifier" => ApplicabilitySignatureIdentifier
-        case "HybridApplicabilitySignatureIdentifier" => HybridApplicabilitySignatureIdentifier
-        case "HybridTaskIdentifier" => HybridApplicabilitySignatureIdentifier
+        case "HybridTaskIdentifier" => ArcHybridTaskIdentifier
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(

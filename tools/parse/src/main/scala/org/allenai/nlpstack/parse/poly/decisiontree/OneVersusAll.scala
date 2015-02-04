@@ -23,7 +23,7 @@ case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
     val unnormalizedDist: Seq[(Int, Double)] =
       binaryClassifiers map {
         case (outcome, classifier) =>
-          (outcome, classifier.outcomeDistribution(featureVector).getOrElse(1, 0.0))
+          (outcome, 0.01 + classifier.outcomeDistribution(featureVector).getOrElse(1, 0.0))
       }
     ProbabilisticClassifier.normalizeDistribution(unnormalizedDist).toMap
   }

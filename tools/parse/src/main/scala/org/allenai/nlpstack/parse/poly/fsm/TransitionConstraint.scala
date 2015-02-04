@@ -1,8 +1,12 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.polyparser.{ RequestedCpos,
-  RequestedArc, ForbiddenArcLabel, ForbiddenEdge }
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  RequestedCpos,
+  RequestedArc,
+  ForbiddenArcLabel,
+  ForbiddenEdge
+}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -20,7 +24,8 @@ object TransitionConstraint {
 
   implicit val requestedArcFormat =
     jsonFormat(RequestedArc.apply, "token1", "token2", "arcLabel").pack(
-      "constraintType" -> "requestedArc")
+      "constraintType" -> "requestedArc"
+    )
 
   implicit val requestedCposFormat =
     jsonFormat2(RequestedCpos.apply).pack("constraintType" -> "requestedCpos")
@@ -31,7 +36,8 @@ object TransitionConstraint {
         forbiddenEdgeFormat,
         forbiddenArcLabelFormat,
         requestedArcFormat,
-        requestedCposFormat)
+        requestedCposFormat
+      )
     }
 
     override def write(constraint: TransitionConstraint): JsValue = constraint match {
@@ -42,3 +48,10 @@ object TransitionConstraint {
     }
   }
 }
+
+/** A ConstraintInterpretation tells you whether a transition is inapplicable in a given state.
+  *
+  * Specifically, it is a function that takes a (state, transition) pair, and returns true
+  * if the transition is inapplicable.
+  */
+trait ConstraintInterpretation extends ((State, StateTransition) => Boolean)

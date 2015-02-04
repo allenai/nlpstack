@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Token, NexusToken, Sentence }
 
-import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, StateTransition, State }
+import org.allenai.nlpstack.parse.poly.fsm.{ ConstraintInterpretation, Sculpture, StateTransition, State }
 
 /** A TransitionParserState captures the current state of a transition-based parser (i.e. it
   * corresponds to a partially constructed PolytreeParse). It includes the following fields:
@@ -53,6 +53,10 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
   /** Returns whether the two tokens are connected in the parse created thus far. */
   def areNeighbors(token1: Int, token2: Int): Boolean = arcLabels.contains(Set(token1, token2))
 
+  def stillActive(token: Int): Boolean = {
+    stack.contains(token) || (bufferPosition > 0 && bufferPosition <= token)
+  }
+
   /** Applies the provided sequence of Transitions (in order) to the state.
     *
     * @param transitions a list of Transitions to be applied (in order)
@@ -67,7 +71,7 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
 
   override def toString: String = {
     (stack map (sentence.tokens(_).word.name)).reverse.mkString(" ") + " ||| " +
-      sentence.tokens.lift(bufferPosition)
+      (sentence.tokens.lift(bufferPosition) map { tok => tok.word.name })
   }
 
   def asSculpture: Option[Sculpture] = {
@@ -119,3 +123,19 @@ abstract class TransitionParserStateTransition extends StateTransition {
 
   def advanceState(state: TransitionParserState): State
 }
+
+/** A ParsingConstraintInterpretation is a ConstraintInterpretation that fires only on
+  * TransitionParserState objects.
+  */
+abstract class ParsingConstraintInterpretation extends ConstraintInterpretation {
+
+  def apply(state: State, transition: StateTransition): Boolean = {
+    state match {
+      case tpState: TransitionParserState => applyToParserState(tpState, transition)
+      case _ => false
+    }
+  }
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean
+}
+
