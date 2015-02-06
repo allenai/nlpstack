@@ -61,8 +61,8 @@ case class EventStatisticFeatures(
     transforms: Seq[(String, NeighborhoodTransform)]
 ) extends PolytreeParseFeature {
 
-  @transient val eventStatistics: Seq[(String, String, NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
-
+  @transient
+  val eventStatistics: Seq[(String, String, NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
     for {
       (neighborhoodName, extractor, counts) <- neighborhoodCounts
       (transformName, transform) <- transforms
