@@ -40,8 +40,9 @@ case class FeatureVector(values: Seq[(FeatureName, Double)]) {
   }
 
   override def toString(): String = {
-    "[" + (values map { case (featureName, featureValue) =>
-      f"${featureName} -> $featureValue%.3f"
+    "[" + (values map {
+      case (featureName, featureValue) =>
+        f"${featureName} -> $featureValue%.3f"
     }).mkString(" ") + "]"
   }
 }

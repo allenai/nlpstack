@@ -54,12 +54,15 @@ object Parser {
     val postagged: Seq[PostaggedToken] = postagger.postag(tokenizer)(text)
     NexusToken +: (postagged map {
       case tok =>
-        core.Token(word = Symbol(tok.string),
+        core.Token(
+          word = Symbol(tok.string),
           Map(
             'factoriePos ->
               Set(Symbol(tok.postag)),
             'factorieCpos ->
-              Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, tok.postag)))))
+              Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, tok.postag)))
+          )
+        )
     })
   }
 }

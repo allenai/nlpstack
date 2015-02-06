@@ -11,7 +11,8 @@ trait PolytreeParseSource extends SentenceSource {
 }
 
 case class InMemoryPolytreeParseSource(
-    parses: Iterable[PolytreeParse]) extends PolytreeParseSource {
+    parses: Iterable[PolytreeParse]
+) extends PolytreeParseSource {
 
   override def parseIterator: Iterator[PolytreeParse] = {
     parses.iterator
@@ -44,7 +45,8 @@ object InMemoryPolytreeParseSource {
           Datastore("private").directoryPath(
             "org.allenai.corpora.parsing",
             "treebanks",
-            1)
+            1
+          )
         Paths.get(path.toString, filename).toString
       case _ =>
         filename
@@ -58,8 +60,10 @@ object InMemoryPolytreeParseSource {
   * @param filename the file containing the parse trees
   * @param format the file format
   */
-case class FileBasedPolytreeParseSource(filename: String,
-    format: PolytreeParseFileFormat) extends PolytreeParseSource {
+case class FileBasedPolytreeParseSource(
+    filename: String,
+    format: PolytreeParseFileFormat
+) extends PolytreeParseSource {
 
   override def parseIterator: Iterator[PolytreeParse] = {
     PolytreeParse.fromFile(filename, format)
@@ -92,7 +96,8 @@ object FileBasedPolytreeParseSource {
           Datastore("private").directoryPath(
             "org.allenai.corpora.parsing",
             "treebanks",
-            1)
+            1
+          )
         Paths.get(path.toString, filename).toString
       case _ =>
         filename

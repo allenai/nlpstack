@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import java.io.{File, PrintWriter}
+import java.io.{ File, PrintWriter }
 
 import org.allenai.common.Resource
 import spray.json._
@@ -49,10 +49,14 @@ case class CandidatePoolCorpus(pools: Iterable[CandidatePool]) {
   private def runOneSamplingIteration(): Iterable[(FeatureVector, Double)] = {
     pools filter { pool => pool.scoredCandidates.size >= 2 } map { pool =>
       val orderedCandidates = pool.scoredCandidates.toIndexedSeq
-      val (cand1, cand2) = (orderedCandidates(randomGenerator.nextInt(orderedCandidates.size)),
-        orderedCandidates(randomGenerator.nextInt(orderedCandidates.size)))
-      val differenceVector: FeatureVector = FeatureVector.subtractVectors(cand1._1,
-        cand2._1)
+      val (cand1, cand2) = (
+        orderedCandidates(randomGenerator.nextInt(orderedCandidates.size)),
+        orderedCandidates(randomGenerator.nextInt(orderedCandidates.size))
+      )
+      val differenceVector: FeatureVector = FeatureVector.subtractVectors(
+        cand1._1,
+        cand2._1
+      )
       val differenceVectorLabel: Double = cand1._2 - cand2._2
       (differenceVector, differenceVectorLabel)
     }
@@ -63,11 +67,11 @@ object CandidatePoolCorpus {
   //implicit val jsFormat = jsonFormat1(CandidatePoolCorpus.apply)
 }
 
-
 case class TrainingVectorPool(trainingVectors: Iterable[(FeatureVector, Double)]) {
   override def toString(): String = {
-    (trainingVectors map { case (featureVector, cost) =>
-      f"${cost}%.2f: $featureVector"
+    (trainingVectors map {
+      case (featureVector, cost) =>
+        f"${cost}%.2f: $featureVector"
     }).mkString("\n")
   }
 }

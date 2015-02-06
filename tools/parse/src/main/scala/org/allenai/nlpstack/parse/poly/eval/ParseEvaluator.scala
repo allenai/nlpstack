@@ -13,10 +13,12 @@ object ParseEvaluator {
     * occurred)
     * @param goldParses an Iterator over gold parses
     * @param statistics a set of ParseStatistic objects (they collect the statistics via their
-    *            .notify() method)
+    * .notify() method)
     */
-  def evaluate(candidateParses: Iterator[Option[PolytreeParse]],
-    goldParses: Iterator[PolytreeParse], statistics: Set[ParseStatistic]) {
+  def evaluate(
+    candidateParses: Iterator[Option[PolytreeParse]],
+    goldParses: Iterator[PolytreeParse], statistics: Set[ParseStatistic]
+  ) {
 
     for {
       (candidateParse, goldParse) <- candidateParses.zip(goldParses)
@@ -61,7 +63,8 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
         if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
           // skip the first element because it is the nexus (hence it has no breadcrumb)
           val zipped = candParse.breadcrumb.zipWithIndex.tail.zip(
-            goldParse.breadcrumb.tail)
+            goldParse.breadcrumb.tail
+          )
           val nonPuncZipped = zipped filter {
             case ((x, i), y) =>
               goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
@@ -69,11 +72,12 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
           numCorrect += candParse.breadcrumb.tail.zip(goldParse.breadcrumb.tail) count
             { case (x, y) => (x == y) }
           numLabeledCorrect += candParse.breadcrumb.zipWithIndex.tail.zip(
-            goldParse.breadcrumb.tail) count {
-              case ((x, i), y) => (x == y) &&
-                candParse.arcLabelByEndNodes.getOrElse(Set(x, i), 'nomatch) ==
-                goldParse.arcLabelByEndNodes(Set(y, i))
-            }
+            goldParse.breadcrumb.tail
+          ) count {
+            case ((x, i), y) => (x == y) &&
+              candParse.arcLabelByEndNodes.getOrElse(Set(x, i), 'nomatch) ==
+              goldParse.arcLabelByEndNodes(Set(y, i))
+          }
           numTotalNoPunc += nonPuncZipped.size
           numCorrectNoPunc += nonPuncZipped count {
             case ((x, _), y) => (x == y)
@@ -81,7 +85,7 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
           numLabeledCorrectNoPunc += nonPuncZipped count {
             case ((x, i), y) => (x == y) &&
               candParse.arcLabelByEndNodes.getOrElse(Set(x, i), 'nomatch) ==
-                goldParse.arcLabelByEndNodes(Set(y, i))
+              goldParse.arcLabelByEndNodes(Set(y, i))
           }
         } else { // skip the parse if the tokenization is different
           println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
@@ -159,7 +163,8 @@ case object PathAccuracy extends ParseStatistic {
       case Some(candParse) =>
         if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
           val zipped = candParse.paths.zipWithIndex.tail.zip(
-            goldParse.paths.tail)
+            goldParse.paths.tail
+          )
           val nonPuncZipped = zipped filter {
             case ((x, i), y) =>
               goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")

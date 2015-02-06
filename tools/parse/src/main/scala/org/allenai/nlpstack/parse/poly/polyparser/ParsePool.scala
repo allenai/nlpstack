@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{File, PrintWriter}
+import java.io.{ File, PrintWriter }
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.fsm.NbestList

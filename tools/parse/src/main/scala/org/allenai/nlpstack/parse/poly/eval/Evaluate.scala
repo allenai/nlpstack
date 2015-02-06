@@ -12,7 +12,7 @@ object Evaluate {
     * Usage: Evaluate [options]
     *
     * -c <file> | --candidate <file>
-    *     the file containing the candidate parses (CoNLL-X format)
+    * the file containing the candidate parses (CoNLL-X format)
     * -g <file> | --gold <file>
     * the file containing the gold parses (CoNLL-X format)
     *
@@ -36,6 +36,7 @@ object Evaluate {
       PolytreeParse.fromFile(config.goldFilename, fileFormat)
     }
     ParseEvaluator.evaluate(candidateParses, goldParses, Set(
-      UnlabeledBreadcrumbAccuracy, PathAccuracy))
+      UnlabeledBreadcrumbAccuracy, PathAccuracy
+    ))
   }
 }

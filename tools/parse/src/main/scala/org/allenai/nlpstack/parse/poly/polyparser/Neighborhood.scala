@@ -50,8 +50,9 @@ trait NeighborhoodExtractor extends (PolytreeParse => Iterator[Neighborhood])
 object NeighborhoodExtractor {
   def preprocessParse(parse: PolytreeParse): (PolytreeParse, Seq[Token]) = {
     //val mappedParse = PolytreeParse.arcInverterStanford(parse)
-    val mappedTokens = parse.tokens.zipWithIndex map { case (tok, index) =>
-      tok.updateProperties(Map('arclabel -> Set(parse.breadcrumbArcLabel(index))))
+    val mappedTokens = parse.tokens.zipWithIndex map {
+      case (tok, index) =>
+        tok.updateProperties(Map('arclabel -> Set(parse.breadcrumbArcLabel(index))))
     }
     (parse, mappedTokens)
   }
@@ -139,10 +140,11 @@ case object BreadcrumbExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse): Iterator[Neighborhood] = {
     val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    (mappedParse.breadcrumb.zipWithIndex.tail map { case (crumb, node) =>
-      Neighborhood(Seq(node, crumb) map { tok =>
-        mappedTokens(tok)
-      })
+    (mappedParse.breadcrumb.zipWithIndex.tail map {
+      case (crumb, node) =>
+        Neighborhood(Seq(node, crumb) map { tok =>
+          mappedTokens(tok)
+        })
     }).iterator
   }
 }
@@ -154,10 +156,11 @@ case class RootPathExtractor(maxPathLength: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse): Iterator[Neighborhood] = {
     val (_, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    (parse.paths.zipWithIndex.tail map { case (path, node) =>
-      Neighborhood((path :+ node).takeRight(maxPathLength) map { tok =>
-        mappedTokens(tok)
-      })
+    (parse.paths.zipWithIndex.tail map {
+      case (path, node) =>
+        Neighborhood((path :+ node).takeRight(maxPathLength) map { tok =>
+          mappedTokens(tok)
+        })
     }).iterator
   }
 }
@@ -172,7 +175,8 @@ case object ParentExtractor extends NeighborhoodExtractor {
       Neighborhood(
         (node +: parentMap.getOrElse(node, Seq[Int]())) map { index =>
           mappedTokens(index)
-        })
+        }
+      )
     }).iterator
   }
 }
@@ -191,8 +195,10 @@ trait NeighborhoodSource {
   * @param parseSource the source of parses
   * @param extractor the extractor for extracting neighborhoods from each parse
   */
-class ExtractorBasedNeighborhoodSource(parseSource: PolytreeParseSource,
-  extractor: NeighborhoodExtractor) extends NeighborhoodSource {
+class ExtractorBasedNeighborhoodSource(
+    parseSource: PolytreeParseSource,
+    extractor: NeighborhoodExtractor
+) extends NeighborhoodSource {
 
   override def getNeighborhoodIterator(): Iterator[Neighborhood] = {
     parseSource.parseIterator flatMap { parse =>
