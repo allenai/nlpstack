@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.common.json._
+import org.allenai.nlpstack.parse.poly.ml.FeatureVector
 import org.allenai.nlpstack.parse.poly.polyparser.{ ArcHybridTransitionSystem, ArcEagerTransitionSystem }
 import org.allenai.nlpstack.parse.poly.polyparser.labeler.ParseLabelerTransitionSystem
 import spray.json.DefaultJsonProtocol._
@@ -10,7 +11,7 @@ trait TransitionSystem {
   val taskIdentifier: TaskIdentifier
   def initialState(marbleBlock: MarbleBlock, constraints: Seq[TransitionConstraint]): Option[State]
   def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction]
-  val feature: StateFeature
+  def computeFeature(state: State): FeatureVector
   def toSculpture(state: State): Option[Sculpture]
   def interpretConstraint(constraint: TransitionConstraint): ((State, StateTransition) => Boolean)
 }
@@ -21,7 +22,7 @@ object TransitionSystem {
     implicit val arcEagerFormat =
       jsonFormat3(ArcEagerTransitionSystem.apply).pack("type" -> "ArcEagerTransitionSystem")
     implicit val arcHybridFormat =
-      jsonFormat2(ArcHybridTransitionSystem.apply).pack("type" -> "ArcHybridTransitionSystem")
+      jsonFormat1(ArcHybridTransitionSystem.apply).pack("type" -> "ArcHybridTransitionSystem")
 
     def write(transitionSystem: TransitionSystem): JsValue = transitionSystem match {
       //case ParseLabelerTransitionSystem => JsString("ParseLabelerTransitionSystem")

@@ -101,7 +101,7 @@ class DTCostFunctionTrainer(
         println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}" +
           s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
         progressCounter += 1
-        val vectors: DTFeatureVectorSource = createDTFeatureVectorSource(trainingVectors.iterator)
+        val vectors: DTFeatureVectorSource = createDTFeatureVectorSource(task, trainingVectors.iterator)
         println("Now training.")
         val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
         val featureMap: Seq[(Int, FeatureName)] =
@@ -121,10 +121,10 @@ class DTCostFunctionTrainer(
   }
 
   private def createDTFeatureVectorSource(
-    trainingVectorIter: Iterator[FSMTrainingVector]
+    task: ClassificationTask, trainingVectorIter: Iterator[FSMTrainingVector]
   ): DTFeatureVectorSource = {
 
-    new InMemoryFeatureVectorSource((trainingVectorIter map createDTFeatureVector).toIndexedSeq)
+    new InMemoryFeatureVectorSource((trainingVectorIter map createDTFeatureVector).toIndexedSeq, task)
   }
 
   private def createDTFeatureVector(trainingVector: FSMTrainingVector): DTFeatureVector = {

@@ -436,8 +436,8 @@ object PolytreeParse {
     'poss, 'prt, 'rcmod, 'rel))
 
   val arcInverterStanford = new ArcInverter(Set('ADVMOD, 'AMOD, 'APPOS,
-    'AUX, 'AUXPASS, 'DET, 'DISCOURSE, 'MARK, 'NEG,
-    'NPADVMOD, 'NN, 'NUM, 'POSS, 'POSSESSIVE, 'PREDET,
+    'AUX, 'AUXPASS, 'CC, 'CONJ, 'DET, 'DISCOURSE, 'MARK, 'NEG,
+    'NPADVMOD, 'NN, 'NUM, 'NUMBER, 'POSS, 'POSSESSIVE, 'PRECONJ, 'PREDET,
     'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD))
 
   implicit val jsFormat = jsonFormat4(PolytreeParse.apply)

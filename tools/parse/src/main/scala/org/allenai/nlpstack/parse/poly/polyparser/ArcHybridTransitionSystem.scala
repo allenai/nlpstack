@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
 /** A struct contains the "modes" of an arc-hybrid transition parser.
   *
@@ -30,9 +30,9 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
               StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
             ))
           case ArcHybridModes.LEFTLABEL =>
-            Some(SimpleTask("leftlabel"))
+            Some(SimpleTask("dt-leftlabel"))
           case ArcHybridModes.RIGHTLABEL =>
-            Some(SimpleTask("rightlabel"))
+            Some(SimpleTask("dt-rightlabel"))
           case _ => None
         }
       case _ => None
@@ -55,16 +55,21 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
   * get a breadcrumb via an operator is the top of the stack. Thus the stack top is the "focal
   * point" of this transition system.
   *
-  * @param feature the features to use
   * @param brownClusters an optional set of Brown clusters to use
   */
 case class ArcHybridTransitionSystem(
-    feature: StateFeature = ArcHybridTransitionSystem.defaultFeature,
     brownClusters: Seq[BrownClusters] = Seq()
 ) extends DependencyParsingTransitionSystem(brownClusters) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
+
+  override def computeFeature(state: State): FeatureVector = {
+    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
+      case Some(x) if x.startsWith("dt-") => ArcHybridTransitionSystem.labelingFeature(state)
+      case _ => ArcHybridTransitionSystem.transitionFeature(state)
+    }
+  }
 
   override def systemSpecificInitialState(annotatedSentence: AnnotatedSentence) = {
     new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), annotatedSentence,
@@ -93,30 +98,47 @@ case class ArcHybridTransitionSystem(
 
 case object ArcHybridTransitionSystem {
 
-  val defaultFeature = constructDefaultFeature()
+  val labelingFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0), BufferRef(1),
+      PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
+      PreviousLinkGrandgretelRef,
+      StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
+      StackRightGretelsRef(0), BufferGretelsRef(0))),
+    new OfflineTokenFeature(StackRef(0)),
+    new OfflineTokenFeature(StackRef(1)),
+    new OfflineTokenFeature(StackRef(2)),
+    new OfflineTokenFeature(BufferRef(0)),
+    new OfflineTokenFeature(BufferRef(1)),
+    new OfflineTokenFeature(PreviousLinkCrumbRef),
+    new OfflineTokenFeature(PreviousLinkGretelRef),
+    new OfflineTokenFeature(PreviousLinkCrumbGretelRef),
+    new OfflineTokenFeature(PreviousLinkGrandgretelRef),
+    new OfflineTokenFeature(StackGretelsRef(0)),
+    new OfflineTokenFeature(StackLeftGretelsRef(0)),
+    new OfflineTokenFeature(StackRightGretelsRef(0)),
+    new OfflineTokenFeature(StackGretelsRef(1)),
+    new OfflineTokenFeature(BufferGretelsRef(0)),
+    new OfflineTokenFeature(LastRef),
+    new OfflineTokenFeature(FirstRef)
+  ))
 
-  def constructDefaultFeature(): StateFeature = {
-    val features = List(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0), BufferRef(1),
-        PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef, PreviousLinkGrandgretelRef,
-        StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
-        StackRightGretelsRef(0), BufferGretelsRef(0))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(PreviousLinkCrumbRef),
-      new OfflineTokenFeature(PreviousLinkGretelRef),
-      new OfflineTokenFeature(PreviousLinkCrumbGretelRef),
-      new OfflineTokenFeature(PreviousLinkGrandgretelRef),
-      new OfflineTokenFeature(StackGretelsRef(0)),
-      new OfflineTokenFeature(StackGretelsRef(1)),
-      new OfflineTokenFeature(BufferGretelsRef(0)),
-      new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
-      new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
-    )
-    new FeatureUnion(features)
-  }
+  val transitionFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+      BufferRef(1), StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
+      StackRightGretelsRef(0), BufferGretelsRef(0))),
+    new OfflineTokenFeature(StackRef(0)),
+    new OfflineTokenFeature(StackRef(1)),
+    new OfflineTokenFeature(StackRef(2)),
+    new OfflineTokenFeature(BufferRef(0)),
+    new OfflineTokenFeature(BufferRef(1)),
+    new OfflineTokenFeature(StackGretelsRef(0)),
+    new OfflineTokenFeature(StackLeftGretelsRef(0)),
+    new OfflineTokenFeature(StackRightGretelsRef(0)),
+    new OfflineTokenFeature(StackGretelsRef(1)),
+    new OfflineTokenFeature(BufferGretelsRef(0)),
+    new OfflineTokenFeature(LastRef),
+    new OfflineTokenFeature(FirstRef)
+  ))
 }
 
 /** The ArcHybridShift operator pops the next buffer item and pushes it onto the stack. */

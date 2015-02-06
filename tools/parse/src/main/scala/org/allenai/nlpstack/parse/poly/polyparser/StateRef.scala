@@ -48,6 +48,14 @@ object StateRef {
         JsObject(bufferRefFormat.write(bufferRef).asJsObject.fields +
           ("type" -> JsString("BufferRef")))
       }
+      case stackWindowRef: StackWindowRef => {
+        JsObject(stackWindowRefFormat.write(stackWindowRef).asJsObject.fields +
+          ("type" -> JsString("StackWindowRef")))
+      }
+      case bufferWindowRef: BufferWindowRef => {
+        JsObject(bufferWindowRefFormat.write(bufferWindowRef).asJsObject.fields +
+          ("type" -> JsString("BufferWindowRef")))
+      }
       case breadcrumbRef: BreadcrumbRef => {
         JsObject(breadcrumbRefFormat.write(breadcrumbRef).asJsObject.fields +
           ("type" -> JsString("BreadcrumbRef")))
@@ -98,6 +106,8 @@ object StateRef {
       case JsObject(values) => values("type") match {
         case JsString("StackRef") => stackRefFormat.read(value)
         case JsString("BufferRef") => bufferRefFormat.read(value)
+        case JsString("StackWindowRef") => stackWindowRefFormat.read(value)
+        case JsString("BufferWindowRef") => bufferWindowRefFormat.read(value)
         case JsString("BreadcrumbRef") => breadcrumbRefFormat.read(value)
         case JsString("StackGretelsRef") => stackGretelsRefFormat.read(value)
         case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
@@ -115,6 +125,8 @@ object StateRef {
 
   val stackRefFormat: RootJsonFormat[StackRef] = jsonFormat1(StackRef.apply)
   val bufferRefFormat: RootJsonFormat[BufferRef] = jsonFormat1(BufferRef.apply)
+  val stackWindowRefFormat: RootJsonFormat[StackWindowRef] = jsonFormat1(StackWindowRef.apply)
+  val bufferWindowRefFormat: RootJsonFormat[BufferWindowRef] = jsonFormat1(BufferWindowRef.apply)
   val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
   val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
   val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] = jsonFormat1(StackChildrenRef.apply)
@@ -161,6 +173,28 @@ case class BufferRef(val index: Int) extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("bufferRef" + index)
+}
+
+case class StackWindowRef(val index: Int) extends StateRef {
+  require(index >= 0, "the index of a StackWindowRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Range(0, index) flatMap { x => BufferRef(x)(state) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("stackWindowRef" + index)
+}
+
+case class BufferWindowRef(val index: Int) extends StateRef {
+  require(index >= 0, "the index of a BufferWindowRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Range(0, index) flatMap { x => BufferRef(x)(state) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("bufferWindowRef" + index)
 }
 
 case class StackGretelsRef(val index: Int) extends StateRef {

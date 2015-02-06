@@ -11,9 +11,9 @@ import scala.annotation.tailrec
   * These labeled feature vectors are used to train classifiers.
   */
 case class FSMTrainingVector(task: ClassificationTask, transition: StateTransition,
-    feature: StateFeature, state: State) {
+    transitionSystem: TransitionSystem, state: State) {
 
-  lazy val featureVector: FeatureVector = feature(state)
+  lazy val featureVector: FeatureVector = transitionSystem.computeFeature(state)
 }
 
 abstract class FSMTrainingVectorSource(
@@ -102,7 +102,7 @@ abstract class FSMTrainingVectorSource(
             }
           }
           generateVectorsHelper(transitions.tail, (transitions.head)(initState), //TODO: task.get?
-            FSMTrainingVector(task.get, nextTransition, transitionSystem.feature, initialState)
+            FSMTrainingVector(task.get, nextTransition, transitionSystem, initialState)
               +: trainingVectorsSoFar)
         }
     }

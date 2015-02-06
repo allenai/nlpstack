@@ -316,10 +316,9 @@ class DecisionTreeTrainer(
     } yield {
       val vectorsByFeatureValue: Map[Int, Seq[FeatureVector]] =
         featureVectorSubstream groupBy { x => x.getFeature(feature) }
-      val result = unsplitEntropy - ((vectorsByFeatureValue.values map { x =>
+      unsplitEntropy - ((vectorsByFeatureValue.values map { x =>
         x.size * computeOutcomeEntropy(x)
       }).sum / featureVectorSubset.size)
-      result
     }
     featureSubset.zip(informationGainByFeatureValue)
   }

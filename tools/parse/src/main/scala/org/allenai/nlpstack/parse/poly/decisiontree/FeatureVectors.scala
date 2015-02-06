@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
+import org.allenai.nlpstack.parse.poly.fsm.ClassificationTask
 import spray.json.DefaultJsonProtocol._
-import scala.util.Random
 
 trait FeatureVectorSource {
   def vectorIterator: Iterator[FeatureVector]
@@ -22,6 +22,8 @@ trait FeatureVectorSource {
 
   /** Gets a uniqued sequence of all outcomes associated with feature vectors in this set. */
   val allOutcomes: Seq[Int]
+
+  val classificationTask: ClassificationTask
 }
 
 /** FeatureVectors is a convenience container for feature vectors.
@@ -31,7 +33,7 @@ trait FeatureVectorSource {
   * @param featureVecs collection of FeatureVector objects
   */
 case class InMemoryFeatureVectorSource(
-    featureVecs: IndexedSeq[FeatureVector]
+    featureVecs: IndexedSeq[FeatureVector], classificationTask: ClassificationTask
 ) extends FeatureVectorSource {
 
   // The number of features must be the same for all feature vectors.
@@ -65,7 +67,7 @@ case class InMemoryFeatureVectorSource(
 }
 
 private object InMemoryFeatureVectorSource {
-  implicit val jsFormat = jsonFormat1(InMemoryFeatureVectorSource.apply)
+  implicit val jsFormat = jsonFormat2(InMemoryFeatureVectorSource.apply)
 }
 
 case class RemappedFeatureVectorSource(
@@ -87,6 +89,8 @@ case class RemappedFeatureVectorSource(
     case None =>
       vec
   }
+
+  override val classificationTask: ClassificationTask = fvSource.classificationTask
 
   /** Gets the number of feature vectors in this collection.
     *

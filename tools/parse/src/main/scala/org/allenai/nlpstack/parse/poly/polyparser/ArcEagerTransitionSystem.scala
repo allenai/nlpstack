@@ -2,13 +2,15 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
 case class ArcEagerTransitionSystem(
     feature: StateFeature = ArcEagerTransitionSystem.defaultFeature,
     brownClusters: Seq[BrownClusters] = Seq(),
     taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
 ) extends TransitionSystem {
+
+  override def computeFeature(state: State): FeatureVector = feature(state)
 
   @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
     TokenPositionFeature,

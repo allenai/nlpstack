@@ -234,7 +234,7 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     interpretation1(state.get, RightLabelArc('pobj)) shouldBe true
     interpretation2(state.get, RightLabelArc('pobj)) shouldBe false
     interpretation3(state.get, RightLabelArc('pobj)) shouldBe false
-    interpretation4(state.get, LeftLabelArc('det)) shouldBe false
+    interpretation4(state.get, RightLabelArc('pobj)) shouldBe false
   }
 }
 

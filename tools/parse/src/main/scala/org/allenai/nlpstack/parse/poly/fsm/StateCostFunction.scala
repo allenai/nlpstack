@@ -80,7 +80,7 @@ case class ClassifierBasedCostFunction(
 
     transitionSystem.taskIdentifier(state) match {
       case Some(task) =>
-        val featureVector: FeatureVector = transitionSystem.feature(state)
+        val featureVector: FeatureVector = transitionSystem.computeFeature(state)
         val topLevelDistribution: Map[StateTransition, Double] = {
           if (!taskClassifiers.contains(task)) {
             transitions.zip(transitions.map { _ =>
