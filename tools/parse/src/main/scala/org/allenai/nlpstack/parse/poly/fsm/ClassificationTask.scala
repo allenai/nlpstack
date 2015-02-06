@@ -6,9 +6,6 @@ import org.allenai.common.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.annotation.tailrec
-import scala.collection.mutable
-
 /** A ClassificationTask specifies a particular classification task for which we want
   * to collect feature vectors and train a classifier.
   *
@@ -203,7 +200,8 @@ object TaskConjunctionIdentifier {
     }
     var activatedTaskCounts: Map[ClassificationTask, Int] = Map[ClassificationTask, Int]()
     activatedTasks foreach { task =>
-      activatedTaskCounts = activatedTaskCounts.updated(task, 1 + activatedTaskCounts.getOrElse(task, 0))
+      activatedTaskCounts =
+        activatedTaskCounts.updated(task, 1 + activatedTaskCounts.getOrElse(task, 0))
     }
     val finalTasks: Set[ClassificationTask] = ((activatedTaskCounts filter
       {

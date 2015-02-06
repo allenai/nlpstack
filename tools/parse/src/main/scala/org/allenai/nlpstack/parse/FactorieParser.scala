@@ -11,7 +11,7 @@ import cc.factorie.app.nlp.parse.{ ParseTreeLabelDomain, ParseTree, OntonotesTra
 import cc.factorie.app.nlp.{ Document => FactorieDocument, Sentence => FactorieSentence }
 
 class FactorieParser extends DependencyParser {
-  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
+  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     val factorieDoc = FactoriePostagger.factorieFormat.write(tokens)
 
     FactorieParser.wordNetLemmatizer.process(factorieDoc)
@@ -26,22 +26,26 @@ object FactorieParser {
   val wordNetLemmatizer =
     new WordNetLemmatizer(
       Datastore.directoryPath(
-        "cc.factorie.app.nlp",
-        "WordNet",
-        1).toFile)
+      "cc.factorie.app.nlp",
+      "WordNet",
+      1
+    ).toFile
+    )
   val parser =
     new OntonotesTransitionBasedParser(
       Datastore.filePath(
-        "cc.factorie.app.nlp.parse",
-        "OntonotesTransitionBasedParser.factorie",
-        1).toUri.toURL)
+      "cc.factorie.app.nlp.parse",
+      "OntonotesTransitionBasedParser.factorie",
+      1
+    ).toUri.toURL
+    )
 
   object factorieFormat extends Format[(Seq[PostaggedToken], DependencyGraph), FactorieDocument] {
     override def read(from: FactorieDocument): (Seq[PostaggedToken], DependencyGraph) = {
       val nodes = from.tokens.map(t =>
         DependencyNode(t.positionInSentence, t.string))
 
-      def pis2node(positionInSentence: Int) =
+      def pis2node(positionInSentence: Int): DependencyNode =
         nodes.find(_.id == positionInSentence).getOrElse(
           sys.error("No token with PIS " + positionInSentence)
         )

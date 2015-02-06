@@ -84,7 +84,8 @@ case class TrainingData(labeledVectors: Iterable[(FeatureVector, Double)]) {
   * @param labeledVectors a sequence of feature vectors labeled with doubles
   */
 class BinaryTrainingData(
-  override val labeledVectors: Iterable[(FeatureVector, Double)])
+  override val labeledVectors: Iterable[(FeatureVector, Double)]
+)
     extends TrainingData(labeledVectors) {
 
   override def svmLightLabel(label: Double): String = {

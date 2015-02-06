@@ -400,8 +400,8 @@ case class ArcEagerInvertedLeftArc(val label: Symbol) extends TransitionParserSt
   override val name: String = s"Lx[${label.name}]"
 }
 
-/** The ArcEagerInvertedRightArc operator creates an inverse arc from the stack top to the next buffer
-  * item and then performs a Shift (see above).
+/** The ArcEagerInvertedRightArc operator creates an inverse arc from the stack top to
+  * the next buffer item and then performs a Shift (see above).
   *
   * @param label the label to attach to the created arc
   */

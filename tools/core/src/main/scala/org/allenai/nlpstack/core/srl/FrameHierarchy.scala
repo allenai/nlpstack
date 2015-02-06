@@ -5,26 +5,36 @@ import org.allenai.nlpstack.core.parse.graph.DependencyGraph
 
 case class FrameHierarchy(frame: Frame, children: Seq[FrameHierarchy]) {
   def height: Int =
-    if (children.isEmpty) 1
-    else 1 + children.iterator.map(_.height).max
+    if (children.isEmpty) {
+      1
+    } else {
+      1 + children.iterator.map(_.height).max
+    }
   override def toString = frame.toString + (if (children.size > 0) (" < " + children.mkString(", ")) else "")
 }
 
 object FrameHierarchy {
   def fromFrames(dgraph: DependencyGraph, frames: Seq[Frame]) = {
-    if (frames.isEmpty) Seq.empty
-    else {
+    if (frames.isEmpty) {
+      Seq.empty
+    } else {
       val framesWithIndex = frames.zipWithIndex
 
       // find all ancestor -> descendant relationships
       val descendants = framesWithIndex.map {
         case (frame, index) =>
-          val inferiors = dgraph.inferiors(frame.relation.node, dedge => !(dedge.source == frame.relation.node && dedge.label == "conj"))
+          val inferiors = dgraph.inferiors(frame.relation.node, dedge =>
+            !(dedge.source == frame.relation.node && dedge.label == "conj"))
           val children = framesWithIndex.filter {
             case (child, index) =>
               frame != child && (
                 // first arguments must match
-                (for (frameRole <- frame.argument(Roles.A0); childRole <- child.argument(Roles.A0)) yield (frameRole == childRole)).getOrElse(false) &&
+                (for (
+                  frameRole <- frame.argument(Roles.A0);
+                  childRole <- child.argument(Roles.A0)
+                ) yield (
+                  frameRole == childRole
+                )).getOrElse(false) &&
                 // child frame must be beneath parent frame relation in dependency graph
                 (inferiors contains child.relation.node) ||
                 // all child nodes are in the inferiors of the relation
@@ -44,15 +54,21 @@ object FrameHierarchy {
           case (parent, children) =>
             val descendants = children flatMap hierarchy
             // add children of children
-            if (descendants != children) parent -> (descendants ++ children)
-            // there is no change
-            else parent -> children
+            if (descendants != children) {
+              parent -> (descendants ++ children)
+            } else {
+              // there is no change
+              parent -> children
+            }
         }
 
         // unstable, continue
-        if (targets != hierarchy) transitiveClosure(targets)
-        // stable, stop
-        else targets
+        if (targets != hierarchy) {
+          transitiveClosure(targets)
+        } else {
+          // stable, stop
+          targets
+        }
       }
 
       val closure = transitiveClosure(descendants)

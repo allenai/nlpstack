@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.common.json._
 
-import org.allenai.nlpstack.parse.poly.polyparser.{PolytreeParse}
+import org.allenai.nlpstack.parse.poly.polyparser.{ PolytreeParse }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -14,7 +14,6 @@ import spray.json._
   * parsed, whereas a Sculpture would be a parse tree for that sentence.
   */
 trait Sculpture
-
 
 object Sculpture {
 
@@ -34,7 +33,8 @@ object Sculpture {
     }
 
     def read(value: JsValue): Sculpture = value.asJsObject.unpackWith(
-      polytreeParseFormat)
+      polytreeParseFormat
+    )
   }
 
 }

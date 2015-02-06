@@ -17,7 +17,7 @@ import spray.json.DefaultJsonProtocol._
   * @param eventTransform a transformation from neighborhoods to events
   */
 case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Neighborhood, Int)],
-  eventTransform: NeighborhoodTransform) {
+    eventTransform: NeighborhoodTransform) {
 
   /** Computes a smoothed probability estimate of the given neighborhood's event. */
   def getSmoothedEventProbability(neighborhood: Neighborhood): Double = {
@@ -45,8 +45,9 @@ case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Nei
   }
 
   override def toString(): String = {
-    (transformedEventCounts.toSeq.sortBy { _._2 } map { case (event, count) =>
-      s"${count}: $event"
+    (transformedEventCounts.toSeq.sortBy { _._2 } map {
+      case (event, count) =>
+        s"${count}: $event"
     }).mkString("\n") + s"\nTotal observations: ${transformedEventCountSum}"
   }
 }

@@ -39,8 +39,11 @@ abstract class WrappedEdgeMatcher[T](val matcher: EdgeMatcher[T]) extends EdgeMa
 
 class DirectedEdgeMatcher[T](val direction: Direction, matcher: EdgeMatcher[T]) extends WrappedEdgeMatcher[T](matcher) {
   def matchText(edge: DirectedEdge[T]) =
-    if (edge.dir == direction) matcher.matchText(edge)
-    else None
+    if (edge.dir == direction) {
+      matcher.matchText(edge)
+    } else {
+      None
+    }
 
   def flip: EdgeMatcher[T] = new DirectedEdgeMatcher(direction.flip, matcher)
 
@@ -107,7 +110,6 @@ abstract class WrappedNodeMatcher[T](val matcher: NodeMatcher[T])
     case that: WrappedNodeMatcher[_] => (that canEqual this) && this.matcher == that.matcher
     case _ => false
   }
-
   override def baseNodeMatchers = this.matcher.baseNodeMatchers
 }
 
@@ -120,8 +122,11 @@ class ConjunctiveNodeMatcher[T](val matchers: Set[NodeMatcher[T]])
   def this(m: NodeMatcher[T]*) = this(Set() ++ m)
 
   override def matchText(node: T) =
-    if (matches(node)) matchers.flatMap(_.matchText(node)).headOption
-    else None
+    if (matches(node)) {
+      matchers.flatMap(_.matchText(node)).headOption
+    } else {
+      None
+    }
 
   override def matches(node: T) = matchers.forall(_.matches(node))
 

@@ -38,8 +38,10 @@ case class NbestCorpus(nbestLists: Iterable[NbestList]) {
     * @param costFunction used to attach a cost to each feature vector
     * @return the resulting candidate pool corpus
     */
-  def toCandidatePoolCorpus(feature: SculptureFeature,
-    costFunction: SculptureCost): CandidatePoolCorpus = {
+  def toCandidatePoolCorpus(
+    feature: SculptureFeature,
+    costFunction: SculptureCost
+  ): CandidatePoolCorpus = {
 
     CandidatePoolCorpus(nbestLists map { nbestList =>
       nbestList.toCandidatePool(feature, costFunction)

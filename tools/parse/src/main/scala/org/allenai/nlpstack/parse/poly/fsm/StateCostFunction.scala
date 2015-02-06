@@ -11,8 +11,8 @@ import org.allenai.common.json._
   *
   * Typically, instances of StateCostFunction will compute this cost using a feature
   * representation of the State. But this is not always the case -- see the
-  * GuidedCostFunction in [[org.allenai.nlpstack.parse.poly.polyparser.ArcEagerGuidedCostFunction]] for a cost
-  * function that uses a gold parse tree as the basis for its cost function.
+  * GuidedCostFunction in [[org.allenai.nlpstack.parse.poly.polyparser.ArcEagerGuidedCostFunction]]
+  * for a cost function that uses a gold parse tree as the basis for its cost function.
   */
 abstract class StateCostFunction extends (State => Map[StateTransition, Double]) {
 

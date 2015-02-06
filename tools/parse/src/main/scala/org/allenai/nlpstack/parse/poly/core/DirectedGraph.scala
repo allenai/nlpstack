@@ -21,8 +21,10 @@ case class DirectedGraphEdge(from: Int, to: Int, labels: Map[Symbol, String])
   * @param nodes the nodes of the directed graph
   * @param edgesByNode each node's outgoing edges
   */
-case class DirectedGraph(nodes: IndexedSeq[DirectedGraphNode],
-  edgesByNode: IndexedSeq[Seq[DirectedGraphEdge]]) {
+case class DirectedGraph(
+    nodes: IndexedSeq[DirectedGraphNode],
+    edgesByNode: IndexedSeq[Seq[DirectedGraphEdge]]
+) {
 
   require(nodes.size == edgesByNode.size, "arguments to DirectedGraph must be sequences of" +
     " equivalent length")
@@ -56,15 +58,21 @@ case class DirectedGraph(nodes: IndexedSeq[DirectedGraphNode],
     */
   def toPositionTree(rootNode: Int): PositionTree = PositionTree(toPositionTreeHelper(rootNode))
 
-  private def toPositionTreeHelper(rootNode: Int,
+  private def toPositionTreeHelper(
+    rootNode: Int,
     positionSoFar: Position = Position.root,
-    encounteredNodes: Set[Int] = Set.empty): Seq[(Position, PositionTreeNode)] = {
+    encounteredNodes: Set[Int] = Set.empty
+  ): Seq[(Position, PositionTreeNode)] = {
 
     require(!encounteredNodes.contains(rootNode), "cannot convert a cyclic graph to a tree")
     val positionTreeNode = PositionTreeNode(nodes(rootNode).labels)
-    val descendantPositions = getOutgoingEdges(rootNode).zipWithIndex flatMap { case (edge, edgeIndex) =>
-      toPositionTreeHelper(edge.to, positionSoFar.getChild(edgeIndex), encounteredNodes + rootNode)
-    }
+    val descendantPositions =
+      getOutgoingEdges(rootNode).zipWithIndex flatMap {
+        case (edge, edgeIndex) =>
+          toPositionTreeHelper(
+            edge.to, positionSoFar.getChild(edgeIndex), encounteredNodes + rootNode
+          )
+      }
     (positionSoFar, positionTreeNode) +: descendantPositions
   }
 }

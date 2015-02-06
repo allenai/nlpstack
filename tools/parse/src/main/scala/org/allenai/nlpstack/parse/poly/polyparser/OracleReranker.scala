@@ -4,8 +4,10 @@ import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm._
 import scopt.OptionParser
 
-private case class OracleRerankerConfig(nbestCorpusFilename: String = "",
-  goldParseFilename: String = "", dataSource: String = "")
+private case class OracleRerankerConfig(
+  nbestCorpusFilename: String = "",
+  goldParseFilename: String = "", dataSource: String = ""
+)
 
 object OracleReranker {
 
@@ -17,18 +19,20 @@ object OracleReranker {
         { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
       opt[String]('d', "datasource") required () valueName ("<file>") action
         { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
-        "('datastore','local')") validate { x =>
-        if (Set("datastore", "local").contains(x)) {
-          success
-        } else {
-          failure(s"unsupported data source: ${x}")
-        }
-      }
+          "('datastore','local')") validate { x =>
+            if (Set("datastore", "local").contains(x)) {
+              success
+            } else {
+              failure(s"unsupported data source: ${x}")
+            }
+          }
     }
     val config: OracleRerankerConfig = optionParser.parse(args, OracleRerankerConfig()).get
     val parsePoolSource = FileBasedParsePoolSource(config.nbestCorpusFilename)
-    val goldParseSource = FileBasedPolytreeParseSource.getParseSource(config.goldParseFilename,
-      ConllX(true), config.dataSource)
+    val goldParseSource = FileBasedPolytreeParseSource.getParseSource(
+      config.goldParseFilename,
+      ConllX(true), config.dataSource
+    )
     val reranker: Reranker =
       new Reranker(OracleRerankingFunction(goldParseSource.parseIterator))
     val candidateParses =

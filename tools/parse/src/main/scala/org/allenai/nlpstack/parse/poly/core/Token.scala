@@ -4,7 +4,7 @@ import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.core.{ PostaggedToken, Tokenizer, Token => NLPStackToken }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
-import org.allenai.nlpstack.parse.poly.ml.{FeatureVector, FeatureName, BrownClusters}
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName, BrownClusters }
 import spray.json.DefaultJsonProtocol._
 
 import scala.collection.mutable.Stack
@@ -65,8 +65,6 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
 
   /** The number of tokens in the sentence (including the nexus). */
   @transient val size: Int = tokens.size
-
-
 
   /** For each token, "look ahead" and aggregrate the property values for later tokens. For
     * instance, lookAhead(3)('cpos) gives the set of all values of the "cpos" property for
@@ -191,10 +189,12 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
         untagged.updateProperties(Map(
           'factoriePos -> Set(Symbol(tagged.postag)),
           'factorieCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
-            tagged.postag, "X")))))
-        //Token(untagged.word, untagged.properties.updated('factoriePos, Set(Symbol(tagged.postag)))
-        //  .updated('factorieCpos,
-        //    Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X")))))
+            tagged.postag, "X"
+          )))
+        ))
+      //Token(untagged.word, untagged.properties.updated('factoriePos, Set(Symbol(tagged.postag)))
+      //  .updated('factorieCpos,
+      //    Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X")))))
     }))
   }
 
@@ -218,7 +218,8 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
         case _ => Set[Symbol]()
       }
       tok.updateProperties(Map(
-        'lexical -> (firstLetterCapital ++ existsCapital ++ allCaps ++ existsNumber)))
+        'lexical -> (firstLetterCapital ++ existsCapital ++ allCaps ++ existsNumber)
+      ))
     })
   }
 

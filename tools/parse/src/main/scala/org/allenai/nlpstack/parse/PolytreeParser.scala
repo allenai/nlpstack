@@ -27,7 +27,7 @@ class PolytreeParser(
       }
     )
 
-  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
+  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     // throw away postags
     val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
 
@@ -49,7 +49,10 @@ class PolytreeParser(
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
     val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
-    require(nodesWithoutIncomingEdges.size <= 1, s"Parser output for sentence '${tokens.map(_.string).mkString(" ")}' has multiple roots.")
+    require(
+      nodesWithoutIncomingEdges.size <= 1,
+      s"Parser output for sentence '${tokens.map(_.string).mkString(" ")}' has multiple roots."
+    )
 
     DependencyGraph(nodes.toSet, edges.toSet)
   }

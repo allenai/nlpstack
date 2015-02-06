@@ -46,10 +46,11 @@ case class EmbeddedClassifier(
     val categoryCounts: Map[Int, Double] = decisionTree.categoryCounts(
       createDTFeatureVector(featureVector)) mapValues { _.toDouble }
     val defaultCount: Double = 0.1
-    val smoothedCategoryCounts = (transitions.zipWithIndex map { case (transition, transitionIndex) =>
-      val categoryCount: Double = categoryCounts.getOrElse(transitionIndex, defaultCount)
-      (transition, categoryCount)
-    }).toMap
+    val smoothedCategoryCounts =
+      (transitions.zipWithIndex map { case (transition, transitionIndex) =>
+        val categoryCount: Double = categoryCounts.getOrElse(transitionIndex, defaultCount)
+        (transition, categoryCount)
+      }).toMap
     val normalizer: Double = smoothedCategoryCounts.values.sum
     val result = smoothedCategoryCounts mapValues { case count =>
       count / normalizer
@@ -101,7 +102,8 @@ class DTCostFunctionTrainer(
         println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}" +
           s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
         progressCounter += 1
-        val vectors: DTFeatureVectorSource = createDTFeatureVectorSource(task, trainingVectors.iterator)
+        val vectors: DTFeatureVectorSource =
+          createDTFeatureVectorSource(task, trainingVectors.iterator)
         println("Now training.")
         val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
         val featureMap: Seq[(Int, FeatureName)] =
@@ -124,7 +126,9 @@ class DTCostFunctionTrainer(
     task: ClassificationTask, trainingVectorIter: Iterator[FSMTrainingVector]
   ): DTFeatureVectorSource = {
 
-    new InMemoryFeatureVectorSource((trainingVectorIter map createDTFeatureVector).toIndexedSeq, task)
+    new InMemoryFeatureVectorSource(
+      (trainingVectorIter map createDTFeatureVector).toIndexedSeq, task
+    )
   }
 
   private def createDTFeatureVector(trainingVector: FSMTrainingVector): DTFeatureVector = {

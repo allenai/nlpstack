@@ -67,10 +67,11 @@ object Dependencies {
         val token = sentence.tokens(node.id)
         val text = escape(token.string)
         val postag = escape(token.postag)
-        if (sentence.dgraph.vertices.filter(_.string.equals(text)).size > 1)
+        if (sentence.dgraph.vertices.filter(_.string.equals(text)).size > 1) {
           text + "_" + postag + "_" + node.id
-        else
+        } else {
           text + "_" + postag
+        }
       }
 
       val indent = " " * 2;

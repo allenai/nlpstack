@@ -63,7 +63,7 @@ case class TokenPropTransform(label: Symbol) extends NeighborhoodTransform {
   * @param name a label for the transform
   */
 case class BrownTransform(clusters: BrownClusters, k: Int,
-                          override val name: String) extends NeighborhoodTransform {
+    override val name: String) extends NeighborhoodTransform {
 
   override def apply(event: Neighborhood): Seq[String] = {
     event.tokens map { tok =>

@@ -9,10 +9,11 @@ class MorphaStemmer extends Stemmer with PostaggedStemmer {
   private val whitespace = "\\s".r
 
   private def stem(word: String, stemmer: (String => String)) =
-    if (whitespace.findFirstMatchIn(word).isDefined)
+    if (whitespace.findFirstMatchIn(word).isDefined) {
       word
-    else
+    } else {
       stemmer(word)
+    }
 
   def stem(word: String) = stem(word, MorphaStem.stemToken(_))
   override def stem(word: String, postag: String) =

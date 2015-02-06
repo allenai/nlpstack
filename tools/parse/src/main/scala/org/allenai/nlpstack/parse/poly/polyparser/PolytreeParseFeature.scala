@@ -1,6 +1,9 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.ml.{FeatureVector => MLFeatureVector, FeatureName => MLFeatureName}
+import org.allenai.nlpstack.parse.poly.ml.{
+  FeatureVector => MLFeatureVector,
+  FeatureName => MLFeatureName
+}
 import org.allenai.common.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -39,8 +42,10 @@ object PolytreeParseFeature {
         case "SentenceLengthFeature" => SentenceLengthFeature
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
-      case jsObj: JsObject => jsObj.unpackWith(eventStatisticFeaturesFormat,
-        polytreeParseFeatureUnionFormat)
+      case jsObj: JsObject => jsObj.unpackWith(
+        eventStatisticFeaturesFormat,
+        polytreeParseFeatureUnionFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }
@@ -52,12 +57,12 @@ object PolytreeParseFeature {
   * @param transforms the neighborhood transforms
   */
 case class EventStatisticFeatures(
-  neighborhoodCounts: Seq[(String, NeighborhoodExtractor, Seq[(Neighborhood, Int)])],
-  transforms: Seq[(String, NeighborhoodTransform)]) extends PolytreeParseFeature {
+    neighborhoodCounts: Seq[(String, NeighborhoodExtractor, Seq[(Neighborhood, Int)])],
+    transforms: Seq[(String, NeighborhoodTransform)]
+) extends PolytreeParseFeature {
 
-  @transient val eventStatistics: Seq[(String, String,
-    NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
-
+  @transient
+  val eventStatistics: Seq[(String, String, NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
     for {
       (neighborhoodName, extractor, counts) <- neighborhoodCounts
       (transformName, transform) <- transforms
@@ -76,7 +81,8 @@ case class EventStatisticFeatures(
           -math.log(stat.getSmoothedEventProbability(neighborhood))
         } reduce { (x, y) => x + y }
         MLFeatureName(
-          List('eventStat, Symbol(neighborhoodName), Symbol(transformName))) -> featureValue
+          List('eventStat, Symbol(neighborhoodName), Symbol(transformName))
+        ) -> featureValue
       }
     )
   }
@@ -107,7 +113,8 @@ case object BaseParserScoreFeature extends PolytreeParseFeature {
   * @param features a list of the features we want to merge into a single feature
   */
 case class PolytreeParseFeatureUnion(
-    val features: Seq[PolytreeParseFeature]) extends PolytreeParseFeature {
+    val features: Seq[PolytreeParseFeature]
+) extends PolytreeParseFeature {
 
   override def apply(parse: PolytreeParse, score: Double): MLFeatureVector = {
     features map (f => f(parse, score)) reduce ((m1, m2) => MLFeatureVector.mergeVectors(m1, m2))

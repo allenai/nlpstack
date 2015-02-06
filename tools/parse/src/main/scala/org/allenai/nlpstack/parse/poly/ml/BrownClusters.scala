@@ -17,7 +17,6 @@ case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {
   private val mostSpecificClusterMap: Map[Symbol, Symbol] =
     clusterMap mapValues { clusters => Symbol(clusters.last.toString) }
 
-
   def getMostSpecificCluster(word: Symbol): Symbol = {
     mostSpecificClusterMap.getOrElse(word, unkCluster)
   }
@@ -52,8 +51,10 @@ object BrownClusters {
     fromStringMap(wordsToBitstrings, wordsToFrequency)
   }
 
-  def fromStringMap(wordsToBitstrings: Map[String, String],
-    wordsToFrequency: Map[String, Int]) = {
+  def fromStringMap(
+    wordsToBitstrings: Map[String, String],
+    wordsToFrequency: Map[String, Int]
+  ): BrownClusters = {
 
     val allBitstringPrefixes: Set[String] =
       (wordsToBitstrings.values.toSet.toSeq flatMap { bitstring: String =>
@@ -66,11 +67,12 @@ object BrownClusters {
         bitstring.size
       }).zipWithIndex.toMap
     val wordsToEncodings: Map[Symbol, Seq[Int]] =
-      wordsToBitstrings map { case (word, bitstring) =>
-        (Symbol(word),
-          (0 to bitstring.size) map { x =>
-            1 + bitstringEncoding(bitstring.take(x))
-          })
+      wordsToBitstrings map {
+        case (word, bitstring) =>
+          (Symbol(word),
+            (0 to bitstring.size) map { x =>
+              1 + bitstringEncoding(bitstring.take(x))
+            })
       }
     BrownClusters(wordsToEncodings.toSeq)
   }

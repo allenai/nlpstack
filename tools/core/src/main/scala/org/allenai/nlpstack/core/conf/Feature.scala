@@ -22,8 +22,11 @@ object Feature {
   implicit def booleanToDouble[E](feature: Feature[E, Boolean]) =
     new Feature[E, Double](feature.name) {
       override def apply(item: E) = {
-        if (feature(item)) 1.0
-        else 0.0
+        if (feature(item)) {
+          1.0
+        } else {
+          0.0
+        }
       }
     }
 }

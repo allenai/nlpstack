@@ -234,7 +234,9 @@ class DecisionTreeTrainer(
 
         // can be expensive
         val infoGainByFeature: Seq[(Int, Double)] =
-          computeInformationGainUnoptimized(data, node.featureVectorSubset, featuresToExamine) filter {
+          computeInformationGainUnoptimized(
+            data, node.featureVectorSubset, featuresToExamine
+          ) filter {
             case (_, gain) => gain > 0 // we get rid of features with zero information gain
           }
 
@@ -301,8 +303,10 @@ class DecisionTreeTrainer(
     }
   }
 
-  private def computeInformationGainUnoptimized(data: FeatureVectorSource, featureVectorSubset: Seq[Int],
-    featureSubset: Seq[Int]): Seq[(Int, Double)] = {
+  private def computeInformationGainUnoptimized(
+    data: FeatureVectorSource,
+    featureVectorSubset: Seq[Int], featureSubset: Seq[Int]
+  ): Seq[(Int, Double)] = {
 
     require(featureVectorSubset.nonEmpty)
     require(featureSubset.nonEmpty)

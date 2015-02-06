@@ -99,15 +99,21 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
                   // add an edge from the closest remaining parent
                   // to last, if we need to
                   val extraEdges =
-                    if (graph.neighbors(last) contains parent) Nil
-                    else List(new Graph.Edge[DependencyNode](parent, last, "prep"))
+                    if (graph.neighbors(last) contains parent) {
+                      Nil
+                    } else {
+                      List(new Graph.Edge[DependencyNode](parent, last, "prep"))
+                    }
 
                   val text = joinVertices.iterator.map(_.string).mkString(" ")
                   new Graph[DependencyNode](
                     extraEdges ++ graph.edges.filterNot(_.vertices exists (removeVertices contains _))
                   ).map(vertex =>
-                    if (vertex == prep.dest) new DependencyNode(-1, text) // these nodes are only temporary
-                    else vertex)
+                    if (vertex == prep.dest) {
+                      new DependencyNode(-1, text) // these nodes are only temporary
+                    } else {
+                      vertex
+                    })
                 }
             }
           }
@@ -131,8 +137,11 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
           val bestCC = ccNodes.minBy {
             case cc =>
               val dist = math.abs(cc.id - conj.dest.id)
-              if (dist < 0) -ccNodes.length - dist
-              else dist
+              if (dist < 0) {
+                -ccNodes.length - dist
+              } else {
+                dist
+              }
           }
 
           val newEdges = scala.collection.Set[Edge[DependencyNode]]() ++ graph.edges - conj + conj.copy(label = "conj_" + bestCC.string)
@@ -232,10 +241,11 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
 
       // if this transformation produced two root nodes, ignore the
       // transformation
-      if (newGraph.vertices.count(newGraph.indegree(_) == 0) == 1)
+      if (newGraph.vertices.count(newGraph.indegree(_) == 0) == 1) {
         newGraph
-      else
+      } else {
         graph
+      }
     }
 
     /** Removes nodes with a temporary id
@@ -265,9 +275,11 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
   /** Simplify xsubj and nsubj to just subj. */
   def collapseXNsubj = {
     val edges = this.edges.map { dep =>
-      if ((dep.label equals "xsubj") || (dep.label equals "nsubj"))
+      if ((dep.label equals "xsubj") || (dep.label equals "nsubj")) {
         new Edge[DependencyNode](dep.source, dep.dest, "subj")
-      else dep
+      } else {
+        dep
+      }
     }
     DependencyGraph(edges)
   }
@@ -319,12 +331,13 @@ object DependencyGraph {
     }
 
     val root: Option[DependencyNode] = {
-      if (roots.isEmpty && !vertices.isEmpty)
+      if (roots.isEmpty && !vertices.isEmpty) {
         throw new IllegalArgumentException("There must be a root: " + vertices)
-      else if (roots.size > 1)
+      } else if (roots.size > 1) {
         throw new IllegalArgumentException("There must be a single root: " + roots)
-      else
+      } else {
         roots.headOption
+      }
     }
 
     this.apply(root, vertices, edges)

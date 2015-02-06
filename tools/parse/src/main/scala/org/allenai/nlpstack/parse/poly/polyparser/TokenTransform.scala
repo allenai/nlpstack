@@ -81,16 +81,17 @@ object TokenTransform {
         case "IsBracketedTransform" => IsBracketedTransform
         case x => deserializationError(s"Invalid identifier for TokenTransform: $x")
       }
-      case jsObj: JsObject => jsObj.unpackWith(tokenPropertyTransformFormat,
+      case jsObj: JsObject => jsObj.unpackWith(
+        tokenPropertyTransformFormat,
         //lookAheadTransformFormat,
         //lookBehindTransformFormat,
         numChildrenToTheLeftFormat, numChildrenToTheRightFormat, keywordTransformFormat,
-        suffixTransformFormat, prefixTransformFormat)
+        suffixTransformFormat, prefixTransformFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
     }
   }
 }
-
 
 /** The WordTransform maps a token to its word representation.
   *
@@ -107,14 +108,13 @@ case object WordTransform extends TokenTransform {
   override val name: Symbol = 'wordAt
 }
 
-
 /** The TokenPropertyTransform maps a token to one of its properties.
   *
   * See the definition of TokenTransform (above) for more details about the interface.
   *
   */
 case class TokenPropertyTransform(property: Symbol)
-  extends TokenTransform {
+    extends TokenTransform {
 
   override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
     state.sentence.tokens(tokenIndex).getProperty(property)

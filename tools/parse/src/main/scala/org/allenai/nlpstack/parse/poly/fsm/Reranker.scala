@@ -13,8 +13,9 @@ class Reranker(rerankingFunction: RerankingFunction) {
 
   def apply(nbestList: NbestList): Option[Sculpture] = {
     val rescoredCandidates: Seq[(Sculpture, Double)] = {
-      (nbestList.scoredSculptures map { case (sculpture, baseCost) =>
-        (sculpture, rerankingFunction(sculpture, baseCost))
+      (nbestList.scoredSculptures map {
+        case (sculpture, baseCost) =>
+          (sculpture, rerankingFunction(sculpture, baseCost))
       }).toSeq
     }
     val sortedCandidates = rescoredCandidates sortBy { _._2 } map { _._1 }
@@ -66,8 +67,6 @@ object RerankingFunction {
     }
   }
 }
-
-
 
 case object BaseCostRerankingFunction extends RerankingFunction {
 

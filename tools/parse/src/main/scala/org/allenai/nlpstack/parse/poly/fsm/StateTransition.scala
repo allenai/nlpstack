@@ -94,8 +94,10 @@ object StateTransition {
 
   val leftArcFormat: RootJsonFormat[ArcEagerLeftArc] = jsonFormat1(ArcEagerLeftArc.apply)
   val rightArcFormat: RootJsonFormat[ArcEagerRightArc] = jsonFormat1(ArcEagerRightArc.apply)
-  val invertedLeftArcFormat: RootJsonFormat[ArcEagerInvertedLeftArc] = jsonFormat1(ArcEagerInvertedLeftArc.apply)
-  val invertedRightArcFormat: RootJsonFormat[ArcEagerInvertedRightArc] = jsonFormat1(ArcEagerInvertedRightArc.apply)
+  val invertedLeftArcFormat: RootJsonFormat[ArcEagerInvertedLeftArc] =
+    jsonFormat1(ArcEagerInvertedLeftArc.apply)
+  val invertedRightArcFormat: RootJsonFormat[ArcEagerInvertedRightArc] =
+    jsonFormat1(ArcEagerInvertedRightArc.apply)
   val hybridLeftArcFormat: RootJsonFormat[ArcHybridLeftArc] = jsonFormat1(ArcHybridLeftArc.apply)
   val hybridRightArcFormat: RootJsonFormat[ArcHybridRightArc] = jsonFormat1(ArcHybridRightArc.apply)
   val leftLabelArcFormat: RootJsonFormat[LeftLabelArc] = jsonFormat1(LeftLabelArc.apply)

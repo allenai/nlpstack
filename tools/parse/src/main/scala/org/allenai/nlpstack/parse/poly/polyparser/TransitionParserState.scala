@@ -2,7 +2,12 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Token, NexusToken, Sentence }
 
-import org.allenai.nlpstack.parse.poly.fsm.{ ConstraintInterpretation, Sculpture, StateTransition, State }
+import org.allenai.nlpstack.parse.poly.fsm.{
+  ConstraintInterpretation,
+  Sculpture,
+  StateTransition,
+  State
+}
 
 /** A TransitionParserState captures the current state of a transition-based parser (i.e. it
   * corresponds to a partially constructed PolytreeParse). It includes the following fields:
@@ -12,8 +17,8 @@ import org.allenai.nlpstack.parse.poly.fsm.{ ConstraintInterpretation, Sculpture
   * - the `bufferPosition` is an integer representing the index of the token that is currently
   * at the front of the buffer.
   * - `breadcrumb` maps the index of a token to its breadcrumb (see
-  * org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse for the definition of breadcrumb). If a token
-  * index does not appear as a key in `breadcrumb`, then its breadcrumb has not yet been
+  * org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse for the definition of breadcrumb).
+  * If a token index does not appear as a key in `breadcrumb`, then its breadcrumb has not yet been
   * determined.
   * - `children` maps the index of a token to the indices of its children (in the partially
   * constructed polytree).
