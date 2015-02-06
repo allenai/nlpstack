@@ -36,6 +36,10 @@ object StateRef {
     def write(stateRef: StateRef): JsValue = stateRef match {
       case LastRef => JsString("LastRef")
       case FirstRef => JsString("FirstRef")
+      case PreviousLinkCrumbRef => JsString("PreviousLinkCrumbRef")
+      case PreviousLinkGretelRef => JsString("PreviousLinkGretelRef")
+      case PreviousLinkCrumbGretelRef => JsString("PreviousLinkCrumbGretelRef")
+      case PreviousLinkGrandgretelRef => JsString("PreviousLinkGrandgretelRef")
       case stackRef: StackRef => {
         JsObject(stackRefFormat.write(stackRef).asJsObject.fields +
           ("type" -> JsString("StackRef")))
@@ -43,6 +47,14 @@ object StateRef {
       case bufferRef: BufferRef => {
         JsObject(bufferRefFormat.write(bufferRef).asJsObject.fields +
           ("type" -> JsString("BufferRef")))
+      }
+      case stackWindowRef: StackWindowRef => {
+        JsObject(stackWindowRefFormat.write(stackWindowRef).asJsObject.fields +
+          ("type" -> JsString("StackWindowRef")))
+      }
+      case bufferWindowRef: BufferWindowRef => {
+        JsObject(bufferWindowRefFormat.write(bufferWindowRef).asJsObject.fields +
+          ("type" -> JsString("BufferWindowRef")))
       }
       case breadcrumbRef: BreadcrumbRef => {
         JsObject(breadcrumbRefFormat.write(breadcrumbRef).asJsObject.fields +
@@ -86,10 +98,16 @@ object StateRef {
       case JsString(typeid) => typeid match {
         case "LastRef" => LastRef
         case "FirstRef" => FirstRef
+        case "PreviousLinkCrumbRef" => PreviousLinkCrumbRef
+        case "PreviousLinkGretelRef" => PreviousLinkGretelRef
+        case "PreviousLinkCrumbGretelRef" => PreviousLinkCrumbGretelRef
+        case "PreviousLinkGrandgretelRef" => PreviousLinkGrandgretelRef
       }
       case JsObject(values) => values("type") match {
         case JsString("StackRef") => stackRefFormat.read(value)
         case JsString("BufferRef") => bufferRefFormat.read(value)
+        case JsString("StackWindowRef") => stackWindowRefFormat.read(value)
+        case JsString("BufferWindowRef") => bufferWindowRefFormat.read(value)
         case JsString("BreadcrumbRef") => breadcrumbRefFormat.read(value)
         case JsString("StackGretelsRef") => stackGretelsRefFormat.read(value)
         case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
@@ -107,6 +125,8 @@ object StateRef {
 
   val stackRefFormat: RootJsonFormat[StackRef] = jsonFormat1(StackRef.apply)
   val bufferRefFormat: RootJsonFormat[BufferRef] = jsonFormat1(BufferRef.apply)
+  val stackWindowRefFormat: RootJsonFormat[StackWindowRef] = jsonFormat1(StackWindowRef.apply)
+  val bufferWindowRefFormat: RootJsonFormat[BufferWindowRef] = jsonFormat1(BufferWindowRef.apply)
   val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
   val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
   val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] = jsonFormat1(StackChildrenRef.apply)
@@ -155,6 +175,28 @@ case class BufferRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("bufferRef" + index)
 }
 
+case class StackWindowRef(val index: Int) extends StateRef {
+  require(index >= 0, "the index of a StackWindowRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Range(0, index) flatMap { x => BufferRef(x)(state) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("stackWindowRef" + index)
+}
+
+case class BufferWindowRef(val index: Int) extends StateRef {
+  require(index >= 0, "the index of a BufferWindowRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Range(0, index) flatMap { x => BufferRef(x)(state) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("bufferWindowRef" + index)
+}
+
 case class StackGretelsRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackGretelsRef must be a nonnegative integer")
 
@@ -166,7 +208,6 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("stackGretelRef" + index)
 }
 
-
 case class StackChildrenRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
 
@@ -177,7 +218,6 @@ case class StackChildrenRef(val index: Int) extends StateRef {
   @transient
   override val name: Symbol = Symbol("stackChildrenRef" + index)
 }
-
 
 case class StackLeftGretelsRef(val index: Int) extends StateRef {
   require(index >= 0, "the index of a StackLeftGretelsRef must be a nonnegative integer")
@@ -279,6 +319,52 @@ case class BreadcrumbRef(val index: Int) extends StateRef {
 
   @transient
   override val name: Symbol = Symbol("crumbRef" + index)
+}
+
+case object PreviousLinkCrumbRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    state.previousLink match {
+      case Some((crumb, _)) => Seq(crumb)
+      case None => Seq()
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkCrumb")
+}
+
+case object PreviousLinkCrumbGretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    PreviousLinkCrumbRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkCrumbGretel")
+}
+
+case object PreviousLinkGretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    state.previousLink match {
+      case Some((_, gretel)) => Seq(gretel)
+      case None => Seq()
+    }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkGretel")
+}
+
+case object PreviousLinkGrandgretelRef extends StateRef {
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    PreviousLinkGretelRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
+  }
+
+  @transient
+  override val name: Symbol = Symbol("prevLinkGrandgretel")
 }
 
 /** A LastRef is a StateRef (see above) whose apply operation returns the final element of

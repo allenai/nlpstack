@@ -1,11 +1,10 @@
-import Dependencies._
-
 parallelExecution in ThisBuild := false
 
-javaOptions += "-Xms512M"
-
-javaOptions += "-Xmx2G"
-
 javaOptions += "-XX:ReservedCodeCacheSize=512M"
+
+javaOptions += "-Xmx8G"
+
+// uncomment if you want to train the parser
+//javaOptions += "-Xss800m"
 
 fork in test := true

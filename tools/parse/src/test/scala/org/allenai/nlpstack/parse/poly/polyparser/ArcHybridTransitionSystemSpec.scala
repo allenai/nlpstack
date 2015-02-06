@@ -82,15 +82,20 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
       ArcHybridShift,
-      ArcHybridLeftArc('det),
+      ArcHybridLeftArc(),
+      LeftLabelArc('det),
       ArcHybridShift,
-      ArcHybridLeftArc('nsubj),
+      ArcHybridLeftArc(),
+      LeftLabelArc('nsubj),
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
-      ArcHybridRightArc('pobj),
-      ArcHybridRightArc('prep),
-      ArcHybridLeftArc('root),
+      ArcHybridRightArc(),
+      RightLabelArc('pobj),
+      ArcHybridRightArc(),
+      RightLabelArc('prep),
+      ArcHybridLeftArc(),
+      LeftLabelArc('root),
       ArcHybridShift
     ))
   }
@@ -104,11 +109,15 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
-      ArcHybridRightArc('b2c),
-      ArcHybridRightArc('a2b),
+      ArcHybridRightArc(),
+      RightLabelArc('b2c),
+      ArcHybridRightArc(),
+      RightLabelArc('a2b),
       ArcHybridShift,
-      ArcHybridRightArc('a2d),
-      ArcHybridLeftArc('n2a),
+      ArcHybridRightArc(),
+      RightLabelArc('a2d),
+      ArcHybridLeftArc(),
+      LeftLabelArc('n2a),
       ArcHybridShift
     ))
   }
@@ -144,4 +153,88 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
         polyparse.arclabels shouldBe parse2.arclabels
     }}
   }
+
+  "The ForbiddenEdge's interpretation" should "return true for a left arc" in {
+    val transitionSystem = ArcHybridTransitionSystem()
+    val interpretation = ArcHybridForbiddenArcInterpretation(ForbiddenEdge(2, 3))
+    val state = StateTransition.applyTransitionSequence(
+      transitionSystem.initialState(parse1, Seq()).get,
+      List(
+        ArcHybridShift,
+        ArcHybridLeftArc(),
+        LeftLabelArc('det),
+        ArcHybridShift
+      )
+    )
+    interpretation(state.get, ArcHybridLeftArc()) shouldBe true
+    interpretation(state.get, ArcHybridRightArc()) shouldBe false
+  }
+
+  it should "return true for a right arc" in {
+    val transitionSystem = ArcHybridTransitionSystem()
+    val interpretation = ArcHybridForbiddenArcInterpretation(ForbiddenEdge(4, 5))
+    val state = StateTransition.applyTransitionSequence(
+      transitionSystem.initialState(parse1, Seq()).get,
+      List(
+        ArcHybridShift,
+        ArcHybridLeftArc(),
+        LeftLabelArc('det),
+        ArcHybridShift,
+        ArcHybridLeftArc(),
+        LeftLabelArc('nsubj),
+        ArcHybridShift,
+        ArcHybridShift,
+        ArcHybridShift
+      )
+    )
+    interpretation(state.get, ArcHybridLeftArc()) shouldBe false
+    interpretation(state.get, ArcHybridRightArc()) shouldBe true
+  }
+
+  "The ForbiddenArcLabel's interpretation" should "return true for a mislabeled left arc" in {
+    val transitionSystem = ArcHybridTransitionSystem()
+    val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'det))
+    val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, 'det))
+    val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, 'det))
+    val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'pobj))
+    val state = StateTransition.applyTransitionSequence(
+      transitionSystem.initialState(parse1, Seq()).get,
+      List(
+        ArcHybridShift,
+        ArcHybridLeftArc()
+      )
+    )
+    interpretation1(state.get, LeftLabelArc('det)) shouldBe true
+    interpretation2(state.get, LeftLabelArc('det)) shouldBe false
+    interpretation3(state.get, LeftLabelArc('det)) shouldBe false
+    interpretation4(state.get, LeftLabelArc('det)) shouldBe false
+  }
+
+  it should "return true for a mislabeled right arc" in {
+    val transitionSystem = ArcHybridTransitionSystem()
+    val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'pobj))
+    val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, 'pobj))
+    val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, 'pobj))
+    val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'det))
+    val state = StateTransition.applyTransitionSequence(
+      transitionSystem.initialState(parse1, Seq()).get,
+      List(
+        ArcHybridShift,
+        ArcHybridLeftArc(),
+        LeftLabelArc('det),
+        ArcHybridShift,
+        ArcHybridLeftArc(),
+        LeftLabelArc('nsubj),
+        ArcHybridShift,
+        ArcHybridShift,
+        ArcHybridShift,
+        ArcHybridRightArc()
+      )
+    )
+    interpretation1(state.get, RightLabelArc('pobj)) shouldBe true
+    interpretation2(state.get, RightLabelArc('pobj)) shouldBe false
+    interpretation3(state.get, RightLabelArc('pobj)) shouldBe false
+    interpretation4(state.get, RightLabelArc('pobj)) shouldBe false
+  }
 }
+

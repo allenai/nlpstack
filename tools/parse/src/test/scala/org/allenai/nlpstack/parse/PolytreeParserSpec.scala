@@ -38,7 +38,7 @@ class PolytreeParserSpec extends UnitSpec {
          |prep(is-3, like-4)
          |det(pancake-6, a-5)
          |pobj(like-4, pancake-6)
-         |prep(is-3, with-7)
+         |prep(pancake-6, with-7)
          |det(trap-10, a-8)
          |nn(trap-10, syrup-9)
          |pobj(with-7, trap-10)
@@ -51,20 +51,20 @@ class PolytreeParserSpec extends UnitSpec {
     // test the same case here.
     val parseTreeStr = parseTreeString("Big investment banks refused to step up to the plate, traders say.")
     val expectedParseTreeStr =
-      """|amod(banks-3, Big-1)
+      """amod(banks-3, Big-1)
          |nn(banks-3, investment-2)
          |nsubj(refused-4, banks-3)
-         |root(ROOT-0, refused-4)
-         |nsubj(step-6, to-5)
-         |ccomp(refused-4, step-6)
+         |ccomp(say-13, refused-4)
+         |aux(step-6, to-5)
+         |xcomp(refused-4, step-6)
          |prt(step-6, up-7)
          |prep(step-6, to-8)
          |det(plate-10, the-9)
          |pobj(to-8, plate-10)
          |punct(say-13, ,-11)
          |nsubj(say-13, traders-12)
-         |parataxis(refused-4, say-13)
-         |punct(refused-4, .-14)""".stripMargin
+         |root(ROOT-0, say-13)
+         |punct(say-13, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
 }

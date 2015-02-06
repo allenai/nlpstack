@@ -14,7 +14,7 @@ trait State {
 object State {
   implicit object StateJsonFormat extends RootJsonFormat[State] {
     implicit val transitionParserStateFormat =
-      jsonFormat6(TransitionParserState.apply).pack("type" -> "TransitionParserState")
+      jsonFormat8(TransitionParserState.apply).pack("type" -> "TransitionParserState")
 
     def write(state: State): JsValue = state match {
       case tpState: TransitionParserState => tpState.toJson
@@ -22,7 +22,8 @@ object State {
     }
 
     def read(value: JsValue): State = value.asJsObject.unpackWith(
-      transitionParserStateFormat)
+      transitionParserStateFormat
+    )
   }
 }
 

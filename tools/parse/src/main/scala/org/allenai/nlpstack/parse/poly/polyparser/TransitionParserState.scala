@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Token, NexusToken, Sentence}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Token, NexusToken, Sentence }
 
-import org.allenai.nlpstack.parse.poly.fsm.{Sculpture, StateTransition, State}
+import org.allenai.nlpstack.parse.poly.fsm.{ ConstraintInterpretation, Sculpture, StateTransition, State }
 
 /** A TransitionParserState captures the current state of a transition-based parser (i.e. it
   * corresponds to a partially constructed PolytreeParse). It includes the following fields:
@@ -32,13 +32,15 @@ import org.allenai.nlpstack.parse.poly.fsm.{Sculpture, StateTransition, State}
   */
 case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int,
     val breadcrumb: Map[Int, Int], val children: Map[Int, Set[Int]],
-    val arcLabels: Map[Set[Int], Symbol], val annotatedSentence: AnnotatedSentence) extends State {
+    val arcLabels: Map[Set[Int], Symbol], val annotatedSentence: AnnotatedSentence,
+    val previousLink: Option[(Int, Int)] = None, val parserMode: Int = 0) extends State {
 
   @transient val sentence = annotatedSentence.sentence
 
   def getGretels(nodeIndex: Int): Set[Int] = {
-    (breadcrumb filter { case (gretel, crumb) =>
-      crumb == nodeIndex
+    (breadcrumb filter {
+      case (gretel, crumb) =>
+        crumb == nodeIndex
     }).keySet
   }
 
@@ -51,24 +53,29 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
   /** Returns whether the two tokens are connected in the parse created thus far. */
   def areNeighbors(token1: Int, token2: Int): Boolean = arcLabels.contains(Set(token1, token2))
 
+  def stillActive(token: Int): Boolean = {
+    stack.contains(token) || (bufferPosition > 0 && bufferPosition <= token)
+  }
+
   /** Applies the provided sequence of Transitions (in order) to the state.
     *
     * @param transitions a list of Transitions to be applied (in order)
     * @return the new state resulting from the sequence of transitions applied to this state
     */
   def applyTransitionSequence(
-    transitions: Seq[TransitionParserState => TransitionParserState]): TransitionParserState = {
+    transitions: Seq[TransitionParserState => TransitionParserState]
+  ): TransitionParserState = {
 
     transitions.foldLeft(this) { (state, transition) => transition(state) }
   }
 
   override def toString: String = {
     (stack map (sentence.tokens(_).word.name)).reverse.mkString(" ") + " ||| " +
-      sentence.tokens.lift(bufferPosition)
+      (sentence.tokens.lift(bufferPosition) map { tok => tok.word.name })
   }
 
   def asSculpture: Option[Sculpture] = {
-    if(isFinal) {
+    if (isFinal) {
       val parseBreadcrumb = ((0 to sentence.size - 1) map { x =>
         breadcrumb(x)
       }).toVector
@@ -82,12 +89,14 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
         neighbor <- neighborSet
         if neighbor >= 0
       } yield (neighbor, arcLabels(Set(i, neighbor)))
-      Some(PolytreeParse(sentence,
+      Some(PolytreeParse(
+        sentence,
         parseBreadcrumb,
         ((0 to sentence.size - 1) map { x =>
-          children.getOrElse(x, Set())
-        }).toVector,
-        parseArcLabels))
+        children.getOrElse(x, Set())
+      }).toVector,
+        parseArcLabels
+      ))
     } else {
       None
     }
@@ -114,3 +123,19 @@ abstract class TransitionParserStateTransition extends StateTransition {
 
   def advanceState(state: TransitionParserState): State
 }
+
+/** A ParsingConstraintInterpretation is a ConstraintInterpretation that fires only on
+  * TransitionParserState objects.
+  */
+abstract class ParsingConstraintInterpretation extends ConstraintInterpretation {
+
+  def apply(state: State, transition: StateTransition): Boolean = {
+    state match {
+      case tpState: TransitionParserState => applyToParserState(tpState, transition)
+      case _ => false
+    }
+  }
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean
+}
+

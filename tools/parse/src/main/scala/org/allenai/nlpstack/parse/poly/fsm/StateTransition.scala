@@ -54,6 +54,14 @@ object StateTransition {
       case hyrt: ArcHybridRightArc => {
         JsObject(hybridRightArcFormat.write(hyrt).asJsObject.fields + ("type" -> JsString("HyRt")))
       }
+      case larc: LeftLabelArc => {
+        JsObject(leftLabelArcFormat.write(larc).asJsObject.fields +
+          ("type" -> JsString("LtLbl")))
+      }
+      case larc: RightLabelArc => {
+        JsObject(rightLabelArcFormat.write(larc).asJsObject.fields +
+          ("type" -> JsString("RtLbl")))
+      }
       case anl: AddNodeLabel => {
         JsObject(addNodeLabelFormat.write(anl).asJsObject.fields +
           ("type" -> JsString("AddNodeLabel")))
@@ -75,6 +83,8 @@ object StateTransition {
         case JsString("Rx") => invertedRightArcFormat.read(value)
         case JsString("HyLt") => hybridLeftArcFormat.read(value)
         case JsString("HyRt") => hybridRightArcFormat.read(value)
+        case JsString("LtLbl") => leftLabelArcFormat.read(value)
+        case JsString("RtLbl") => rightLabelArcFormat.read(value)
         case JsString("AddNodeLabel") => addNodeLabelFormat.read(value)
         case x => deserializationError(s"Invalid identifier for Transition: $x")
       }
@@ -88,6 +98,8 @@ object StateTransition {
   val invertedRightArcFormat: RootJsonFormat[ArcEagerInvertedRightArc] = jsonFormat1(ArcEagerInvertedRightArc.apply)
   val hybridLeftArcFormat: RootJsonFormat[ArcHybridLeftArc] = jsonFormat1(ArcHybridLeftArc.apply)
   val hybridRightArcFormat: RootJsonFormat[ArcHybridRightArc] = jsonFormat1(ArcHybridRightArc.apply)
+  val leftLabelArcFormat: RootJsonFormat[LeftLabelArc] = jsonFormat1(LeftLabelArc.apply)
+  val rightLabelArcFormat: RootJsonFormat[RightLabelArc] = jsonFormat1(RightLabelArc.apply)
   val addNodeLabelFormat: RootJsonFormat[AddNodeLabel] = jsonFormat1(AddNodeLabel.apply)
 }
 

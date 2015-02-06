@@ -21,6 +21,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
   splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Seq[(Int, Int)]])
     extends ProbabilisticClassifier {
 
+  /*
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
     var pathMap = Map[Int, Seq[(Int, Int)]]()
     pathMap = pathMap + (0 -> Seq[(Int, Int)]())
@@ -33,6 +34,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     }
     Range(0, child.size) map { node => pathMap(node) }
   }
+
 
   @transient lazy val topologicalOrder: Seq[Int] = {
     val stack = mutable.Stack[Int]()
@@ -47,6 +49,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     }
     topoList.reverse
   }
+  */
 
   /** Gets a probability distribution over possible outcomes..
     *
@@ -67,13 +70,13 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
   /** Map versions of the argument parameters (only included because Spray/JSON was not working
     * with maps for reasons unclear to me).
     */
-  @transient private val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
-  @transient private val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] = outcomeHistograms map { cc =>
+  @transient private lazy val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
+  @transient private lazy val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] = outcomeHistograms map { cc =>
     cc.toMap
   }
 
   /** The most probable outcome at each node of the decision tree. */
-  @transient private val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
+  @transient private lazy val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
     (cc maxBy { _._2 })._1
   }
 

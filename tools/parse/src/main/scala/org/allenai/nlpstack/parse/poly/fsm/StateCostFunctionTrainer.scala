@@ -8,8 +8,9 @@ import org.allenai.nlpstack.parse.poly.ml.FeatureName
   *
   * @param trainingVectorSource a source of training vectors
   */
-abstract class StateCostFunctionTrainer(taskIdentifier: TaskIdentifier,
-  transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource) {
+abstract class StateCostFunctionTrainer(
+    transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource
+) {
 
   /** The trained cost function. */
   def costFunction: StateCostFunction

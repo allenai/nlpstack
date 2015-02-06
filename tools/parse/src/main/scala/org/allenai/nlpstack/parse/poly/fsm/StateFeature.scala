@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import org.allenai.nlpstack.parse.poly.polyparser.{TokenCardinalityFeature, OfflineTokenFeature, TokenTransformFeature}
+import org.allenai.nlpstack.parse.poly.polyparser._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -21,6 +21,7 @@ object StateFeature {
       extends RootJsonFormat[StateFeature] {
 
     def write(feature: StateFeature): JsValue = feature match {
+      case PreviousLinkDirection => JsString("PreviousLinkDirection")
       case ttFeature: TokenTransformFeature =>
         JsObject(tokenTransformFeatureFormat.write(ttFeature).asJsObject.fields +
           ("type" -> JsString("TokenTransformFeature")))
@@ -36,6 +37,10 @@ object StateFeature {
     }
 
     def read(value: JsValue): StateFeature = value match {
+      case JsString(typeid) => typeid match {
+        case "PreviousLinkDirection" => PreviousLinkDirection
+        case x => deserializationError(s"Invalid identifier for Transition: $x")
+      }
       case JsObject(values) => values("type") match {
         case JsString("TokenTransformFeature") => tokenTransformFeatureFormat.read(value)
         case JsString("OfflineTokenFeature") => offlineTokenFeatureFormat.read(value)

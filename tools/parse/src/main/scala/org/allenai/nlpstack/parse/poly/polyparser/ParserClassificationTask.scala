@@ -76,16 +76,3 @@ object ApplicabilitySignatureIdentifier extends TaskIdentifier {
   }
 }
 
-/** The HybridApplicabilitySignatureIdentifier identifies the ClassificationTask of a parser state
-  * according to the state's applicability signature (for an ArcHybrid transition system).
-  */
-object HybridApplicabilitySignatureIdentifier extends TaskIdentifier {
-  override def apply(state: State): Option[ClassificationTask] = {
-    Some(ApplicabilitySignature(
-      StateTransition.applicable(ArcHybridShift, Some(state)),
-      false,
-      ArcHybridLeftArc.applicable(state), ArcHybridRightArc.applicable(state)
-    ))
-  }
-}
-

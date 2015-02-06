@@ -43,11 +43,13 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     (decisionTrees map { _.allFeatures }) reduce { (x, y) => x ++ y }
   }
 
+  /*
   @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Double)] = {
     (decisionTrees flatMap { decisionTree =>
       decisionTree.decisionPaths zip (decisionTree.distribution map { x => x(1) })
     }).toSet.toSeq
   }
+  */
 }
 
 object RandomForest {
@@ -82,14 +84,16 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @param data a set of feature vectors to use for training
     * @return the induced random forest
     */
-  override def apply(data: FeatureVectors): ProbabilisticClassifier = {
+  override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
 
     val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode)
+    System.gc()
+    val initialMemory: Double = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
     val result = RandomForest(
       data.allOutcomes,
       Range(0, numDecisionTrees) flatMap { _ =>
         val trainingData = useBagging match {
-          case true => data.getBag
+          case true => data //.getBag
           case false => data
         }
         dtTrainer(trainingData) match {
@@ -98,6 +102,11 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
         }
       }
     )
+    System.gc()
+    val memoryAfterLoading: Double = Runtime.getRuntime.totalMemory -
+      Runtime.getRuntime.freeMemory()
+    println("Random forest memory footprint: %.1f MB".format((memoryAfterLoading - initialMemory)
+      / Math.pow(10.0, 6.0)))
     println("Completed random forest training.")
     result
   }

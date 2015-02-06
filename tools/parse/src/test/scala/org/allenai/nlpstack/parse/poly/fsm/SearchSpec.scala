@@ -74,9 +74,13 @@ case object AlphabetBlockTransitionSystem extends TransitionSystem {
     }
   }
 
+  override val taskIdentifier: TaskIdentifier = new SimpleTaskIdentifier("alpha")
+
   def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] = None
 
-  val feature: StateFeature = FeatureUnion(Seq())
+  private val feature: StateFeature = FeatureUnion(Seq())
+
+  def computeFeature(state: State) = feature(state)
 
   def toSculpture(state: State): Option[Sculpture] = {
     state match {

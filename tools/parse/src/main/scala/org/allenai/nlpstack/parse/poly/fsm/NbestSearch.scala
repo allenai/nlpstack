@@ -6,8 +6,10 @@ import scala.collection.mutable
   *
   * @param costFunction the cost function to use to evaluate transitions from a given state
   */
-class NbestSearch(costFunction: StateCostFunction,
-    timeout: Int = NbestSearch.defaultTimeout) {
+class NbestSearch(
+    costFunction: StateCostFunction,
+    timeout: Int = NbestSearch.defaultTimeout
+) {
 
   // Right now, we use a rather generous "qualifying cost delta" of 10000.0, to make sure that
   // most reasonable alternatives are remembered by the nostalgic parser.
@@ -24,7 +26,8 @@ class NbestSearch(costFunction: StateCostFunction,
     constraints: Set[TransitionConstraint] = Set()): NbestList = {
 
     val queue = mutable.PriorityQueue[ScoredWalk]()(
-      Ordering.by({ walk: ScoredWalk => -walk.score }))
+      Ordering.by({ walk: ScoredWalk => -walk.score })
+    )
     var otherGoals: Seq[ScoredWalk] = Seq()
     var results: Seq[ScoredWalk] = Seq()
     var iterNumber: Int = 0
@@ -38,8 +41,8 @@ class NbestSearch(costFunction: StateCostFunction,
         val (mementos, constraintEncountered) =
           baseParser.getPromisingWalks(scoredWalk.walk, scoredWalk.score, constraints)
         mementos.headOption match {
-          case Some(memento) if memento.walk.isGoal =>
-            if (!constraintEncountered) {
+          case Some(memento) =>
+            if (!constraintEncountered && memento.walk.isGoal) {
               results = memento +: results
               queue ++= mementos.tail
             } else {
@@ -53,12 +56,12 @@ class NbestSearch(costFunction: StateCostFunction,
     val allWalks: Seq[ScoredWalk] = results ++ otherGoals
     NbestList(
       (allWalks map { scoredWalk =>
-        scoredWalk.walk.finalState flatMap { state =>
-          state.asSculpture
-        } map { sculpture =>
-          (sculpture, scoredWalk.score)
-        }
-      }).flatten
+      scoredWalk.walk.finalState flatMap { state =>
+        state.asSculpture
+      } map { sculpture =>
+        (sculpture, scoredWalk.score)
+      }
+    }).flatten
     )
   }
 }

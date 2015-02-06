@@ -31,7 +31,7 @@ abstract class StateCostFunction extends (State => Map[StateTransition, Double])
 object StateCostFunction {
   implicit object StateJsonFormat extends RootJsonFormat[StateCostFunction] {
     implicit val classifierBasedCostFunctionFormat =
-      jsonFormat6(ClassifierBasedCostFunction.apply).pack("type" -> "ClassifierBasedCostFunction")
+      jsonFormat5(ClassifierBasedCostFunction.apply).pack("type" -> "ClassifierBasedCostFunction")
 
     def write(costFunction: StateCostFunction): JsValue = costFunction match {
       case cbCostFunction: ClassifierBasedCostFunction => cbCostFunction.toJson
@@ -39,15 +39,17 @@ object StateCostFunction {
     }
 
     def read(value: JsValue): StateCostFunction = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFormat)
+      classifierBasedCostFunctionFormat
+    )
   }
 }
 
-case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
+case class ClassifierBasedCostFunction(
   transitionSystem: TransitionSystem, transitions: IndexedSeq[StateTransition],
   taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
   featureNames: List[FeatureName],
-  baseCostFunction: Option[StateCostFunction] = None)
+  baseCostFunction: Option[StateCostFunction] = None
+)
     extends StateCostFunction {
 
   @transient
@@ -68,15 +70,17 @@ case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
     *
     * @param state the parser state
     * @param minProb only include transitions in the returned map if their
-    *         probability is greater than this bound
+    * probability is greater than this bound
     * @return a map from transitions to their probabilities
     */
-  private def transitionDistribution(state: State,
-    minProb: Double): Map[StateTransition, Double] = {
+  private def transitionDistribution(
+    state: State,
+    minProb: Double
+  ): Map[StateTransition, Double] = {
 
-    taskIdentifier(state) match {
+    transitionSystem.taskIdentifier(state) match {
       case Some(task) =>
-        val featureVector: FeatureVector = transitionSystem.feature(state)
+        val featureVector: FeatureVector = transitionSystem.computeFeature(state)
         val topLevelDistribution: Map[StateTransition, Double] = {
           if (!taskClassifiers.contains(task)) {
             transitions.zip(transitions.map { _ =>
@@ -119,11 +123,13 @@ case class ClassifierBasedCostFunction(taskIdentifier: TaskIdentifier,
     *
     * @param state the parser state
     * @param minProb only include transitions in the returned map if their
-    *         probability is greater than this bound
+    * probability is greater than this bound
     * @return a map from transitions to negative log of their neprobabilities
     */
-  private def transitionCosts(state: State,
-    minProb: Double): Map[StateTransition, Double] = {
+  private def transitionCosts(
+    state: State,
+    minProb: Double
+  ): Map[StateTransition, Double] = {
 
     transitionDistribution(state, minProb) mapValues (-Math.log(_))
   }

@@ -51,17 +51,15 @@ case class GoldParseSource(goldParses: PolytreeParseSource, transitionSystem: Tr
   * feature(state2)) will be used to train different classifiers.
   *
   * @param goldParses the data source for the parse trees
-  * @param taskIdentifier identifies the ClassificationTask associated with each feature vector
   * @param transitionSystem the transition system to use (for generating states)
   * @param baseCostFunction a trained cost function to adapt (optional)
   */
 case class GoldParseTrainingVectorSource(
   goldParses: PolytreeParseSource,
-  taskIdentifier: TaskIdentifier,
   transitionSystem: TransitionSystem,
   baseCostFunction: Option[StateCostFunction] = None
 )
-    extends FSMTrainingVectorSource(taskIdentifier, transitionSystem, baseCostFunction) {
+    extends FSMTrainingVectorSource(transitionSystem, baseCostFunction) {
 
   def getVectorIterator: Iterator[FSMTrainingVector] = {
     for {

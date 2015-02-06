@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.decisiontree.{
   FeatureVector => DTFeatureVector,
-  FeatureVectors => DTFeatureVectors,
+  FeatureVectorSource => DTFeatureVectorSource,
   _
 }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
@@ -78,14 +78,12 @@ case class EmbeddedClassifier(
   */
 class DTCostFunctionTrainer(
   classifierTrainer: ProbabilisticClassifierTrainer,
-  taskIdentifier: TaskIdentifier,
   transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource,
   baseCostFunction: Option[StateCostFunction]
 )
-    extends StateCostFunctionTrainer(taskIdentifier, transitionSystem, trainingVectorSource) {
+    extends StateCostFunctionTrainer(transitionSystem, trainingVectorSource) {
 
   override def costFunction: StateCostFunction = new ClassifierBasedCostFunction(
-    taskIdentifier,
     transitionSystem, transitions, taskClassifiers.toList, featureNames, baseCostFunction
   )
 
@@ -103,7 +101,7 @@ class DTCostFunctionTrainer(
         println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}" +
           s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
         progressCounter += 1
-        val vectors: DTFeatureVectors = createDTFeatureVectors(trainingVectors.iterator)
+        val vectors: DTFeatureVectorSource = createDTFeatureVectorSource(task, trainingVectors.iterator)
         println("Now training.")
         val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
         val featureMap: Seq[(Int, FeatureName)] =
@@ -114,20 +112,19 @@ class DTCostFunctionTrainer(
             case (feat, featIndex) =>
               (featIndex, feat)
           }
-        val result = (task, new EmbeddedClassifier(
+        (task, new EmbeddedClassifier(
           inducedClassifier,
           transitions, featureMap, featureNames.size
         ))
-        result
       }
     }).toMap
   }
 
-  private def createDTFeatureVectors(
-    trainingVectorIter: Iterator[FSMTrainingVector]
-  ): DTFeatureVectors = {
+  private def createDTFeatureVectorSource(
+    task: ClassificationTask, trainingVectorIter: Iterator[FSMTrainingVector]
+  ): DTFeatureVectorSource = {
 
-    new DTFeatureVectors((trainingVectorIter map createDTFeatureVector).toIndexedSeq)
+    new InMemoryFeatureVectorSource((trainingVectorIter map createDTFeatureVector).toIndexedSeq, task)
   }
 
   private def createDTFeatureVector(trainingVector: FSMTrainingVector): DTFeatureVector = {

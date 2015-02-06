@@ -14,6 +14,9 @@ object ParseLabel {
 }
 
 case object ParseLabelerTransitionSystem extends TransitionSystem {
+
+  val taskIdentifier = ???
+
   def initialState(
     marbleBlock: MarbleBlock,
     constraints: Seq[TransitionConstraint]
@@ -36,6 +39,8 @@ case object ParseLabelerTransitionSystem extends TransitionSystem {
 
   val feature: StateFeature = FeatureUnion(List(BreadcrumbFeature, GrandcrumbFeature,
     NextNodeFeature, RelativeCposFeature, LastWordFeature, SiblingFeature, ChildrenFeature))
+
+  override def computeFeature(state: State): FeatureVector = feature(state)
 
   def toSculpture(state: State): Option[Sculpture] = {
     state match {
