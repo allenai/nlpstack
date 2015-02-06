@@ -2,8 +2,10 @@ package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import org.allenai.nlpstack.parse.poly.polyparser.{ ArcHybridTransitionSystem, ArcEagerTransitionSystem }
-import org.allenai.nlpstack.parse.poly.polyparser.labeler.ParseLabelerTransitionSystem
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  ArcHybridTransitionSystem,
+  ArcEagerTransitionSystem
+}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

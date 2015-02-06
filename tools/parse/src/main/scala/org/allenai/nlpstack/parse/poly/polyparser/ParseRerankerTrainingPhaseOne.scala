@@ -1,16 +1,17 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{File, PrintWriter}
+import java.io.{ File, PrintWriter }
 
 import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
-import org.allenai.nlpstack.parse.poly.ml.{TrainingVectorPool, BrownClusters}
+import org.allenai.nlpstack.parse.poly.ml.{ TrainingVectorPool, BrownClusters }
 import scopt.OptionParser
 import spray.json._
 
-
-private case class PRTPOCommandLine(nbestFilenames: String = "",
+private case class PRTPOCommandLine(
+  nbestFilenames: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
-  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = "")
+  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = ""
+)
 
 object ParseRerankerTrainingPhaseOne {
 
@@ -21,30 +22,32 @@ object ParseRerankerTrainingPhaseOne {
       opt[String]('g', "goldfile") required () valueName ("<file>") action
         { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
       opt[String]('h', "othergoldfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(otherGoldParseFilename = x) } text ("the file containing the other gold parses")
+        { (x, c) => c.copy(otherGoldParseFilename = x) } text (
+          "the file containing the other gold parses"
+        )
       opt[String]('c', "clusters") valueName ("<file>") action
         { (x, c) => c.copy(clustersPath = x) } text ("the path to the Brown cluster files " +
-        "(in Liang format, comma-separated filenames)")
+          "(in Liang format, comma-separated filenames)")
       opt[String]('o', "outputfile") required () valueName ("<file>") action
         { (x, c) => c.copy(rerankerFilename = x) } text ("where to write the incomplete" +
-        " reranking function")
+          " reranking function")
       opt[String]('v', "vectorfiles") required () valueName ("<file>") action
         { (x, c) => c.copy(vectorFilenames = x) } text ("where to write the training" +
-        " vectors")
+          " vectors")
       opt[String]('d', "datasource") required () valueName ("<file>") action
         { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
-        "('datastore','local')") validate { x =>
-        if (Set("datastore", "local").contains(x)) {
-          success
-        } else {
-          failure(s"unsupported data source: ${x}")
-        }
-      }
+          "('datastore','local')") validate { x =>
+            if (Set("datastore", "local").contains(x)) {
+              success
+            } else {
+              failure(s"unsupported data source: ${x}")
+            }
+          }
     }
     val clArgs: PRTPOCommandLine =
       optionParser.parse(args, PRTPOCommandLine()).get
     val clusters: Seq[BrownClusters] = {
-      if(clArgs.clustersPath != "") {
+      if (clArgs.clustersPath != "") {
         clArgs.clustersPath.split(",") map { path =>
           BrownClusters.fromLiangFormat(path)
         }
@@ -61,14 +64,17 @@ object ParseRerankerTrainingPhaseOne {
 
     val otherGoldSource: PolytreeParseSource =
       MultiPolytreeParseSource(clArgs.otherGoldParseFilename.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(path,
-          ConllX(true), clArgs.dataSource)
+        InMemoryPolytreeParseSource.getParseSource(
+          path,
+          ConllX(true), clArgs.dataSource
+        )
       })
     val parseCostFunction = OracleRerankingFunction(otherGoldSource.parseIterator)
 
-    val goldParseSource = InMemoryPolytreeParseSource.getParseSource(clArgs.goldParseFilename,
-      ConllX(true, makePoly = true), clArgs.dataSource)
-
+    val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
+      clArgs.goldParseFilename,
+      ConllX(true, makePoly = true), clArgs.dataSource
+    )
 
     println("Initializing features.")
     //val leftChildNeighborhoodCounts = ("leftChild", LeftChildrenExtractor,
@@ -77,12 +83,16 @@ object ParseRerankerTrainingPhaseOne {
     //val rightChildNeighborhoodCounts = ("rightChild", RightChildrenExtractor,
     //  Neighborhood.countNeighborhoods(
     //    new ExtractorBasedNeighborhoodSource(goldParseSource, RightChildrenExtractor)))
-    val childNeighborhoodCounts = ("child", ChildrenExtractor,
+    val childNeighborhoodCounts = ("child",
+      ChildrenExtractor,
       Neighborhood.countNeighborhoods(
-        new ExtractorBasedNeighborhoodSource(goldParseSource, ChildrenExtractor)))
-    val crumbNeighborhoodCounts = ("crumb", BreadcrumbExtractor,
+        new ExtractorBasedNeighborhoodSource(goldParseSource, ChildrenExtractor)
+      ))
+    val crumbNeighborhoodCounts = ("crumb",
+      BreadcrumbExtractor,
       Neighborhood.countNeighborhoods(
-        new ExtractorBasedNeighborhoodSource(goldParseSource, BreadcrumbExtractor)))
+        new ExtractorBasedNeighborhoodSource(goldParseSource, BreadcrumbExtractor)
+      ))
     //val path3NeighborhoodCounts = ("path3", RootPathExtractor(3),
     //  Neighborhood.countNeighborhoods(
     //    new ExtractorBasedNeighborhoodSource(goldParseSource, RootPathExtractor(3))))
@@ -102,7 +112,7 @@ object ParseRerankerTrainingPhaseOne {
         //rightChildNeighborhoodCounts,
         childNeighborhoodCounts,
         crumbNeighborhoodCounts
-        //path3NeighborhoodCounts
+      //path3NeighborhoodCounts
       ), transforms)
     ))
 
@@ -116,31 +126,34 @@ object ParseRerankerTrainingPhaseOne {
     }
 
     println("Creating training vectors.")
-    inputSources zip vectorFiles foreach { case (inputSource, vectorFile) =>
-      val scoredParsePools: Iterator[Iterable[((PolytreeParse, Double), Double)]] =
-        for {
-          parsePool <- inputSource.poolIterator
-        } yield {
+    inputSources zip vectorFiles foreach {
+      case (inputSource, vectorFile) =>
+        val scoredParsePools: Iterator[Iterable[((PolytreeParse, Double), Double)]] =
           for {
-            (parse, origCost) <- parsePool.parses
+            parsePool <- inputSource.poolIterator
           } yield {
-            ((parse, origCost), parseCostFunction(parse))
+            for {
+              (parse, origCost) <- parsePool.parses
+            } yield {
+              ((parse, origCost), parseCostFunction(parse))
+            }
           }
+        val trainingVectorPools: Iterator[TrainingVectorPool] = scoredParsePools map { pool =>
+          createTrainingVectorPoolfromScoredParses(pool, feature)
         }
-      val trainingVectorPools: Iterator[TrainingVectorPool] = scoredParsePools map { pool =>
-        createTrainingVectorPoolfromScoredParses(pool, feature)
-      }
-      TrainingVectorPool.writeTrainingVectorPools(trainingVectorPools, vectorFile)
+        TrainingVectorPool.writeTrainingVectorPools(trainingVectorPools, vectorFile)
     }
   }
 
   private def createTrainingVectorPoolfromScoredParses(
     scoredParses: Iterable[((PolytreeParse, Double), Double)],
-    feature: PolytreeParseFeature): TrainingVectorPool = {
+    feature: PolytreeParseFeature
+  ): TrainingVectorPool = {
 
     TrainingVectorPool(
-      scoredParses map { case ((parse, origCost), goldCost) =>
-        (feature(parse, origCost), goldCost)
+      scoredParses map {
+        case ((parse, origCost), goldCost) =>
+          (feature(parse, origCost), goldCost)
       }
     )
   }

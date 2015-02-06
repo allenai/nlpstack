@@ -71,9 +71,10 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     * with maps for reasons unclear to me).
     */
   @transient private lazy val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
-  @transient private lazy val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] = outcomeHistograms map { cc =>
-    cc.toMap
-  }
+  @transient private lazy val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] =
+    outcomeHistograms map { cc =>
+      cc.toMap
+    }
 
   /** The most probable outcome at each node of the decision tree. */
   @transient private lazy val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
@@ -114,7 +115,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     * @param featureVector feature vector to classify
     * @return the decision tree node that the feature vector is classified into
     */
-  @tailrec protected final def findDecisionPoint(featureVector: FeatureVector, nodeId: Int = 0): Int = {
+  @tailrec protected final def findDecisionPoint(
+    featureVector: FeatureVector, nodeId: Int = 0
+  ): Int = {
     selectChild(nodeId, featureVector) match {
       case None => nodeId
       case Some(child) => findDecisionPoint(featureVector, child)

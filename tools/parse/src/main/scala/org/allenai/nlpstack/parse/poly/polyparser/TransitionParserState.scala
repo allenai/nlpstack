@@ -2,7 +2,12 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Token, NexusToken, Sentence }
 
-import org.allenai.nlpstack.parse.poly.fsm.{ ConstraintInterpretation, Sculpture, StateTransition, State }
+import org.allenai.nlpstack.parse.poly.fsm.{
+  ConstraintInterpretation,
+  Sculpture,
+  StateTransition,
+  State
+}
 
 /** A TransitionParserState captures the current state of a transition-based parser (i.e. it
   * corresponds to a partially constructed PolytreeParse). It includes the following fields:

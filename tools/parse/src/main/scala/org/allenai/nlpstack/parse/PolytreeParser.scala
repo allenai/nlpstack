@@ -27,7 +27,7 @@ class PolytreeParser(
       }
     )
 
-  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]) = {
+  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     // throw away postags
     val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
 

@@ -71,7 +71,9 @@ case class ArcHybridTransitionSystem(
     }
   }
 
-  override def systemSpecificInitialState(annotatedSentence: AnnotatedSentence) = {
+  override def systemSpecificInitialState(
+    annotatedSentence: AnnotatedSentence
+  ): TransitionParserState = {
     new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), annotatedSentence,
       None, ArcHybridModes.TRANSITION)
   }
@@ -99,10 +101,9 @@ case class ArcHybridTransitionSystem(
 case object ArcHybridTransitionSystem {
 
   val labelingFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0), BufferRef(1),
-      PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
-      PreviousLinkGrandgretelRef,
-      StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+      BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
+      PreviousLinkGrandgretelRef, StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
       StackRightGretelsRef(0), BufferGretelsRef(0))),
     new OfflineTokenFeature(StackRef(0)),
     new OfflineTokenFeature(StackRef(1)),
@@ -392,20 +393,22 @@ case class ArcHybridRequestedArcInterpretation(
 
   def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
     transition match {
-      case ArcHybridLeftArc(_) => (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
-        case (Some(stackFirst), Some(bufferFirst)) =>
-          val otherToken = arcTokens - stackFirst
-          arcTokens.contains(stackFirst) &&
-            !arcTokens.contains(bufferFirst) && state.stillActive(otherToken.head)
-        case _ => false
-      }
-      case ArcHybridRightArc(_) => (StackRef(0)(state).headOption, StackRef(1)(state).headOption) match {
-        case (Some(stackFirst), Some(stackSecond)) =>
-          val otherToken = arcTokens - stackFirst
-          arcTokens.contains(stackFirst) &&
-            !arcTokens.contains(stackSecond) && state.stillActive(otherToken.head)
-        case _ => false
-      }
+      case ArcHybridLeftArc(_) =>
+        (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
+          case (Some(stackFirst), Some(bufferFirst)) =>
+            val otherToken = arcTokens - stackFirst
+            arcTokens.contains(stackFirst) &&
+              !arcTokens.contains(bufferFirst) && state.stillActive(otherToken.head)
+          case _ => false
+        }
+      case ArcHybridRightArc(_) =>
+        (StackRef(0)(state).headOption, StackRef(1)(state).headOption) match {
+          case (Some(stackFirst), Some(stackSecond)) =>
+            val otherToken = arcTokens - stackFirst
+            arcTokens.contains(stackFirst) &&
+              !arcTokens.contains(stackSecond) && state.stillActive(otherToken.head)
+          case _ => false
+        }
       case LeftLabelArc(arcLabel) =>
         (
           PreviousLinkCrumbRef(state).headOption,

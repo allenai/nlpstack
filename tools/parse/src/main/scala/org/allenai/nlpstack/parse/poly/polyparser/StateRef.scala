@@ -129,13 +129,20 @@ object StateRef {
   val bufferWindowRefFormat: RootJsonFormat[BufferWindowRef] = jsonFormat1(BufferWindowRef.apply)
   val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
   val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
-  val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] = jsonFormat1(StackChildrenRef.apply)
-  val stackLeftGretelsRefFormat: RootJsonFormat[StackLeftGretelsRef] = jsonFormat1(StackLeftGretelsRef.apply)
-  val stackRightGretelsRefFormat: RootJsonFormat[StackRightGretelsRef] = jsonFormat1(StackRightGretelsRef.apply)
-  val bufferGretelsRefFormat: RootJsonFormat[BufferGretelsRef] = jsonFormat1(BufferGretelsRef.apply)
-  val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] = jsonFormat1(BufferChildrenRef.apply)
-  val bufferLeftGretelsRefFormat: RootJsonFormat[BufferLeftGretelsRef] = jsonFormat1(BufferLeftGretelsRef.apply)
-  val bufferRightGretelsRefFormat: RootJsonFormat[BufferRightGretelsRef] = jsonFormat1(BufferRightGretelsRef.apply)
+  val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] =
+    jsonFormat1(StackChildrenRef.apply)
+  val stackLeftGretelsRefFormat: RootJsonFormat[StackLeftGretelsRef] =
+    jsonFormat1(StackLeftGretelsRef.apply)
+  val stackRightGretelsRefFormat: RootJsonFormat[StackRightGretelsRef] =
+    jsonFormat1(StackRightGretelsRef.apply)
+  val bufferGretelsRefFormat: RootJsonFormat[BufferGretelsRef] =
+    jsonFormat1(BufferGretelsRef.apply)
+  val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] =
+    jsonFormat1(BufferChildrenRef.apply)
+  val bufferLeftGretelsRefFormat: RootJsonFormat[BufferLeftGretelsRef] =
+    jsonFormat1(BufferLeftGretelsRef.apply)
+  val bufferRightGretelsRefFormat: RootJsonFormat[BufferRightGretelsRef] =
+    jsonFormat1(BufferRightGretelsRef.apply)
 }
 
 /** A StackRef is a StateRef (see above) whose apply operation returns the `index`th element of

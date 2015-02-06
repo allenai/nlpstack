@@ -35,7 +35,7 @@ case class Position(components: Seq[Int]) {
     * This returns None if this is the root position.
     */
   @transient lazy val parent: Option[Position] = {
-    if(components.isEmpty) {
+    if (components.isEmpty) {
       None
     } else {
       Some(Position(components.tail))
@@ -76,7 +76,6 @@ object Position {
   * @param labels a map from label names to label values
   */
 case class PositionTreeNode(labels: Map[Symbol, String])
-
 
 /** A PositionTree is a rooted, directed tree, implemented as a map from positions to nodes.
   *
@@ -119,7 +118,8 @@ case class PositionTree(nodes: Seq[(Position, PositionTreeNode)]) {
 
   /** The leaf positions of the tree, sorted in depth-first left-to-right order. */
   lazy val leaves: Seq[Position] = Position.depthFirstPreorder(
-    positions filter { pos => !positions.contains(pos.getChild(0)) })
+    positions filter { pos => !positions.contains(pos.getChild(0)) }
+  )
 
   /** Swaps the subtrees at two different positions.
     *
@@ -133,22 +133,26 @@ case class PositionTree(nodes: Seq[(Position, PositionTreeNode)]) {
   def swapPositions(position1: Position, position2: Position): PositionTree = {
     require(positions.contains(position1), s"position ${position1} is not a valid position")
     require(positions.contains(position2), s"position ${position2} is not a valid position")
-    require(!position1.isDescendentOf(position2) && !position2.isDescendentOf(position1),
-      s"swapped positions cannot be descendants of each other: ${position1} and ${position2}")
+    require(
+      !position1.isDescendentOf(position2) && !position2.isDescendentOf(position1),
+      s"swapped positions cannot be descendants of each other: ${position1} and ${position2}"
+    )
     PositionTree(
-      nodes map { case (position, node) =>
-        val transformedPosition =
-          if(position.isDescendentOf(position1)) {
-            Position(position.components.take(position.depth - position1.depth)
-              ++ position2.components)
-          } else if(position.isDescendentOf(position2))  {
-            Position(position.components.take(position.depth - position2.depth)
-              ++ position1.components)
-          } else {
-            position
-          }
-        (transformedPosition, node)
-      })
+      nodes map {
+        case (position, node) =>
+          val transformedPosition =
+            if (position.isDescendentOf(position1)) {
+              Position(position.components.take(position.depth - position1.depth)
+                ++ position2.components)
+            } else if (position.isDescendentOf(position2)) {
+              Position(position.components.take(position.depth - position2.depth)
+                ++ position1.components)
+            } else {
+              position
+            }
+          (transformedPosition, node)
+      }
+    )
   }
 
   /** Substitutes the subtree at the specified position with a new subtree.
@@ -159,22 +163,25 @@ case class PositionTree(nodes: Seq[(Position, PositionTreeNode)]) {
     */
   def substitute(position: Position, positionTree: PositionTree): PositionTree = {
     require(positions.contains(position), s"Cannot substitute at invalid position ${position}")
-    val retained = nodes filter { case (pos, node) =>
-      !pos.isDescendentOf(position)
+    val retained = nodes filter {
+      case (pos, node) =>
+        !pos.isDescendentOf(position)
     }
-    val substituted = positionTree.nodes map { case (pos, node) =>
-      (Position(pos.components ++ position.components), node)
+    val substituted = positionTree.nodes map {
+      case (pos, node) =>
+        (Position(pos.components ++ position.components), node)
     }
     PositionTree(retained ++ substituted)
   }
 }
 
 class SubstitutionNode(label: String) extends PositionTreeNode(
-  Map(ConstituencyParse.wordLabelName -> label))
+  Map(ConstituencyParse.wordLabelName -> label)
+)
 
 class SubstitutionTree(label: String) extends PositionTree(
-  Seq((Position.root, new SubstitutionNode(label))))
-
+  Seq((Position.root, new SubstitutionNode(label)))
+)
 
 object ConstituencyParse {
   val constituencyLabelName = 'constituent
@@ -187,7 +194,7 @@ object ConstituencyParse {
     * @param positionTree a position tree corresponding to a constituency parse
     * @return the words of the tree, in left-to-right order
     */
-  def getWords(positionTree: PositionTree) = {
+  def getWords(positionTree: PositionTree): Seq[String] = {
     positionTree.leaves flatMap { leaf =>
       positionTree.getLabel(leaf, ConstituencyParse.wordLabelName)
     }
