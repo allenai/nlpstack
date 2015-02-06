@@ -2,10 +2,11 @@ package org.allenai.nlpstack.core.repr
 
 class Document(val text: String) {
   override def toString = {
-    if (text.length > 80)
+    if (text.length > 80) {
       s"Document(${text.take(80) + "..."})"
-    else
+    } else {
       s"Document($text)"
+    }
   }
 
   def canEqual(that: Document) = that.isInstanceOf[Document]

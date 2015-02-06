@@ -9,14 +9,17 @@ trait ConstituencyParser {
 }
 
 /** A representation of the constituency parse. */
-abstract class ParseTree(val token: String, var index: Int, val children: Array[ParseTree]) extends Iterable[ParseTree] {
+abstract class ParseTree(
+    val token: String, var index: Int, val children: Array[ParseTree]
+) extends Iterable[ParseTree] {
 
   /** Prints the tree in Penn treebank format. */
   override def toString() =
-    if (children.size == 0)
+    if (children.size == 0) {
       token
-    else
+    } else {
       "(" + token + " " + children.map(child => child.toString).mkString(" ") + ")"
+    }
 
   def value = token
 

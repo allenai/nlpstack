@@ -34,8 +34,11 @@ class LogisticRegression[T](
 
     val z = this.featureSet.featureNames.iterator.map { name =>
       val weight = featureWeights(name)
-      if (weight == 0.0 || weight == -0.0) 0
-      else weight * featureSet.featureMap(name).apply(extraction)
+      if (weight == 0.0 || weight == -0.0) {
+        0
+      } else {
+        weight * featureSet.featureMap(name).apply(extraction)
+      }
     }.sum
 
     1.0 / (1.0 + math.exp(-(z + this.intercept)))
@@ -60,7 +63,7 @@ class LogisticRegression[T](
 
 object LogisticRegression {
   private val tab = """\t""".r
-  def fromUrl[E](featureSet: FeatureSet[E, Double], url: URL) = {
+  def fromUrl[E](featureSet: FeatureSet[E, Double], url: URL): LogisticRegression[E] = {
     def buildFeatureWeightMap(input: InputStream): Map[String, Double] = {
       var featureWeights = Map.empty[String, Double]
 
