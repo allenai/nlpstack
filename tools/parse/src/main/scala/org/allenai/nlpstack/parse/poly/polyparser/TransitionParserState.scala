@@ -58,10 +58,6 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
   /** Returns whether the two tokens are connected in the parse created thus far. */
   def areNeighbors(token1: Int, token2: Int): Boolean = arcLabels.contains(Set(token1, token2))
 
-  def stillActive(token: Int): Boolean = {
-    stack.contains(token) || (bufferPosition > 0 && bufferPosition <= token)
-  }
-
   /** Applies the provided sequence of Transitions (in order) to the state.
     *
     * @param transitions a list of Transitions to be applied (in order)
