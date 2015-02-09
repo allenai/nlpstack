@@ -26,13 +26,7 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
         baseParser.find(initState, config.parsingNbestSize, constraints)
       }
     val mappedNbestList: Option[NbestList] = nbestList map { x =>
-      NbestList(x.scoredSculptures map {
-        case (sculpture, cost) =>
-          (sculpture match {
-            case parse: PolytreeParse => parse //PolytreeParse.arcInverterStanford(parse)
-            case y => y
-          }, cost)
-      })
+      NbestList(x.scoredSculptures)
     }
     val candidate: Option[Sculpture] = mappedNbestList flatMap { nbList => reranker(nbList) }
     candidate match {

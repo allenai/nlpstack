@@ -129,7 +129,7 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     val greedySearch = new GreedySearch(costFunction)
     val finalState = greedySearch.find(initialState, Set()) flatMap { walk => walk.finalState }
     val finalSculpture = finalState flatMap { state => transitionSystem.toSculpture(state) }
-    //finalSculpture.get.toString shouldBe parse1.toString
+    finalSculpture.get.toString shouldBe parse1.toString
     finalSculpture map { sculpture => sculpture match {
       case polyparse: PolytreeParse =>
         polyparse.breadcrumb shouldBe parse1.breadcrumb
@@ -145,7 +145,7 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     val greedySearch = new GreedySearch(costFunction)
     val finalState = greedySearch.find(initialState, Set()) flatMap { walk => walk.finalState }
     val finalSculpture = finalState flatMap { state => transitionSystem.toSculpture(state) }
-    //finalSculpture.get.toString shouldBe parse2.toString
+    finalSculpture.get.toString shouldBe parse2.toString
     finalSculpture map { sculpture => sculpture match {
       case polyparse: PolytreeParse =>
         polyparse.breadcrumb shouldBe parse2.breadcrumb

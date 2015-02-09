@@ -65,11 +65,10 @@ case class ArcHybridTransitionSystem(
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
   override def computeFeature(state: State): FeatureVector = {
-    val result = (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
+    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
       case Some(x) if x.startsWith("dt-") => ArcHybridTransitionSystem.labelingFeature(state)
       case _ => ArcHybridTransitionSystem.transitionFeature(state)
     }
-    result
   }
 
   override def systemSpecificInitialState(
