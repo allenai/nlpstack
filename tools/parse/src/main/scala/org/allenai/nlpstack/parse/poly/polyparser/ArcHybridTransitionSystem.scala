@@ -263,11 +263,21 @@ case class LeftLabelArc(val label: Symbol) extends TransitionParserStateTransiti
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
     state.previousLink match {
       case Some((crumb, gretel)) =>
-        state.copy(
-          arcLabels = state.arcLabels +
-          (Set(crumb, gretel) -> label),
-          parserMode = ArcHybridModes.TRANSITION
-        )
+        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+          state.copy(
+            arcLabels = state.arcLabels +
+            (Set(crumb, gretel) -> label),
+            parserMode = ArcHybridModes.TRANSITION,
+            children = ???
+          )
+        } else {
+          state.copy(
+            arcLabels = state.arcLabels +
+            (Set(crumb, gretel) -> label),
+            parserMode = ArcHybridModes.TRANSITION,
+            children = ???
+          )
+        }
       case _ => ???
     }
   }
