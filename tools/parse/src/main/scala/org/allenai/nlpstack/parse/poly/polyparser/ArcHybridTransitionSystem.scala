@@ -424,17 +424,23 @@ case class ArcHybridRequestedArcInterpretation(
       case ArcHybridLeftArc(_) =>
         (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
           case (Some(stackFirst), Some(bufferFirst)) =>
-            val otherToken = arcTokens - stackFirst
+            val otherToken = (arcTokens - stackFirst).head
             arcTokens.contains(stackFirst) &&
-              !arcTokens.contains(bufferFirst) && state.stillActive(otherToken.head)
+              !arcTokens.contains(bufferFirst) &&
+              (state.stack.contains(otherToken) ||
+                otherToken == 0 ||
+                (state.bufferPosition > 0 && state.bufferPosition <= otherToken))
           case _ => false
         }
       case ArcHybridRightArc(_) =>
         (StackRef(0)(state).headOption, StackRef(1)(state).headOption) match {
           case (Some(stackFirst), Some(stackSecond)) =>
-            val otherToken = arcTokens - stackFirst
+            val otherToken = (arcTokens - stackFirst).head
             arcTokens.contains(stackFirst) &&
-              !arcTokens.contains(stackSecond) && state.stillActive(otherToken.head)
+              !arcTokens.contains(stackSecond) &&
+              (state.stack.contains(otherToken) ||
+                otherToken == 0 ||
+                (state.bufferPosition > 0 && state.bufferPosition <= otherToken))
           case _ => false
         }
       case LeftLabelArc(arcLabel) =>
