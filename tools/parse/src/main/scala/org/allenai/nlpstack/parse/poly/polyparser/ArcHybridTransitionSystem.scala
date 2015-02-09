@@ -65,10 +65,11 @@ case class ArcHybridTransitionSystem(
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
   override def computeFeature(state: State): FeatureVector = {
-    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
+    val result = (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
       case Some(x) if x.startsWith("dt-") => ArcHybridTransitionSystem.labelingFeature(state)
       case _ => ArcHybridTransitionSystem.transitionFeature(state)
     }
+    result
   }
 
   override def systemSpecificInitialState(
@@ -132,6 +133,9 @@ case object ArcHybridTransitionSystem {
     new OfflineTokenFeature(StackRef(2)),
     new OfflineTokenFeature(BufferRef(0)),
     new OfflineTokenFeature(BufferRef(1)),
+    new OfflineTokenFeature(StackChildrenRef(0)),
+    new OfflineTokenFeature(StackChildrenRef(1)),
+    new OfflineTokenFeature(BufferChildrenRef(0)),
     new OfflineTokenFeature(StackGretelsRef(0)),
     new OfflineTokenFeature(StackLeftGretelsRef(0)),
     new OfflineTokenFeature(StackRightGretelsRef(0)),
@@ -181,13 +185,9 @@ case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserS
   }
 
   override def advanceState(state: TransitionParserState): State = {
-    val bufferPositionChildren: Set[Int] =
-      state.children.getOrElse(state.bufferPosition, Set.empty[Int])
     state.copy(
       stack = state.stack.tail,
       breadcrumb = state.breadcrumb + (state.stack.head -> state.bufferPosition),
-      children = state.children +
-      (state.bufferPosition -> (bufferPositionChildren + state.stack.head)),
       arcLabels = state.arcLabels +
       (Set(state.stack.head, state.bufferPosition) -> label),
       previousLink = Some((state.bufferPosition, state.stack.head)),
@@ -223,13 +223,9 @@ case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParser
   override def advanceState(state: TransitionParserState): State = {
     val stackFirst = state.stack.head
     val stackSecond = state.stack.tail.head
-    val stackSecondChildren: Set[Int] =
-      state.children.getOrElse(stackSecond, Set.empty[Int])
     val result = state.copy(
       stack = state.stack.tail,
       breadcrumb = state.breadcrumb + (stackFirst -> stackSecond),
-      children = state.children +
-      (stackSecond -> (stackSecondChildren + stackFirst)),
       arcLabels = state.arcLabels +
       (Set(stackFirst, stackSecond) -> label),
       previousLink = Some((stackSecond, stackFirst)),
@@ -264,18 +260,24 @@ case class LeftLabelArc(val label: Symbol) extends TransitionParserStateTransiti
     state.previousLink match {
       case Some((crumb, gretel)) =>
         if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+          val gretelChildren: Set[Int] =
+            state.children.getOrElse(gretel, Set.empty[Int])
           state.copy(
             arcLabels = state.arcLabels +
             (Set(crumb, gretel) -> label),
             parserMode = ArcHybridModes.TRANSITION,
-            children = ???
+            children = state.children +
+            (gretel -> (gretelChildren + crumb))
           )
         } else {
+          val crumbChildren: Set[Int] =
+            state.children.getOrElse(crumb, Set.empty[Int])
           state.copy(
             arcLabels = state.arcLabels +
             (Set(crumb, gretel) -> label),
             parserMode = ArcHybridModes.TRANSITION,
-            children = ???
+            children = state.children +
+            (crumb -> (crumbChildren + gretel))
           )
         }
       case _ => ???
@@ -297,11 +299,27 @@ case class RightLabelArc(val label: Symbol) extends TransitionParserStateTransit
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
     state.previousLink match {
       case Some((crumb, gretel)) =>
-        state.copy(
-          arcLabels = state.arcLabels +
-          (Set(crumb, gretel) -> label),
-          parserMode = ArcHybridModes.TRANSITION
-        )
+        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+          val gretelChildren: Set[Int] =
+            state.children.getOrElse(gretel, Set.empty[Int])
+          state.copy(
+            arcLabels = state.arcLabels +
+            (Set(crumb, gretel) -> label),
+            parserMode = ArcHybridModes.TRANSITION,
+            children = state.children +
+            (gretel -> (gretelChildren + crumb))
+          )
+        } else {
+          val crumbChildren: Set[Int] =
+            state.children.getOrElse(crumb, Set.empty[Int])
+          state.copy(
+            arcLabels = state.arcLabels +
+            (Set(crumb, gretel) -> label),
+            parserMode = ArcHybridModes.TRANSITION,
+            children = state.children +
+            (crumb -> (crumbChildren + gretel))
+          )
+        }
       case _ => ???
     }
   }

@@ -74,7 +74,7 @@ object NbestParser {
             sentence =>
               ParsePool(baseParser.parse(sentence, Set()) map {
                 case (parse, cost) =>
-                  (PolytreeParse.arcInverterStanford(parse), cost)
+                  (parse, cost) //(PolytreeParse.arcInverterStanford(parse), cost)
               })
           }
         }

@@ -63,6 +63,7 @@ object TokenTransform {
     def write(transform: TokenTransform): JsValue = transform match {
       case WordTransform => JsString("WordTransform")
       case BreadcrumbAssigned => JsString("BreadcrumbAssigned")
+      case BreadcrumbArc => JsString("BreadcrumbArc")
       case tp: TokenPropertyTransform => tp.toJson
       //case fp: LookAheadTransform => fp.toJson
       //case bp: LookBehindTransform => bp.toJson
@@ -78,6 +79,7 @@ object TokenTransform {
       case JsString(typeid) => typeid match {
         case "WordTransform" => WordTransform
         case "BreadcrumbAssigned" => BreadcrumbAssigned
+        case "BreadcrumbArc" => BreadcrumbArc
         case "IsBracketedTransform" => IsBracketedTransform
         case x => deserializationError(s"Invalid identifier for TokenTransform: $x")
       }
@@ -183,6 +185,25 @@ case object BreadcrumbAssigned extends TokenTransform {
 
   @transient
   override val name: Symbol = 'crumbAssigned
+}
+
+/** The BreadcrumbArc transform maps a token to the label of the arc from its breadcrumb to itself.
+  *
+  * See the definition of TokenTransform (above) for more details about the interface.
+  *
+  */
+case object BreadcrumbArc extends TokenTransform {
+
+  override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
+    state.breadcrumb.get(tokenIndex) match {
+      case Some(crumb) =>
+        Set(state.arcLabels.getOrElse(Set(crumb, tokenIndex), 'ROOT))
+      case None => Set()
+    }
+  }
+
+  @transient
+  override val name: Symbol = 'crumbArc
 }
 
 /** The NumChildrenToTheLeft transform maps a token to how many of its children appear to its

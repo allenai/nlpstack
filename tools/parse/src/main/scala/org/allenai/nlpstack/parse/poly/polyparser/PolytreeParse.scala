@@ -165,11 +165,11 @@ case class PolytreeParse(
         List(index, tokens(index).word.name, "_",
           tokens(index).getDeterministicProperty('cpos) match {
             case Token.propertyNotFound => "_"
-            case x => x
+            case x => x.name
           },
           tokens(index).getDeterministicProperty('pos) match {
             case Token.propertyNotFound => "_"
-            case x => x
+            case x => x.name
           },
           "_", crumb,
           arcLabelByEndNodes(Set(crumb, index)).name,

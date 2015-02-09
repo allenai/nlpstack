@@ -29,7 +29,7 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
       NbestList(x.scoredSculptures map {
         case (sculpture, cost) =>
           (sculpture match {
-            case parse: PolytreeParse => PolytreeParse.arcInverterStanford(parse)
+            case parse: PolytreeParse => parse //PolytreeParse.arcInverterStanford(parse)
             case y => y
           }, cost)
       })
