@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import org.allenai.common.json._
-import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 trait ProbabilisticClassifier {
@@ -38,6 +37,20 @@ object ProbabilisticClassifier {
     */
   implicit object ProbabilisticClassifierJsonFormat
       extends RootJsonFormat[ProbabilisticClassifier] {
+
+    // Override the Spray/JSON serialization for maps with integer keys, because these
+    // don't work out-of-the-box.
+    import spray.json.DefaultJsonProtocol.{ mapFormat => _, _ }
+    implicit val intMapFormat = new JsonFormat[Map[Int, Int]] {
+      override def write(map: Map[Int, Int]): JsValue = {
+        map.toSeq.toJson
+      }
+      override def read(json: JsValue): Map[Int, Int] = json match {
+        case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
+        case _ =>
+      }
+    }
+    implicit val intSeqMapFormat = indexedSeqFormat[Map[Int, Int]]
 
     implicit val decisionTreeFormat =
       jsonFormat4(DecisionTree.apply).pack("type" -> "DecisionTree")

@@ -109,17 +109,17 @@ private class Node(private var data: Option[FeatureVectorSource], val featureVec
 
   def toDecisionTree(outcomes: Iterable[Int] = outcomeCounts.keys): DecisionTree = {
     val nodeToId: Map[Node, Int] = nodes.zipWithIndex.toMap
-    val dtChild: IndexedSeq[Seq[(Int, Int)]] = nodes.toIndexedSeq map { node =>
-      (node.childrenMap.toMap mapValues { c => nodeToId(c) }).toSeq
+    val dtChild: IndexedSeq[Map[Int, Int]] = nodes.toIndexedSeq map { node =>
+      node.childrenMap.toMap mapValues { c => nodeToId(c) }
     }
     val dtSplittingFeature: IndexedSeq[Option[Int]] = nodes.toIndexedSeq map { node =>
       node.splittingFeature
     }
-    val dtOutcomeCounts: IndexedSeq[Seq[(Int, Int)]] = nodes.toIndexedSeq map { node =>
+    val dtOutcomeCounts: IndexedSeq[Map[Int, Int]] = nodes.toIndexedSeq map { node =>
       (node.outcomeCounts map {
         case (k, v) =>
           k -> (v + node.outcomeCounts.getOrElse(k, 0))
-      }).toSeq
+      })
     }
     new DecisionTree(outcomes, dtChild, dtSplittingFeature, dtOutcomeCounts)
   }

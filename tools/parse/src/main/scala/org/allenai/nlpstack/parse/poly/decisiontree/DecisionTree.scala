@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import spray.json.DefaultJsonProtocol._
+import spray.json._
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -17,8 +17,8 @@ import scala.collection.mutable
   * appearance at that node (i.e. how many times a training vector with
   * that outcome makes it to this node during classification)
   */
-case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int)]],
-  splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Seq[(Int, Int)]])
+case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]],
+  splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Map[Int, Int]])
     extends ProbabilisticClassifier {
 
   /*
@@ -61,20 +61,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
   }
 
   def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
-    outcomeHistogramMap(findDecisionPoint(featureVector))
+    outcomeHistograms(findDecisionPoint(featureVector))
   }
 
   /** All features used in the decision tree. */
   override def allFeatures: Set[Int] = splittingFeature.flatten.toSet
-
-  /** Map versions of the argument parameters (only included because Spray/JSON was not working
-    * with maps for reasons unclear to me).
-    */
-  @transient private lazy val childMap: IndexedSeq[Map[Int, Int]] = child map { c => c.toMap }
-  @transient private lazy val outcomeHistogramMap: IndexedSeq[Map[Int, Int]] =
-    outcomeHistograms map { cc =>
-      cc.toMap
-    }
 
   /** The most probable outcome at each node of the decision tree. */
   @transient private lazy val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
@@ -88,7 +79,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     * in the training data.
     */
   @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
-    outcomeHistogramMap map { cc =>
+    outcomeHistograms map { cc =>
       val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
       (ProbabilisticClassifier.normalizeDistribution(
         (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
@@ -105,7 +96,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     */
   protected def selectChild(nodeId: Int, featureVector: FeatureVector): Option[Int] = {
     splittingFeature(nodeId) flatMap { feature =>
-      childMap(nodeId).get(featureVector.getFeature(feature))
+      child(nodeId).get(featureVector.getFeature(feature))
     }
   }
 
@@ -131,12 +122,12 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
     splittingFeature(nodeId) match {
       case Some(feature) =>
         println(tabbing + featureNames(feature))
-        childMap(nodeId).get(1) match {
+        child(nodeId).get(1) match {
           case Some(child) =>
             print(featureNames, outcomeNames, child, tabbing + "  ")
           case None => println(tabbing + "  +")
         }
-        childMap(nodeId).get(0) match {
+        child(nodeId).get(0) match {
           case Some(child) =>
             print(featureNames, outcomeNames, child, tabbing + "  ")
           case None => println(tabbing + "  -")
@@ -148,5 +139,6 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Seq[(Int, Int
 }
 
 object DecisionTree {
+  import spray.json.DefaultJsonProtocol._
   implicit val dtFormat = jsonFormat4(DecisionTree.apply)
 }
