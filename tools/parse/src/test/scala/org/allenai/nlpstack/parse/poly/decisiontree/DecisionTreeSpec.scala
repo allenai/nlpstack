@@ -7,11 +7,11 @@ class DecisionTreeSpec extends UnitSpec {
   val decisionTree1 = DecisionTree(
     outcomes = Seq(0, 1),
     child = Vector(
-      Seq((0, 1), (1, 2)), // node 0
-      Seq(), // node 1
-      Seq((0, 3), (1, 4)), // node 2
-      Seq(), // node 3
-      Seq()
+      Seq((0, 1), (1, 2)).toMap, // node 0
+      Seq().toMap, // node 1
+      Seq((0, 3), (1, 4)).toMap, // node 2
+      Seq().toMap, // node 3
+      Seq().toMap
     ), // node 4
     splittingFeature = Vector(
       Some(35), // node 0
@@ -21,11 +21,11 @@ class DecisionTreeSpec extends UnitSpec {
       None
     ), // node 4
     outcomeHistograms = Vector(
-      Seq((0, 45), (1, 55)), // node 0
-      Seq((0, 29), (1, 9)), // node 1
-      Seq((0, 16), (1, 46)), // node 2
-      Seq((0, 5), (1, 10)), // node 3
-      Seq((0, 11), (1, 36))
+      Seq((0, 45), (1, 55)).toMap, // node 0
+      Seq((0, 29), (1, 9)).toMap, // node 1
+      Seq((0, 16), (1, 46)).toMap, // node 2
+      Seq((0, 5), (1, 10)).toMap, // node 3
+      Seq((0, 11), (1, 36)).toMap
     ) // node 4
   )
 

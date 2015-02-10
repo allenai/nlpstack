@@ -47,7 +47,7 @@ object ProbabilisticClassifier {
       }
       override def read(json: JsValue): Map[Int, Int] = json match {
         case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
-        case _ =>
+        case _ => ???
       }
     }
     implicit val intSeqMapFormat = indexedSeqFormat[Map[Int, Int]]
