@@ -72,10 +72,7 @@ object NbestParser {
         val candidateParses: Iterator[ParsePool] = {
           sentenceSource.sentenceIterator map {
             sentence =>
-              ParsePool(baseParser.parse(sentence, Set()) map {
-                case (parse, cost) =>
-                  (PolytreeParse.arcInverterStanford(parse), cost)
-              })
+              ParsePool(baseParser.parse(sentence, Set()))
           }
         }
         FileBasedParsePoolSource.writePools(candidateParses, clArgs.outputFilename)

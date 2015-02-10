@@ -165,11 +165,11 @@ case class PolytreeParse(
         List(index, tokens(index).word.name, "_",
           tokens(index).getDeterministicProperty('cpos) match {
             case Token.propertyNotFound => "_"
-            case x => x
+            case x => x.name
           },
           tokens(index).getDeterministicProperty('pos) match {
             case Token.propertyNotFound => "_"
-            case x => x
+            case x => x.name
           },
           "_", crumb,
           arcLabelByEndNodes(Set(crumb, index)).name,
@@ -435,7 +435,7 @@ object PolytreeParse {
     'ccomp, 'compmod, 'dep, 'det, 'infmod, 'neg, 'nmod, 'num, 'p, 'parataxis, 'partmod,
     'poss, 'prt, 'rcmod, 'rel))
 
-  val arcInverterStanford = new ArcInverter(Set('ADVMOD, 'AMOD, 'APPOS,
+  val arcInverterStanford = new ArcInverter(Set('ADVCL, 'ADVMOD, 'AMOD, 'APPOS,
     'AUX, 'AUXPASS, 'CC, 'CONJ, 'DET, 'DISCOURSE, 'MARK, 'NEG,
     'NPADVMOD, 'NN, 'NUM, 'NUMBER, 'POSS, 'POSSESSIVE, 'PRECONJ, 'PREDET,
     'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD))
