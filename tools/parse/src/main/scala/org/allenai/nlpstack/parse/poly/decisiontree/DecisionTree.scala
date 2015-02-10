@@ -79,8 +79,8 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     * in the training data.
     */
   @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
+    val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     outcomeHistograms map { cc =>
-      val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
       (ProbabilisticClassifier.normalizeDistribution(
         (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
       )).toMap
@@ -139,6 +139,17 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
 }
 
 object DecisionTree {
-  import spray.json.DefaultJsonProtocol._
+  // Override the Spray/JSON serialization for maps with integer keys, because these
+  // don't work out-of-the-box.
+  import spray.json.DefaultJsonProtocol.{ mapFormat => _, _ }
+  implicit val intMapFormat = new JsonFormat[Map[Int, Int]] {
+    override def write(map: Map[Int, Int]): JsValue = {
+      map.toSeq.toJson
+    }
+    override def read(json: JsValue): Map[Int, Int] = json match {
+      case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
+      case _ => throw new DeserializationException("Expected JSArray for int map")
+    }
+  }
   implicit val dtFormat = jsonFormat4(DecisionTree.apply)
 }
