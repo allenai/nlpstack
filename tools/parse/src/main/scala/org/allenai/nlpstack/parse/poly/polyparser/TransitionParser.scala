@@ -39,6 +39,22 @@ abstract class TransitionParser {
       constraints
     ) map { x => PolytreeParse.arcInverterStanford(x) }
   }
+
+  /** Returns all possible arc labels for this transition parser.
+    *
+    * TODO: currently this is hard-coded for Stanford labels. This should be revised to get these
+    * labels from the trained models.
+    *
+    * @return the set of all possible arc labels that the parser might use
+    */
+  def possibleArcLabels: Set[Symbol] = {
+    Set('ACOMP, 'ADVCL, 'ADVMOD, 'AMOD, 'APPOS,
+      'AUX, 'AUXPASS, 'CC, 'CCOMP, 'CONJ, 'COP, 'CSUBJ, 'CSUBJPASS, 'DEP,
+      'DET, 'DISCOURSE, 'DOBJ, 'EXPL, 'GOESWITH, 'IOBJ, 'MARK, 'MWE, 'NEG,
+      'NN, 'NPADVMOD, 'NSUBJ, 'NSUBJPASS, 'NUM, 'NUMBER, 'PARATAXIS, 'PCOMP, 'POBJ, 'POSS,
+      'POSSESSIVE, 'PRECONJ, 'PREDET,
+      'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'ROOT, 'TMOD, 'VMOD, 'XCOMP)
+  }
 }
 
 object TransitionParser {
