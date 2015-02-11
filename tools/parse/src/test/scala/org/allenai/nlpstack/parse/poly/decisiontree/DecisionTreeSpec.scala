@@ -22,10 +22,10 @@ class DecisionTreeSpec extends UnitSpec {
     ), // node 4
     outcomeHistograms = Vector(
       Map(0 -> 45, 1 -> 55), // node 0
-      Map(0 -> 29, 1 -> 9).toMap, // node 1
-      Map(0 -> 16, 1 -> 46).toMap, // node 2
-      Map(0 -> 5, 1 -> 10).toMap, // node 3
-      Map(0 -> 11, 1 -> 36).toMap
+      Map(0 -> 29, 1 -> 9), // node 1
+      Map(0 -> 16, 1 -> 46), // node 2
+      Map(0 -> 5, 1 -> 10), // node 3
+      Map(0 -> 11, 1 -> 36)
     ) // node 4
   )
 
