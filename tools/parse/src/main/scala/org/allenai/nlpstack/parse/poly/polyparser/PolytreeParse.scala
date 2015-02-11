@@ -436,7 +436,7 @@ object PolytreeParse {
     'poss, 'prt, 'rcmod, 'rel))
 
   val arcInverterStanford = new ArcInverter(Set('ADVCL, 'ADVMOD, 'AMOD, 'APPOS,
-    'AUX, 'AUXPASS, 'CC, 'CONJ, 'DET, 'DISCOURSE, 'MARK, 'NEG,
+    'AUX, 'AUXPASS, 'CC, 'CONJ, 'DET, 'DISCOURSE, 'GOESWITH, 'MARK, 'MWE, 'NEG,
     'NPADVMOD, 'NN, 'NUM, 'NUMBER, 'POSS, 'POSSESSIVE, 'PRECONJ, 'PREDET,
     'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD))
 

@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import org.allenai.common.json._
-import spray.json.DefaultJsonProtocol._
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 trait ProbabilisticClassifier {
 
@@ -39,8 +39,7 @@ object ProbabilisticClassifier {
   implicit object ProbabilisticClassifierJsonFormat
       extends RootJsonFormat[ProbabilisticClassifier] {
 
-    implicit val decisionTreeFormat =
-      jsonFormat4(DecisionTree.apply).pack("type" -> "DecisionTree")
+    implicit val decisionTreeFormat = DecisionTree.dtFormat.pack("type" -> "DecisionTree")
     implicit val randomForestFormat =
       jsonFormat2(RandomForest.apply).pack(
         "type" -> "RandomForest"
