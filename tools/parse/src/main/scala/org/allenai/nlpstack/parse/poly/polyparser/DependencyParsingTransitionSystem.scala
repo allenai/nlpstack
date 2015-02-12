@@ -103,30 +103,27 @@ case class LabelLeftArc(val label: Symbol) extends TransitionParserStateTransiti
 
   override def advanceState(state: TransitionParserState): State = {
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
-    state.previousLink match {
-      case Some((crumb, gretel)) =>
-        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
-          val gretelChildren: Set[Int] =
-            state.children.getOrElse(gretel, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = DependencyParserModes.TRANSITION,
-            children = state.children +
-            (gretel -> (gretelChildren + crumb))
-          )
-        } else {
-          val crumbChildren: Set[Int] =
-            state.children.getOrElse(crumb, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = DependencyParserModes.TRANSITION,
-            children = state.children +
-            (crumb -> (crumbChildren + gretel))
-          )
-        }
-      case _ => ???
+    val (crumb, gretel) = state.previousLink.get
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+      val gretelChildren: Set[Int] =
+        state.children.getOrElse(gretel, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (gretel -> (gretelChildren + crumb))
+      )
+    } else {
+      val crumbChildren: Set[Int] =
+        state.children.getOrElse(crumb, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (crumb -> (crumbChildren + gretel))
+      )
     }
   }
 
@@ -143,30 +140,27 @@ case class LabelRightArc(val label: Symbol) extends TransitionParserStateTransit
 
   override def advanceState(state: TransitionParserState): State = {
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
-    state.previousLink match {
-      case Some((crumb, gretel)) =>
-        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
-          val gretelChildren: Set[Int] =
-            state.children.getOrElse(gretel, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = DependencyParserModes.TRANSITION,
-            children = state.children +
-            (gretel -> (gretelChildren + crumb))
-          )
-        } else {
-          val crumbChildren: Set[Int] =
-            state.children.getOrElse(crumb, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = DependencyParserModes.TRANSITION,
-            children = state.children +
-            (crumb -> (crumbChildren + gretel))
-          )
-        }
-      case _ => ???
+    val (crumb, gretel) = state.previousLink.get
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+      val gretelChildren: Set[Int] =
+        state.children.getOrElse(gretel, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (gretel -> (gretelChildren + crumb))
+      )
+    } else {
+      val crumbChildren: Set[Int] =
+        state.children.getOrElse(crumb, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (crumb -> (crumbChildren + gretel))
+      )
     }
   }
 

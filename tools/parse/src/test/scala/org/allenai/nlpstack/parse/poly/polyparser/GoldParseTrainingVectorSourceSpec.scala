@@ -49,7 +49,7 @@ class GoldParseTrainingVectorSourceSpec extends UnitSpec {
     * do not permit features to be specified during construction. They will be re-enabled when
     * these functionality returns. */
   /*
-  "Calling TrainingVectorGenerator's generate" should "create parse1's feature vectors" in {
+   "Calling TrainingVectorGenerator's generate" should "create parse1's feature vectors" in {
     val feat = new FeatureUnion(List(
       new TokenTransformFeature(StackRef(0), Set(WordTransform)),
       new TokenTransformFeature(BufferRef(0), Set(WordTransform))

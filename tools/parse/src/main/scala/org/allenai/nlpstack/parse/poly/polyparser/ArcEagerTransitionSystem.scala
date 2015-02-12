@@ -292,20 +292,13 @@ case class ArcEagerForbiddenArcInterpretation(
 ) extends ParsingConstraintInterpretation {
 
   def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
-    state match {
-      case tpState: TransitionParserState =>
-        StackRef(0)(tpState).headOption match {
-          case Some(stackTop) => BufferRef(0)(tpState).headOption match {
-            case Some(bufferTop) => transition match {
-              case ArcEagerShift => false
-              case ArcEagerReduce => false
-              case _ => {
-                Set(forbiddenArc.token1, forbiddenArc.token2) == Set(stackTop, bufferTop)
-              }
-            }
-            case None => false
-          }
-          case None => false
+    (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
+      case (Some(stackTop), Some(bufferTop)) =>
+        transition match {
+          case ArcEagerShift => false
+          case ArcEagerReduce => false
+          case _ =>
+            Set(forbiddenArc.token1, forbiddenArc.token2) == Set(stackTop, bufferTop)
         }
       case _ => false
     }

@@ -72,24 +72,12 @@ object Training {
 
     println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
-      ArcEagerTransitionSystem(clusters)
-    //ArcHybridTransitionSystem(clusters)
-    //val taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
-    //val taskIdentifier: TaskIdentifier = HybridApplicabilitySignatureIdentifier
-    //val taskIdentifier: TaskIdentifier = TaskConjunctionIdentifier(List(), None)
-
-    //val baseCostFunction: Option[ClassifierBasedCostFunction] =
-    //  config.baseModelPath match {
-    //    case "" => None
-    //    case _ => Some(ClassifierBasedCostFunction.load(config.baseModelPath))
-    //  }
+      ArcHybridTransitionSystem(clusters)
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
-    //val classifierTrainer: ProbabilisticClassifierTrainer = new DecisionTreeTrainer(0.3)
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
-    //new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
     val trainingVectorSource = new GoldParseTrainingVectorSource(
       trainingSource,
       transitionSystem, baseCostFunction
