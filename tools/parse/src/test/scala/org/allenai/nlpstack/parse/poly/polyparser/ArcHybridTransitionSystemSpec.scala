@@ -83,19 +83,19 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
       ArcHybridShift,
       ArcHybridLeftArc(),
-      LeftLabelArc('DET),
+      LabelLeftArc('DET),
       ArcHybridShift,
       ArcHybridLeftArc(),
-      LeftLabelArc('NSUBJ),
+      LabelLeftArc('NSUBJ),
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridRightArc(),
-      RightLabelArc('POBJ),
+      LabelRightArc('POBJ),
       ArcHybridRightArc(),
-      RightLabelArc('PREP),
+      LabelRightArc('PREP),
       ArcHybridLeftArc(),
-      LeftLabelArc('ROOT),
+      LabelLeftArc('ROOT),
       ArcHybridShift
     ))
   }
@@ -110,14 +110,14 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridRightArc(),
-      RightLabelArc('b2c),
+      LabelRightArc('b2c),
       ArcHybridRightArc(),
-      RightLabelArc('a2b),
+      LabelRightArc('a2b),
       ArcHybridShift,
       ArcHybridRightArc(),
-      RightLabelArc('a2d),
+      LabelRightArc('a2d),
       ArcHybridLeftArc(),
-      LeftLabelArc('n2a),
+      LabelLeftArc('n2a),
       ArcHybridShift
     ))
   }
@@ -162,7 +162,7 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LeftLabelArc('DET),
+        LabelLeftArc('DET),
         ArcHybridShift
       )
     )
@@ -178,10 +178,10 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LeftLabelArc('DET),
+        LabelLeftArc('DET),
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LeftLabelArc('NSUBJ),
+        LabelLeftArc('NSUBJ),
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridShift
@@ -204,10 +204,10 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
         ArcHybridLeftArc()
       )
     )
-    interpretation1(state.get, LeftLabelArc('DET)) shouldBe true
-    interpretation2(state.get, LeftLabelArc('DET)) shouldBe false
-    interpretation3(state.get, LeftLabelArc('DET)) shouldBe false
-    interpretation4(state.get, LeftLabelArc('DET)) shouldBe false
+    interpretation1(state.get, LabelLeftArc('DET)) shouldBe true
+    interpretation2(state.get, LabelLeftArc('DET)) shouldBe false
+    interpretation3(state.get, LabelLeftArc('DET)) shouldBe false
+    interpretation4(state.get, LabelLeftArc('DET)) shouldBe false
   }
 
   it should "return true for a mislabeled right arc" in {
@@ -221,20 +221,20 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LeftLabelArc('DET),
+        LabelLeftArc('DET),
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LeftLabelArc('NSUBJ),
+        LabelLeftArc('NSUBJ),
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridRightArc()
       )
     )
-    interpretation1(state.get, RightLabelArc('POBJ)) shouldBe true
-    interpretation2(state.get, RightLabelArc('POBJ)) shouldBe false
-    interpretation3(state.get, RightLabelArc('POBJ)) shouldBe false
-    interpretation4(state.get, RightLabelArc('POBJ)) shouldBe false
+    interpretation1(state.get, LabelRightArc('POBJ)) shouldBe true
+    interpretation2(state.get, LabelRightArc('POBJ)) shouldBe false
+    interpretation3(state.get, LabelRightArc('POBJ)) shouldBe false
+    interpretation4(state.get, LabelRightArc('POBJ)) shouldBe false
   }
 }
 

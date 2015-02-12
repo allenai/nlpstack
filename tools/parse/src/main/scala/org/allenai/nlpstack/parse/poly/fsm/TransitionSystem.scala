@@ -22,7 +22,7 @@ object TransitionSystem {
 
   implicit object TransitionSystemJsonFormat extends RootJsonFormat[TransitionSystem] {
     implicit val arcEagerFormat =
-      jsonFormat3(ArcEagerTransitionSystem.apply).pack("type" -> "ArcEagerTransitionSystem")
+      jsonFormat1(ArcEagerTransitionSystem.apply).pack("type" -> "ArcEagerTransitionSystem")
     implicit val arcHybridFormat =
       jsonFormat1(ArcHybridTransitionSystem.apply).pack("type" -> "ArcHybridTransitionSystem")
 

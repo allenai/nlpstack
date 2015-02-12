@@ -4,7 +4,7 @@ import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionSystem
 
-class ParserConstraintsSpec extends UnitSpec {
+class ArcEagerConstraintsSpec extends UnitSpec {
   // scalastyle:off
 
   /** This represents the following parser state:
@@ -52,8 +52,6 @@ class ParserConstraintsSpec extends UnitSpec {
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerLeftArc('foo)) shouldBe true
     interpretation(state1, ArcEagerRightArc('foo)) shouldBe true
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe true
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe true
   }
 
   it should "return false for a LeftArc if the stack top and buffer top do not match the " +
@@ -88,21 +86,18 @@ class ParserConstraintsSpec extends UnitSpec {
       val constraint = RequestedArc(0, 5, None)
       val interpretation = arcEagerSystem.interpretConstraint(constraint)
       interpretation(state1, ArcEagerRightArc('foo)) shouldBe true
-      interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe true
     }
 
   it should "return false if we draw a right arc to node B and A and B are already neighbors" in {
     val constraint = RequestedArc(3, 5, None)
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerRightArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe false
   }
 
   it should "return false if we draw a right arc to node B and A is the stack top" in {
     val constraint = RequestedArc(2, 5, None)
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerRightArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe false
   }
 
   it should "return true if we reduce node A and A and B aren't yet " +
@@ -129,60 +124,33 @@ class ParserConstraintsSpec extends UnitSpec {
       val constraint = RequestedArc(2, 6, None)
       val interpretation = arcEagerSystem.interpretConstraint(constraint)
       interpretation(state1, ArcEagerLeftArc('foo)) shouldBe true
-      interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe true
     }
 
   it should "return false if we draw a left arc to node A and A and B are already neighbors" in {
     val constraint = RequestedArc(2, 1, None)
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerLeftArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe false
   }
 
   it should "return false if we draw a left arc to node A and B is the stack top" in {
     val constraint = RequestedArc(2, 5, None)
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerLeftArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe false
   }
 
   it should "return false if we draw an arc between A and B with the right label" in {
     val constraint = RequestedArc(2, 5, Some('foo))
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerLeftArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe false
     interpretation(state1, ArcEagerRightArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe false
   }
 
-  it should "return true if we draw an arc between A and B with the wrong label" in {
-    val constraint = RequestedArc(2, 5, Some('foo))
-    val interpretation = arcEagerSystem.interpretConstraint(constraint)
-    interpretation(state1, ArcEagerLeftArc('bar)) shouldBe true
-    interpretation(state1, ArcEagerInvertedLeftArc('bar)) shouldBe true
-    interpretation(state1, ArcEagerRightArc('bar)) shouldBe true
-    interpretation(state1, ArcEagerInvertedRightArc('bar)) shouldBe true
-  }
-
-  "Calling ForbiddenArcLabel's .apply" should "return true if we draw an arc between " +
-    "A and B with the forbidden label" in {
-
-    val constraint = ForbiddenArcLabel(2, 5, 'foo)
-    val interpretation = arcEagerSystem.interpretConstraint(constraint)
-    interpretation(state1, ArcEagerLeftArc('foo)) shouldBe true
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe true
-    interpretation(state1, ArcEagerRightArc('foo)) shouldBe true
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe true
-  }
-
-  it should "return false if we draw an arc between " +
+  "Calling ForbiddenArcLabel's .apply" should "return false if we draw an arc between " +
     "A and B with some non-forbidden label" in {
 
     val constraint = ForbiddenArcLabel(2, 5, 'bar)
     val interpretation = arcEagerSystem.interpretConstraint(constraint)
     interpretation(state1, ArcEagerLeftArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedLeftArc('foo)) shouldBe false
     interpretation(state1, ArcEagerRightArc('foo)) shouldBe false
-    interpretation(state1, ArcEagerInvertedRightArc('foo)) shouldBe false
   }
 }

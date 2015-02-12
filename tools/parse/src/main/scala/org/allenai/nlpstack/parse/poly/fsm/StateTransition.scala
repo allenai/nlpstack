@@ -42,23 +42,17 @@ object StateTransition {
       case rt: ArcEagerRightArc => {
         JsObject(rightArcFormat.write(rt).asJsObject.fields + ("type" -> JsString("Rt")))
       }
-      case lx: ArcEagerInvertedLeftArc => {
-        JsObject(invertedLeftArcFormat.write(lx).asJsObject.fields + ("type" -> JsString("Lx")))
-      }
-      case rx: ArcEagerInvertedRightArc => {
-        JsObject(invertedRightArcFormat.write(rx).asJsObject.fields + ("type" -> JsString("Rx")))
-      }
       case hylt: ArcHybridLeftArc => {
         JsObject(hybridLeftArcFormat.write(hylt).asJsObject.fields + ("type" -> JsString("HyLt")))
       }
       case hyrt: ArcHybridRightArc => {
         JsObject(hybridRightArcFormat.write(hyrt).asJsObject.fields + ("type" -> JsString("HyRt")))
       }
-      case larc: LeftLabelArc => {
+      case larc: LabelLeftArc => {
         JsObject(leftLabelArcFormat.write(larc).asJsObject.fields +
           ("type" -> JsString("LtLbl")))
       }
-      case larc: RightLabelArc => {
+      case larc: LabelRightArc => {
         JsObject(rightLabelArcFormat.write(larc).asJsObject.fields +
           ("type" -> JsString("RtLbl")))
       }
@@ -79,8 +73,6 @@ object StateTransition {
       case JsObject(values) => values("type") match {
         case JsString("Lt") => leftArcFormat.read(value)
         case JsString("Rt") => rightArcFormat.read(value)
-        case JsString("Lx") => invertedLeftArcFormat.read(value)
-        case JsString("Rx") => invertedRightArcFormat.read(value)
         case JsString("HyLt") => hybridLeftArcFormat.read(value)
         case JsString("HyRt") => hybridRightArcFormat.read(value)
         case JsString("LtLbl") => leftLabelArcFormat.read(value)
@@ -94,14 +86,10 @@ object StateTransition {
 
   val leftArcFormat: RootJsonFormat[ArcEagerLeftArc] = jsonFormat1(ArcEagerLeftArc.apply)
   val rightArcFormat: RootJsonFormat[ArcEagerRightArc] = jsonFormat1(ArcEagerRightArc.apply)
-  val invertedLeftArcFormat: RootJsonFormat[ArcEagerInvertedLeftArc] =
-    jsonFormat1(ArcEagerInvertedLeftArc.apply)
-  val invertedRightArcFormat: RootJsonFormat[ArcEagerInvertedRightArc] =
-    jsonFormat1(ArcEagerInvertedRightArc.apply)
   val hybridLeftArcFormat: RootJsonFormat[ArcHybridLeftArc] = jsonFormat1(ArcHybridLeftArc.apply)
   val hybridRightArcFormat: RootJsonFormat[ArcHybridRightArc] = jsonFormat1(ArcHybridRightArc.apply)
-  val leftLabelArcFormat: RootJsonFormat[LeftLabelArc] = jsonFormat1(LeftLabelArc.apply)
-  val rightLabelArcFormat: RootJsonFormat[RightLabelArc] = jsonFormat1(RightLabelArc.apply)
+  val leftLabelArcFormat: RootJsonFormat[LabelLeftArc] = jsonFormat1(LabelLeftArc.apply)
+  val rightLabelArcFormat: RootJsonFormat[LabelRightArc] = jsonFormat1(LabelRightArc.apply)
   val addNodeLabelFormat: RootJsonFormat[AddNodeLabel] = jsonFormat1(AddNodeLabel.apply)
 }
 

@@ -62,17 +62,3 @@ case class ApplicabilitySignature(val shift: Boolean, val reduce: Boolean, val l
     }).mkString
   }
 }
-
-/** The ApplicabilitySignatureIdentifier identifies the ClassificationTask of a parser state
-  * according to the state's applicability signature (for an ArcEager transition system).
-  */
-object ApplicabilitySignatureIdentifier extends TaskIdentifier {
-  override def apply(state: State): Option[ClassificationTask] = {
-    Some(ApplicabilitySignature(
-      StateTransition.applicable(ArcEagerShift, Some(state)),
-      StateTransition.applicable(ArcEagerReduce, Some(state)),
-      ArcEagerLeftArc.applicable(state), ArcEagerRightArc.applicable(state)
-    ))
-  }
-}
-
