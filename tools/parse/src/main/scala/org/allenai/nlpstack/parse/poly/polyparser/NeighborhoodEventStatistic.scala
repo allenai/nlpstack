@@ -42,6 +42,11 @@ case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Nei
     sigMap
   }
 
+  @transient val uniqueEventCount = transformedEventCounts.size
+
+  @transient val singletonEventCount =
+    (transformedEventCounts filter { case (_, eventCount) => eventCount == 1 }).size
+
   @transient private val transformedEventCountSum: Int = {
     transformedEventCounts.values reduce { (x, y) => x + y }
   }
@@ -119,6 +124,8 @@ object NeighborhoodEventStatistic {
     val stat = NeighborhoodEventStatistic("arclabelstat", childNeighborhoodCounts._3,
       TokenPropTransform('cpos))
     println(stat.toString)
+    println(s"Number of unique events: ${stat.uniqueEventCount}")
+    println(s"Number of singleton events: ${stat.singletonEventCount}")
   }
 }
 
