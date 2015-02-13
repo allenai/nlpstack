@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import scopt.OptionParser
 import spray.json.DefaultJsonProtocol._
 
 /** Collects statistics over "neighborhood events."
@@ -54,5 +56,69 @@ case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Nei
 
 object NeighborhoodEventStatistic {
   implicit val eventStatisticJsonFormat = jsonFormat3(NeighborhoodEventStatistic.apply)
+
+  def main(args: Array[String]) {
+    val optionParser = new OptionParser[PRTPOCommandLine]("ParseRerankerTrainingPhaseOne") {
+      opt[String]('g', "goldfile") required () valueName ("<file>") action { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
+      opt[String]('c', "clusters") valueName ("<file>") action { (x, c) => c.copy(clustersPath = x) } text ("the path to the Brown cluster files " +
+        "(in Liang format, comma-separated filenames)")
+      opt[String]('d', "datasource") required () valueName ("<file>") action { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
+        "('datastore','local')") validate { x =>
+          if (Set("datastore", "local").contains(x)) {
+            success
+          } else {
+            failure(s"unsupported data source: ${x}")
+          }
+        }
+    }
+    val clArgs: PRTPOCommandLine =
+      optionParser.parse(args, PRTPOCommandLine()).get
+    val clusters: Seq[BrownClusters] = {
+      if (clArgs.clustersPath != "") {
+        clArgs.clustersPath.split(",") map { path =>
+          BrownClusters.fromLiangFormat(path)
+        }
+      } else {
+        Seq[BrownClusters]()
+      }
+    }
+
+    val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
+      clArgs.goldParseFilename,
+      ConllX(true, makePoly = true), clArgs.dataSource
+    )
+
+    println("Initializing features.")
+    //val leftChildNeighborhoodCounts = ("leftChild", LeftChildrenExtractor,
+    //  Neighborhood.countNeighborhoods(
+    //    new ExtractorBasedNeighborhoodSource(goldParseSource, LeftChildrenExtractor)))
+    //val rightChildNeighborhoodCounts = ("rightChild", RightChildrenExtractor,
+    //  Neighborhood.countNeighborhoods(
+    //    new ExtractorBasedNeighborhoodSource(goldParseSource, RightChildrenExtractor)))
+    val childNeighborhoodCounts = ("child",
+      ChildrenExtractor,
+      Neighborhood.countNeighborhoods(
+        new ExtractorBasedNeighborhoodSource(goldParseSource, ChildrenExtractor)
+      ))
+    val crumbNeighborhoodCounts = ("crumb",
+      BreadcrumbExtractor,
+      Neighborhood.countNeighborhoods(
+        new ExtractorBasedNeighborhoodSource(goldParseSource, BreadcrumbExtractor)
+      ))
+    //val path3NeighborhoodCounts = ("path3", RootPathExtractor(3),
+    //  Neighborhood.countNeighborhoods(
+    //    new ExtractorBasedNeighborhoodSource(goldParseSource, RootPathExtractor(3))))
+
+    val transforms = Seq(
+      ("brown", BrownTransform(clusters.head, 100, "brown")),
+      ("arclabel", TokenPropTransform('arclabel)),
+      ("cpos", TokenPropTransform('cpos)),
+      ("pos", TokenPropTransform('factoriePos))
+    )
+
+    val stat = NeighborhoodEventStatistic("arclabelstat", childNeighborhoodCounts._3,
+      TokenPropTransform('cpos))
+    println(stat.toString)
+  }
 }
 
