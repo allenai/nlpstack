@@ -4,6 +4,16 @@ import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters, S
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
+/** A struct contains the "modes" of a typical transition parser.
+  *
+  * Specifically, the mode tells you what the next expected action is.
+  */
+object DependencyParserModes {
+  val TRANSITION: Int = 0
+  val LEFTLABEL: Int = 1
+  val RIGHTLABEL: Int = 2
+}
+
 abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownClusters] = Seq())
     extends TransitionSystem {
 
@@ -82,4 +92,78 @@ object DependencyParsingTransitionSystem {
 
   val keywords = WordClusters.commonWords ++ WordClusters.puncWords ++
     WordClusters.stopWords
+}
+
+/** The LabelLeftArc operator labels the most recently created left-facing arc. */
+case class LabelLeftArc(val label: Symbol) extends TransitionParserStateTransition {
+
+  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
+    state.parserMode == DependencyParserModes.LEFTLABEL
+  }
+
+  override def advanceState(state: TransitionParserState): State = {
+    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
+    val (crumb, gretel) = state.previousLink.get
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+      val gretelChildren: Set[Int] =
+        state.children.getOrElse(gretel, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (gretel -> (gretelChildren + crumb))
+      )
+    } else {
+      val crumbChildren: Set[Int] =
+        state.children.getOrElse(crumb, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (crumb -> (crumbChildren + gretel))
+      )
+    }
+  }
+
+  @transient
+  override val name: String = s"LtLbl[${label.name}]"
+}
+
+/** The LabelRightArc operator labels the most recently created right-facing arc. */
+case class LabelRightArc(val label: Symbol) extends TransitionParserStateTransition {
+
+  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
+    state.parserMode == DependencyParserModes.RIGHTLABEL
+  }
+
+  override def advanceState(state: TransitionParserState): State = {
+    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
+    val (crumb, gretel) = state.previousLink.get
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+      val gretelChildren: Set[Int] =
+        state.children.getOrElse(gretel, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (gretel -> (gretelChildren + crumb))
+      )
+    } else {
+      val crumbChildren: Set[Int] =
+        state.children.getOrElse(crumb, Set.empty[Int])
+      state.copy(
+        arcLabels = state.arcLabels +
+        (Set(crumb, gretel) -> label),
+        parserMode = DependencyParserModes.TRANSITION,
+        children = state.children +
+        (crumb -> (crumbChildren + gretel))
+      )
+    }
+  }
+
+  @transient
+  override val name: String = s"RtLbl[${label.name}]"
 }

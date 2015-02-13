@@ -4,34 +4,24 @@ import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
-/** A struct contains the "modes" of an arc-hybrid transition parser.
-  *
-  * Specifically, the mode tells you what the next expected action is.
-  */
-object ArcHybridModes {
-  val TRANSITION: Int = 0
-  val LEFTLABEL: Int = 1
-  val RIGHTLABEL: Int = 2
-}
-
 /** The ArcHybridTaskIdentifier identifies the ClassificationTask associated with a particular
-  * state of the transition system.
+  * state of the arc-hybrid transition system.
   */
 object ArcHybridTaskIdentifier extends TaskIdentifier {
   override def apply(state: State): Option[ClassificationTask] = {
     state match {
       case tpState: TransitionParserState =>
         tpState.parserMode match {
-          case ArcHybridModes.TRANSITION =>
+          case DependencyParserModes.TRANSITION =>
             Some(ApplicabilitySignature(
               StateTransition.applicable(ArcHybridShift, Some(state)),
               false,
               StateTransition.applicable(ArcHybridLeftArc('NONE), Some(state)),
               StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
             ))
-          case ArcHybridModes.LEFTLABEL =>
+          case DependencyParserModes.LEFTLABEL =>
             Some(SimpleTask("dt-leftlabel"))
-          case ArcHybridModes.RIGHTLABEL =>
+          case DependencyParserModes.RIGHTLABEL =>
             Some(SimpleTask("dt-rightlabel"))
           case _ => None
         }
@@ -55,7 +45,7 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
   * get a breadcrumb via an operator is the top of the stack. Thus the stack top is the "focal
   * point" of this transition system.
   *
-  * @param brownClusters an optional set of Brown clusters to use
+  * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcHybridTransitionSystem(
     brownClusters: Seq[BrownClusters] = Seq()
@@ -75,7 +65,7 @@ case class ArcHybridTransitionSystem(
     annotatedSentence: AnnotatedSentence
   ): TransitionParserState = {
     new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), annotatedSentence,
-      None, ArcHybridModes.TRANSITION)
+      None, DependencyParserModes.TRANSITION)
   }
 
   override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
@@ -149,7 +139,7 @@ case object ArcHybridTransitionSystem {
 case object ArcHybridShift extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    state.parserMode == ArcHybridModes.TRANSITION &&
+    state.parserMode == DependencyParserModes.TRANSITION &&
       (state.bufferPosition < state.sentence.size) &&
       !(state.bufferPosition == 0 && state.stack.nonEmpty)
   }
@@ -180,7 +170,7 @@ case object ArcHybridShift extends TransitionParserStateTransition {
 case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    (state.parserMode == ArcHybridModes.TRANSITION) && ArcHybridLeftArc.applicable(state)
+    (state.parserMode == DependencyParserModes.TRANSITION) && ArcHybridLeftArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -190,7 +180,7 @@ case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserS
       arcLabels = state.arcLabels +
       (Set(state.stack.head, state.bufferPosition) -> label),
       previousLink = Some((state.bufferPosition, state.stack.head)),
-      parserMode = ArcHybridModes.LEFTLABEL
+      parserMode = DependencyParserModes.LEFTLABEL
     )
   }
 
@@ -216,7 +206,7 @@ object ArcHybridLeftArc {
 case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    (state.parserMode == ArcHybridModes.TRANSITION) && ArcHybridRightArc.applicable(state)
+    (state.parserMode == DependencyParserModes.TRANSITION) && ArcHybridRightArc.applicable(state)
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -228,7 +218,7 @@ case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParser
       arcLabels = state.arcLabels +
       (Set(stackFirst, stackSecond) -> label),
       previousLink = Some((stackSecond, stackFirst)),
-      parserMode = ArcHybridModes.RIGHTLABEL
+      parserMode = DependencyParserModes.RIGHTLABEL
     )
     result
   }
@@ -247,86 +237,6 @@ object ArcHybridRightArc {
   }
 }
 
-/** The LabelArc operator labels the most recently created arc. */
-case class LeftLabelArc(val label: Symbol) extends TransitionParserStateTransition {
-
-  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    state.parserMode == ArcHybridModes.LEFTLABEL
-  }
-
-  override def advanceState(state: TransitionParserState): State = {
-    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
-    state.previousLink match {
-      case Some((crumb, gretel)) =>
-        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
-          val gretelChildren: Set[Int] =
-            state.children.getOrElse(gretel, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = ArcHybridModes.TRANSITION,
-            children = state.children +
-            (gretel -> (gretelChildren + crumb))
-          )
-        } else {
-          val crumbChildren: Set[Int] =
-            state.children.getOrElse(crumb, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = ArcHybridModes.TRANSITION,
-            children = state.children +
-            (crumb -> (crumbChildren + gretel))
-          )
-        }
-      case _ => ???
-    }
-  }
-
-  @transient
-  override val name: String = s"LtLbl[${label.name}]"
-}
-
-/** The LabelArc operator labels the most recently created arc. */
-case class RightLabelArc(val label: Symbol) extends TransitionParserStateTransition {
-
-  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    state.parserMode == ArcHybridModes.RIGHTLABEL
-  }
-
-  override def advanceState(state: TransitionParserState): State = {
-    require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
-    state.previousLink match {
-      case Some((crumb, gretel)) =>
-        if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
-          val gretelChildren: Set[Int] =
-            state.children.getOrElse(gretel, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = ArcHybridModes.TRANSITION,
-            children = state.children +
-            (gretel -> (gretelChildren + crumb))
-          )
-        } else {
-          val crumbChildren: Set[Int] =
-            state.children.getOrElse(crumb, Set.empty[Int])
-          state.copy(
-            arcLabels = state.arcLabels +
-            (Set(crumb, gretel) -> label),
-            parserMode = ArcHybridModes.TRANSITION,
-            children = state.children +
-            (crumb -> (crumbChildren + gretel))
-          )
-        }
-      case _ => ???
-    }
-  }
-
-  @transient
-  override val name: String = s"RtLbl[${label.name}]"
-}
-
 /** The ArcHybridGuidedCostFunction uses a gold parse tree to make deterministic decisions
   * about which transition to apply in any given state. Since the decision is uniquely determined
   * by the gold parse, the returned map will have only a single mapping that assigns zero cost
@@ -343,14 +253,14 @@ class ArcHybridGuidedCostFunction(
     val result: Map[StateTransition, Double] = state match {
       case tpState: TransitionParserState =>
         require(!tpState.isFinal)
-        if (tpState.parserMode == ArcHybridModes.LEFTLABEL) {
+        if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
           val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
-          Map(LeftLabelArc(arclabel) -> 0)
-        } else if (tpState.parserMode == ArcHybridModes.RIGHTLABEL) {
+          Map(LabelLeftArc(arclabel) -> 0)
+        } else if (tpState.parserMode == DependencyParserModes.RIGHTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
           val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
-          Map(RightLabelArc(arclabel) -> 0)
+          Map(LabelRightArc(arclabel) -> 0)
         } else if (tpState.stack.isEmpty) {
           Map(ArcHybridShift -> 0)
         } else if (tpState.bufferIsEmpty) {
@@ -442,7 +352,7 @@ case class ArcHybridRequestedArcInterpretation(
                 (state.bufferPosition > 0 && state.bufferPosition <= otherToken))
           case _ => false
         }
-      case LeftLabelArc(arcLabel) =>
+      case LabelLeftArc(arcLabel) =>
         (
           PreviousLinkCrumbRef(state).headOption,
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
@@ -451,7 +361,7 @@ case class ArcHybridRequestedArcInterpretation(
               Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
             case _ => false
           }
-      case RightLabelArc(arcLabel) =>
+      case LabelRightArc(arcLabel) =>
         (
           PreviousLinkCrumbRef(state).headOption,
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
@@ -479,13 +389,13 @@ case class ArcHybridForbiddenArcLabelInterpretation(
 
   def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
     transition match {
-      case LeftLabelArc(arcLabel) =>
+      case LabelLeftArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
             Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel
           case _ => false
         }
-      case RightLabelArc(arcLabel) =>
+      case LabelRightArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
             Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel

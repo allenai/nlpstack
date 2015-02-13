@@ -230,7 +230,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
       (cluster, clusterId) <- clusters.zipWithIndex
     } yield {
       Symbol(s"brown${clusterId}") ->
-        Set(cluster.getMostSpecificCluster(tok.getDeterministicProperty('lcase)))
+        Set(cluster.getMostSpecificCluster(Symbol(tok.word.name.toLowerCase)))
     }).toMap))
   }
 }

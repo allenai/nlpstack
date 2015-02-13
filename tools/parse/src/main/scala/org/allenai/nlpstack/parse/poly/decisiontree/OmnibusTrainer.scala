@@ -4,7 +4,7 @@ class OmnibusTrainer()
     extends ProbabilisticClassifierTrainer {
 
   val dtTrainer = new DecisionTreeTrainer(0.3)
-  val rfTrainer = new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 200))
+  val rfTrainer = new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
 
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
     val trainer = data.classificationTask.filenameFriendlyName match {

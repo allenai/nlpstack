@@ -1,73 +1,69 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
-case class ArcEagerTransitionSystem(
-    feature: StateFeature = ArcEagerTransitionSystem.defaultFeature,
-    brownClusters: Seq[BrownClusters] = Seq(),
-    taskIdentifier: TaskIdentifier = ApplicabilitySignatureIdentifier
-) extends TransitionSystem {
-
-  override def computeFeature(state: State): FeatureVector = feature(state)
-
-  @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
-    TokenPositionFeature,
-    TokenPropertyFeature('factorieCpos),
-    TokenPropertyFeature('factoriePos),
-    TokenPropertyFeature('brown0),
-    //TokenPropertyFeature('lexical),
-    //SuffixFeature(WordClusters.suffixes.toSeq),
-    KeywordFeature(ArcEagerTransitionSystem.keywords)
-  ))
-
-  override def initialState(
-    marbleBlock: MarbleBlock,
-    constraints: Seq[TransitionConstraint]
-  ): Option[State] = {
-
-    val sentence: Option[Sentence] = marbleBlock match {
-      case parse: PolytreeParse =>
-        Some(parse.sentence)
-      case sentence: Sentence =>
-        Some(sentence)
+/** The ArcEagerTaskIdentifier identifies the ClassificationTask associated with a particular
+  * state of the arc-eager transition system.
+  */
+object ArcEagerTaskIdentifier extends TaskIdentifier {
+  override def apply(state: State): Option[ClassificationTask] = {
+    state match {
+      case tpState: TransitionParserState =>
+        tpState.parserMode match {
+          case DependencyParserModes.TRANSITION =>
+            Some(ApplicabilitySignature(
+              StateTransition.applicable(ArcEagerShift, Some(state)),
+              StateTransition.applicable(ArcEagerReduce, Some(state)),
+              StateTransition.applicable(ArcEagerLeftArc('NONE), Some(state)),
+              StateTransition.applicable(ArcEagerRightArc('NONE), Some(state))
+            ))
+          case DependencyParserModes.LEFTLABEL =>
+            Some(SimpleTask("dt-leftlabel"))
+          case DependencyParserModes.RIGHTLABEL =>
+            Some(SimpleTask("dt-rightlabel"))
+          case _ => None
+        }
       case _ => None
     }
-    sentence map { sent =>
-      val taggedSentence = sent.taggedWithFactorie
-        //.taggedWithLexicalProperties
-        .taggedWithBrownClusters(brownClusters)
+  }
+}
 
-      // override factorie tags with requested tags
-      val requestedCposConstraints: Map[Int, RequestedCpos] =
-        (constraints flatMap { constraint: TransitionConstraint =>
-          constraint match {
-            case cposConstraint: RequestedCpos => Some(cposConstraint)
-            case _ => None
-          }
-        } map { constraint =>
-          (constraint.tokenIndex, constraint)
-        }).toMap
-      val overriddenSentence: Sentence = Sentence(
-        Range(0, taggedSentence.tokens.size) map { i =>
-          requestedCposConstraints.get(i)
-        } zip taggedSentence.tokens map {
-          case (maybeConstraint, tok) =>
-            maybeConstraint match {
-              case Some(constraint) =>
-                tok.updateProperties(Map(
-                  'factorieCpos -> Set(constraint.cpos),
-                  'factoriePos -> Set()
-                ))
-              case None => tok
-            }
-        }
-      )
+/** The ArcEagerTransitionSystem has four transition operators: Shift, Reduce,
+  * RightArc, and LeftArc.
+  *
+  * The Shift operator pops the next buffer item and pushes it onto the stack.
+  *
+  * The Reduce operator pops the next stack item.
+  *
+  * The RightArc operator creates an arc from the top element of the stack to the next buffer item,
+  * then performs a Shift operation.
+  *
+  * The LeftArc operator creates an arc from the next buffer item to the top element
+  * of the stack, then performs a Reduce operation.
+  *
+  * @param brownClusters an optional set of Brown clusters to use for creating features
+  */
+case class ArcEagerTransitionSystem(
+    brownClusters: Seq[BrownClusters] = Seq()
+) extends DependencyParsingTransitionSystem(brownClusters) {
 
-      val augmentedSentence = tokenFeatureTagger.tag(overriddenSentence)
-      new TransitionParserState(Vector(0), 1, Map(0 -> -1), Map(), Map(), augmentedSentence)
+  @transient
+  override val taskIdentifier: TaskIdentifier = ArcEagerTaskIdentifier
+
+  override def computeFeature(state: State): FeatureVector = {
+    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
+      case Some(x) if x.startsWith("dt-") => ArcEagerTransitionSystem.labelingFeature(state)
+      case _ => ArcEagerTransitionSystem.defaultFeature(state)
     }
+  }
+
+  override def systemSpecificInitialState(
+    annotatedSentence: AnnotatedSentence
+  ): TransitionParserState = {
+    new TransitionParserState(Vector(0), 1, Map(0 -> -1), Map(), Map(), annotatedSentence, None,
+      DependencyParserModes.TRANSITION)
   }
 
   override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
@@ -77,43 +73,17 @@ case class ArcEagerTransitionSystem(
       case _ => None
     }
 
-  override def toSculpture(state: State): Option[Sculpture] = {
-    state match {
-      case tpState: TransitionParserState =>
-        tpState.asSculpture
-      case _ =>
-        None
-    }
-  }
-
   override def interpretConstraint(
     constraint: TransitionConstraint
   ): ((State, StateTransition) => Boolean) = {
 
     constraint match {
-      case ForbiddenEdge(token1, token2) => { (state: State, transition: StateTransition) =>
-        state match {
-          case tpState: TransitionParserState =>
-            StackRef(0)(tpState).headOption match {
-              case Some(stackTop) => BufferRef(0)(tpState).headOption match {
-                case Some(bufferTop) => transition match {
-                  case ArcEagerShift => false
-                  case ArcEagerReduce => false
-                  case _ => {
-                    Set(token1, token2) == Set(stackTop, bufferTop)
-                  }
-                }
-                case None => false
-              }
-              case None => false
-            }
-          case _ => false
-        }
-      }
+      case forbiddenArc: ForbiddenEdge =>
+        ArcEagerForbiddenArcInterpretation(forbiddenArc)
       case requestedArc: RequestedArc =>
-        ArcEagerTransitionSystem.requestedArcInterpretation(requestedArc)
+        ArcEagerRequestedArcInterpretation(requestedArc)
       case forbiddenArcLabel: ForbiddenArcLabel =>
-        ArcEagerTransitionSystem.forbiddenArcLabelInterpretation(forbiddenArcLabel)
+        ArcHybridForbiddenArcLabelInterpretation(forbiddenArcLabel)
       case _ => TransitionSystem.trivialConstraint
     }
   }
@@ -121,135 +91,47 @@ case class ArcEagerTransitionSystem(
 
 case object ArcEagerTransitionSystem {
 
-  def requestedArcInterpretation(
-    requestedArc: RequestedArc
-  ): ((State, StateTransition) => Boolean) = {
-
-    val tokenA: Int = List(requestedArc.token1, requestedArc.token2).min
-    val tokenB: Int = List(requestedArc.token1, requestedArc.token2).max
-    (state: State, transition: StateTransition) => {
-      state match {
-        case tpState: TransitionParserState =>
-          (StackRef(0)(tpState).headOption, BufferRef(0)(tpState).headOption) match {
-            case (Some(stackTop), Some(bufferTop)) =>
-              transition match {
-                case ArcEagerShift => (bufferTop == tokenB) && !tpState.areNeighbors(tokenA, tokenB)
-                case ArcEagerRightArc(alabel) =>
-                  (bufferTop == tokenB &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    stackTop != tokenA) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      requestedArc.arcLabel != None &&
-                      requestedArc.arcLabel.get != alabel)
-                case ArcEagerInvertedRightArc(alabel) =>
-                  (bufferTop == tokenB &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    stackTop != tokenA) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      requestedArc.arcLabel != None &&
-                      requestedArc.arcLabel.get != alabel)
-                case ArcEagerReduce => (stackTop == tokenA) && !tpState.areNeighbors(tokenA, tokenB)
-                case ArcEagerLeftArc(alabel) =>
-                  (stackTop == tokenA &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    bufferTop != tokenB) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      requestedArc.arcLabel != None &&
-                      requestedArc.arcLabel.get != alabel)
-                case ArcEagerInvertedLeftArc(alabel) =>
-                  (stackTop == tokenA &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    bufferTop != tokenB) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      requestedArc.arcLabel != None &&
-                      requestedArc.arcLabel.get != alabel)
-                case _ => false
-              }
-            case _ => false
-          }
-        case _ => false
-      }
-    }
-  }
-
-  def forbiddenArcLabelInterpretation(
-    forbiddenArcLabel: ForbiddenArcLabel
-  ): ((State, StateTransition) => Boolean) = {
-
-    val tokenA: Int = List(forbiddenArcLabel.token1, forbiddenArcLabel.token2).min
-    val tokenB: Int = List(forbiddenArcLabel.token1, forbiddenArcLabel.token2).max
-    (state: State, transition: StateTransition) => {
-      state match {
-        case tpState: TransitionParserState =>
-          (StackRef(0)(tpState).headOption, BufferRef(0)(tpState).headOption) match {
-            case (Some(stackTop), Some(bufferTop)) =>
-              transition match {
-                case ArcEagerShift => (bufferTop == tokenB) && !tpState.areNeighbors(tokenA, tokenB)
-                case ArcEagerRightArc(alabel) =>
-                  (bufferTop == tokenB &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    stackTop != tokenA) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      forbiddenArcLabel.arcLabel == alabel)
-                case ArcEagerInvertedRightArc(alabel) =>
-                  (bufferTop == tokenB &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    stackTop != tokenA) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      forbiddenArcLabel.arcLabel == alabel)
-                case ArcEagerReduce => (stackTop == tokenA) && !tpState.areNeighbors(tokenA, tokenB)
-                case ArcEagerLeftArc(alabel) =>
-                  (stackTop == tokenA &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    bufferTop != tokenB) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      forbiddenArcLabel.arcLabel == alabel)
-                case ArcEagerInvertedLeftArc(alabel) =>
-                  (stackTop == tokenA &&
-                    !tpState.areNeighbors(tokenA, tokenB) &&
-                    bufferTop != tokenB) ||
-                    (stackTop == tokenA &&
-                      bufferTop == tokenB &&
-                      forbiddenArcLabel.arcLabel == alabel)
-                case _ => false
-              }
-            case _ => false
-          }
-        case _ => false
-      }
-    }
-  }
-
   val keywords = WordClusters.commonWords ++ WordClusters.puncWords ++
     WordClusters.stopWords
 
-  val defaultFeature = constructDefaultFeature(keywords)
+  val labelingFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+      BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
+      PreviousLinkGrandgretelRef, StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
+      StackRightGretelsRef(0), BufferGretelsRef(0))),
+    new OfflineTokenFeature(StackRef(0)),
+    new OfflineTokenFeature(StackRef(1)),
+    new OfflineTokenFeature(StackRef(2)),
+    new OfflineTokenFeature(BufferRef(0)),
+    new OfflineTokenFeature(BufferRef(1)),
+    new OfflineTokenFeature(PreviousLinkCrumbRef),
+    new OfflineTokenFeature(PreviousLinkGretelRef),
+    new OfflineTokenFeature(PreviousLinkCrumbGretelRef),
+    new OfflineTokenFeature(PreviousLinkGrandgretelRef),
+    new OfflineTokenFeature(StackGretelsRef(0)),
+    new OfflineTokenFeature(StackLeftGretelsRef(0)),
+    new OfflineTokenFeature(StackRightGretelsRef(0)),
+    new OfflineTokenFeature(StackGretelsRef(1)),
+    new OfflineTokenFeature(BufferGretelsRef(0)),
+    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
+    new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
+  ))
 
-  def constructDefaultFeature(keywords: Set[Symbol]): StateFeature = {
-    val features = List(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
-        StackGretelsRef(0), StackGretelsRef(1), BreadcrumbRef(0), StackLeftGretelsRef(0),
-        StackRightGretelsRef(1), BufferGretelsRef(0))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(StackGretelsRef(0)),
-      new OfflineTokenFeature(StackGretelsRef(1)),
-      new OfflineTokenFeature(BufferGretelsRef(0)),
-      new OfflineTokenFeature(BreadcrumbRef(0)),
-      new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
-      new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
-    )
-    new FeatureUnion(features)
-  }
+  val defaultFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
+      StackGretelsRef(0), StackGretelsRef(1), BreadcrumbRef(0), StackLeftGretelsRef(0),
+      StackRightGretelsRef(1), BufferGretelsRef(0))),
+    new OfflineTokenFeature(StackRef(0)),
+    new OfflineTokenFeature(StackRef(1)),
+    new OfflineTokenFeature(BufferRef(0)),
+    new OfflineTokenFeature(BufferRef(1)),
+    new OfflineTokenFeature(StackGretelsRef(0)),
+    new OfflineTokenFeature(StackGretelsRef(1)),
+    new OfflineTokenFeature(BufferGretelsRef(0)),
+    new OfflineTokenFeature(BreadcrumbRef(0)),
+    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
+    new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
+  ))
 }
 
 /** The ArcEagerShift operator pops the next buffer item and pushes it onto the stack. */
@@ -295,31 +177,9 @@ case object ArcEagerReduce extends TransitionParserStateTransition {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerLeftArc(val label: Symbol) extends TransitionParserStateTransition {
+case class ArcEagerLeftArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerLeftArc.applicable(state)
-  }
-
-  override def advanceState(state: TransitionParserState): State = {
-    val bufferPositionChildren: Set[Int] =
-      state.children.getOrElse(state.bufferPosition, Set.empty[Int])
-    state.copy(
-      stack = state.stack.tail,
-      breadcrumb = state.breadcrumb + (state.stack.head -> state.bufferPosition),
-      children = state.children +
-      (state.bufferPosition -> (bufferPositionChildren + state.stack.head)),
-      arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
-    )
-  }
-
-  @transient
-  override val name: String = s"Lt[${label.name}]"
-}
-
-object ArcEagerLeftArc {
-  def applicable(state: State): Boolean = {
     state match {
       case tpState: TransitionParserState =>
         (tpState.bufferPosition < tpState.sentence.size) && tpState.stack.nonEmpty &&
@@ -327,6 +187,20 @@ object ArcEagerLeftArc {
       case _ => false
     }
   }
+
+  override def advanceState(state: TransitionParserState): State = {
+    state.copy(
+      stack = state.stack.tail,
+      breadcrumb = state.breadcrumb + (state.stack.head -> state.bufferPosition),
+      arcLabels = state.arcLabels +
+      (Set(state.stack.head, state.bufferPosition) -> label),
+      previousLink = Some((state.bufferPosition, state.stack.head)),
+      parserMode = DependencyParserModes.LEFTLABEL
+    )
+  }
+
+  @transient
+  override val name: String = s"Lt[${label.name}]"
 }
 
 /** The ArcEagerRightArc operator creates an arc from the stack top to the next buffer item and then
@@ -334,32 +208,9 @@ object ArcEagerLeftArc {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerRightArc(val label: Symbol) extends TransitionParserStateTransition {
+case class ArcEagerRightArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerRightArc.applicable(state)
-  }
-
-  override def advanceState(state: TransitionParserState): State = {
-    val stackHeadChildren: Set[Int] =
-      state.children.getOrElse(state.stack.head, Set.empty[Int])
-    state.copy(
-      stack = state.bufferPosition +: state.stack,
-      bufferPosition = state.bufferPosition + 1,
-      breadcrumb = state.breadcrumb + (state.bufferPosition -> state.stack.head),
-      children = state.children +
-      (state.stack.head -> (stackHeadChildren + state.bufferPosition)),
-      arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
-    )
-  }
-
-  @transient
-  override val name: String = s"Rt[${label.name}]"
-}
-
-object ArcEagerRightArc {
-  def applicable(state: State): Boolean = {
     state match {
       case tpState: TransitionParserState =>
         // second conjunction means: if we only have one token left in the buffer, then all
@@ -370,87 +221,21 @@ object ArcEagerRightArc {
       case _ => false
     }
   }
-}
-
-/** The ArcEagerInvertedLeftArc operator creates an inverse arc from the next buffer item
-  * to the stack top and then performs a Reduce (see above).
-  *
-  * @param label the label to attach to the created arc
-  */
-case class ArcEagerInvertedLeftArc(val label: Symbol) extends TransitionParserStateTransition {
-
-  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerLeftArc.applicable(state)
-  }
 
   override def advanceState(state: TransitionParserState): State = {
-    val stackHeadChildren: Set[Int] =
-      state.children.getOrElse(state.stack.head, Set.empty[Int])
-    state.copy(
-      stack = state.stack.tail,
-      breadcrumb = state.breadcrumb + (state.stack.head -> state.bufferPosition),
-      children = state.children +
-      (state.stack.head -> (stackHeadChildren + state.bufferPosition)),
-      arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
-    )
-  }
-
-  @transient
-  override val name: String = s"Lx[${label.name}]"
-}
-
-/** The ArcEagerInvertedRightArc operator creates an inverse arc from the stack top to
-  * the next buffer item and then performs a Shift (see above).
-  *
-  * @param label the label to attach to the created arc
-  */
-case class ArcEagerInvertedRightArc(val label: Symbol) extends TransitionParserStateTransition {
-
-  override def apply(state: Option[State]): Option[State] = {
-    state filter { someState =>
-      someState match {
-        case tpState: TransitionParserState if ArcEagerRightArc.applicable(tpState) => true
-        case _ => false
-      }
-    } map { someState =>
-      someState match {
-        case tpState: TransitionParserState =>
-          val bufferPositionChildren: Set[Int] =
-            tpState.children.getOrElse(tpState.bufferPosition, Set.empty[Int])
-          tpState.copy(
-            stack = tpState.bufferPosition +: tpState.stack,
-            bufferPosition = tpState.bufferPosition + 1,
-            breadcrumb = tpState.breadcrumb + (tpState.bufferPosition -> tpState.stack.head),
-            children = tpState.children +
-            (tpState.bufferPosition -> (bufferPositionChildren + tpState.stack.head)),
-            arcLabels = tpState.arcLabels +
-            (Set(tpState.stack.head, tpState.bufferPosition) -> label)
-          )
-      }
-    }
-  }
-
-  override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    ArcEagerRightArc.applicable(state)
-  }
-
-  override def advanceState(state: TransitionParserState): State = {
-    val bufferPositionChildren: Set[Int] =
-      state.children.getOrElse(state.bufferPosition, Set.empty[Int])
     state.copy(
       stack = state.bufferPosition +: state.stack,
       bufferPosition = state.bufferPosition + 1,
       breadcrumb = state.breadcrumb + (state.bufferPosition -> state.stack.head),
-      children = state.children +
-      (state.bufferPosition -> (bufferPositionChildren + state.stack.head)),
       arcLabels = state.arcLabels +
-      (Set(state.stack.head, state.bufferPosition) -> label)
+      (Set(state.stack.head, state.bufferPosition) -> label),
+      previousLink = Some((state.stack.head, state.bufferPosition)),
+      parserMode = DependencyParserModes.RIGHTLABEL
     )
   }
 
   @transient
-  override val name: String = s"Rx[${label.name}]"
+  override val name: String = s"Rt[${label.name}]"
 }
 
 /** The ArcEagerGuidedCostFunction uses a gold parse tree to make deterministic decisions
@@ -469,24 +254,20 @@ class ArcEagerGuidedCostFunction(
     state match {
       case tpState: TransitionParserState =>
         require(tpState.stack.nonEmpty)
-        if (tpState.bufferIsEmpty) {
+        if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
+          val (crumb, gretel) = tpState.previousLink.get
+          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          Map(LabelLeftArc(arclabel) -> 0)
+        } else if (tpState.parserMode == DependencyParserModes.RIGHTLABEL) {
+          val (crumb, gretel) = tpState.previousLink.get
+          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          Map(LabelRightArc(arclabel) -> 0)
+        } else if (tpState.bufferIsEmpty) {
           Map(ArcEagerReduce -> 0)
         } else if (parse.breadcrumb(tpState.bufferPosition) == tpState.stack.head) {
-          val arcLabel = parse.arcLabelByEndNodes(Set(tpState.stack.head, tpState.bufferPosition))
-          //val arcLabel = parse.tokens(tpState.bufferPosition).getProperty('cpos).head
-          if (parse.children(tpState.stack.head).contains(tpState.bufferPosition)) {
-            Map(ArcEagerRightArc(arcLabel) -> 0)
-          } else {
-            Map(ArcEagerInvertedRightArc(arcLabel) -> 0)
-          }
+          Map(ArcEagerRightArc() -> 0)
         } else if (parse.breadcrumb(tpState.stack.head) == tpState.bufferPosition) {
-          val arcLabel = parse.arcLabelByEndNodes(Set(tpState.stack.head, tpState.bufferPosition))
-          //val arcLabel = parse.tokens(tpState.stack.head).getProperty('cpos).head
-          if (parse.children(tpState.bufferPosition).contains(tpState.stack.head)) {
-            Map(ArcEagerLeftArc(arcLabel) -> 0)
-          } else {
-            Map(ArcEagerInvertedLeftArc(arcLabel) -> 0)
-          }
+          Map(ArcEagerLeftArc() -> 0)
         } else if (tpState.stack.tail forall (!parse.areNeighbors(_, tpState.bufferPosition))) {
           // once we shift the next buffer item, we will no longer be able to attach it to anything
           // currently on the stack; therefore only shift if it has no remaining neighbors on the
@@ -500,3 +281,79 @@ class ArcEagerGuidedCostFunction(
   }
 }
 
+/** The ArcEagerForbiddenArcInterpretation handles ForbiddenArc constraints for the arc-eager
+  * system. In other words, it translates these constraints into a function that returns true
+  * for any (state, transition) pair that violates the constraint.
+  *
+  * @param forbiddenArc the forbidden arc constraint to consider
+  */
+case class ArcEagerForbiddenArcInterpretation(
+    forbiddenArc: ForbiddenEdge
+) extends ParsingConstraintInterpretation {
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
+    (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
+      case (Some(stackTop), Some(bufferTop)) =>
+        transition match {
+          case ArcEagerShift => false
+          case ArcEagerReduce => false
+          case _ =>
+            Set(forbiddenArc.token1, forbiddenArc.token2) == Set(stackTop, bufferTop)
+        }
+      case _ => false
+    }
+  }
+}
+
+/** The ArcEagerRequestedArcInterpretation handles RequestedArc constraints for the arc-eager
+  * system. In other words, it translates these constraints into a function that returns true
+  * for any (state, transition) pair that violates the constraint.
+  *
+  * @param requestedArc the requested arc constraint to consider
+  */
+case class ArcEagerRequestedArcInterpretation(
+    requestedArc: RequestedArc
+) extends ParsingConstraintInterpretation {
+
+  private val arcTokens: Set[Int] = Set(requestedArc.token1, requestedArc.token2)
+  private val tokenA: Int = List(requestedArc.token1, requestedArc.token2).min
+  private val tokenB: Int = List(requestedArc.token1, requestedArc.token2).max
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
+    (StackRef(0)(state).headOption, BufferRef(0)(state).headOption) match {
+      case (Some(stackTop), Some(bufferTop)) =>
+        transition match {
+          case ArcEagerShift => (bufferTop == tokenB) && !state.areNeighbors(tokenA, tokenB)
+          case ArcEagerRightArc(_) =>
+            bufferTop == tokenB &&
+              !state.areNeighbors(tokenA, tokenB) &&
+              stackTop != tokenA
+          case ArcEagerReduce => (stackTop == tokenA) && !state.areNeighbors(tokenA, tokenB)
+          case ArcEagerLeftArc(_) =>
+            stackTop == tokenA &&
+              !state.areNeighbors(tokenA, tokenB) &&
+              bufferTop != tokenB
+          case LabelLeftArc(arcLabel) =>
+            (
+              PreviousLinkCrumbRef(state).headOption,
+              PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
+            ) match {
+                case (Some(crumb), Some(gretel), Some(reqLabel)) =>
+                  Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+                case _ => false
+              }
+          case LabelRightArc(arcLabel) =>
+            (
+              PreviousLinkCrumbRef(state).headOption,
+              PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
+            ) match {
+                case (Some(crumb), Some(gretel), Some(reqLabel)) =>
+                  Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+                case _ => false
+              }
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+}

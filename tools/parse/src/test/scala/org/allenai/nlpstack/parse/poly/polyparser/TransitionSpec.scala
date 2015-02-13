@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Sentence, NexusToken, Token}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm.StateTransition
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -11,11 +11,7 @@ class TransitionSpec extends UnitSpec {
 
   val leftArc: StateTransition = new ArcEagerLeftArc('dummy)
 
-  val invLeftArc: StateTransition = new ArcEagerInvertedLeftArc('dummy)
-
   val rightArc: StateTransition = new ArcEagerRightArc('dummy)
-
-  val invRightArc: StateTransition = new ArcEagerInvertedRightArc('dummy)
 
   val tokens1: Vector[Token] = Vector(NexusToken, Token('we), Token('saw), Token('a),
     Token('white), Token('cat), Token('with), Token('a), Token('telescope))
@@ -64,7 +60,6 @@ class TransitionSpec extends UnitSpec {
   val state3a: TransitionParserState = TransitionParserState(Vector(3, 2, 0), 4, breadcrumb3,
     children3, arcLabels3, AnnotatedSentence(Sentence(tokens3), IndexedSeq()))
 
-
   "Calling shift's apply" should "give back a shifted state" in {
     ArcEagerShift(Some(state1)) shouldBe
       Some(TransitionParserState(Vector(3, 2, 0), 4, state1.breadcrumb,
@@ -81,42 +76,28 @@ class TransitionSpec extends UnitSpec {
     leftArc(Some(state1b)) shouldBe
       Some(TransitionParserState(Vector(3, 2, 0), 5,
         state1b.breadcrumb + (4 -> 5),
-        state1b.children + (5 -> Set(4)),
+        state1b.children,
         state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence))
-  }
-
-  "Calling inverted left arc's apply" should "have a inverted left arc in the returned state" in {
-    invLeftArc(Some(state1b)) shouldBe
-      Some(TransitionParserState(Vector(3, 2, 0), 5,
-        state1b.breadcrumb + (4 -> 5),
-        state1b.children + (4 -> Set(5)),
-        state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence))
+        state1b.annotatedSentence,
+        Some(5 -> 4),
+        DependencyParserModes.LEFTLABEL))
   }
 
   "Calling right arc's apply" should "have a right arc in the returned state" in {
     rightArc(Some(state1b)) shouldBe
       Some(TransitionParserState(Vector(5, 4, 3, 2, 0), 6,
         state1b.breadcrumb + (5 -> 4),
-        state1b.children + (4 -> Set(5)),
+        state1b.children,
         state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence))
-  }
-
-  "Calling inverted right arc's apply" should "have a inverted right arc in the returned state" in {
-    invRightArc(Some(state1b)) shouldBe
-      Some(TransitionParserState(Vector(5, 4, 3, 2, 0), 6,
-        state1b.breadcrumb + (5 -> 4),
-        state1b.children + (5 -> Set(4)),
-        state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence))
+        state1b.annotatedSentence,
+        Some(4 -> 5),
+        DependencyParserModes.RIGHTLABEL))
   }
 
   "Calling shift's applicable" should "return false for 2A since you can't shift the final buffer " +
     "item" in {
-    StateTransition.applicable(ArcEagerShift, Some(state2a)) shouldBe false
-  }
+      StateTransition.applicable(ArcEagerShift, Some(state2a)) shouldBe false
+    }
 
   it should "return false for 2B since the buffer is empty" in {
     StateTransition.applicable(ArcEagerShift, Some(state2b)) shouldBe false
@@ -140,8 +121,8 @@ class TransitionSpec extends UnitSpec {
 
   "Calling reduce's applicable" should "return false for 2A since its stack top's breadcrumb" +
     "is the nexus and there are still items left in the buffer" in {
-    StateTransition.applicable(ArcEagerReduce, Some(state2a)) shouldBe false
-  }
+      StateTransition.applicable(ArcEagerReduce, Some(state2a)) shouldBe false
+    }
 
   it should "return true for 2B since its preconds are satisfied" in {
     StateTransition.applicable(ArcEagerReduce, Some(state2b)) shouldBe true
@@ -165,70 +146,57 @@ class TransitionSpec extends UnitSpec {
 
   "Calling left arc's applicable" should "return false for 2A since the stack head has a " +
     "breadcrumb" in {
-    StateTransition.applicable(leftArc, Some(state2a)) shouldBe false
-    StateTransition.applicable(invLeftArc, Some(state2a)) shouldBe false
-  }
+      StateTransition.applicable(leftArc, Some(state2a)) shouldBe false
+    }
 
   it should "return false for 2B since the buffer is empty" in {
     StateTransition.applicable(leftArc, Some(state2b)) shouldBe false
-    StateTransition.applicable(invLeftArc, Some(state2b)) shouldBe false
   }
 
   it should "return false for 2C since the stack is empty" in {
     StateTransition.applicable(leftArc, Some(state2c)) shouldBe false
-    StateTransition.applicable(invLeftArc, Some(state2c)) shouldBe false
   }
 
   it should "return false for 2D since the stack head has a breadcrumb already" in {
     StateTransition.applicable(leftArc, Some(state2d)) shouldBe false
-    StateTransition.applicable(invLeftArc, Some(state2d)) shouldBe false
   }
 
   it should "return true for 1B since its preconds are satisfied" in {
     StateTransition.applicable(leftArc, Some(state1b)) shouldBe true
-    StateTransition.applicable(invLeftArc, Some(state1b)) shouldBe true
   }
 
   it should "return false for 3A since the stack head has a breadcrumb already" in {
     StateTransition.applicable(leftArc, Some(state3a)) shouldBe false
-    StateTransition.applicable(invLeftArc, Some(state3a)) shouldBe false
   }
 
   "Calling right arc's applicable" should "return true for 2A since its preconds are " +
     "satisfied" in {
-    StateTransition.applicable(rightArc, Some(state2a)) shouldBe true
-    StateTransition.applicable(invRightArc, Some(state2a)) shouldBe true
-  }
+      StateTransition.applicable(rightArc, Some(state2a)) shouldBe true
+    }
 
   it should "return false for 2B since the buffer is empty" in {
     StateTransition.applicable(rightArc, Some(state2b)) shouldBe false
-    StateTransition.applicable(invRightArc, Some(state2b)) shouldBe false
   }
 
   it should "return false for 2C since the stack is empty" in {
     StateTransition.applicable(rightArc, Some(state2c)) shouldBe false
-    StateTransition.applicable(invRightArc, Some(state2c)) shouldBe false
   }
 
   it should "return true for 2D since its preconds are satisfied" in {
     StateTransition.applicable(rightArc, Some(state2d)) shouldBe true
-    StateTransition.applicable(invRightArc, Some(state2d)) shouldBe true
   }
 
   it should "return true for 1B since its preconds are satisfied" in {
     StateTransition.applicable(rightArc, Some(state1b)) shouldBe true
-    StateTransition.applicable(invRightArc, Some(state1b)) shouldBe true
   }
 
   it should "return false for 3A since there exists a stack item without a breadcrumb" in {
     StateTransition.applicable(rightArc, Some(state3a)) shouldBe false
-    StateTransition.applicable(invRightArc, Some(state3a)) shouldBe false
   }
 
   "Serializing a list of Transitions" should "preserve it" in {
-    val transitions: List[StateTransition] = List(ArcEagerShift, ArcEagerReduce, ArcEagerLeftArc('a), ArcEagerRightArc('b),
-      ArcEagerInvertedLeftArc('c), ArcEagerInvertedRightArc('d))
+    val transitions: List[StateTransition] = List(ArcEagerShift, ArcEagerReduce,
+      ArcEagerLeftArc('a), ArcEagerRightArc('b))
     transitions.toJson.convertTo[List[StateTransition]] shouldBe transitions
   }
-
 }

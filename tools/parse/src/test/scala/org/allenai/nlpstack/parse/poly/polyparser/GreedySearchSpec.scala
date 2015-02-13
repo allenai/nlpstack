@@ -35,8 +35,8 @@ class GreedySearchSpec extends UnitSpec {
     )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
-    arclabels = Vector(Set((3, 'root)), Set((2, 'det)), Set((1, 'det), (3, 'nsubj)),
-      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj)))
+    arclabels = Vector(Set((3, 'ROOT)), Set((2, 'DET)), Set((1, 'DET), (3, 'NSUBJ)),
+      Set((0, 'ROOT), (2, 'NSUBJ), (4, 'PREP)), Set((3, 'PREP), (5, 'POBJ)), Set((4, 'POBJ)))
   )
 
   "Calling GreedySearch's find" should "re-create parse1" in {
@@ -46,10 +46,23 @@ class GreedySearchSpec extends UnitSpec {
       costFunction.transitionSystem.initialState(parse1.sentence, Seq()).get,
       constraints = Set()
     )
-    bestWalk map { _.transitions } shouldBe Some(List(ArcEagerShift, ArcEagerInvertedLeftArc('det),
-      ArcEagerShift, ArcEagerLeftArc('nsubj), ArcEagerRightArc('root),
-      ArcEagerInvertedRightArc('prep), ArcEagerRightArc('pobj),
-      ArcEagerReduce, ArcEagerReduce, ArcEagerReduce))
+    bestWalk map { _.transitions } shouldBe Some(List(
+      ArcEagerShift,
+      ArcEagerLeftArc(),
+      LabelLeftArc('DET),
+      ArcEagerShift,
+      ArcEagerLeftArc(),
+      LabelLeftArc('NSUBJ),
+      ArcEagerRightArc(),
+      LabelRightArc('ROOT),
+      ArcEagerRightArc(),
+      LabelRightArc('PREP),
+      ArcEagerRightArc(),
+      LabelRightArc('POBJ),
+      ArcEagerReduce,
+      ArcEagerReduce,
+      ArcEagerReduce
+    ))
   }
 
   it should "have a failure if we create an impossible constraint" in {
@@ -69,11 +82,25 @@ class GreedySearchSpec extends UnitSpec {
       costFunction.transitionSystem.initialState(parse1.sentence, Seq()).get,
       constraints = Set(ForbiddenEdge(3, 5), ForbiddenEdge(1, 3))
     )
-    bestWalk map { _.transitions } shouldBe Some(List(ArcEagerShift, ArcEagerInvertedLeftArc('det),
-      ArcEagerShift, ArcEagerLeftArc('nsubj), ArcEagerRightArc('root),
-      ArcEagerInvertedRightArc('prep), ArcEagerRightArc('pobj),
-      ArcEagerReduce, ArcEagerReduce, ArcEagerReduce))
+    bestWalk map { _.transitions } shouldBe Some(List(
+      ArcEagerShift,
+      ArcEagerLeftArc(),
+      LabelLeftArc('DET),
+      ArcEagerShift,
+      ArcEagerLeftArc(),
+      LabelLeftArc('NSUBJ),
+      ArcEagerRightArc(),
+      LabelRightArc('ROOT),
+      ArcEagerRightArc(),
+      LabelRightArc('PREP),
+      ArcEagerRightArc(),
+      LabelRightArc('POBJ),
+      ArcEagerReduce,
+      ArcEagerReduce,
+      ArcEagerReduce
+    ))
   }
+
 
   //TODO: some test that exercises a cost function that returns scores for multiple transitions
 }
