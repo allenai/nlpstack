@@ -99,7 +99,7 @@ object ParseFile {
     parser match {
       case rerankingParser: RerankingTransitionParser =>
         val oracleRerankingFunction: RerankingFunction =
-          OracleRerankingFunction(parseSource.parseIterator)
+          OracleRerankingFunction(parseSource)
         val oracleParserConfig = ParserConfiguration(
           rerankingParser.config.parsingCostFunction,
           //parserConfig.labelingCostFunction,

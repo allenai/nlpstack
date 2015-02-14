@@ -69,7 +69,7 @@ object ParseRerankerTrainingPhaseOne {
           ConllX(true), clArgs.dataSource
         )
       })
-    val parseCostFunction = OracleRerankingFunction(otherGoldSource.parseIterator)
+    val parseCostFunction = OracleRerankingFunction(otherGoldSource)
 
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,

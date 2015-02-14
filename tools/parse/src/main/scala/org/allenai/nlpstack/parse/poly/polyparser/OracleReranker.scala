@@ -34,7 +34,7 @@ object OracleReranker {
       ConllX(true), config.dataSource
     )
     val reranker: Reranker =
-      new Reranker(OracleRerankingFunction(goldParseSource.parseIterator))
+      new Reranker(OracleRerankingFunction(goldParseSource))
     val candidateParses =
       for {
         parsePool <- parsePoolSource.poolIterator
@@ -53,21 +53,17 @@ object OracleReranker {
   }
 }
 
-case class OracleRerankingFunction(goldParses: Iterator[PolytreeParse]) extends RerankingFunction {
+case class OracleRerankingFunction(goldParses: PolytreeParseSource) extends RerankingFunction {
 
-  val scoringFunction: ParseScore = {
-    val goldParseMap: Map[String, PolytreeParse] = (goldParses map { parse =>
-      (parse.sentence.asWhitespaceSeparatedString, parse)
-    }).toMap
-    PathAccuracyScore(goldParseMap)
-  }
+  val scoringFunction: ParseScore = PathAccuracyScore(
+    goldParses,
+    ignorePunctuation = true, ignorePathLabels = false
+  )
 
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
-    val parse: Option[PolytreeParse] =
-      sculpture match {
-        case parse: PolytreeParse => Some(parse)
-        case _ => None
-      }
-    1.0 - scoringFunction(parse)
+    sculpture match {
+      case parse: PolytreeParse => 1.0 - scoringFunction(parse)
+      case _ => 1.0
+    }
   }
 }
