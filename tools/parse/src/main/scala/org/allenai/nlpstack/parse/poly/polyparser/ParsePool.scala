@@ -6,6 +6,7 @@ import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.fsm.NbestList
 
 import scala.io.Source
+import scala.util.Random
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
@@ -16,6 +17,12 @@ import spray.json.DefaultJsonProtocol._
 case class ParsePool(parses: Iterable[(PolytreeParse, Double)]) {
   def toNbestList: NbestList = {
     NbestList(parses)
+  }
+
+  @transient lazy val indexedParses = parses.toIndexedSeq
+
+  def chooseRandomParse: PolytreeParse = {
+    indexedParses(Random.nextInt(indexedParses.size))._1
   }
 }
 

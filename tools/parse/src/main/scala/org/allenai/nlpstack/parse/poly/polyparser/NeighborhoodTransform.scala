@@ -71,3 +71,21 @@ case class BrownTransform(clusters: BrownClusters, k: Int,
     }
   }
 }
+
+case class SuffixNeighborhoodTransform(keysuffixes: Seq[String], override val name: String) extends NeighborhoodTransform {
+
+  override def apply(event: Neighborhood): Seq[String] = {
+    event.tokens flatMap { tok =>
+      keysuffixes filter { suffix => tok.word.name.toLowerCase.endsWith(suffix.toLowerCase) }
+    }
+  }
+}
+
+case class KeywordNeighborhoodTransform(keywords: Seq[String], override val name: String) extends NeighborhoodTransform {
+
+  override def apply(event: Neighborhood): Seq[String] = {
+    event.tokens flatMap { tok =>
+      keywords filter { keyword => tok.word.name.toLowerCase() == keyword.toLowerCase() }
+    }
+  }
+}

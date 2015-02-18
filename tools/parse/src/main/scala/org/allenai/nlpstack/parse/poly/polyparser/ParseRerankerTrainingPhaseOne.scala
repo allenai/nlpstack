@@ -76,6 +76,7 @@ object ParseRerankerTrainingPhaseOne {
       ConllX(true, makePoly = true), clArgs.dataSource
     )
 
+    /*
     println("Initializing features.")
     //val leftChildNeighborhoodCounts = ("leftChild", LeftChildrenExtractor,
     //  Neighborhood.countNeighborhoods(
@@ -156,6 +157,8 @@ object ParseRerankerTrainingPhaseOne {
           (feature(parse, origCost), goldCost)
       }
     )
+  */
+
   }
 }
 

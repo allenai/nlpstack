@@ -100,16 +100,19 @@ object NeighborhoodEventStatistic {
     //val rightChildNeighborhoodCounts = ("rightChild", RightChildrenExtractor,
     //  Neighborhood.countNeighborhoods(
     //    new ExtractorBasedNeighborhoodSource(goldParseSource, RightChildrenExtractor)))
+    /*
     val childNeighborhoodCounts = ("child",
       ChildrenExtractor,
       Neighborhood.countNeighborhoods(
         new ExtractorBasedNeighborhoodSource(goldParseSource, ChildrenExtractor)
       ))
+
     val crumbNeighborhoodCounts = ("crumb",
       BreadcrumbExtractor,
       Neighborhood.countNeighborhoods(
         new ExtractorBasedNeighborhoodSource(goldParseSource, BreadcrumbExtractor)
       ))
+
     //val path3NeighborhoodCounts = ("path3", RootPathExtractor(3),
     //  Neighborhood.countNeighborhoods(
     //    new ExtractorBasedNeighborhoodSource(goldParseSource, RootPathExtractor(3))))
@@ -126,6 +129,7 @@ object NeighborhoodEventStatistic {
     println(stat.toString)
     println(s"Number of unique events: ${stat.uniqueEventCount}")
     println(s"Number of singleton events: ${stat.singletonEventCount}")
+    */
   }
 }
 

@@ -35,9 +35,10 @@ case class CandidatePoolCorpus(pools: Iterable[CandidatePool]) {
     * the first vector is better (has lower cost) than the second, and a positive cost if the
     * second vector is better (has lower cost) than the first.
     *
-    * @param numIters number of samples to generate per pool
+    * param numIters number of samples to generate per pool
     * @return a training data corpus consisting of the resulting difference vectors
     */
+  /*
   def runSampling(numIters: Int): TrainingData = {
     TrainingData((Range(0, numIters) map { iter =>
       runOneSamplingIteration()
@@ -45,6 +46,7 @@ case class CandidatePoolCorpus(pools: Iterable[CandidatePool]) {
       (x: Iterable[(FeatureVector, Double)], y: Iterable[(FeatureVector, Double)]) => x ++ y
     }))
   }
+  */
 
   private def runOneSamplingIteration(): Iterable[(FeatureVector, Double)] = {
     pools filter { pool => pool.scoredCandidates.size >= 2 } map { pool =>

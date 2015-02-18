@@ -102,6 +102,14 @@ case class PolytreeParse(
     }
   }
 
+  @transient lazy val labeledFamilies: Seq[(Int, Seq[(Symbol, Int)])] = {
+    Range(0, tokens.size) map { tokIndex =>
+      (tokIndex, children(tokIndex).toSeq.sorted map { child =>
+        (arcLabelByEndNodes(Set(tokIndex, child)), child)
+      })
+    }
+  }
+
   @transient
   lazy val siblings: Vector[Set[Int]] = {
     breadcrumb.zipWithIndex map {
@@ -257,11 +265,12 @@ case class PolytreeParse(
   }
 
   override def toString(): String = {
-    (families map { family =>
-      (family map {
-        familyMember =>
-          s"${sentence.tokens(familyMember).word.name}[$familyMember]"
-      }).mkString(":")
+    (labeledFamilies map {
+      case (node, labeledChildren) =>
+        (s"${sentence.tokens(node).word.name}[$node]" +: (labeledChildren map {
+          case (arclabel, familyMember) =>
+            s"${arclabel.name}.${sentence.tokens(familyMember).word.name}[$familyMember]"
+        })).mkString(":")
     }).mkString(" ")
   }
 

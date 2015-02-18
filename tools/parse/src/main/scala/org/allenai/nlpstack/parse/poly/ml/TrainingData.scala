@@ -21,7 +21,7 @@ object FeatureEncoding {
   *
   * @param labeledVectors a sequence of feature vectors labeled with doubles
   */
-case class TrainingData(labeledVectors: Iterable[(FeatureVector, Double)]) {
+case class TrainingData(labeledVectors: Iterable[(FeatureVector, Int)]) {
 
   /** The set of feature names found in the training data. */
   lazy val featureNames: Set[FeatureName] = {
@@ -31,24 +31,6 @@ case class TrainingData(labeledVectors: Iterable[(FeatureVector, Double)]) {
     })
     featureNameSets.fold(Set[FeatureName]())((x: Set[FeatureName], y: Set[FeatureName]) =>
       x union y)
-  }
-
-  /** Creates "positive" and "negative" feature vectors according to whether the feature
-    * cost is greater than `margin` or less than -`margin`, respectively.
-    *
-    * Feature vectors that are within `margin` of zero are filtered from the traing data.
-    *
-    * @param margin the absolute threshold that determines whether a vector is kept
-    * @return a TrainingData instance where all costs are -1 or 1
-    */
-  def binarize(margin: Double): BinaryTrainingData = {
-    new BinaryTrainingData(labeledVectors filter {
-      case (_, label) =>
-        label.abs >= margin
-    } map {
-      case (vec, label) =>
-        (vec, math.signum(label))
-    })
   }
 
   /** Expresses this training data in "SVMlight" format, which is
@@ -77,21 +59,4 @@ case class TrainingData(labeledVectors: Iterable[(FeatureVector, Double)]) {
   }
 
   protected def svmLightLabel(label: Double): String = s"${label}"
-}
-
-/** A subinstance of TrainingData whose labels are -1 or 1.
-  *
-  * @param labeledVectors a sequence of feature vectors labeled with doubles
-  */
-class BinaryTrainingData(
-  override val labeledVectors: Iterable[(FeatureVector, Double)]
-)
-    extends TrainingData(labeledVectors) {
-
-  override def svmLightLabel(label: Double): String = {
-    label match {
-      case x if x < 0 => "-1"
-      case _ => "+1"
-    }
-  }
 }

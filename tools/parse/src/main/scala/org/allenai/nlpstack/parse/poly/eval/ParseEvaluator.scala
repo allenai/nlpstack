@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser.{ InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.ml.WrapperClassifier
+import org.allenai.nlpstack.parse.poly.polyparser.{ ParseNodeFeature, InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
 
 object ParseEvaluator {
 
@@ -178,33 +179,6 @@ case object PathAccuracy extends ParseStatistic {
           numTotalNoPunc += totalIncrement
       }
     }
-    /*
-    numTotal += goldParse.breadcrumb.tail.size
-    candidateParse match {
-      case Some(candParse) =>
-        if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
-          val zipped = candParse.paths.zipWithIndex.tail.zip(
-            goldParse.paths.tail
-          )
-          val nonPuncZipped = zipped filter {
-            case ((x, i), y) =>
-              goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
-          }
-          // skip the first element because it is the nexus (hence it has no breadcrumb)
-          numCorrect += zipped count
-            { case ((x, _), y) => (x == y) }
-          numCorrectNoPunc += nonPuncZipped count
-            { case ((x, _), y) => (x == y) }
-          numTotalNoPunc += nonPuncZipped.size
-        } else { // skip the parse if the tokenization is different
-          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
-            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
-          numParses -= 1
-          numTotal -= goldParse.breadcrumb.tail.size
-        }
-      case None =>
-    }
-    */
   }
 
   override def report(): Unit = {
@@ -220,6 +194,45 @@ case object PathAccuracy extends ParseStatistic {
     numCorrectNoPunc = 0
     numTotalNoPunc = 0
     numParses = 0
+  }
+}
+
+case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeature)
+    extends ParseStatistic {
+
+  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+    if (candidateParse != None) {
+      val scoringFunction = PathAccuracyScore(
+        InMemoryPolytreeParseSource(Seq(goldParse)),
+        ignorePunctuation = false, ignorePathLabels = false
+      )
+      scoringFunction.getRatio(candidateParse.get) match {
+        case (correctIncrement, totalIncrement) =>
+          if (totalIncrement > 0 && correctIncrement.toFloat / totalIncrement < 0.5) {
+            println(s"sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
+            println(s"candidate: ${candidateParse.get}")
+            println(s"gold: $goldParse")
+            val goldNodeWeirdness = Range(0, goldParse.tokens.size) map { tokenIndex =>
+              (tokenIndex, classifier.getDistribution(feature(goldParse, tokenIndex)).getOrElse(0, 0.0))
+            }
+            val weirdGoldNodes = (goldNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
+            weirdGoldNodes foreach { node => println(s"Weird gold node: $node") }
+            val candidateNodeWeirdness = Range(0, candidateParse.get.tokens.size) map { tokenIndex =>
+              (tokenIndex, classifier.getDistribution(feature(candidateParse.get, tokenIndex)).getOrElse(0, 0.0))
+            }
+            val weirdCandidateNodes = (candidateNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
+            weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
+
+            println("")
+          }
+      }
+    }
+  }
+
+  override def report(): Unit = {
+  }
+
+  override def reset(): Unit = {
   }
 }
 

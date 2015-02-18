@@ -11,8 +11,8 @@ import scala.util.Random
   * @param featureVectorSubset the subset of feature vector indices that interests us
   * @param featureSubset the subset of feature indices to consider
   */
-private class Node(private var data: Option[FeatureVectorSource], val featureVectorSubset: Seq[Int],
-    val featureSubset: Seq[Int]) {
+private class Node(data: Option[FeatureVectorSource], val featureVectorSubset: Seq[Int],
+    val featureSubset: Seq[Int], val depth: Int) {
 
   // The feature to split on, at this node.
   private var splittingFeature: Option[Int] = None
@@ -174,7 +174,8 @@ private class Node(private var data: Option[FeatureVectorSource], val featureVec
 //param validationPercentage percentage of the training vectors to hold out for validation
 class DecisionTreeTrainer(
     validationPercentage: Double,
-    featuresExaminedPerNode: Int = Integer.MAX_VALUE
+    featuresExaminedPerNode: Int = Integer.MAX_VALUE,
+    maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
 
   /** Factory constructor of DecisionTree.
@@ -215,7 +216,7 @@ class DecisionTreeTrainer(
     featuresExaminedPerNode: Int): Node = {
 
     val root = new Node(Some(data), featureVectorSubset,
-      (0 to data.numFeatures - 1).toIndexedSeq)
+      (0 to data.numFeatures - 1).toIndexedSeq, depth = 0)
     val stack = mutable.Stack[Node]()
     stack.push(root)
     while (stack.nonEmpty) {
@@ -224,6 +225,7 @@ class DecisionTreeTrainer(
       // detects termination conditions: if no more features are available to split on, or
       // all remaining feature vectors are labeled with the same outcome
       if (!(node.featureSubset.isEmpty ||
+        node.depth > maximumDepth ||
         node.featureVectorSubset.forall(data.getNthVector(_).outcome ==
           data.getNthVector(node.featureVectorSubset.head).outcome))) {
 
@@ -253,7 +255,8 @@ class DecisionTreeTrainer(
               nonzeroFeatures.drop(bestFeatureIndex + 1)
           }
           for ((featVal, childFeatureVectorSubset) <- subsets) {
-            val child = new Node(Some(data), childFeatureVectorSubset, childFeatureSubset)
+            val child = new Node(Some(data), childFeatureVectorSubset, childFeatureSubset,
+              node.depth + 1)
             node.addChild(featVal, child)
             stack.push(child)
           }

@@ -22,16 +22,16 @@ object PolytreeParseFeature {
     */
   implicit object PolytreeParseFeatureJsonFormat extends RootJsonFormat[PolytreeParseFeature] {
 
-    implicit val eventStatisticFeaturesFormat =
-      jsonFormat2(EventStatisticFeatures.apply).pack("type" -> "EventStatisticFeatures")
+    //implicit val eventStatisticFeaturesFormat =
+    //  jsonFormat2(EventStatisticFeatures.apply).pack("type" -> "EventStatisticFeatures")
     implicit val polytreeParseFeatureUnionFormat =
       jsonFormat1(PolytreeParseFeatureUnion.apply).pack("type" -> "PolytreeParseFeatureUnion")
 
     def write(feature: PolytreeParseFeature): JsValue = feature match {
       case BaseParserScoreFeature => JsString("BaseParserScoreFeature")
       case SentenceLengthFeature => JsString("SentenceLengthFeature")
-      case eventStatisticFeatures: EventStatisticFeatures =>
-        eventStatisticFeatures.toJson
+      //case eventStatisticFeatures: EventStatisticFeatures =>
+      //  eventStatisticFeatures.toJson
       case polytreeParseFeatureUnion: PolytreeParseFeatureUnion =>
         polytreeParseFeatureUnion.toJson
     }
@@ -43,7 +43,7 @@ object PolytreeParseFeature {
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
-        eventStatisticFeaturesFormat,
+        //eventStatisticFeaturesFormat,
         polytreeParseFeatureUnionFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
@@ -53,9 +53,10 @@ object PolytreeParseFeature {
 
 /** Generates a feature for each neighborhood histogram and transform in the argument list.
   *
-  * @param neighborhoodCounts the neighborhood histograms
-  * @param transforms the neighborhood transforms
+  * param neighborhoodCounts the neighborhood histograms
+  * param transforms the neighborhood transforms
   */
+/*
 case class EventStatisticFeatures(
     neighborhoodCounts: Seq[(String, NeighborhoodExtractor, Seq[(Neighborhood, Int)])],
     transforms: Seq[(String, NeighborhoodTransform)]
@@ -87,6 +88,7 @@ case class EventStatisticFeatures(
     )
   }
 }
+*/
 
 /** Simply passes along the length of the sentence as a feature. */
 case object SentenceLengthFeature extends PolytreeParseFeature {
