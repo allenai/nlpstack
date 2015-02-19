@@ -162,11 +162,11 @@ case object PathAccuracy extends ParseStatistic {
     if (candidateParse != None) {
       val scoringFunction = PathAccuracyScore(
         InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = false, ignorePathLabels = false
+        ignorePunctuation = false, ignorePathLabels = true
       )
       val scoringFunctionNoPunc = PathAccuracyScore(
         InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = true, ignorePathLabels = false
+        ignorePunctuation = true, ignorePathLabels = true
       )
       scoringFunction.getRatio(candidateParse.get) match {
         case (correctIncrement, totalIncrement) =>
@@ -217,11 +217,17 @@ case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeat
             }
             val weirdGoldNodes = (goldNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
             weirdGoldNodes foreach { node => println(s"Weird gold node: $node") }
+
             val candidateNodeWeirdness = Range(0, candidateParse.get.tokens.size) map { tokenIndex =>
               (tokenIndex, classifier.getDistribution(feature(candidateParse.get, tokenIndex)).getOrElse(0, 0.0))
             }
             val weirdCandidateNodes = (candidateNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
             weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
+
+            val weirdDescendants = Range(0, candidateParse.get.tokens.size) filter { tokenIndex =>
+              (candidateParse.get.paths(tokenIndex).toSet & weirdCandidateNodes.toSet).nonEmpty
+            }
+            weirdDescendants foreach { node => println(s"Weird descendant: $node") }
 
             println("")
           }

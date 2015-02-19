@@ -6,6 +6,7 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
   _
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
+import spray.json.DefaultJsonProtocol._
 import scala.collection.immutable.HashSet
 
 case class WrapperClassifier(
@@ -34,6 +35,8 @@ case class WrapperClassifier(
 }
 
 object WrapperClassifier {
+  implicit val wcFormat = jsonFormat2(WrapperClassifier.apply)
+
   def createDTFeatureVector(
     featureVector: FeatureVector,
     featureNameToIndex: Map[FeatureName, Int],

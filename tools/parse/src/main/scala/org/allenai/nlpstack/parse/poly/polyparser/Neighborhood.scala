@@ -65,15 +65,28 @@ object NeighborhoodExtractor {
     */
   implicit object NeighborhoodExtractorJsonFormat extends RootJsonFormat[NeighborhoodExtractor] {
 
+    implicit val singleParentTransformFormat =
+      jsonFormat1(SingleParentExtractor.apply).pack("type" -> "SingleParentExtractor")
+    implicit val singleChildTransformFormat =
+      jsonFormat1(SingleChildExtractor.apply).pack("type" -> "SingleChildExtractor")
+
     def write(extractor: NeighborhoodExtractor): JsValue = extractor match {
+      case singleParentExtractor: SingleParentExtractor => singleParentExtractor.toJson
+      case singleChildExtractor: SingleChildExtractor => singleChildExtractor.toJson
       case ChildrenExtractor => JsString("ChildrenExtractor")
+      case SelfExtractor => JsString("SelfExtractor")
     }
 
     def read(value: JsValue): NeighborhoodExtractor = value match {
       case JsString(typeid) => typeid match {
         case "ChildrenExtractor" => ChildrenExtractor
+        case "SelfExtractor" => SelfExtractor
         case x => deserializationError(s"Invalid identifier for NeighborhoodExtractor: $x")
       }
+      case jsObj: JsObject => jsObj.unpackWith(
+        singleParentTransformFormat,
+        singleChildTransformFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }

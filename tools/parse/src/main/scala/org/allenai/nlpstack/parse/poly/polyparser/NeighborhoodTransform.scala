@@ -32,15 +32,25 @@ object NeighborhoodTransform {
     implicit val tokenPropTransformFormat =
       jsonFormat1(TokenPropTransform.apply).pack("type" -> "TokenPropertyTransform")
 
+    implicit val suffixNeighborhoodTransformFormat =
+      jsonFormat2(SuffixNeighborhoodTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
+    implicit val keywordNeighborhoodTransformFormat =
+      jsonFormat2(KeywordNeighborhoodTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
+
     def write(feature: NeighborhoodTransform): JsValue = feature match {
       case brownTransform: BrownTransform =>
         brownTransform.toJson
       case tokenPropertyTransform: TokenPropTransform =>
         tokenPropertyTransform.toJson
+      case suffixNeighborhoodTransform: SuffixNeighborhoodTransform =>
+        suffixNeighborhoodTransform.toJson
+      case keywordNeighborhoodTransform: KeywordNeighborhoodTransform =>
+        keywordNeighborhoodTransform.toJson
     }
 
     def read(value: JsValue): NeighborhoodTransform = value match {
-      case jsObj: JsObject => jsObj.unpackWith(brownTransformFormat, tokenPropTransformFormat)
+      case jsObj: JsObject => jsObj.unpackWith(brownTransformFormat, tokenPropTransformFormat,
+        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat)
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }

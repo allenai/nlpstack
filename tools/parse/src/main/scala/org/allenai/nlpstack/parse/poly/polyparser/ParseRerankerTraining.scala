@@ -147,15 +147,17 @@ object ParseRerankerTraining {
     ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator,
       Set(stat, PathAccuracy, MistakeAnalyzer(classifier, feature)))
 
-    /*
     val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
     parser match {
       case rankingParser: RerankingTransitionParser =>
-        val revisedConfig = rankingParser.config.copy(parsingNbestSize = 50, rerankingFunction = rerankingFunction)
+        val revisedConfig = rankingParser.config.copy(
+          parsingNbestSize = 10,
+          rerankingFunction = rerankingFunction
+        )
         val revisedParser = RerankingTransitionParser(revisedConfig)
+        TransitionParser.save(revisedParser, clArgs.rerankerFilename)
         ParseFile.parseTestSet(revisedParser, otherGoldParseSource)
     }
-    */
   }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
@@ -199,16 +201,22 @@ object ParseRerankerTraining {
   }
 }
 
-case class WrapperClassifierRerankingFunction(classifier: WrapperClassifier, feature: ParseNodeFeature)
-    extends RerankingFunction {
+case class WrapperClassifierRerankingFunction(
+    classifier: WrapperClassifier,
+    feature: ParseNodeFeature
+) extends RerankingFunction {
 
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     sculpture match {
       case parse: PolytreeParse =>
         val nodeWeirdness = Range(0, parse.tokens.size) map { tokenIndex =>
-          classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0)
+          (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0))
         }
-        val weirdNodes = (nodeWeirdness filter { x => x >= 0.5 })
+        val weirdNodes: Set[Int] = ((nodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }).toSet
+        val weirdDescendants = Range(0, parse.tokens.size).toSet filter { tokenIndex =>
+          (parse.paths(tokenIndex).toSet & weirdNodes).nonEmpty
+        }
+        //val result = (weirdDescendants ++ weirdNodes).size.toDouble
         val result = weirdNodes.size.toDouble
         result
       case _ => Double.MaxValue
