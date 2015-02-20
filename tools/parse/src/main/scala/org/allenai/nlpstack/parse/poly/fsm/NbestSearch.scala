@@ -28,7 +28,6 @@ class NbestSearch(
     val queue = mutable.PriorityQueue[ScoredWalk]()(
       Ordering.by({ walk: ScoredWalk => -walk.score })
     )
-    var otherGoals: Seq[ScoredWalk] = Seq()
     var results: Seq[ScoredWalk] = Seq()
     var iterNumber: Int = 0
     queue.enqueue(ScoredWalk(Walk(initialState, Seq()), 0.0))
@@ -38,22 +37,21 @@ class NbestSearch(
       if (scoredWalk.walk.isGoal) {
         results = scoredWalk +: results
       } else {
-        val (mementos, constraintEncountered) =
+        val (mementos, _) =
           baseParser.getPromisingWalks(scoredWalk.walk, scoredWalk.score, constraints)
         mementos.headOption match {
           case Some(memento) =>
-            if (!constraintEncountered && memento.walk.isGoal) {
+            if (memento.walk.isGoal) {
               results = memento +: results
               queue ++= mementos.tail
             } else {
-              otherGoals = memento +: otherGoals
               queue ++= mementos
             }
           case _ =>
         }
       }
     }
-    val allWalks: Seq[ScoredWalk] = results ++ otherGoals
+    val allWalks: Seq[ScoredWalk] = results
     NbestList(
       (allWalks map { scoredWalk =>
       scoredWalk.walk.finalState flatMap { state =>

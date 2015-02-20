@@ -23,7 +23,12 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
         sentence,
         constraints.toSeq
       ) map { initState =>
-        baseParser.find(initState, config.parsingNbestSize, constraints)
+        // Only do full reranking in the absence of constraints.
+        if (constraints.isEmpty) {
+          baseParser.find(initState, config.parsingNbestSize, constraints)
+        } else {
+          baseParser.find(initState, 1, constraints)
+        }
       }
     val mappedNbestList: Option[NbestList] = nbestList map { x =>
       NbestList(x.scoredSculptures)
