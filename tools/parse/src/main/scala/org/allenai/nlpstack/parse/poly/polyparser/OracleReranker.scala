@@ -45,11 +45,10 @@ object OracleReranker {
           case _ => None
         }
       }
-    val stat = UnlabeledBreadcrumbAccuracy
-    stat.reset()
-    PathAccuracy.reset()
-    ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator,
-      Set(stat, PathAccuracy))
+    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
+      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
+    stats foreach { stat => stat.reset() }
+    ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator, stats)
   }
 }
 

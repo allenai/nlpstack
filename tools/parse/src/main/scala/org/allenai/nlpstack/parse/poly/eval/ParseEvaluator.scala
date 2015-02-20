@@ -18,7 +18,7 @@ object ParseEvaluator {
     */
   def evaluate(
     candidateParses: Iterator[Option[PolytreeParse]],
-    goldParses: Iterator[PolytreeParse], statistics: Set[ParseStatistic]
+    goldParses: Iterator[PolytreeParse], statistics: Seq[ParseStatistic]
   ) {
 
     for {
@@ -150,53 +150,6 @@ case object FirstMistakeAggregator extends ParseStatistic {
 }
 */
 
-case object PathAccuracy extends ParseStatistic {
-  var numCorrect = 0
-  var numTotal = 0
-  var numCorrectNoPunc = 0
-  var numTotalNoPunc = 0
-  var numParses = 0
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    numParses += 1
-    if (candidateParse != None) {
-      val scoringFunction = PathAccuracyScore(
-        InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = false, ignorePathLabels = true
-      )
-      val scoringFunctionNoPunc = PathAccuracyScore(
-        InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = true, ignorePathLabels = true
-      )
-      scoringFunction.getRatio(candidateParse.get) match {
-        case (correctIncrement, totalIncrement) =>
-          numCorrect += correctIncrement
-          numTotal += totalIncrement
-      }
-      scoringFunctionNoPunc.getRatio(candidateParse.get) match {
-        case (correctIncrement, totalIncrement) =>
-          numCorrectNoPunc += correctIncrement
-          numTotalNoPunc += totalIncrement
-      }
-    }
-  }
-
-  override def report(): Unit = {
-    println("Path Accuracy: %d / %d = %2.2f%%".format(numCorrect, numTotal,
-      (100.0 * numCorrect) / numTotal))
-    println("Path Accuracy (no punc): %d / %d = %2.2f%%".format(numCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numCorrectNoPunc) / numTotalNoPunc))
-  }
-
-  override def reset(): Unit = {
-    numCorrect = 0
-    numTotal = 0
-    numCorrectNoPunc = 0
-    numTotalNoPunc = 0
-    numParses = 0
-  }
-}
-
 case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeature)
     extends ParseStatistic {
 
@@ -224,11 +177,12 @@ case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeat
             val weirdCandidateNodes = (candidateNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
             weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
 
+            /*
             val weirdDescendants = Range(0, candidateParse.get.tokens.size) filter { tokenIndex =>
               (candidateParse.get.paths(tokenIndex).toSet & weirdCandidateNodes.toSet).nonEmpty
             }
             weirdDescendants foreach { node => println(s"Weird descendant: $node") }
-
+            */
             println("")
           }
       }
@@ -245,6 +199,43 @@ case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeat
 /** A ParseScore maps a candidate parse to a score. */
 trait ParseScore extends (PolytreeParse => Double) {
   def getRatio(candidateParse: PolytreeParse): (Int, Int)
+}
+
+case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
+    extends ParseStatistic {
+
+  var numCorrect = 0
+  var numTotal = 0
+  var numParses = 0
+
+  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+    numParses += 1
+    if (candidateParse != None) {
+      val scoringFunction = PathAccuracyScore(
+        InMemoryPolytreeParseSource(Seq(goldParse)),
+        ignorePunctuation, ignorePathLabels
+      )
+      scoringFunction.getRatio(candidateParse.get) match {
+        case (correctIncrement, totalIncrement) =>
+          numCorrect += correctIncrement
+          numTotal += totalIncrement
+      }
+    }
+  }
+
+  override def report(): Unit = {
+    val puncNote = Map(true -> "ignorePunc", false -> "full")
+    val labelNote = Map(true -> "unlabeled", false -> "labeled")
+    println(s"Path Accuracy (${labelNote(ignorePathLabels)}, ${puncNote(ignorePunctuation)}): " +
+      s"%d / %d = %2.2f%%".format(numCorrect, numTotal,
+        (100.0 * numCorrect) / numTotal))
+  }
+
+  override def reset(): Unit = {
+    numCorrect = 0
+    numTotal = 0
+    numParses = 0
+  }
 }
 
 /** The PathAccuracyScore computes the percentage of a candidate parse's tokens that have a

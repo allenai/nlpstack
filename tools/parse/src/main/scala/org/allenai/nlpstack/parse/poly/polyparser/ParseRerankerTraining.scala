@@ -62,13 +62,6 @@ object ParseRerankerTraining {
       }
     }
 
-    println("Initializing features.")
-    //val transforms = Seq(
-    //("brown", BrownTransform(clusters.head, 100, "brown")),
-    //("arclabel", TokenPropTransform('arclabel)),
-    //  ("cpos", TokenPropTransform('cpos))
-    //)
-
     println("Creating training vectors.")
     val nbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.nbestFilenames)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
@@ -104,9 +97,6 @@ object ParseRerankerTraining {
         ("keyword", KeywordNeighborhoodTransform(WordClusters.stopWords.toSeq map { _.name }, "keyword"))
       )),
       ChildrenArcLabelsFeature
-    //TransformedNeighborhoodHistogramFeature(Seq(
-    //  ("children", ChildrenExtractor)
-    //), transforms, goldParseSource)
     ))
 
     val trainingData = createTrainingData(goldParseSource, nbestSource, feature)
@@ -121,7 +111,7 @@ object ParseRerankerTraining {
     testData.labeledVectors foreach { x => println(x) }
 
     println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 10, 100))
+    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 5, 100))
     val classifier: WrapperClassifier = trainer(trainingData)
     evaluate(trainingData, classifier)
     evaluate(testData, classifier)
@@ -141,11 +131,11 @@ object ParseRerankerTraining {
           case _ => None
         }
       }
-    val stat = UnlabeledBreadcrumbAccuracy
-    stat.reset()
-    PathAccuracy.reset()
-    ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator,
-      Set(stat, PathAccuracy, MistakeAnalyzer(classifier, feature)))
+    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, true),
+      PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false),
+      MistakeAnalyzer(classifier, feature))
+    stats foreach { stat => stat.reset() }
+    ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
 
     val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
     parser match {
@@ -166,24 +156,40 @@ object ParseRerankerTraining {
     val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
       (parse.sentence.asWhitespaceSeparatedString, parse)
     }).toMap
-    val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
-      parsePools.poolIterator flatMap { parsePool =>
-        Range(0, 1) map { i =>
-          val randomParse = parsePool.chooseRandomParse
-          (randomParse, goldParseMap(randomParse.sentence.asWhitespaceSeparatedString))
+    val positiveExamples: Iterable[(FeatureVector, Int)] =
+      (parsePools.poolIterator flatMap { parsePool =>
+        val parse = parsePool.parses.head
+        //parsePool.parses.headOption flatMap { case (parse, _) =>
+        val goldParse = goldParseMap(parse._1.sentence.asWhitespaceSeparatedString)
+        Range(0, goldParse.sentence.tokens.size) map { tokenIndex =>
+          (feature(goldParse, tokenIndex), 1)
+        }
+      }).toIterable
+    val negativeExamples: Iterable[(FeatureVector, Int)] = {
+      Range(0, 5) flatMap { _ =>
+        val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
+          parsePools.poolIterator flatMap { parsePool =>
+            Range(0, 1) map { i =>
+              val randomParse = parsePool.chooseRandomParse
+              (randomParse, goldParseMap(randomParse.sentence.asWhitespaceSeparatedString))
+            }
+          }
+        parsePairs flatMap {
+          case (candidateParse, goldParse) =>
+            val badTokens: Set[Int] =
+              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet) map {
+                case (node, family) =>
+                  node
+              }
+            badTokens map { badToken =>
+              (feature(candidateParse, badToken), 0)
+            }
         }
       }
-    val trainingData = TrainingData((parsePairs flatMap {
-      case (candidateParse, goldParse) =>
-        val badTokens: Set[Int] =
-          (candidateParse.families.toSet -- goldParse.families.toSet) map { family =>
-            family.head
-          }
-        badTokens flatMap { badToken =>
-          Seq((feature(candidateParse, badToken), 0), (feature(goldParse, badToken), 1))
-        }
-    }).toIterable)
-    trainingData
+    }
+    println(s"Found ${positiveExamples.size} positive examples " +
+      s"and ${negativeExamples.size} negative examples")
+    TrainingData((positiveExamples ++ negativeExamples).toIterable)
   }
 
   def evaluate(trainingData: TrainingData, classifier: WrapperClassifier) {
