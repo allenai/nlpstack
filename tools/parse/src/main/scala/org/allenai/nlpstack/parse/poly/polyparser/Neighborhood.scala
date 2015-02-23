@@ -15,7 +15,7 @@ import spray.json._
   * @param tokens a sequence of tokens, usually associated in some way (see NeighborhoodExtractors
   * for examples of such associations)
   */
-case class Neighborhood(tokens: Seq[Token])
+case class Neighborhood(tokens: Seq[Int])
 
 object Neighborhood {
   implicit val neighborhoodJsonFormat = jsonFormat1(Neighborhood.apply)
@@ -74,12 +74,14 @@ object NeighborhoodExtractor {
       case singleParentExtractor: SingleParentExtractor => singleParentExtractor.toJson
       case singleChildExtractor: SingleChildExtractor => singleChildExtractor.toJson
       case ChildrenExtractor => JsString("ChildrenExtractor")
+      case ParentsExtractor => JsString("ParentsExtractor")
       case SelfExtractor => JsString("SelfExtractor")
     }
 
     def read(value: JsValue): NeighborhoodExtractor = value match {
       case JsString(typeid) => typeid match {
         case "ChildrenExtractor" => ChildrenExtractor
+        case "ParentsExtractor" => ParentsExtractor
         case "SelfExtractor" => SelfExtractor
         case x => deserializationError(s"Invalid identifier for NeighborhoodExtractor: $x")
       }
@@ -96,8 +98,15 @@ object NeighborhoodExtractor {
 case object ChildrenExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(parse.families(token) map { tok => parse.tokens(tok) }))
+    parse.children(token).toSeq map { child => Neighborhood(Seq(child)) }
+  }
+}
+
+/** Extracts neighborhoods of the form (node, child1, ..., childN) from a parse tree. */
+case object ParentsExtractor extends NeighborhoodExtractor {
+
+  override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
+    parse.getParents().getOrElse(token, Seq()) map { parent => Neighborhood(Seq(parent)) }
   }
 }
 
@@ -106,7 +115,7 @@ case object LeftChildrenExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(parse.families(token) filter { tok => tok < token } map { tok => parse.tokens(tok) }))
+    Seq(Neighborhood(parse.families(token) filter { tok => tok < token }))
   }
 }
 
@@ -115,7 +124,7 @@ case object RightChildrenExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(parse.families(token) filter { tok => tok > token } map { tok => parse.tokens(tok) }))
+    Seq(Neighborhood(parse.families(token) filter { tok => tok > token }))
   }
 }
 
@@ -123,8 +132,9 @@ case object RightChildrenExtractor extends NeighborhoodExtractor {
 case class SingleChildExtractor(childIndex: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(Seq(parse.families(token).lift(childIndex)).flatten map { tok => parse.tokens(tok) }))
+    Seq(
+      parse.families(token).lift(childIndex) map { x => Neighborhood(Seq(x, token)) }
+    ).flatten
   }
 }
 
@@ -132,8 +142,9 @@ case class SingleChildExtractor(childIndex: Int) extends NeighborhoodExtractor {
 case class SingleParentExtractor(parentIndex: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(Seq(parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex)).flatten map { tok => parse.tokens(tok) }))
+    Seq(
+      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x => Neighborhood(Seq(x, token)) }
+    ).flatten
   }
 }
 
@@ -142,7 +153,7 @@ case class SingleLeftChildExtractor(childIndex: Int) extends NeighborhoodExtract
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(Seq((parse.families(token) filter { tok => tok < token }).lift(childIndex)).flatten map { tok => parse.tokens(tok) }))
+    Seq(Neighborhood(Seq((parse.families(token) filter { tok => tok < token }).lift(childIndex)).flatten))
   }
 }
 
@@ -151,7 +162,7 @@ case class SingleRightChildExtractor(childIndex: Int) extends NeighborhoodExtrac
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     //val (mappedParse, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(Seq((parse.families(token) filter { tok => tok > token }).lift(childIndex)).flatten map { tok => parse.tokens(tok) }))
+    Seq(Neighborhood(Seq((parse.families(token) filter { tok => tok > token }).lift(childIndex)).flatten))
   }
 }
 
@@ -160,7 +171,17 @@ case object ParentChildExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     parse.children(token).toSeq map { child =>
-      Neighborhood(Seq(parse.tokens(token), parse.tokens(child)))
+      Neighborhood(Seq(token, child))
+    }
+  }
+}
+
+/** Extracts neighborhoods of the form (parent, child) from a parse tree. */
+case object ChildParentExtractor extends NeighborhoodExtractor {
+
+  override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
+    parse.getParents().getOrElse(token, Seq[Int]()).toSeq map { parent =>
+      Neighborhood(Seq(token, parent))
     }
   }
 }
@@ -170,7 +191,7 @@ case object SelfExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     //val (_, mappedTokens) = NeighborhoodExtractor.preprocessParse(parse)
-    Seq(Neighborhood(Seq(parse.tokens(token))))
+    Seq(Neighborhood(Seq(token)))
   }
 }
 

@@ -45,6 +45,8 @@ object WordClusters {
     "was", "we", "well", "were", "what", "where", "whether", "which", "while", "who", "will",
     "with", "year", "yesterday") map { Symbol(_) }
 
+  val keyWords = stopWords ++ puncWords ++ commonWords
+
   /** Maps standard Penn Treebank-style part-of-speech tags into the Google's "universal" POS set:
     *
     * https://code.google.com/p/universal-pos-tags/

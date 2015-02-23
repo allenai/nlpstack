@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, BrownClusters }
 import org.allenai.common.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -12,7 +12,7 @@ import spray.json._
   * to the sequence of their POS tags, e.g. ("VERB", "NOUN", "NOUN").
   *
   */
-trait NeighborhoodTransform extends (Neighborhood => Seq[String]) {
+trait NeighborhoodTransform extends ((PolytreeParse, Neighborhood) => Seq[FeatureName]) {
   val name: String
 }
 
@@ -29,8 +29,8 @@ object NeighborhoodTransform {
 
     implicit val brownTransformFormat =
       jsonFormat3(BrownTransform.apply).pack("type" -> "BrownTransform")
-    implicit val tokenPropTransformFormat =
-      jsonFormat1(TokenPropTransform.apply).pack("type" -> "TokenPropertyTransform")
+    //implicit val tokenPropTransformFormat =
+    //  jsonFormat1(TokenPropTransform.apply).pack("type" -> "TokenPropertyTransform")
 
     implicit val suffixNeighborhoodTransformFormat =
       jsonFormat2(SuffixNeighborhoodTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
@@ -38,10 +38,12 @@ object NeighborhoodTransform {
       jsonFormat2(KeywordNeighborhoodTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
 
     def write(feature: NeighborhoodTransform): JsValue = feature match {
+      case CposNeighborhoodTransform => JsString("CposNeighborhoodTransform")
+      case ArcLabelNeighborhoodTransform => JsString("ArcLabelNeighborhoodTransform")
       case brownTransform: BrownTransform =>
         brownTransform.toJson
-      case tokenPropertyTransform: TokenPropTransform =>
-        tokenPropertyTransform.toJson
+      //case tokenPropertyTransform: TokenPropTransform =>
+      // tokenPropertyTransform.toJson
       case suffixNeighborhoodTransform: SuffixNeighborhoodTransform =>
         suffixNeighborhoodTransform.toJson
       case keywordNeighborhoodTransform: KeywordNeighborhoodTransform =>
@@ -49,21 +51,30 @@ object NeighborhoodTransform {
     }
 
     def read(value: JsValue): NeighborhoodTransform = value match {
-      case jsObj: JsObject => jsObj.unpackWith(brownTransformFormat, tokenPropTransformFormat,
-        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat)
+      case JsString(typeid) => typeid match {
+        case "CposNeighborhoodTransform" => CposNeighborhoodTransform
+        case "ArcLabelNeighborhoodTransform" => ArcLabelNeighborhoodTransform
+        case x => deserializationError(s"Invalid identifier for NeighborhoodExtractor: $x")
+      }
+      case jsObj: JsObject => jsObj.unpackWith(
+        brownTransformFormat,
+        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }
 }
 
 /** Maps the tokens of a neighborhood to a particular property in their token's property map. */
+/*
 case class TokenPropTransform(label: Symbol) extends NeighborhoodTransform {
-  override def apply(event: Neighborhood): Seq[String] = {
-    event.tokens map { tok => tok.getDeterministicProperty(label).name }
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    event.tokens map { tok => parse.tokens(tok).getDeterministicProperty(label).name }
   }
 
   @transient override val name = label.name
 }
+*/
 
 /** Maps the tokens of a neighborhood to their respective Brown clusters.
   *
@@ -75,27 +86,60 @@ case class TokenPropTransform(label: Symbol) extends NeighborhoodTransform {
 case class BrownTransform(clusters: BrownClusters, k: Int,
     override val name: String) extends NeighborhoodTransform {
 
-  override def apply(event: Neighborhood): Seq[String] = {
-    event.tokens map { tok =>
-      clusters.getKthCluster(Symbol(tok.word.name.toLowerCase), k).name
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    clusters.getAllClusters(Symbol(parse.tokens(event.tokens(0)).word.name.toLowerCase)) map {
+      cluster => FeatureName(Seq(cluster))
     }
   }
 }
 
 case class SuffixNeighborhoodTransform(keysuffixes: Seq[String], override val name: String) extends NeighborhoodTransform {
 
-  override def apply(event: Neighborhood): Seq[String] = {
-    event.tokens flatMap { tok =>
-      keysuffixes filter { suffix => tok.word.name.toLowerCase.endsWith(suffix.toLowerCase) }
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    keysuffixes filter { suffix =>
+      parse.tokens(event.tokens(0)).word.name.toLowerCase.endsWith(suffix.toLowerCase)
+    } map { suffix =>
+      FeatureName(Seq('keysuffix, Symbol(suffix)))
     }
   }
 }
 
 case class KeywordNeighborhoodTransform(keywords: Seq[String], override val name: String) extends NeighborhoodTransform {
 
-  override def apply(event: Neighborhood): Seq[String] = {
-    event.tokens flatMap { tok =>
-      keywords filter { keyword => tok.word.name.toLowerCase() == keyword.toLowerCase() }
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    keywords filter { keyword =>
+      parse.tokens(event.tokens(0)).word.name.toLowerCase() == keyword.toLowerCase()
+    } map { keyword =>
+      FeatureName(Seq('keyword, Symbol(keyword)))
     }
   }
+}
+
+case object CposNeighborhoodTransform extends NeighborhoodTransform {
+
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    Seq(
+      FeatureName(Seq('cpos, parse.tokens(event.tokens(0)).getDeterministicProperty('cpos)))
+    )
+  }
+
+  override val name: String = "cposTransform"
+}
+
+case object ArcLabelNeighborhoodTransform extends NeighborhoodTransform {
+
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    require(event.tokens.size == 2)
+    val direction = (event.tokens(0) < event.tokens(1)) match {
+      case true => 'R
+      case false => 'L
+    }
+    Seq(
+      FeatureName(Seq(
+        'arclabel, parse.arcLabelByEndNodes(Set(event.tokens(0), event.tokens(1))), direction
+      ))
+    )
+  }
+
+  override val name: String = "arcLabel"
 }

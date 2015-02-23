@@ -14,10 +14,11 @@ import spray.json.DefaultJsonProtocol._
   * how many times each neighborhood event like (VERB, NOUN, NOUN) occurs in the corpus.
   * This is what the NeighborhoodEventStatistic does.
   *
-  * @param name a label for this object
-  * @param neighborhoodCounts a histogram over observed neighborhoods
-  * @param eventTransform a transformation from neighborhoods to events
+  * param name a label for this object
+  * param neighborhoodCounts a histogram over observed neighborhoods
+  * param eventTransform a transformation from neighborhoods to events
   */
+/*
 case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Neighborhood, Int)],
     eventTransform: NeighborhoodTransform) {
 
@@ -58,9 +59,11 @@ case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Nei
     }).mkString("\n") + s"\nTotal observations: ${transformedEventCountSum}"
   }
 }
-
+*/
+/*
 object NeighborhoodEventStatistic {
   implicit val eventStatisticJsonFormat = jsonFormat3(NeighborhoodEventStatistic.apply)
+
 
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PRTPOCommandLine]("ParseRerankerTrainingPhaseOne") {
@@ -100,7 +103,7 @@ object NeighborhoodEventStatistic {
     //val rightChildNeighborhoodCounts = ("rightChild", RightChildrenExtractor,
     //  Neighborhood.countNeighborhoods(
     //    new ExtractorBasedNeighborhoodSource(goldParseSource, RightChildrenExtractor)))
-    /*
+
     val childNeighborhoodCounts = ("child",
       ChildrenExtractor,
       Neighborhood.countNeighborhoods(
@@ -129,7 +132,8 @@ object NeighborhoodEventStatistic {
     println(stat.toString)
     println(s"Number of unique events: ${stat.uniqueEventCount}")
     println(s"Number of singleton events: ${stat.singletonEventCount}")
-    */
-  }
-}
 
+  }
+
+}
+*/

@@ -29,6 +29,7 @@ object ParseNodeFeature {
 
     def write(feature: ParseNodeFeature): JsValue = feature match {
       case ChildrenArcLabelsFeature => JsString("ChildrenArcLabelsFeature")
+      case NumChildren => JsString("NumChildren")
       case parseNodeFeatureUnion: ParseNodeFeatureUnion =>
         parseNodeFeatureUnion.toJson
       case transformedNeighborhoodFeature: TransformedNeighborhoodFeature =>
@@ -38,6 +39,7 @@ object ParseNodeFeature {
     def read(value: JsValue): ParseNodeFeature = value match {
       case JsString(typeid) => typeid match {
         case "ChildrenArcLabelsFeature" => ChildrenArcLabelsFeature
+        case "NumChildren" => NumChildren
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
@@ -73,9 +75,11 @@ case class TransformedNeighborhoodFeature(
         (extractorName, extractor) <- neighborhoodExtractors
         neighborhood <- extractor(parse, token)
         (transformName, transform) <- transforms
+        transformedNeighborhood <- transform(parse, neighborhood)
       } yield {
-        val featureName = List(extractorName, transformName) ++ transform(neighborhood)
-        FeatureName(featureName map { x => Symbol(x) }) -> 1.0
+        val featureName = (Seq(extractorName, transformName) map { x => Symbol(x) }) ++
+          transformedNeighborhood.symbols
+        FeatureName(featureName) -> 1.0
       }
     )
   }
@@ -91,50 +95,13 @@ case object ChildrenArcLabelsFeature extends ParseNodeFeature {
   }
 }
 
-/*
-case class TransformedNeighborhoodHistogramFeature(
-  neighborhoodExtractors: Seq[(String, NeighborhoodExtractor)],
-  transforms: Seq[(String, NeighborhoodTransform)],
-  goldParses: PolytreeParseSource
-) extends ParseNodeFeature {
-
-  private val histograms: Map[(String, String), Map[Seq[String], Int]] =
-    (for {
-      (extractorName, extractor) <- neighborhoodExtractors
-      (transformName, transform) <- transforms
-    } yield {
-      var histogram = Map[Seq[String], Int]()
-      goldParses.parseIterator foreach { parse =>
-        Range(1, parse.tokens.size) foreach { tokenIndex =>
-          val event: Seq[String] = transform(extractor(parse, tokenIndex))
-          histogram = histogram.updated(event, 1 + histogram.getOrElse(event, 0))
-        }
-      }
-      (extractorName, transformName) -> histogram
-    }).toMap
-
-  histograms foreach { case (label, hist) =>
-    println(label)
-    (hist.toSeq.sortBy { _._2 }) foreach { case (key, value) =>
-      println(s"$key: $value")
-    }
-  }
-
+case object NumChildren extends ParseNodeFeature {
   override def apply(parse: PolytreeParse, token: Int): FeatureVector = {
     FeatureVector(
-      for {
-        (extractorName, extractor) <- neighborhoodExtractors
-        (transformName, transform) <- transforms
-      } yield {
-        val eventCount =
-          histograms((extractorName, transformName)).getOrElse(transform(extractor(parse, token)), 0)
-        if (eventCount > 4) {
-          FeatureName(List('count5, Symbol(extractorName), Symbol(transformName))) -> 1.0
-        } else {
-          FeatureName(List('count5, Symbol(extractorName), Symbol(transformName))) -> 0.0
-        }
-      }
+      (FeatureName(Seq('numChildren, Symbol(parse.children(token).size.toString))) -> 1.0) +:
+        (Range(0, 1 + parse.children(token).size) map { numChildren =>
+          FeatureName(Seq('numChildren, Symbol(s"$numChildren+"))) -> 1.0
+        })
     )
   }
 }
-*/

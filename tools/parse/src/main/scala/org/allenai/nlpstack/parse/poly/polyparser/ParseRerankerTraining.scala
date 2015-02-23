@@ -71,32 +71,31 @@ object ParseRerankerTraining {
     val feature = new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(
         ("self", SelfExtractor),
-        ("children", ChildrenExtractor),
-        ("parent1", SingleParentExtractor(0)),
-        ("parent2", SingleParentExtractor(1)),
-        ("child1", SingleChildExtractor(1)),
-        ("child2", SingleChildExtractor(2)),
-        ("child3", SingleChildExtractor(3)),
-        ("child4", SingleChildExtractor(4)),
-        ("child5", SingleChildExtractor(5))
+        ("parent", ParentsExtractor),
+        ("child", ChildrenExtractor)
       ), Seq(
-        ("cpos", TokenPropTransform('cpos))
-      //("brown", BrownTransform(clusters.head, 100, "brown"))
-      )),
-      TransformedNeighborhoodFeature(Seq(
-        ("self", SelfExtractor),
-        ("parent1", SingleParentExtractor(0)),
-        ("parent2", SingleParentExtractor(1)),
-        ("child1", SingleChildExtractor(1)),
-        ("child2", SingleChildExtractor(2)),
-        ("child3", SingleChildExtractor(3)),
-        ("child4", SingleChildExtractor(4)),
-        ("child5", SingleChildExtractor(5))
-      ), Seq(
+        ("cpos", CposNeighborhoodTransform),
         ("suffix", SuffixNeighborhoodTransform(WordClusters.suffixes.toSeq map { _.name }, "suffix")),
         ("keyword", KeywordNeighborhoodTransform(WordClusters.stopWords.toSeq map { _.name }, "keyword"))
       )),
-      ChildrenArcLabelsFeature
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SingleParentExtractor(0)),
+        ("parent2", SingleParentExtractor(1)),
+        ("parent3", SingleParentExtractor(2)),
+        ("parent4", SingleParentExtractor(3)),
+        ("child1", SingleChildExtractor(1)),
+        ("child2", SingleChildExtractor(2)),
+        ("child3", SingleChildExtractor(3)),
+        ("child4", SingleChildExtractor(4)),
+        ("child5", SingleChildExtractor(5))
+      ), Seq(
+        //("brown", BrownTransform(clusters.head, 100, "brown")),
+        ("cpos", CposNeighborhoodTransform),
+        ("suffix", SuffixNeighborhoodTransform(WordClusters.suffixes.toSeq map { _.name }, "suffix")),
+        ("keyword", KeywordNeighborhoodTransform(WordClusters.stopWords.toSeq map { _.name }, "keyword")),
+        ("alabel", ArcLabelNeighborhoodTransform)
+      )),
+      NumChildren
     ))
 
     val trainingData = createTrainingData(goldParseSource, nbestSource, feature)
@@ -111,7 +110,7 @@ object ParseRerankerTraining {
     testData.labeledVectors foreach { x => println(x) }
 
     println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 5, 100))
+    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 10, 100))
     val classifier: WrapperClassifier = trainer(trainingData)
     evaluate(trainingData, classifier)
     evaluate(testData, classifier)
@@ -166,7 +165,7 @@ object ParseRerankerTraining {
         }
       }).toIterable
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
-      Range(0, 5) flatMap { _ =>
+      Range(0, 4) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
           parsePools.poolIterator flatMap { parsePool =>
             Range(0, 1) map { i =>
