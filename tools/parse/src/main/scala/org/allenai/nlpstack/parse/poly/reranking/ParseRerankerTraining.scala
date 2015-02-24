@@ -1,12 +1,11 @@
-package org.allenai.nlpstack.parse.poly.polyparser
-
-import java.io.{ File, PrintWriter }
+package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.decisiontree.RandomForestTrainer
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{ Reranker, Sculpture, RerankingFunction }
+import org.allenai.nlpstack.parse.poly.fsm.{ Reranker, RerankingFunction, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
+import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
 private case class PRTCommandLine(
@@ -70,32 +69,42 @@ object ParseRerankerTraining {
     )
     val feature = new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(
-        ("self", SelfExtractor),
-        ("parent", ParentsExtractor),
-        ("child", ChildrenExtractor)
+        ("children", AllChildrenExtractor)
       ), Seq(
-        ("cpos", CposNeighborhoodTransform),
-        ("suffix", SuffixNeighborhoodTransform(WordClusters.suffixes.toSeq map { _.name }, "suffix")),
-        ("keyword", KeywordNeighborhoodTransform(WordClusters.stopWords.toSeq map { _.name }, "keyword"))
+        ("card", CardinalityNhTransform)
       )),
       TransformedNeighborhoodFeature(Seq(
-        ("parent1", SingleParentExtractor(0)),
-        ("parent2", SingleParentExtractor(1)),
-        ("parent3", SingleParentExtractor(2)),
-        ("parent4", SingleParentExtractor(3)),
-        ("child1", SingleChildExtractor(1)),
-        ("child2", SingleChildExtractor(2)),
-        ("child3", SingleChildExtractor(3)),
-        ("child4", SingleChildExtractor(4)),
-        ("child5", SingleChildExtractor(5))
+        ("self", SelfExtractor),
+        ("parent", EachParentExtractor),
+        ("child", EachChildExtractor),
+        ("parent1", SpecificParentExtractor(0)),
+        ("parent2", SpecificParentExtractor(1)),
+        ("parent3", SpecificParentExtractor(2)),
+        ("parent4", SpecificParentExtractor(3)),
+        ("child1", SpecificChildExtractor(0)),
+        ("child2", SpecificChildExtractor(1)),
+        ("child3", SpecificChildExtractor(2)),
+        ("child4", SpecificChildExtractor(3)),
+        ("child5", SpecificChildExtractor(4))
       ), Seq(
-        //("brown", BrownTransform(clusters.head, 100, "brown")),
-        ("cpos", CposNeighborhoodTransform),
-        ("suffix", SuffixNeighborhoodTransform(WordClusters.suffixes.toSeq map { _.name }, "suffix")),
-        ("keyword", KeywordNeighborhoodTransform(WordClusters.stopWords.toSeq map { _.name }, "keyword")),
-        ("alabel", ArcLabelNeighborhoodTransform)
+        ("cpos", PropertyNhTransform('cpos)),
+        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
       )),
-      NumChildren
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SelfAndSpecificParentExtractor(0)),
+        ("parent2", SelfAndSpecificParentExtractor(1)),
+        ("parent3", SelfAndSpecificParentExtractor(2)),
+        ("parent4", SelfAndSpecificParentExtractor(3)),
+        ("child1", SelfAndSpecificChildExtractor(0)),
+        ("child2", SelfAndSpecificChildExtractor(1)),
+        ("child3", SelfAndSpecificChildExtractor(2)),
+        ("child4", SelfAndSpecificChildExtractor(3)),
+        ("child5", SelfAndSpecificChildExtractor(4))
+      ), Seq(
+        ("alabel", ArclabelNhTransform),
+        ("direction", DirectionNhTransform)
+      ))
     ))
 
     val trainingData = createTrainingData(goldParseSource, nbestSource, feature)
@@ -221,8 +230,8 @@ case class WrapperClassifierRerankingFunction(
         val weirdDescendants = Range(0, parse.tokens.size).toSet filter { tokenIndex =>
           (parse.paths(tokenIndex).toSet & weirdNodes).nonEmpty
         }
-        //val result = (weirdDescendants ++ weirdNodes).size.toDouble
-        val result = weirdNodes.size.toDouble
+        val result = (weirdDescendants ++ weirdNodes).size.toDouble
+        //val result = weirdNodes.size.toDouble
         result
       case _ => Double.MaxValue
     }

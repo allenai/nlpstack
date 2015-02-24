@@ -1,10 +1,8 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.ml.{
-  FeatureVector => MLFeatureVector,
-  FeatureName => MLFeatureName
-}
 import org.allenai.common.json._
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName => MLFeatureName, FeatureVector => MLFeatureVector }
+import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

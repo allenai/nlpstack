@@ -19,7 +19,7 @@ object FeatureEncoding {
   *
   * Provides various serialization options for different machine learning tools.
   *
-  * @param labeledVectors a sequence of feature vectors labeled with doubles
+  * @param labeledVectors a sequence of feature vectors labeled with integer outcomes
   */
 case class TrainingData(labeledVectors: Iterable[(FeatureVector, Int)]) {
 

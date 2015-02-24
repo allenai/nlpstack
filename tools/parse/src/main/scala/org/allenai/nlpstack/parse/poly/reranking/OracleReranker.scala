@@ -1,7 +1,8 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm._
+import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
 private case class OracleRerankerConfig(

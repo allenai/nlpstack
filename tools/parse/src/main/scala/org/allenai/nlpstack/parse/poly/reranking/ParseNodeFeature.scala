@@ -1,9 +1,10 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
+import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
+import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 import spray.json.DefaultJsonProtocol._
 import spray.json._
-import org.allenai.common.json._
 
 /** Maps a selected node of a parse tree into a feature vector. */
 abstract class ParseNodeFeature extends ((PolytreeParse, Int) => FeatureVector)
@@ -28,8 +29,6 @@ object ParseNodeFeature {
       )
 
     def write(feature: ParseNodeFeature): JsValue = feature match {
-      case ChildrenArcLabelsFeature => JsString("ChildrenArcLabelsFeature")
-      case NumChildren => JsString("NumChildren")
       case parseNodeFeatureUnion: ParseNodeFeatureUnion =>
         parseNodeFeatureUnion.toJson
       case transformedNeighborhoodFeature: TransformedNeighborhoodFeature =>
@@ -37,11 +36,6 @@ object ParseNodeFeature {
     }
 
     def read(value: JsValue): ParseNodeFeature = value match {
-      case JsString(typeid) => typeid match {
-        case "ChildrenArcLabelsFeature" => ChildrenArcLabelsFeature
-        case "NumChildren" => NumChildren
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
       case jsObj: JsObject => jsObj.unpackWith(
         parseNodeFeatureUnionFormat,
         transformedNeighborhoodFeatureFormat
@@ -81,27 +75,6 @@ case class TransformedNeighborhoodFeature(
           transformedNeighborhood.symbols
         FeatureName(featureName) -> 1.0
       }
-    )
-  }
-}
-
-case object ChildrenArcLabelsFeature extends ParseNodeFeature {
-  override def apply(parse: PolytreeParse, token: Int): FeatureVector = {
-    FeatureVector(Seq(
-      FeatureName('childArcLabels +: (parse.families(token).tail.toList map { tok =>
-        parse.arcLabelByEndNodes(Set(tok, token))
-      })) -> 1.0
-    ))
-  }
-}
-
-case object NumChildren extends ParseNodeFeature {
-  override def apply(parse: PolytreeParse, token: Int): FeatureVector = {
-    FeatureVector(
-      (FeatureName(Seq('numChildren, Symbol(parse.children(token).size.toString))) -> 1.0) +:
-        (Range(0, 1 + parse.children(token).size) map { numChildren =>
-          FeatureName(Seq('numChildren, Symbol(s"$numChildren+"))) -> 1.0
-        })
     )
   }
 }

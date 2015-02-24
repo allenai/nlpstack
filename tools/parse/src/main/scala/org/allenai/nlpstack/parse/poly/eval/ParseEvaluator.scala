@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.eval
 
 import org.allenai.nlpstack.parse.poly.ml.WrapperClassifier
-import org.allenai.nlpstack.parse.poly.polyparser.{ ParseNodeFeature, InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.polyparser.{ InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.reranking.ParseNodeFeature
 
 object ParseEvaluator {
 

@@ -6,6 +6,7 @@ import org.allenai.nlpstack.parse.poly.fsm.{
   RerankingFunction,
   FeatureUnion
 }
+import org.allenai.nlpstack.parse.poly.reranking.OracleRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
@@ -52,7 +53,7 @@ object ParseFile {
     }
     val config: ParseFileConfig = optionParser.parse(args, ParseFileConfig()).get
     val parser: TransitionParser = TransitionParser.load(config.configFilename)
-    fullParseEvaluation(parser, config.testFilename, ConllX(true), config.dataSource,
+    fullParseEvaluation(parser, config.testFilename, ConllX(false), config.dataSource,
       config.oracleNbest)
   }
 

@@ -60,7 +60,7 @@ object NbestParser {
       MultiPolytreeParseSource(clArgs.inputFilename.split(",") map { path =>
         InMemoryPolytreeParseSource.getParseSource(
           path,
-          ConllX(true), clArgs.dataSource
+          ConllX(false), clArgs.dataSource
         )
       })
 

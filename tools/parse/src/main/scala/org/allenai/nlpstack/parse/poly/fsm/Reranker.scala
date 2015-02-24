@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import org.allenai.nlpstack.parse.poly.polyparser.{ WrapperClassifierRerankingFunction, LinearParseRerankingFunction }
 import org.allenai.common.json._
+import org.allenai.nlpstack.parse.poly.reranking.{ LinearParseRerankingFunction, WrapperClassifierRerankingFunction }
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 

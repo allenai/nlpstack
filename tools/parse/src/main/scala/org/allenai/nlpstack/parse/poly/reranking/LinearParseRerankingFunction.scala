@@ -1,7 +1,8 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.LinearModel
+import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 
 /** Scores parse trees based on a linear combination of features. */
 case class LinearParseRerankingFunction(

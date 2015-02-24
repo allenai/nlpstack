@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.polyparser._
-import org.allenai.nlpstack.parse.poly.polyparser.labeler.AddNodeLabel
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -56,10 +55,6 @@ object StateTransition {
         JsObject(rightLabelArcFormat.write(larc).asJsObject.fields +
           ("type" -> JsString("RtLbl")))
       }
-      case anl: AddNodeLabel => {
-        JsObject(addNodeLabelFormat.write(anl).asJsObject.fields +
-          ("type" -> JsString("AddNodeLabel")))
-      }
     }
 
     def read(value: JsValue): StateTransition = value match {
@@ -77,7 +72,6 @@ object StateTransition {
         case JsString("HyRt") => hybridRightArcFormat.read(value)
         case JsString("LtLbl") => leftLabelArcFormat.read(value)
         case JsString("RtLbl") => rightLabelArcFormat.read(value)
-        case JsString("AddNodeLabel") => addNodeLabelFormat.read(value)
         case x => deserializationError(s"Invalid identifier for Transition: $x")
       }
       case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
@@ -90,7 +84,6 @@ object StateTransition {
   val hybridRightArcFormat: RootJsonFormat[ArcHybridRightArc] = jsonFormat1(ArcHybridRightArc.apply)
   val leftLabelArcFormat: RootJsonFormat[LabelLeftArc] = jsonFormat1(LabelLeftArc.apply)
   val rightLabelArcFormat: RootJsonFormat[LabelRightArc] = jsonFormat1(LabelRightArc.apply)
-  val addNodeLabelFormat: RootJsonFormat[AddNodeLabel] = jsonFormat1(AddNodeLabel.apply)
 }
 
 case object Fallback extends StateTransition {
