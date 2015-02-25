@@ -8,11 +8,18 @@ import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
-private case class PRTCommandLine(
+case class PRTCommandLine(
   nbestFilenames: String = "", otherNbestFilename: String = "", parserFilename: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
   vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = ""
 )
+
+/** A toy command-line that shows the way towards possibly better parse reranking.
+  *
+  * This trains a "weirdness" classifier that learns to classify parse tree nodes as "weird"
+  * or not "weird," and then reranks parses based on how many of their nodes are classified as
+  * "weird."
+  */
 object ParseRerankerTraining {
 
   def main(args: Array[String]) {
@@ -214,6 +221,14 @@ object ParseRerankerTraining {
   }
 }
 
+/** This reranking function attempts to rerank parses based on how many "weird" nodes they have,
+  * according to a "weirdness" classifier.
+  *
+  * @param classifier the weirdness classifier
+  * @param feature computes a feature vector from a parse tree node
+  * @param weirdnessThreshold the minimum probability of weirdness in order for a node to count as
+  * "weird"
+  */
 case class WeirdParseNodeRerankingFunction(
     classifier: WrapperClassifier,
     feature: ParseNodeFeature,
@@ -228,6 +243,11 @@ case class WeirdParseNodeRerankingFunction(
     }
   }
 
+  /** Gets the set of "weird" tokens in a parse.
+    *
+    * @param parse the parse tree to analyze
+    * @return the indices of all weird tokens
+    */
   def getWeirdNodes(parse: PolytreeParse): Set[Int] = {
     val nodeWeirdness: Set[(Int, Double)] =
       Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
@@ -243,6 +263,10 @@ case class WeirdParseNodeRerankingFunction(
   }
 }
 
+/** A parse statistic that outputs weirdness statistics for a candidate parse.
+  *
+  * @param rerankingFunction the weirdness reranking function
+  */
 case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     extends ParseStatistic {
 

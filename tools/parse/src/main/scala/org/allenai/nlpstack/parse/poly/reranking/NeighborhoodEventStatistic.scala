@@ -1,8 +1,8 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
+import org.allenai.nlpstack.parse.poly.polyparser.{ ConllX, InMemoryPolytreeParseSource }
 import scopt.OptionParser
-import spray.json.DefaultJsonProtocol._
 
 /** Collects statistics over "neighborhood events."
   *
@@ -14,126 +14,88 @@ import spray.json.DefaultJsonProtocol._
   * how many times each neighborhood event like (VERB, NOUN, NOUN) occurs in the corpus.
   * This is what the NeighborhoodEventStatistic does.
   *
-  * param name a label for this object
-  * param neighborhoodCounts a histogram over observed neighborhoods
-  * param eventTransform a transformation from neighborhoods to events
+  * @param neighborhoodSource provides a stream of neighborhoods
+  * @param eventTransform a transformation from neighborhoods to events
   */
-/*
-case class NeighborhoodEventStatistic(name: String, neighborhoodCounts: Seq[(Neighborhood, Int)],
-    eventTransform: NeighborhoodTransform) {
+case class NeighborhoodEventStatistic(
+    neighborhoodSource: NeighborhoodSource,
+    eventTransform: NeighborhoodTransform
+) {
 
-  /** Computes a smoothed probability estimate of the given neighborhood's event. */
-  def getSmoothedEventProbability(neighborhood: Neighborhood): Double = {
-    (getNeighborhoodCount(neighborhood) + 0.5) /
-      (transformedEventCountSum + 0.5)
-  }
-
-  private def getNeighborhoodCount(neighborhood: Neighborhood): Int = {
-    transformedEventCounts.getOrElse(eventTransform(neighborhood), 0)
-  }
-
-  @transient private val transformedEventCounts: Map[Seq[String], Int] = {
-    var sigMap = Map[Seq[String], Int]()
+  /** Maps each neighborhood event to the count of its observations in the event stream. */
+  @transient private val eventCounts: Map[FeatureName, Int] = {
+    var sigMap = Map[FeatureName, Int]()
     for {
-      (neighborhood, count) <- neighborhoodCounts
-      transformedEvent = eventTransform(neighborhood)
+      (parse, neighborhood) <- neighborhoodSource.getNeighborhoodIterator()
+      event <- eventTransform(parse, neighborhood)
     } {
-      sigMap = sigMap + (transformedEvent -> (count + sigMap.getOrElse(transformedEvent, 0)))
+      sigMap = sigMap + (event -> (1 + sigMap.getOrElse(event, 0)))
     }
     sigMap
   }
 
-  @transient val uniqueEventCount = transformedEventCounts.size
+  /** The total number of observed (non-unique) neighborhood events. */
+  @transient val observedEventCount: Int =
+    eventCounts.values reduce { (x, y) => x + y }
 
+  /** The total number of unique neighborhood events. */
+  @transient val uniqueEventCount = eventCounts.size
+
+  /** The total number of singleton (observed only once) neighborhood events. */
   @transient val singletonEventCount =
-    (transformedEventCounts filter { case (_, eventCount) => eventCount == 1 }).size
-
-  @transient private val transformedEventCountSum: Int = {
-    transformedEventCounts.values reduce { (x, y) => x + y }
-  }
+    (eventCounts filter { case (_, eventCount) => eventCount == 1 }).size
 
   override def toString(): String = {
-    (transformedEventCounts.toSeq.sortBy { _._2 } map {
+    (eventCounts.toSeq.sortBy { case (_, count) => count } map {
       case (event, count) =>
         s"${count}: $event"
-    }).mkString("\n") + s"\nTotal observations: ${transformedEventCountSum}"
+    }).mkString("\n") + s"\nTotal observations: ${observedEventCount}"
   }
 }
-*/
-/*
+
+private case class NESCommandLine(goldParseFilename: String = "", dataSource: String = "")
+
 object NeighborhoodEventStatistic {
-  implicit val eventStatisticJsonFormat = jsonFormat3(NeighborhoodEventStatistic.apply)
 
-
+  /** A toy command-line to extract neighborhood event statistics from a set of gold parses.
+    *
+    * format: OFF
+    * Usage: NeighborhoodEventStatistic [options]
+    *
+    *   -g <file> | --goldfile <file>
+    *         the file containing the gold parses
+    *   -d <file> | --datasource <file>
+    *         the location of the data ('datastore','local')
+    * format: ON
+    *
+    * @param args see above
+    */
   def main(args: Array[String]) {
-    val optionParser = new OptionParser[PRTPOCommandLine]("ParseRerankerTrainingPhaseOne") {
-      opt[String]('g', "goldfile") required () valueName ("<file>") action { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
-      opt[String]('c', "clusters") valueName ("<file>") action { (x, c) => c.copy(clustersPath = x) } text ("the path to the Brown cluster files " +
-        "(in Liang format, comma-separated filenames)")
-      opt[String]('d', "datasource") required () valueName ("<file>") action { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
+    val optionParser = new OptionParser[NESCommandLine]("NeighborhoodEventStatistic") {
+      opt[String]('g', "goldfile") required () valueName "<file>" action { (x, c) =>
+        c.copy(goldParseFilename = x) } text "the file containing the gold parses"
+      opt[String]('d', "datasource") required () valueName "<file>" action { (x, c) =>
+        c.copy(dataSource = x) } text ("the location of the data " +
         "('datastore','local')") validate { x =>
           if (Set("datastore", "local").contains(x)) {
             success
           } else {
-            failure(s"unsupported data source: ${x}")
+            failure(s"unsupported data source: $x")
           }
         }
     }
-    val clArgs: PRTPOCommandLine =
-      optionParser.parse(args, PRTPOCommandLine()).get
-    val clusters: Seq[BrownClusters] = {
-      if (clArgs.clustersPath != "") {
-        clArgs.clustersPath.split(",") map { path =>
-          BrownClusters.fromLiangFormat(path)
-        }
-      } else {
-        Seq[BrownClusters]()
-      }
-    }
-
+    val clArgs: NESCommandLine =
+      optionParser.parse(args, NESCommandLine()).get
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-
-    println("Initializing features.")
-    //val leftChildNeighborhoodCounts = ("leftChild", LeftChildrenExtractor,
-    //  Neighborhood.countNeighborhoods(
-    //    new ExtractorBasedNeighborhoodSource(goldParseSource, LeftChildrenExtractor)))
-    //val rightChildNeighborhoodCounts = ("rightChild", RightChildrenExtractor,
-    //  Neighborhood.countNeighborhoods(
-    //    new ExtractorBasedNeighborhoodSource(goldParseSource, RightChildrenExtractor)))
-
-    val childNeighborhoodCounts = ("child",
-      ChildrenExtractor,
-      Neighborhood.countNeighborhoods(
-        new ExtractorBasedNeighborhoodSource(goldParseSource, ChildrenExtractor)
-      ))
-
-    val crumbNeighborhoodCounts = ("crumb",
-      BreadcrumbExtractor,
-      Neighborhood.countNeighborhoods(
-        new ExtractorBasedNeighborhoodSource(goldParseSource, BreadcrumbExtractor)
-      ))
-
-    //val path3NeighborhoodCounts = ("path3", RootPathExtractor(3),
-    //  Neighborhood.countNeighborhoods(
-    //    new ExtractorBasedNeighborhoodSource(goldParseSource, RootPathExtractor(3))))
-
-    val transforms = Seq(
-      ("brown", BrownTransform(clusters.head, 100, "brown")),
-      ("arclabel", TokenPropTransform('arclabel)),
-      ("cpos", TokenPropTransform('cpos)),
-      ("pos", TokenPropTransform('factoriePos))
+    val stat = NeighborhoodEventStatistic(
+      new ExtractorBasedNeighborhoodSource(goldParseSource, AllChildrenExtractor),
+      PropertyNhTransform('cpos)
     )
-
-    val stat = NeighborhoodEventStatistic("arclabelstat", childNeighborhoodCounts._3,
-      TokenPropTransform('cpos))
     println(stat.toString)
     println(s"Number of unique events: ${stat.uniqueEventCount}")
     println(s"Number of singleton events: ${stat.singletonEventCount}")
-
   }
-
 }
-*/

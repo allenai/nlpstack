@@ -17,6 +17,17 @@ object OracleReranker {
     * The oracle score is the labeled path accuracy (ignoring punctuation) with respect to a
     * gold parse.
     *
+    * format: OFF
+    * Usage: ParseFile [options]
+    *
+    *    -n <file> | --nbestfile <file>
+    *          the file containing the nbest lists
+    *    -g <file> | --goldfile <file>
+    *          the file containing the gold parses
+    *    -d <file> | --datasource <file>
+    *          the location of the data ('datastore','local')
+    * format: ON
+    *
     * @param args see above
     */
   def main(args: Array[String]) {

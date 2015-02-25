@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
+import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 import spray.json.DefaultJsonProtocol._
 
 /** A Neighborhood is a sequence of token indices, generally referring to a parse tree.
@@ -24,5 +25,5 @@ trait NeighborhoodSource {
     *
     * @return an iterator over the neighborhoods in this data source
     */
-  def getNeighborhoodIterator(): Iterator[Neighborhood]
+  def getNeighborhoodIterator(): Iterator[(PolytreeParse, Neighborhood)]
 }

@@ -202,12 +202,16 @@ class ParseNeighborhoodExtractor(subextractor: NeighborhoodExtractor) {
   */
 class ExtractorBasedNeighborhoodSource(
     parseSource: PolytreeParseSource,
-    extractor: ParseNeighborhoodExtractor
+    extractor: NeighborhoodExtractor
 ) extends NeighborhoodSource {
 
-  override def getNeighborhoodIterator(): Iterator[Neighborhood] = {
+  private val parseExtractor = new ParseNeighborhoodExtractor(extractor)
+
+  override def getNeighborhoodIterator(): Iterator[(PolytreeParse, Neighborhood)] = {
     parseSource.parseIterator flatMap { parse =>
-      extractor(parse)
+      parseExtractor(parse) map { neighborhood =>
+        (parse, neighborhood)
+      }
     }
   }
 }
