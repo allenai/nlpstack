@@ -1,7 +1,10 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.reranking.{ LinearParseRerankingFunction, WrapperClassifierRerankingFunction }
+import org.allenai.nlpstack.parse.poly.reranking.{
+  WeirdParseNodeRerankingFunction,
+  LinearParseRerankingFunction
+}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
@@ -51,16 +54,16 @@ object RerankingFunction {
 
     implicit val linearParseRerankingFunctionFormat =
       jsonFormat2(LinearParseRerankingFunction.apply).pack("type" -> "LinearParseRerankingFunction")
-    implicit val wrapperClassifierRerankingFunctionFormat =
-      jsonFormat2(WrapperClassifierRerankingFunction.apply).pack(
-        "type" -> "WrapperClassifierRerankingFunction"
+    implicit val weirdParseNodeRerankingFunctionFormat =
+      jsonFormat3(WeirdParseNodeRerankingFunction.apply).pack(
+        "type" -> "WeirdParseNodeRerankingFunction"
       )
     def write(rerankingFunction: RerankingFunction): JsValue = rerankingFunction match {
       case BaseCostRerankingFunction => JsString("BaseCostRerankingFunction")
       case linearParseRerankingFunction: LinearParseRerankingFunction =>
         linearParseRerankingFunction.toJson
-      case wrapperClassifierRerankingFunction: WrapperClassifierRerankingFunction =>
-        wrapperClassifierRerankingFunction.toJson
+      case weirdParseNodeRerankingFunction: WeirdParseNodeRerankingFunction =>
+        weirdParseNodeRerankingFunction.toJson
     }
     def read(value: JsValue): RerankingFunction = value match {
       case JsString(typeid) => typeid match {
@@ -69,7 +72,7 @@ object RerankingFunction {
       }
       case jsObj: JsObject => jsObj.unpackWith(
         linearParseRerankingFunctionFormat,
-        wrapperClassifierRerankingFunctionFormat
+        weirdParseNodeRerankingFunctionFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }

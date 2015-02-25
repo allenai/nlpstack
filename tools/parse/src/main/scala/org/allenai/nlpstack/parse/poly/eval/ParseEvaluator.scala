@@ -1,8 +1,10 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.ml.WrapperClassifier
-import org.allenai.nlpstack.parse.poly.polyparser.{ InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
-import org.allenai.nlpstack.parse.poly.reranking.ParseNodeFeature
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  InMemoryPolytreeParseSource,
+  PolytreeParseSource,
+  PolytreeParse
+}
 
 object ParseEvaluator {
 
@@ -35,7 +37,7 @@ object ParseEvaluator {
 /** A ParseStatistic accrues a particular statistic over (candidate parse, gold parse) pairs.
   * Every time .notify() is called, the statistic is updated.
   */
-sealed abstract class ParseStatistic {
+abstract class ParseStatistic {
   def reset(): Unit = {}
 
   def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit
@@ -119,81 +121,6 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
     numLabeledCorrectNoPunc = 0
     numTotalNoPunc = 0
     numParses = 0
-  }
-}
-
-/** FirstMistakeAggregator collates the "first" incorrect transition decisions that a parser
-  * makes with respect to gold parses. For instance, say there's a parse whose gold transition
-  * representation is [Sh, Sh, Rt('nsubj), Rt('det)], and a candidate parse comes up with
-  * [Sh, Rt('adjp), Sh, Rt('det)]. The "first" incorrect transition decision is the pair
-  * (Rt('adjp), Sh). In other words, the first mistake that the candidate parse made was to
-  * guess transition Rt('adjp) when it should have guessed Sh.
-  */
-/*
-case object FirstMistakeAggregator extends ParseStatistic {
-  var mistakeHistogram = Map[(StateTransition, StateTransition), Int]()
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    for {
-      candParse <- candidateParse
-      candidateTransitions <- candParse.asTransitionSequence
-      goldTransitions <- goldParse.asTransitionSequence
-      zippedTransitions = candidateTransitions.zip(goldTransitions)
-      firstMistake <- zippedTransitions find { case (t1, t2) => t1 != t2 }
-    } {
-      mistakeHistogram = mistakeHistogram +
-        ((firstMistake._1, firstMistake._2) -> (1 + mistakeHistogram.getOrElse((firstMistake._1,
-          firstMistake._2), 0)))
-    }
-  }
-
-  override def report(): Unit = {}
-}
-*/
-
-case class MistakeAnalyzer(classifier: WrapperClassifier, feature: ParseNodeFeature)
-    extends ParseStatistic {
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    if (candidateParse != None) {
-      val scoringFunction = PathAccuracyScore(
-        InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = false, ignorePathLabels = false
-      )
-      scoringFunction.getRatio(candidateParse.get) match {
-        case (correctIncrement, totalIncrement) =>
-          if (totalIncrement > 0 && correctIncrement.toFloat / totalIncrement < 0.5) {
-            println(s"sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
-            println(s"candidate: ${candidateParse.get}")
-            println(s"gold: $goldParse")
-            val goldNodeWeirdness = Range(0, goldParse.tokens.size) map { tokenIndex =>
-              (tokenIndex, classifier.getDistribution(feature(goldParse, tokenIndex)).getOrElse(0, 0.0))
-            }
-            val weirdGoldNodes = (goldNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
-            weirdGoldNodes foreach { node => println(s"Weird gold node: $node") }
-
-            val candidateNodeWeirdness = Range(0, candidateParse.get.tokens.size) map { tokenIndex =>
-              (tokenIndex, classifier.getDistribution(feature(candidateParse.get, tokenIndex)).getOrElse(0, 0.0))
-            }
-            val weirdCandidateNodes = (candidateNodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }
-            weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
-
-            /*
-            val weirdDescendants = Range(0, candidateParse.get.tokens.size) filter { tokenIndex =>
-              (candidateParse.get.paths(tokenIndex).toSet & weirdCandidateNodes.toSet).nonEmpty
-            }
-            weirdDescendants foreach { node => println(s"Weird descendant: $node") }
-            */
-            println("")
-          }
-      }
-    }
-  }
-
-  override def report(): Unit = {
-  }
-
-  override def reset(): Unit = {
   }
 }
 

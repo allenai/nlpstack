@@ -49,45 +49,6 @@ object PolytreeParseFeature {
   }
 }
 
-/** Generates a feature for each neighborhood histogram and transform in the argument list.
-  *
-  * param neighborhoodCounts the neighborhood histograms
-  * param transforms the neighborhood transforms
-  */
-/*
-case class EventStatisticFeatures(
-    neighborhoodCounts: Seq[(String, NeighborhoodExtractor, Seq[(Neighborhood, Int)])],
-    transforms: Seq[(String, NeighborhoodTransform)]
-) extends PolytreeParseFeature {
-
-  @transient
-  val eventStatistics: Seq[(String, String, NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
-    for {
-      (neighborhoodName, extractor, counts) <- neighborhoodCounts
-      (transformName, transform) <- transforms
-    } yield {
-      val stat = NeighborhoodEventStatistic("", counts, transform)
-      (neighborhoodName, transformName, extractor, stat)
-    }
-  }
-
-  override def apply(parse: PolytreeParse, score: Double): MLFeatureVector = {
-    MLFeatureVector(
-      for {
-        (neighborhoodName, transformName, extractor, stat) <- eventStatistics
-      } yield {
-        val featureValue = extractor(parse) map { neighborhood =>
-          -math.log(stat.getSmoothedEventProbability(neighborhood))
-        } reduce { (x, y) => x + y }
-        MLFeatureName(
-          List('eventStat, Symbol(neighborhoodName), Symbol(transformName))
-        ) -> featureValue
-      }
-    )
-  }
-}
-*/
-
 /** Simply passes along the length of the sentence as a feature. */
 case object SentenceLengthFeature extends PolytreeParseFeature {
 

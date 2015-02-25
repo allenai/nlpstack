@@ -6,7 +6,7 @@ import org.allenai.nlpstack.parse.poly.fsm.{
   RerankingFunction,
   FeatureUnion
 }
-import org.allenai.nlpstack.parse.poly.reranking.OracleRerankingFunction
+import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
@@ -96,11 +96,15 @@ object ParseFile {
 
     parser match {
       case rerankingParser: RerankingTransitionParser =>
+        val oracleScore: ParseScore =
+          PathAccuracyScore(
+            parseSource,
+            ignorePunctuation = true, ignorePathLabels = false
+          )
         val oracleRerankingFunction: RerankingFunction =
-          OracleRerankingFunction(parseSource)
+          ParseRerankingFunction(oracleScore)
         val oracleParserConfig = ParserConfiguration(
           rerankingParser.config.parsingCostFunction,
-          //parserConfig.labelingCostFunction,
           oracleRerankingFunction, oracleNbestSize
         )
         val parser = RerankingTransitionParser(oracleParserConfig)

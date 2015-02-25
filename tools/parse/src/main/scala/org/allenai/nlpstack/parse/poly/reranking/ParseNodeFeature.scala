@@ -58,6 +58,12 @@ case class ParseNodeFeatureUnion(
   }
 }
 
+/** A TransformedNeighborhoodFeature creates a feature vector from a set of neighborhood
+  * extractors and transforms.
+  *
+  * @param neighborhoodExtractors the neighborhood extractors you want to apply to each parse node
+  * @param transforms the transforms you want to apply to the extracted neighborhoods
+  */
 case class TransformedNeighborhoodFeature(
     neighborhoodExtractors: Seq[(String, NeighborhoodExtractor)],
     transforms: Seq[(String, NeighborhoodTransform)]

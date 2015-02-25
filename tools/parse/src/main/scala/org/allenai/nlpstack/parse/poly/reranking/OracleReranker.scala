@@ -12,19 +12,26 @@ private case class OracleRerankerConfig(
 
 object OracleReranker {
 
+  /** Command-line for reranking a set of n-best lists according to an oracle score.
+    *
+    * The oracle score is the labeled path accuracy (ignoring punctuation) with respect to a
+    * gold parse.
+    *
+    * @param args see above
+    */
   def main(args: Array[String]) {
     val optionParser = new OptionParser[OracleRerankerConfig]("ParseFile") {
-      opt[String]('n', "nbestfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(nbestCorpusFilename = x) } text ("the file containing the nbest lists")
-      opt[String]('g', "goldfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
-      opt[String]('d', "datasource") required () valueName ("<file>") action
+      opt[String]('n', "nbestfile") required () valueName "<file>" action
+        { (x, c) => c.copy(nbestCorpusFilename = x) } text "the file containing the nbest lists"
+      opt[String]('g', "goldfile") required () valueName "<file>" action
+        { (x, c) => c.copy(goldParseFilename = x) } text "the file containing the gold parses"
+      opt[String]('d', "datasource") required () valueName "<file>" action
         { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
           "('datastore','local')") validate { x =>
             if (Set("datastore", "local").contains(x)) {
               success
             } else {
-              failure(s"unsupported data source: ${x}")
+              failure(s"unsupported data source: $x")
             }
           }
     }
@@ -34,8 +41,13 @@ object OracleReranker {
       config.goldParseFilename,
       ConllX(true), config.dataSource
     )
+
+    val oracleScore: ParseScore = PathAccuracyScore(
+      goldParseSource,
+      ignorePunctuation = true, ignorePathLabels = false
+    )
     val reranker: Reranker =
-      new Reranker(OracleRerankingFunction(goldParseSource))
+      new Reranker(ParseRerankingFunction(oracleScore))
     val candidateParses =
       for {
         parsePool <- parsePoolSource.poolIterator
@@ -50,20 +62,5 @@ object OracleReranker {
       PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator, stats)
-  }
-}
-
-case class OracleRerankingFunction(goldParses: PolytreeParseSource) extends RerankingFunction {
-
-  val scoringFunction: ParseScore = PathAccuracyScore(
-    goldParses,
-    ignorePunctuation = true, ignorePathLabels = false
-  )
-
-  override def apply(sculpture: Sculpture, baseCost: Double): Double = {
-    sculpture match {
-      case parse: PolytreeParse => 1.0 - scoringFunction(parse)
-      case _ => 1.0
-    }
   }
 }

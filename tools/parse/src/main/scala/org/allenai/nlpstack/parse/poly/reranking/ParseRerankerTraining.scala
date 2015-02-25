@@ -3,7 +3,7 @@ package org.allenai.nlpstack.parse.poly.reranking
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.decisiontree.RandomForestTrainer
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{ Reranker, RerankingFunction, Sculpture }
+import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Reranker, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
@@ -125,7 +125,7 @@ object ParseRerankerTraining {
     evaluate(testData, classifier)
 
     println("Creating reranker.")
-    val rerankingFunction = WrapperClassifierRerankingFunction(classifier, feature)
+    val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
     val reranker: Reranker = new Reranker(rerankingFunction)
 
     println("Reranking.")
@@ -141,7 +141,7 @@ object ParseRerankerTraining {
       }
     val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, true),
       PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false),
-      MistakeAnalyzer(classifier, feature))
+      WeirdnessAnalyzer(rerankingFunction))
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
 
@@ -167,7 +167,6 @@ object ParseRerankerTraining {
     val positiveExamples: Iterable[(FeatureVector, Int)] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
-        //parsePool.parses.headOption flatMap { case (parse, _) =>
         val goldParse = goldParseMap(parse._1.sentence.asWhitespaceSeparatedString)
         Range(0, goldParse.sentence.tokens.size) map { tokenIndex =>
           (feature(goldParse, tokenIndex), 1)
@@ -215,25 +214,61 @@ object ParseRerankerTraining {
   }
 }
 
-case class WrapperClassifierRerankingFunction(
+case class WeirdParseNodeRerankingFunction(
     classifier: WrapperClassifier,
-    feature: ParseNodeFeature
+    feature: ParseNodeFeature,
+    weirdnessThreshold: Double
 ) extends RerankingFunction {
 
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     sculpture match {
       case parse: PolytreeParse =>
-        val nodeWeirdness = Range(0, parse.tokens.size) map { tokenIndex =>
-          (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0))
-        }
-        val weirdNodes: Set[Int] = ((nodeWeirdness filter { x => x._2 >= 0.5 }) map { _._1 }).toSet
-        val weirdDescendants = Range(0, parse.tokens.size).toSet filter { tokenIndex =>
-          (parse.paths(tokenIndex).toSet & weirdNodes).nonEmpty
-        }
-        val result = (weirdDescendants ++ weirdNodes).size.toDouble
-        //val result = weirdNodes.size.toDouble
-        result
+        getWeirdNodes(parse).size.toDouble
       case _ => Double.MaxValue
     }
   }
+
+  def getWeirdNodes(parse: PolytreeParse): Set[Int] = {
+    val nodeWeirdness: Set[(Int, Double)] =
+      Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
+        (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0))
+      }
+    nodeWeirdness filter {
+      case (_, weirdness) =>
+        weirdness >= weirdnessThreshold
+    } map {
+      case (node, _) =>
+        node
+    }
+  }
+}
+
+case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
+    extends ParseStatistic {
+
+  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+    if (candidateParse != None) {
+      val scoringFunction = PathAccuracyScore(
+        InMemoryPolytreeParseSource(Seq(goldParse)),
+        ignorePunctuation = true, ignorePathLabels = false
+      )
+      scoringFunction.getRatio(candidateParse.get) match {
+        case (correctIncrement, totalIncrement) =>
+          if (totalIncrement > 0 && correctIncrement.toFloat / totalIncrement < 0.5) {
+            println(s"sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
+            println(s"candidate: ${candidateParse.get}")
+            println(s"gold: $goldParse")
+            val weirdGoldNodes = rerankingFunction.getWeirdNodes(goldParse)
+            weirdGoldNodes foreach { node => println(s"Weird gold node: $node") }
+            val weirdCandidateNodes = rerankingFunction.getWeirdNodes(candidateParse.get)
+            weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
+            println("")
+          }
+      }
+    }
+  }
+
+  override def report(): Unit = {}
+
+  override def reset(): Unit = {}
 }
