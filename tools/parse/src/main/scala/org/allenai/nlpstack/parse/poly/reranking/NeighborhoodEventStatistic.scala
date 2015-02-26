@@ -36,14 +36,13 @@ case class NeighborhoodEventStatistic(
 
   /** The total number of observed (non-unique) neighborhood events. */
   @transient val observedEventCount: Int =
-    eventCounts.values reduce { (x, y) => x + y }
+    eventCounts.values.sum
 
   /** The total number of unique neighborhood events. */
   @transient val uniqueEventCount = eventCounts.size
 
   /** The total number of singleton (observed only once) neighborhood events. */
-  @transient val singletonEventCount =
-    (eventCounts filter { case (_, eventCount) => eventCount == 1 }).size
+  @transient val singletonEventCount = eventCounts.values.count(_ == 1)
 
   override def toString(): String = {
     (eventCounts.toSeq.sortBy { case (_, count) => count } map {

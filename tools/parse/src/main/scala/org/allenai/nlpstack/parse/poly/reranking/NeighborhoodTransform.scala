@@ -12,9 +12,7 @@ import spray.json._
   * (node, child1, child2), i.e. three nodes of a parse tree. A transform might map these
   * to the sequence of their POS tags, e.g. FeatureName(Seq('VERB, 'NOUN, 'NOUN)).
   */
-trait NeighborhoodTransform extends ((PolytreeParse, Neighborhood) => Seq[FeatureName]) {
-  val name: String
-}
+trait NeighborhoodTransform extends ((PolytreeParse, Neighborhood) => Seq[FeatureName])
 
 object NeighborhoodTransform {
 
@@ -30,9 +28,9 @@ object NeighborhoodTransform {
     implicit val propertyNhTransformFormat =
       jsonFormat1(PropertyNhTransform.apply).pack("type" -> "PropertyNhTransform")
     implicit val suffixNeighborhoodTransformFormat =
-      jsonFormat2(SuffixNhTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
+      jsonFormat1(SuffixNhTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
     implicit val keywordNeighborhoodTransformFormat =
-      jsonFormat2(KeywordNhTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
+      jsonFormat1(KeywordNhTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
 
     def write(feature: NeighborhoodTransform): JsValue = feature match {
       case ArclabelNhTransform => JsString("ArcLabelNeighborhoodTransform")
@@ -67,8 +65,6 @@ object NeighborhoodTransform {
   * @param propertyName name of the desired property
   */
 case class PropertyNhTransform(propertyName: Symbol) extends NeighborhoodTransform {
-  @transient override val name = propertyName.name
-
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
     Seq(
       FeatureName(event.tokens map { tok =>
@@ -82,10 +78,8 @@ case class PropertyNhTransform(propertyName: Symbol) extends NeighborhoodTransfo
   * the input neighborhood.
   *
   * @param keysuffixes the set of suffixes to consider
-  * @param name an identifier for this transform (for the caller to use in feature name
-  * creation, if desired)
   */
-case class SuffixNhTransform(keysuffixes: Seq[String], override val name: String = "keysuffix")
+case class SuffixNhTransform(keysuffixes: Seq[String])
     extends NeighborhoodTransform {
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
@@ -105,10 +99,8 @@ case class SuffixNhTransform(keysuffixes: Seq[String], override val name: String
   * Note that the keyword matching is case-insensitive.
   *
   * @param keywords the set of words to consider
-  * @param name an identifier for this transform (for the caller to use in feature name
-  * creation, if desired)
   */
-case class KeywordNhTransform(keywords: Seq[String], override val name: String = "keyword")
+case class KeywordNhTransform(keywords: Seq[String])
     extends NeighborhoodTransform {
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
@@ -129,7 +121,6 @@ case class KeywordNhTransform(keywords: Seq[String], override val name: String =
   * contains an arc between the two neighborhood nodes.
   */
 case object ArclabelNhTransform extends NeighborhoodTransform {
-  @transient override val name: String = "arclabel"
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
     require(
@@ -158,7 +149,6 @@ case object ArclabelNhTransform extends NeighborhoodTransform {
   * the same (i.e. neither appears to the left of the other).
   */
 case object DirectionNhTransform extends NeighborhoodTransform {
-  @transient override val name: String = "direction"
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
     require(
@@ -183,7 +173,6 @@ case object DirectionNhTransform extends NeighborhoodTransform {
   * in the neighborhood.
   */
 case object CardinalityNhTransform extends NeighborhoodTransform {
-  @transient override val name: String = "card"
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
     Seq(FeatureName(Seq(Symbol(event.tokens.size.toString))))

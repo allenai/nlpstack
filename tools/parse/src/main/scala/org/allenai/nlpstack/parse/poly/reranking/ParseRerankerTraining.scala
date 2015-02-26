@@ -207,17 +207,14 @@ object ParseRerankerTraining {
   }
 
   def evaluate(trainingData: TrainingData, classifier: WrapperClassifier) {
-    var correctCounter = 0
-    val total = trainingData.labeledVectors.size
-    trainingData.labeledVectors foreach {
+    val numCorrect = trainingData.labeledVectors count {
       case (vec, outcome) =>
-        if (classifier.classify(vec) == outcome) {
-          correctCounter += 1
-        }
+        classifier.classify(vec) == outcome
     }
-    println(correctCounter)
+    val total = trainingData.labeledVectors.size
+    println(numCorrect)
     println(total)
-    println(s"Accuracy: ${correctCounter.toFloat / total}")
+    println(s"Accuracy: ${numCorrect.toFloat / total}")
   }
 }
 
