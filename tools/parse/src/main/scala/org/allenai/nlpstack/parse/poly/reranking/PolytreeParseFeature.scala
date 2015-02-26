@@ -20,16 +20,12 @@ object PolytreeParseFeature {
     */
   implicit object PolytreeParseFeatureJsonFormat extends RootJsonFormat[PolytreeParseFeature] {
 
-    //implicit val eventStatisticFeaturesFormat =
-    //  jsonFormat2(EventStatisticFeatures.apply).pack("type" -> "EventStatisticFeatures")
     implicit val polytreeParseFeatureUnionFormat =
       jsonFormat1(PolytreeParseFeatureUnion.apply).pack("type" -> "PolytreeParseFeatureUnion")
 
     def write(feature: PolytreeParseFeature): JsValue = feature match {
       case BaseParserScoreFeature => JsString("BaseParserScoreFeature")
       case SentenceLengthFeature => JsString("SentenceLengthFeature")
-      //case eventStatisticFeatures: EventStatisticFeatures =>
-      //  eventStatisticFeatures.toJson
       case polytreeParseFeatureUnion: PolytreeParseFeatureUnion =>
         polytreeParseFeatureUnion.toJson
     }
@@ -41,7 +37,6 @@ object PolytreeParseFeature {
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
-        //eventStatisticFeaturesFormat,
         polytreeParseFeatureUnionFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")

@@ -138,16 +138,16 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     numParses += 1
-    if (candidateParse != None) {
-      val scoringFunction = PathAccuracyScore(
-        InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation, ignorePathLabels
-      )
-      scoringFunction.getRatio(candidateParse.get) match {
-        case (correctIncrement, totalIncrement) =>
-          numCorrect += correctIncrement
-          numTotal += totalIncrement
-      }
+    val scoringFunction = PathAccuracyScore(
+      InMemoryPolytreeParseSource(Seq(goldParse)),
+      ignorePunctuation, ignorePathLabels
+    )
+    candidateParse map { parse =>
+      scoringFunction.getRatio(parse)
+    } foreach {
+      case (correctIncrement, totalIncrement) =>
+        numCorrect += correctIncrement
+        numTotal += totalIncrement
     }
   }
 
@@ -176,10 +176,20 @@ case class PathAccuracyScore(
     ignorePunctuation: Boolean, ignorePathLabels: Boolean
 ) extends ParseScore {
 
-  private val goldParses: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
-    (parse.sentence.asWhitespaceSeparatedString, parse)
-  }).toMap
+  final def apply(candParse: PolytreeParse): Double = {
+    val (numerator, denominator) = getRatio(candParse)
+    if (denominator == 0) {
+      0.0
+    } else {
+      numerator.toFloat / denominator
+    }
+  }
 
+  /** Get the number of correct paths and the number of total paths in a candidate parse.
+    *
+    * @param candParse the candidate parse to evaluate
+    * @return the pair (num correct paths, num total paths)
+    */
   def getRatio(candParse: PolytreeParse): (Int, Int) = {
     goldParses.get(candParse.sentence.asWhitespaceSeparatedString) match {
       case Some(goldParse) =>
@@ -205,11 +215,11 @@ case class PathAccuracyScore(
             }
           }
           val numCorrect: Int = zippedPaths count {
-            case ((x, i), y) =>
-              (x == y) &&
+            case ((candidatePath, token), goldPath) =>
+              (candidatePath == goldPath) &&
                 (ignorePathLabels ||
-                  ((x :+ i) map { tokIndex => candParse.breadcrumbArcLabel(tokIndex) }) ==
-                  ((y :+ i) map { tokIndex => goldParse.breadcrumbArcLabel(tokIndex) }))
+                  convertPathToArcLabels(candidatePath :+ token, candParse) ==
+                  convertPathToArcLabels(goldPath :+ token, goldParse))
           }
           (numCorrect, zippedPaths.size)
         }
@@ -217,12 +227,14 @@ case class PathAccuracyScore(
     }
   }
 
-  final def apply(candParse: PolytreeParse): Double = {
-    val (numerator, denominator) = getRatio(candParse)
-    if (denominator == 0) {
-      0.0
-    } else {
-      numerator.toFloat / denominator
+  private val goldParses: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
+    (parse.sentence.asWhitespaceSeparatedString, parse)
+  }).toMap
+
+  /** Converts a path in the parse tree to its arc labels. */
+  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[Symbol] = {
+    path map { pathToken =>
+      parse.breadcrumbArcLabel(pathToken)
     }
   }
 }

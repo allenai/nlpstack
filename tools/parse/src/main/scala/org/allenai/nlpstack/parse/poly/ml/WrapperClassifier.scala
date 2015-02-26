@@ -102,8 +102,7 @@ class WrapperClassifierTrainer(classifierTrainer: ProbabilisticClassifierTrainer
         case (_, featIndex) =>
           inducedClassifier.allFeatures.contains(featIndex)
       } map {
-        case (feat, featIndex) =>
-          (featIndex, feat)
+        _.swap
       }
     WrapperClassifier(inducedClassifier, featureMap)
   }
