@@ -98,12 +98,13 @@ class DTCostFunctionTrainer(
     var progressCounter = 1
     (taskTrainingVectors map {
       case (task, trainingVectorIter) => {
-        val trainingVectors = trainingVectorIter.toIterable
-        println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}" +
-          s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
+        //val trainingVectors = trainingVectorIter.toIterable
+        println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
+        //s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
+        //trainingVectors foreach { vec => println(vec) }
         progressCounter += 1
         val vectors: DTFeatureVectorSource =
-          createDTFeatureVectorSource(task, trainingVectors.iterator)
+          createDTFeatureVectorSource(task, trainingVectorIter) //trainingVectors.iterator)
         println("Now training.")
         val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
         val featureMap: Seq[(Int, FeatureName)] =

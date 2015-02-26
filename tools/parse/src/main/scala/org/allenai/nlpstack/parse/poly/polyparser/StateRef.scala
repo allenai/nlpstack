@@ -158,7 +158,7 @@ case class StackRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackRef" + index)
+  override val name: Symbol = Symbol("s" + index)
 }
 
 /** A BufferRef is a StateRef (see above) whose apply operation returns the `index`th element of
@@ -179,7 +179,7 @@ case class BufferRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferRef" + index)
+  override val name: Symbol = Symbol("b" + index)
 }
 
 case class StackWindowRef(val index: Int) extends StateRef {
@@ -212,7 +212,7 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackGretelRef" + index)
+  override val name: Symbol = Symbol("sg" + index)
 }
 
 case class StackChildrenRef(val index: Int) extends StateRef {
@@ -223,7 +223,7 @@ case class StackChildrenRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackChildrenRef" + index)
+  override val name: Symbol = Symbol("sc" + index)
 }
 
 case class StackLeftGretelsRef(val index: Int) extends StateRef {
@@ -238,7 +238,7 @@ case class StackLeftGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackLeftGretelRef" + index)
+  override val name: Symbol = Symbol("sgl" + index)
 }
 
 case class StackRightGretelsRef(val index: Int) extends StateRef {
@@ -253,7 +253,7 @@ case class StackRightGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackRightGretelRef" + index)
+  override val name: Symbol = Symbol("sgr" + index)
 }
 
 case class BufferGretelsRef(val index: Int) extends StateRef {
@@ -264,7 +264,7 @@ case class BufferGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferGretelRef" + index)
+  override val name: Symbol = Symbol("bg" + index)
 }
 
 case class BufferChildrenRef(val index: Int) extends StateRef {
@@ -275,7 +275,7 @@ case class BufferChildrenRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferChildrenRef" + index)
+  override val name: Symbol = Symbol("bc" + index)
 }
 
 case class BufferLeftGretelsRef(val index: Int) extends StateRef {
@@ -290,7 +290,7 @@ case class BufferLeftGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferLeftGretelRef" + index)
+  override val name: Symbol = Symbol("bgl" + index)
 }
 
 case class BufferRightGretelsRef(val index: Int) extends StateRef {
@@ -305,7 +305,7 @@ case class BufferRightGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferRightGretelRef" + index)
+  override val name: Symbol = Symbol("bgr" + index)
 }
 
 /** A BreadcrumbRef is a StateRef (see above) whose apply operation returns the breadcrumb of
@@ -338,7 +338,7 @@ case object PreviousLinkCrumbRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkCrumb")
+  override val name: Symbol = Symbol("pc")
 }
 
 case object PreviousLinkCrumbGretelRef extends StateRef {
@@ -348,7 +348,7 @@ case object PreviousLinkCrumbGretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkCrumbGretel")
+  override val name: Symbol = Symbol("pcg")
 }
 
 case object PreviousLinkGretelRef extends StateRef {
@@ -361,7 +361,7 @@ case object PreviousLinkGretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkGretel")
+  override val name: Symbol = Symbol("pg")
 }
 
 case object PreviousLinkGrandgretelRef extends StateRef {
@@ -371,7 +371,7 @@ case object PreviousLinkGrandgretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkGrandgretel")
+  override val name: Symbol = Symbol("pgg")
 }
 
 /** A LastRef is a StateRef (see above) whose apply operation returns the final element of
@@ -384,7 +384,7 @@ case object LastRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("lastRef")
+  override val name: Symbol = Symbol("last")
 }
 
 /** A FirstRef is a StateRef (see above) whose apply operation returns the first element of
@@ -401,5 +401,5 @@ case object FirstRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("firstRef")
+  override val name: Symbol = Symbol("first")
 }

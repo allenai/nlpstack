@@ -27,7 +27,7 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
         } yield (FeatureName(List(tokenTrans.name, stateRef.name, sym)), 1.0))
     }
   }
-  override def toString: String = s"tokenTransformFeature.${stateRef.name}"
+  override def toString(): String = s"tokenTransformFeature.${stateRef.name}"
 }
 
 case class OfflineTokenFeature(val stateRef: StateRef)
@@ -45,7 +45,7 @@ case class OfflineTokenFeature(val stateRef: StateRef)
     }
   }
 
-  override def toString: String = s"offlineTokenFeature.${stateRef.name}"
+  override def toString(): String = s"offlineTokenFeature.${stateRef.name}"
 }
 
 case object PreviousLinkDirection extends StateFeature {
@@ -61,13 +61,13 @@ case object PreviousLinkDirection extends StateFeature {
     }
   }
 
-  override def toString: String = s"prevLink"
+  override def toString(): String = s"prevLink"
 }
 
 case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
     extends StateFeature {
 
-  @transient val featureName = 'tokenCardinality
+  @transient val featureName = 'card
 
   override def apply(state: State): FeatureVector = {
     state match {
@@ -83,5 +83,5 @@ case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
     }
   }
 
-  override def toString: String = s"tokenCardinalityFeature"
+  override def toString(): String = s"tokenCardinalityFeature"
 }

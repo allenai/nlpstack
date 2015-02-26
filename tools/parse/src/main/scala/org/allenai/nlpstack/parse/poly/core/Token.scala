@@ -36,7 +36,7 @@ case class Token(val word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map())
 object Token {
   implicit val tokenJsonFormat = jsonFormat2(Token.apply)
 
-  def createProperties1(word: String, goldCpos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
+  def createProperties(word: String, goldCpos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
     val propertyMap = Map('lcase -> Set(Symbol(word.toLowerCase)))
     goldCpos match {
       case Some(cpos) => propertyMap.updated('cpos, Set(Symbol(cpos)))
@@ -45,14 +45,14 @@ object Token {
   }
 
   def create(word: String, coarsePos: String): Token = {
-    Token(Symbol(word), createProperties1(word, Some(coarsePos)))
+    Token(Symbol(word), createProperties(word, Some(coarsePos)))
   }
 
   val propertyNotFound = 'notFound
 }
 
 /** The NexusToken is the "zeroth" token of a dependency parse. */
-object NexusToken extends Token('nexus, Token.createProperties1("nexus", Some("nexus")))
+object NexusToken extends Token('nexus, Token.createProperties("nexus", Some("nexus")))
 
 /** A Sentence is a sequence of tokens.
   *

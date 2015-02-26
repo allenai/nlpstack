@@ -134,7 +134,7 @@ case class KeywordFeature(keywords: Set[Symbol]) extends TokenFeature {
     getTokenSequence(sentence, tokenIndex) flatMap { token =>
       val word = Symbol(token.word.name.toLowerCase)
       if (keywords.contains(word)) {
-        Seq(FeatureName(List(featureName, token.word)) -> 1.0)
+        Seq(FeatureName(List(featureName, word)) -> 1.0)
       } else {
         Seq[(FeatureName, Double)]()
       }

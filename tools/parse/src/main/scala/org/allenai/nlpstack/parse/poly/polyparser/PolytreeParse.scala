@@ -377,39 +377,34 @@ object PolytreeParse {
     // - row(6) is the breadcrumb
     // - row(7) is the arc label (for the unique arc between the word and its breadcrumb)
     val iFinePos = 4
-    val sentence: Sentence = {
-      Sentence(if (useGoldPosTags) {
+    val sentence =
+      Sentence(
         (NexusToken +: (rows map { row =>
-          Token(Symbol(row(1)), Token.createProperties1(
+        Token(
+          Symbol(row(1)),
+          Token.createProperties(
             row(1),
-            WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
-          ))
-        })).toVector
-      } else {
-        val words: Seq[String] = (rows map { row => row(1) }).toSeq
-        val nlpStackTokens: Seq[NLPStackToken] = Tokenizer.computeOffsets(words, words.mkString)
-        val taggedTokens: Seq[PostaggedToken] = defaultPostagger.postagTokenized(nlpStackTokens)
-        (NexusToken +: (taggedTokens map { x =>
-          Token(Symbol(x.string), Token.createProperties1(x.string))
-        })).toVector
-      })
-    }
-    val taggedSentence = sentence.taggedWithFactorie
+            goldCpos = if (useGoldPosTags) {
+              WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
+            } else {
+              None
+            }
+          )
+        )
+      })).toVector
+      )
+    //val taggedSentence = sentence.taggedWithFactorie
     val breadcrumbPos: Int = 6
     val arcLabelPos: Int = 7
     val breadcrumb: Vector[Int] = (-1 +: rows.map(row => row(breadcrumbPos).toInt)).toVector
     val childMap: Map[Int, Set[Int]] = ((breadcrumb.zipWithIndex.tail groupBy { _._1 })
       map { case (key, value) => (key, (value map { _._2 }).toSet) })
-    val children: Vector[Set[Int]] = ((0 to (taggedSentence.tokens.size - 1)) map { x =>
+    val children: Vector[Set[Int]] = ((0 to (sentence.tokens.size - 1)) map { x =>
       childMap.getOrElse(x, Set())
     }).toVector
-    val neighbors: Vector[Set[Int]] = ((0 to (taggedSentence.tokens.size - 1)) map { i =>
+    val neighbors: Vector[Set[Int]] = ((0 to (sentence.tokens.size - 1)) map { i =>
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
-    //val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
-    //  row(0).toInt,
-    //  row(breadcrumbPos).toInt
-    //), Symbol("NONE"))).toMap
     val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
       row(0).toInt,
       row(breadcrumbPos).toInt
@@ -420,7 +415,7 @@ object PolytreeParse {
       neighbor <- neighborSet
       if neighbor >= 0
     } yield (neighbor, arcLabelByTokenPair(Set(i, neighbor)))
-    PolytreeParse(taggedSentence, breadcrumb, children, arcLabels)
+    PolytreeParse(sentence, breadcrumb, children, arcLabels)
   }
 
   /** Returns an iterator that iterates over all of the words (as strings) that exist in

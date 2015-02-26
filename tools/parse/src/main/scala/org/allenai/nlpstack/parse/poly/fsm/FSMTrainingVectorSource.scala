@@ -14,6 +14,8 @@ case class FSMTrainingVector(task: ClassificationTask, transition: StateTransiti
     transitionSystem: TransitionSystem, state: State) {
 
   lazy val featureVector: FeatureVector = transitionSystem.computeFeature(state)
+
+  override def toString: String = s"$transition: $featureVector"
 }
 
 abstract class FSMTrainingVectorSource(
@@ -34,7 +36,7 @@ abstract class FSMTrainingVectorSource(
     if (!vectorIter.hasNext) {
       resultSoFar
     } else {
-      taskHelper(resultSoFar + vectorIter.next.task, vectorIter)
+      taskHelper(resultSoFar + vectorIter.next().task, vectorIter)
     }
   }
 
