@@ -98,7 +98,7 @@ object Training {
     println("Saving models.")
     TransitionParser.save(parser, config.outputPath)
 
-    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
+    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(false),
       config.dataSource, ParseFile.defaultOracleNbest)
   }
 }

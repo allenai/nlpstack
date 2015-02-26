@@ -1,6 +1,10 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  InMemoryPolytreeParseSource,
+  PolytreeParseSource,
+  PolytreeParse
+}
 
 object ParseEvaluator {
 
@@ -17,7 +21,7 @@ object ParseEvaluator {
     */
   def evaluate(
     candidateParses: Iterator[Option[PolytreeParse]],
-    goldParses: Iterator[PolytreeParse], statistics: Set[ParseStatistic]
+    goldParses: Iterator[PolytreeParse], statistics: Seq[ParseStatistic]
   ) {
 
     for {
@@ -33,7 +37,7 @@ object ParseEvaluator {
 /** A ParseStatistic accrues a particular statistic over (candidate parse, gold parse) pairs.
   * Every time .notify() is called, the statistic is updated.
   */
-sealed abstract class ParseStatistic {
+abstract class ParseStatistic {
   def reset(): Unit = {}
 
   def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit
@@ -120,113 +124,117 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
   }
 }
 
-/** FirstMistakeAggregator collates the "first" incorrect transition decisions that a parser
-  * makes with respect to gold parses. For instance, say there's a parse whose gold transition
-  * representation is [Sh, Sh, Rt('nsubj), Rt('det)], and a candidate parse comes up with
-  * [Sh, Rt('adjp), Sh, Rt('det)]. The "first" incorrect transition decision is the pair
-  * (Rt('adjp), Sh). In other words, the first mistake that the candidate parse made was to
-  * guess transition Rt('adjp) when it should have guessed Sh.
-  */
-/*
-case object FirstMistakeAggregator extends ParseStatistic {
-  var mistakeHistogram = Map[(StateTransition, StateTransition), Int]()
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    for {
-      candParse <- candidateParse
-      candidateTransitions <- candParse.asTransitionSequence
-      goldTransitions <- goldParse.asTransitionSequence
-      zippedTransitions = candidateTransitions.zip(goldTransitions)
-      firstMistake <- zippedTransitions find { case (t1, t2) => t1 != t2 }
-    } {
-      mistakeHistogram = mistakeHistogram +
-        ((firstMistake._1, firstMistake._2) -> (1 + mistakeHistogram.getOrElse((firstMistake._1,
-          firstMistake._2), 0)))
-    }
-  }
-
-  override def report(): Unit = {}
+/** A ParseScore maps a candidate parse to a score. */
+trait ParseScore extends (PolytreeParse => Double) {
+  def getRatio(candidateParse: PolytreeParse): (Int, Int)
 }
-*/
 
-case object PathAccuracy extends ParseStatistic {
+case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
+    extends ParseStatistic {
+
   var numCorrect = 0
   var numTotal = 0
-  var numCorrectNoPunc = 0
-  var numTotalNoPunc = 0
   var numParses = 0
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     numParses += 1
-    numTotal += goldParse.breadcrumb.tail.size
-    candidateParse match {
-      case Some(candParse) =>
-        if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
-          val zipped = candParse.paths.zipWithIndex.tail.zip(
-            goldParse.paths.tail
-          )
-          val nonPuncZipped = zipped filter {
-            case ((x, i), y) =>
-              goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
-          }
-          // skip the first element because it is the nexus (hence it has no breadcrumb)
-          numCorrect += zipped count
-            { case ((x, _), y) => (x == y) }
-          numCorrectNoPunc += nonPuncZipped count
-            { case ((x, _), y) => (x == y) }
-          numTotalNoPunc += nonPuncZipped.size
-        } else { // skip the parse if the tokenization is different
-          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
-            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
-          numParses -= 1
-          numTotal -= goldParse.breadcrumb.tail.size
-        }
-      case None =>
+    val scoringFunction = PathAccuracyScore(
+      InMemoryPolytreeParseSource(Seq(goldParse)),
+      ignorePunctuation, ignorePathLabels
+    )
+    candidateParse map { parse =>
+      scoringFunction.getRatio(parse)
+    } foreach {
+      case (correctIncrement, totalIncrement) =>
+        numCorrect += correctIncrement
+        numTotal += totalIncrement
     }
   }
 
   override def report(): Unit = {
-    println("Path Accuracy: %d / %d = %2.2f%%".format(numCorrect, numTotal,
-      (100.0 * numCorrect) / numTotal))
-    println("Path Accuracy (no punc): %d / %d = %2.2f%%".format(numCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numCorrectNoPunc) / numTotalNoPunc))
+    val puncNote = Map(true -> "ignorePunc", false -> "full")
+    val labelNote = Map(true -> "unlabeled", false -> "labeled")
+    println(s"Path Accuracy (${labelNote(ignorePathLabels)}, ${puncNote(ignorePunctuation)}): " +
+      s"%d / %d = %2.2f%%".format(numCorrect, numTotal,
+        (100.0 * numCorrect) / numTotal))
   }
 
   override def reset(): Unit = {
     numCorrect = 0
     numTotal = 0
-    numCorrectNoPunc = 0
-    numTotalNoPunc = 0
     numParses = 0
   }
 }
-
-/** A ParseScore maps a candidate parse to a score. */
-trait ParseScore extends (Option[PolytreeParse] => Double)
 
 /** The PathAccuracyScore computes the percentage of a candidate parse's tokens that have a
   * completely correct breadcrumb path (i.e. if you follow a token's breadcrumbs to the nexus
   * in both the candidate and the gold parse, you encounter the same set of tokens in the same
   * order).
   */
-case class PathAccuracyScore(goldParses: Map[String, PolytreeParse]) extends ParseScore {
-  final def apply(candidateParse: Option[PolytreeParse]): Double = {
-    candidateParse match {
-      case Some(candParse) =>
-        goldParses.get(candParse.sentence.asWhitespaceSeparatedString) match {
-          case Some(goldParse) =>
-            if (candParse.breadcrumb.size != goldParse.breadcrumb.size ||
-              goldParse.breadcrumb.size <= 1) {
-              0.0
+case class PathAccuracyScore(
+    goldParseSource: PolytreeParseSource,
+    ignorePunctuation: Boolean, ignorePathLabels: Boolean
+) extends ParseScore {
+
+  final def apply(candParse: PolytreeParse): Double = {
+    val (numerator, denominator) = getRatio(candParse)
+    if (denominator == 0) {
+      0.0
+    } else {
+      numerator.toFloat / denominator
+    }
+  }
+
+  /** Get the number of correct paths and the number of total paths in a candidate parse.
+    *
+    * @param candParse the candidate parse to evaluate
+    * @return the pair (num correct paths, num total paths)
+    */
+  def getRatio(candParse: PolytreeParse): (Int, Int) = {
+    goldParses.get(candParse.sentence.asWhitespaceSeparatedString) match {
+      case Some(goldParse) =>
+        if (candParse.breadcrumb.size != goldParse.breadcrumb.size ||
+          goldParse.breadcrumb.size <= 1) {
+
+          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
+            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
+          (0, 0)
+        } else {
+          // skip the first element because it is the nexus (hence it has no breadcrumb)
+          val zippedPaths = {
+            val zipped = candParse.paths.zipWithIndex.tail.zip(
+              goldParse.paths.tail
+            )
+            if (ignorePunctuation) {
+              zipped filter {
+                case ((x, i), y) =>
+                  goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
+              }
             } else {
-              // skip the first element because it is the nexus (hence it has no breadcrumb)
-              val numCorrect: Double = candParse.paths.tail.zip(goldParse.paths.tail) count
-                { case (x, y) => (x == y) }
-              numCorrect / goldParse.breadcrumb.tail.size
+              zipped
             }
-          case None => 0.0 // TODO: throw error?
+          }
+          val numCorrect: Int = zippedPaths count {
+            case ((candidatePath, token), goldPath) =>
+              (candidatePath == goldPath) &&
+                (ignorePathLabels ||
+                  convertPathToArcLabels(candidatePath :+ token, candParse) ==
+                  convertPathToArcLabels(goldPath :+ token, goldParse))
+          }
+          (numCorrect, zippedPaths.size)
         }
-      case None => 0.0
+      case None => (0, 0) // TODO: throw error?
+    }
+  }
+
+  private val goldParses: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
+    (parse.sentence.asWhitespaceSeparatedString, parse)
+  }).toMap
+
+  /** Converts a path in the parse tree to its arc labels. */
+  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[Symbol] = {
+    path map { pathToken =>
+      parse.breadcrumbArcLabel(pathToken)
     }
   }
 }

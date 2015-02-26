@@ -6,7 +6,7 @@ import spray.json.DefaultJsonProtocol._
   *
   * @param symbols the list of symbols comprising the feature name
   */
-case class FeatureName(symbols: List[Symbol]) {
+case class FeatureName(symbols: Seq[Symbol]) {
   override def toString(): String = {
     (symbols map { sym => sym.name }).mkString(".")
   }

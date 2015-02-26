@@ -1,15 +1,12 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.eval.{
-  PathAccuracy,
-  UnlabeledBreadcrumbAccuracy,
-  ParseEvaluator
-}
+import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.{
   ClassifierBasedCostFunction,
   RerankingFunction,
   FeatureUnion
 }
+import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
@@ -56,7 +53,7 @@ object ParseFile {
     }
     val config: ParseFileConfig = optionParser.parse(args, ParseFileConfig()).get
     val parser: TransitionParser = TransitionParser.load(config.configFilename)
-    fullParseEvaluation(parser, config.testFilename, ConllX(true), config.dataSource,
+    fullParseEvaluation(parser, config.testFilename, ConllX(false), config.dataSource,
       config.oracleNbest)
   }
 
@@ -74,14 +71,15 @@ object ParseFile {
         parse => parser.parse(parse.sentence)
       }
     }
-    val stat = UnlabeledBreadcrumbAccuracy
-    stat.reset()
-    PathAccuracy.reset()
-    ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator,
-      Set(stat, PathAccuracy))
+    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
+      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
+    stats foreach { stat => stat.reset() }
+    ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
+
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
-      stat.numParses, parsingDurationInSeconds, (1.0 * stat.numParses) / parsingDurationInSeconds
+      UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
+      (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
     ))
   }
 
@@ -98,11 +96,15 @@ object ParseFile {
 
     parser match {
       case rerankingParser: RerankingTransitionParser =>
+        val oracleScore: ParseScore =
+          PathAccuracyScore(
+            parseSource,
+            ignorePunctuation = true, ignorePathLabels = false
+          )
         val oracleRerankingFunction: RerankingFunction =
-          OracleRerankingFunction(parseSource.parseIterator)
+          ParseRerankingFunction(oracleScore)
         val oracleParserConfig = ParserConfiguration(
           rerankingParser.config.parsingCostFunction,
-          //parserConfig.labelingCostFunction,
           oracleRerankingFunction, oracleNbestSize
         )
         val parser = RerankingTransitionParser(oracleParserConfig)

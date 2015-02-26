@@ -1,10 +1,8 @@
-package org.allenai.nlpstack.parse.poly.polyparser
+package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.ml.{
-  FeatureVector => MLFeatureVector,
-  FeatureName => MLFeatureName
-}
 import org.allenai.common.json._
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName => MLFeatureName, FeatureVector => MLFeatureVector }
+import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -22,16 +20,12 @@ object PolytreeParseFeature {
     */
   implicit object PolytreeParseFeatureJsonFormat extends RootJsonFormat[PolytreeParseFeature] {
 
-    implicit val eventStatisticFeaturesFormat =
-      jsonFormat2(EventStatisticFeatures.apply).pack("type" -> "EventStatisticFeatures")
     implicit val polytreeParseFeatureUnionFormat =
       jsonFormat1(PolytreeParseFeatureUnion.apply).pack("type" -> "PolytreeParseFeatureUnion")
 
     def write(feature: PolytreeParseFeature): JsValue = feature match {
       case BaseParserScoreFeature => JsString("BaseParserScoreFeature")
       case SentenceLengthFeature => JsString("SentenceLengthFeature")
-      case eventStatisticFeatures: EventStatisticFeatures =>
-        eventStatisticFeatures.toJson
       case polytreeParseFeatureUnion: PolytreeParseFeatureUnion =>
         polytreeParseFeatureUnion.toJson
     }
@@ -43,48 +37,10 @@ object PolytreeParseFeature {
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
-        eventStatisticFeaturesFormat,
         polytreeParseFeatureUnionFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
-  }
-}
-
-/** Generates a feature for each neighborhood histogram and transform in the argument list.
-  *
-  * @param neighborhoodCounts the neighborhood histograms
-  * @param transforms the neighborhood transforms
-  */
-case class EventStatisticFeatures(
-    neighborhoodCounts: Seq[(String, NeighborhoodExtractor, Seq[(Neighborhood, Int)])],
-    transforms: Seq[(String, NeighborhoodTransform)]
-) extends PolytreeParseFeature {
-
-  @transient
-  val eventStatistics: Seq[(String, String, NeighborhoodExtractor, NeighborhoodEventStatistic)] = {
-    for {
-      (neighborhoodName, extractor, counts) <- neighborhoodCounts
-      (transformName, transform) <- transforms
-    } yield {
-      val stat = NeighborhoodEventStatistic("", counts, transform)
-      (neighborhoodName, transformName, extractor, stat)
-    }
-  }
-
-  override def apply(parse: PolytreeParse, score: Double): MLFeatureVector = {
-    MLFeatureVector(
-      for {
-        (neighborhoodName, transformName, extractor, stat) <- eventStatistics
-      } yield {
-        val featureValue = extractor(parse) map { neighborhood =>
-          -math.log(stat.getSmoothedEventProbability(neighborhood))
-        } reduce { (x, y) => x + y }
-        MLFeatureName(
-          List('eventStat, Symbol(neighborhoodName), Symbol(transformName))
-        ) -> featureValue
-      }
-    )
   }
 }
 

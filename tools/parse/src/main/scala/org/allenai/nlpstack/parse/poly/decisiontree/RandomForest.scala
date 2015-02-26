@@ -76,7 +76,8 @@ object RandomForest {
   * selected features to consider at each node
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-  featuresExaminedPerNode: Int, useBagging: Boolean = false)
+  featuresExaminedPerNode: Int, useBagging: Boolean = false,
+  maximumDepthPerTree: Int = Integer.MAX_VALUE)
     extends ProbabilisticClassifierTrainer {
 
   /** Induces a RandomForest from a set of feature vectors.
@@ -86,7 +87,8 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
 
-    val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode)
+    val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode,
+      maximumDepth = maximumDepthPerTree)
     System.gc()
     val initialMemory: Double = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
     val result = RandomForest(

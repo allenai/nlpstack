@@ -1,7 +1,10 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import org.allenai.nlpstack.parse.poly.polyparser.LinearParseRerankingFunction
 import org.allenai.common.json._
+import org.allenai.nlpstack.parse.poly.reranking.{
+  WeirdParseNodeRerankingFunction,
+  LinearParseRerankingFunction
+}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
@@ -51,18 +54,26 @@ object RerankingFunction {
 
     implicit val linearParseRerankingFunctionFormat =
       jsonFormat2(LinearParseRerankingFunction.apply).pack("type" -> "LinearParseRerankingFunction")
+    implicit val weirdParseNodeRerankingFunctionFormat =
+      jsonFormat3(WeirdParseNodeRerankingFunction.apply).pack(
+        "type" -> "WeirdParseNodeRerankingFunction"
+      )
     def write(rerankingFunction: RerankingFunction): JsValue = rerankingFunction match {
       case BaseCostRerankingFunction => JsString("BaseCostRerankingFunction")
       case linearParseRerankingFunction: LinearParseRerankingFunction =>
         linearParseRerankingFunction.toJson
+      case weirdParseNodeRerankingFunction: WeirdParseNodeRerankingFunction =>
+        weirdParseNodeRerankingFunction.toJson
     }
-
     def read(value: JsValue): RerankingFunction = value match {
       case JsString(typeid) => typeid match {
         case "BaseCostRerankingFunction" => BaseCostRerankingFunction
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
-      case jsObj: JsObject => jsObj.unpackWith(linearParseRerankingFunctionFormat)
+      case jsObj: JsObject => jsObj.unpackWith(
+        linearParseRerankingFunctionFormat,
+        weirdParseNodeRerankingFunctionFormat
+      )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
   }
