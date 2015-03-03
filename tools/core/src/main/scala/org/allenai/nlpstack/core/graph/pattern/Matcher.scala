@@ -29,12 +29,11 @@ abstract class BaseEdgeMatcher[T] extends EdgeMatcher[T] {
 
 abstract class WrappedEdgeMatcher[T](val matcher: EdgeMatcher[T]) extends EdgeMatcher[T] {
   def canEqual(that: Any) = that.isInstanceOf[WrappedEdgeMatcher[_]]
-  override def hashCode = 37 * (matcher.hashCode + 1)
   override def equals(that: Any) = that match {
     case that: WrappedEdgeMatcher[_] => (that canEqual this) && this.matcher == that.matcher
     case _ => false
   }
-  override def hashCode = matcher.hashCode + 3
+  override def hashCode = 37 * (matcher.hashCode + 1)
 
   override def baseEdgeMatcher = matcher.baseEdgeMatcher
 }

@@ -56,7 +56,8 @@ object NlpstackBuild extends Build {
       dependencyOverrides ++= Set(
         parserCombinators,
         "commons-codec" % "commons-codec" % "1.9",
-        "org.apache.commons" % "commons-compress" % "1.8"),
+        "org.apache.commons" % "commons-compress" % "1.8",
+        "org.allenai.common" % "common-core_2.11" % "2015.01.23-0"),
       PublishTo.sonatype)
 
   lazy val tools = Project(
