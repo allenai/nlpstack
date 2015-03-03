@@ -29,10 +29,12 @@ abstract class BaseEdgeMatcher[T] extends EdgeMatcher[T] {
 
 abstract class WrappedEdgeMatcher[T](val matcher: EdgeMatcher[T]) extends EdgeMatcher[T] {
   def canEqual(that: Any) = that.isInstanceOf[WrappedEdgeMatcher[_]]
+  override def hashCode = 37 * (matcher.hashCode + 1)
   override def equals(that: Any) = that match {
     case that: WrappedEdgeMatcher[_] => (that canEqual this) && this.matcher == that.matcher
     case _ => false
   }
+  override def hashCode = matcher.hashCode + 3
 
   override def baseEdgeMatcher = matcher.baseEdgeMatcher
 }
@@ -110,6 +112,7 @@ abstract class WrappedNodeMatcher[T](val matcher: NodeMatcher[T])
     case that: WrappedNodeMatcher[_] => (that canEqual this) && this.matcher == that.matcher
     case _ => false
   }
+  override def hashCode = 37 * (matcher.hashCode + 2)
   override def baseNodeMatchers = this.matcher.baseNodeMatchers
 }
 
@@ -138,6 +141,7 @@ class ConjunctiveNodeMatcher[T](val matchers: Set[NodeMatcher[T]])
     case that: ConjunctiveNodeMatcher[_] => (that canEqual this) && this.matchers == that.matchers
     case _ => false
   }
+  override def hashCode = 37 * (matchers.hashCode + 3)
 }
 
 /** Always match any node.
