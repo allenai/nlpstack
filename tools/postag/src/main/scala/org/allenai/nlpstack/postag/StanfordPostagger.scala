@@ -7,7 +7,7 @@ import edu.stanford.nlp.tagger.maxent.MaxentTagger
 import org.allenai.nlpstack.core._
 
 class StanfordPostagger(
-  val tagger: MaxentTagger
+    val tagger: MaxentTagger
 ) extends Postagger {
 
   def this() = this(StanfordPostagger.loadDefaultModel())
@@ -15,14 +15,15 @@ class StanfordPostagger(
   override def postagTokenized(tokens: Seq[Token]): Seq[PostaggedToken] = {
     val postags = tagger.tagSentence(
       tokens.map { token =>
-        val corelabel = new CoreLabel();
-        corelabel.setWord(token.string);
-        corelabel
-      }.toList
+      val corelabel = new CoreLabel();
+      corelabel.setWord(token.string);
+      corelabel
+    }.toList
     ).map(_.tag())
 
-    (tokens zip postags) map { case (token, postag) =>
-      PostaggedToken(token, postag)
+    (tokens zip postags) map {
+      case (token, postag) =>
+        PostaggedToken(token, postag)
     }
   }
 }
