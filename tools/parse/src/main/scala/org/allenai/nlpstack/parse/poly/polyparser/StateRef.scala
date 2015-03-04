@@ -52,10 +52,6 @@ object StateRef {
         JsObject(breadcrumbRefFormat.write(breadcrumbRef).asJsObject.fields +
           ("type" -> JsString("BreadcrumbRef")))
       }
-      //case transitiveRef: TransitiveRef => {
-      //  JsObject(transitiveRefFormat.write(transitiveRef).asJsObject.fields +
-      //    ("type" -> JsString("TransitiveRef")))
-      //}
       case stackChildrenRef: StackChildrenRef => {
         JsObject(stackChildrenRefFormat.write(stackChildrenRef).asJsObject.fields +
           ("type" -> JsString("StackChildrenRef")))
@@ -127,7 +123,6 @@ object StateRef {
         case JsString("StackRef") => stackRefFormat.read(value)
         case JsString("BufferRef") => bufferRefFormat.read(value)
         case JsString("BreadcrumbRef") => breadcrumbRefFormat.read(value)
-        //case JsString("TransitiveRef") => transitiveRefFormat.read(value)
         case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
         case JsString("StackChildRef") => stackChildRefFormat.read(value)
         case JsString("BufferChildrenRef") => bufferChildrenRefFormat.read(value)
@@ -152,7 +147,6 @@ object StateRef {
   val stackRefFormat: RootJsonFormat[StackRef] = jsonFormat1(StackRef.apply)
   val bufferRefFormat: RootJsonFormat[BufferRef] = jsonFormat1(BufferRef.apply)
   val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
-  //val transitiveRefFormat: RootJsonFormat[TransitiveRef] = jsonFormat2(TransitiveRef.apply)
   val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] =
     jsonFormat1(StackChildrenRef.apply)
   val stackChildRefFormat: RootJsonFormat[StackChildRef] =
@@ -320,6 +314,7 @@ case object TokenCrumb extends TokenNeighbors {
   @transient override val name: Symbol = Symbol("p")
 }
 
+// TODO: currently cannot be serialized
 case class TransitiveRef(stateRef: StateRef, neighbors: Seq[TokenNeighbors]) extends StateRef {
   override def apply(state: TransitionParserState): Seq[Int] = {
     (neighbors.foldLeft(stateRef(state).toSet)((tokens, neighbor) =>

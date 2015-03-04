@@ -24,7 +24,6 @@ abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownCluster
     TokenPositionFeature,
     TokenPropertyFeature('factorieCpos),
     TokenPropertyFeature('factoriePos),
-    //TokenPropertyFeature('cpos),
     TokenPropertyFeature('brown0),
     KeywordFeature(DependencyParsingTransitionSystem.keywords)
   ))

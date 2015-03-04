@@ -99,8 +99,7 @@ case object ArcHybridTransitionSystem {
     )
   } yield {
     Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors)),
-      new TokenLinkDirectionFeature(stateRef, TransitiveRef(stateRef, neighbors))
+      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
     )
   }).flatten
 
@@ -113,8 +112,7 @@ case object ArcHybridTransitionSystem {
     )
   } yield {
     Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors)),
-      new TokenLinkDirectionFeature(stateRef, TransitiveRef(stateRef, neighbors))
+      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
     )
   }).flatten
 
@@ -143,13 +141,9 @@ case object ArcHybridTransitionSystem {
   }
 
   val transitionFeature = FeatureUnion(
-    //linkFeatures ++
-    //offlineTransitiveFeatures ++
     Seq(
       new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
         BufferRef(1))),
-      //, StackParentsRef(0), StackParentsRef(1), BufferParentsRef(0),
-      //StackChildrenRef(0), StackChildrenRef(1), BufferChildrenRef(0))),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
       new OfflineTokenFeature(StackRef(2)),
@@ -161,15 +155,10 @@ case object ArcHybridTransitionSystem {
   )
 
   val labelingFeature = FeatureUnion(
-    //previousLinkFeatures ++
-    //linkFeatures ++
-    //offlineTransitiveFeatures ++
-    //offlinePreviousLinkFeatures ++
     Seq(
       new TokenLinkFeature(PreviousLinkCrumbRef, PreviousLinkGretelRef),
       new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1))), // PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
-      //PreviousLinkGrandgretelRef)),
+        BufferRef(1))),
       new OfflineTokenFeature(StackRef(0)),
       new OfflineTokenFeature(StackRef(1)),
       new OfflineTokenFeature(StackRef(2)),

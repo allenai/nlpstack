@@ -112,50 +112,17 @@ class DTCostFunctionTrainer(
         }
         classifier
     }
-    //taskClassifierSeq.toMap
-    /*
-    (taskTrainingVectors map {
-      case (task, trainingVectorIter) => {
-        //val trainingVectors = trainingVectorIter.toIterable
-        println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
-        //s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
-        //trainingVectors foreach { vec => println(vec) }
-        progressCounter += 1
-        val vectors: DTFeatureVectorSource =
-          createDTFeatureVectorSource(task,
-            trainingVectorIter)
-            //trainingVectors.iterator)
-        println("Now training.")
-        val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
-        val featureMap: Seq[(Int, FeatureName)] =
-          featureNames.zipWithIndex filter {
-            case (_, featIndex) =>
-              inducedClassifier.allFeatures.contains(featIndex)
-          } map {
-            case (feat, featIndex) =>
-              (featIndex, feat)
-          }
-        (task, new EmbeddedClassifier(
-          inducedClassifier,
-          transitions, featureMap, featureNames.size
-        ))
-      }
-    }).toMap*/
   }
 
   private def trainClassifier(progressCounter: Int, task: ClassificationTask,
     trainingVectorIter: Iterator[FSMTrainingVector]): EmbeddedClassifier = {
 
-    //val trainingVectors = trainingVectorIter.toIterable
     println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
-    //s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
-    //trainingVectors foreach { vec => println(vec) }
     val vectors: DTFeatureVectorSource =
       createDTFeatureVectorSource(
         task,
         trainingVectorIter
       )
-    //trainingVectors.iterator)
     println("Now training.")
     val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
     val featureMap: Seq[(Int, FeatureName)] =
