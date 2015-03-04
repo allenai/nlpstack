@@ -1,6 +1,12 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
+import java.io.{ PrintWriter, File }
+
+import org.allenai.common.Resource
+import org.allenai.nlpstack.parse.poly.core.Util
+import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -80,36 +86,38 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   maximumDepthPerTree: Int = Integer.MAX_VALUE)
     extends ProbabilisticClassifierTrainer {
 
+  private val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode,
+    maximumDepth = maximumDepthPerTree)
+
   /** Induces a RandomForest from a set of feature vectors.
     *
     * @param data a set of feature vectors to use for training
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-
-    val dtTrainer = new DecisionTreeTrainer(validationPercentage, featuresExaminedPerNode,
-      maximumDepth = maximumDepthPerTree)
-    System.gc()
-    val initialMemory: Double = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
-    val result = RandomForest(
-      data.allOutcomes,
-      Range(0, numDecisionTrees) flatMap { _ =>
-        val trainingData = useBagging match {
-          case true => data //.getBag
-          case false => data
-        }
-        dtTrainer(trainingData) match {
-          case dt: DecisionTree => Some(dt)
-          case _ => None
-        }
+    var subtreeFiles: Seq[File] = Seq() // TODO: do we need a var here?
+    Range(0, numDecisionTrees) foreach { _ =>
+      dtTrainer(data) match {
+        case dt: DecisionTree =>
+          val tempFile: File = File.createTempFile("temp.", ".dt")
+          Resource.using(new PrintWriter(tempFile)) { writer =>
+            writer.println(dt.toJson.compactPrint)
+          }
+          subtreeFiles = tempFile +: subtreeFiles
       }
-    )
-    System.gc()
-    val memoryAfterLoading: Double = Runtime.getRuntime.totalMemory -
-      Runtime.getRuntime.freeMemory()
-    println("Random forest memory footprint: %.1f MB".format((memoryAfterLoading - initialMemory)
-      / Math.pow(10.0, 6.0)))
-    println("Completed random forest training.")
-    result
+    }
+    val subtrees: Seq[DecisionTree] = subtreeFiles map {
+      case subtreeFile =>
+        Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>
+          val jsVal = Util.getJsValueFromStream(stream)
+          jsVal match {
+            case JsObject(values) =>
+            case _ => deserializationError("Unexpected JsValue type. Must be " +
+              "JsObject.")
+          }
+          jsVal.convertTo[DecisionTree]
+        }
+    }
+    RandomForest(data.allOutcomes, subtrees)
   }
 }

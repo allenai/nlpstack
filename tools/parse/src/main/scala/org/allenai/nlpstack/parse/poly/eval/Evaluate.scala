@@ -35,8 +35,9 @@ object Evaluate {
     val goldParses: Iterator[PolytreeParse] = {
       PolytreeParse.fromFile(config.goldFilename, fileFormat)
     }
-    ParseEvaluator.evaluate(candidateParses, goldParses, Seq(
-      UnlabeledBreadcrumbAccuracy, PathAccuracy(false, true)
-    ))
+    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
+      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
+
+    ParseEvaluator.evaluate(candidateParses, goldParses, stats)
   }
 }

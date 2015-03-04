@@ -114,7 +114,7 @@ case class TokenPropertyFeature(property: Symbol)
   override def apply(sentence: Sentence, tokenIndex: Int): Seq[(FeatureName, Double)] = {
     getTokenSequence(sentence, tokenIndex) flatMap { token =>
       token.getProperty(property).toSeq map { propValue =>
-        FeatureName(List(featureName, property, propValue)) -> 1.0
+        FeatureName(Seq(property, propValue)) -> 1.0
       }
     }
   }
@@ -190,7 +190,7 @@ case class PrefixFeature(keyprefixes: Seq[Symbol]) extends TokenFeature {
 
 case object TokenPositionFeature extends TokenFeature {
 
-  @transient val featureName = 'tokenPosition
+  @transient val featureName = 'place
   @transient val hasNexusSymbol = 'nexus
   @transient val hasFirstSymbol = 'first
   @transient val hasSecondSymbol = 'second

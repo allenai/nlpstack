@@ -49,6 +49,21 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
     }).keySet
   }
 
+  lazy val parents: Map[Int, Set[Int]] = {
+    val childParentPairs: Seq[(Int, Int)] = for {
+      (parent, childSet) <- children.toSeq
+      child <- childSet
+    } yield (child, parent)
+
+    val s: Map[Int, Seq[(Int, Int)]] = childParentPairs groupBy (_._1)
+
+    s.mapValues { case intPairSeq: Seq[(Int, Int)] => (intPairSeq map { _._2 }).toSet }
+  }
+
+  def getParents(token: Int): Set[Int] = {
+    parents.getOrElse(token, Set())
+  }
+
   /** Returns whether the buffer has been exhausted. */
   lazy val bufferIsEmpty: Boolean = (bufferPosition >= sentence.size)
 

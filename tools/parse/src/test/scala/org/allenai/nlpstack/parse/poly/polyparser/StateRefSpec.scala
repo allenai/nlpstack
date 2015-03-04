@@ -1,14 +1,14 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Sentence, NexusToken, Token}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import spray.json._
 
 class StateRefSpec extends UnitSpec {
   // scalastyle:off
 
-
   /** This represents the following parser state:
+    * format: OFF
     *
     *   ---------
     *   |        |
@@ -18,6 +18,7 @@ class StateRefSpec extends UnitSpec {
     *            V
     *          we_1
     *
+    * format: ON
     */
   val state1: TransitionParserState = TransitionParserState(
     stack = Vector(5, 4, 3, 2, 0),
@@ -28,8 +29,43 @@ class StateRefSpec extends UnitSpec {
     annotatedSentence = AnnotatedSentence(
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
         Token('white), Token('cat), Token('with), Token('a), Token('telescope))),
-      IndexedSeq()))
+      IndexedSeq()
+    )
+  )
 
+  val state2: TransitionParserState = TransitionParserState(
+    stack = Vector(2),
+    bufferPosition = 6,
+    breadcrumb = Map(0 -> -1, 1 -> 2, 5 -> 2, 3 -> 5, 4 -> 5),
+    children = Map(2 -> Set(1, 5), 3 -> Set(5), 4 -> Set(5)),
+    arcLabels = Map(Set(1, 2) -> 'nsubj, Set(2, 5) -> 'dobj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
+    annotatedSentence = AnnotatedSentence(
+      Sentence(Vector(
+        NexusToken,
+        Token('we, Map('cpos -> Set('PRON))),
+        Token('saw, Map('cpos -> Set('VERB))),
+        Token('a, Map('cpos -> Set('DET))),
+        Token('white, Map('cpos -> Set('ADJ))),
+        Token('cat, Map('cpos -> Set('NOUN))),
+        Token('with, Map('cpos -> Set('ADP))),
+        Token('a, Map('cpos -> Set('DET))),
+        Token('telescope, Map('cpos -> Set('NOUN)))
+      )),
+      IndexedSeq()
+    )
+  )
+
+  "Calling TransitiveRef's apply" should "give the correct answers" in {
+    TransitiveRef(StackRef(0), Seq(TokenChildren))(state2) shouldBe Seq(1, 5)
+    TransitiveRef(StackRef(1), Seq(TokenChildren))(state2) shouldBe Seq()
+    TransitiveRef(StackRef(0), Seq(TokenChild(0)))(state2) shouldBe Seq(1)
+    TransitiveRef(StackRef(0), Seq(TokenChild(1), TokenParent(0)))(state2) shouldBe Seq(2)
+    TransitiveRef(StackRef(0), Seq(TokenChild(1), TokenParent(1)))(state2) shouldBe Seq(3)
+    TransitiveRef(StackRef(0), Seq(TokenChild(1), TokenParent(2)))(state2) shouldBe Seq(4)
+    TransitiveRef(StackRef(0), Seq(TokenChild(1), TokenParent(3)))(state2) shouldBe Seq()
+    TransitiveRef(StackRef(0), Seq(TokenChild(1), TokenParents))(state2) shouldBe Seq(2, 3, 4)
+    TransitiveRef(StackRef(0), Seq(TokenChildren, TokenParent(0)))(state2) shouldBe Seq(2)
+  }
 
   "Constructing a StackRef" should "throw IllegalArgumentException for a negative index" in {
     intercept[IllegalArgumentException] {
@@ -77,6 +113,24 @@ class StateRefSpec extends UnitSpec {
     stateRef.toJson.convertTo[StateRef] shouldBe BufferRef(2)
   }
 
+  "Calling LastRef's apply" should "give back the last sentence token" in {
+    LastRef(state1) shouldBe List(8)
+  }
+
+  "Serializing a LastRef" should "preserve a LastRef" in {
+    val stateRef: StateRef = LastRef
+    stateRef.toJson.convertTo[StateRef] shouldBe LastRef
+  }
+
+  "Calling FirstRef's apply" should "give back the first (non-nexus) sentence token" in {
+    FirstRef(state1) shouldBe List(1)
+  }
+
+  "Serializing a FirstRef" should "preserve a FirstRef" in {
+    val stateRef: StateRef = FirstRef
+    stateRef.toJson.convertTo[StateRef] shouldBe FirstRef
+  }
+
   "Constructing a BreadcrumbRef" should "throw IllegalArgumentException for a negative index" in {
     intercept[IllegalArgumentException] {
       BreadcrumbRef(-1)
@@ -106,8 +160,8 @@ class StateRefSpec extends UnitSpec {
 
   "Calling StackGretelsRef's apply" should "give back the empty set when a valid stack item " +
     "has no gretels" in {
-    StackGretelsRef(0)(state1) shouldBe List()
-  }
+      StackGretelsRef(0)(state1) shouldBe List()
+    }
 
   it should "give back all gretels when a valid stack item has gretels" in {
     StackGretelsRef(3)(state1) shouldBe List(1)
@@ -122,21 +176,4 @@ class StateRefSpec extends UnitSpec {
     stateRef.toJson.convertTo[StateRef] shouldBe StackGretelsRef(4)
   }
 
-  "Calling LastRef's apply" should "give back the last sentence token" in {
-    LastRef(state1) shouldBe List(8)
-  }
-
-  "Serializing a LastRef" should "preserve a LastRef" in {
-    val stateRef: StateRef = LastRef
-    stateRef.toJson.convertTo[StateRef] shouldBe LastRef
-  }
-
-  "Calling FirstRef's apply" should "give back the first (non-nexus) sentence token" in {
-    FirstRef(state1) shouldBe List(1)
-  }
-
-  "Serializing a FirstRef" should "preserve a FirstRef" in {
-    val stateRef: StateRef = FirstRef
-    stateRef.toJson.convertTo[StateRef] shouldBe FirstRef
-  }
 }

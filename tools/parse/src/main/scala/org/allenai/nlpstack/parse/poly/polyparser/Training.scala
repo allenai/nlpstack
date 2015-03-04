@@ -68,7 +68,7 @@ object Training {
       }
     }
     val transitionSystem: TransitionSystem =
-      ArcHybridTransitionSystem(clusters)
+      ArcEagerTransitionSystem(clusters)
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this

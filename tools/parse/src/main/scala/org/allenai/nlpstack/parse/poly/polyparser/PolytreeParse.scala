@@ -376,6 +376,7 @@ object PolytreeParse {
     // - row(4) is the fine POS tag
     // - row(6) is the breadcrumb
     // - row(7) is the arc label (for the unique arc between the word and its breadcrumb)
+    //val iCoarsePos = 3
     val iFinePos = 4
     val sentence =
       Sentence(
@@ -385,6 +386,7 @@ object PolytreeParse {
           Token.createProperties(
             row(1),
             goldCpos = if (useGoldPosTags) {
+              //Some(row(iCoarsePos))
               WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
             } else {
               None

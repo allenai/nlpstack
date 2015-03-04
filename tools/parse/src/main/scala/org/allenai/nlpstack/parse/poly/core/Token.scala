@@ -118,8 +118,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
     parenIntervals
   }
 
-  @transient
-  lazy val taggedWithFactorie: Sentence = {
+  @transient lazy val taggedWithFactorie: Sentence = {
     val words: IndexedSeq[String] = tokens.tail map { tok => tok.word.name }
     val nlpStackTokens: IndexedSeq[NLPStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
@@ -133,9 +132,6 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
             tagged.postag, "X"
           )))
         ))
-      //Token(untagged.word, untagged.properties.updated('factoriePos, Set(Symbol(tagged.postag)))
-      //  .updated('factorieCpos,
-      //    Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X")))))
     }))
   }
 
@@ -159,6 +155,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
         case _ => Set[Symbol]()
       }
       tok.updateProperties(Map(
+        'lcase -> Set(Symbol(tokStr.toLowerCase)),
         'lexical -> (firstLetterCapital ++ existsCapital ++ allCaps ++ existsNumber)
       ))
     })
