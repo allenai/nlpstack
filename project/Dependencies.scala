@@ -22,4 +22,6 @@ object Dependencies extends CoreDependencies {
   val testingLibraries = Seq(allenAiTestkit % "test")
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
+
+  val loggingDependencies = Seq(Logging.slf4jApi, Logging.logbackCore, Logging.logbackClassic)
 }
