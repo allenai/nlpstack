@@ -1,3 +1,3 @@
 import Dependencies._
 
-addLoggingDependencies(libraryDependencies)
+libraryDependencies ++= loggingDependencies

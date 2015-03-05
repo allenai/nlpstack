@@ -17,6 +17,7 @@ class Bipath[T](val path: List[DirectedEdge[T]]) {
     case that: Bipath[_] => (that canEqual this) && that.path == this.path
     case _ => false
   }
+  override def hashCode = 37 * (path.hashCode + 1)
 
   /** the undirected edges of the path */
   def edges: Set[Edge[T]] = path.foldRight[Set[Edge[T]]](Set()) {

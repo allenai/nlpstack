@@ -48,6 +48,7 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
       that.edges == this.edges
     case _ => false
   }
+  override def hashCode = vertices.hashCode * 31 + edges.hashCode
 
   /* Expand a set of verticess to all neighbors along immediate edges
    * that satisfy the supplied predicate.
