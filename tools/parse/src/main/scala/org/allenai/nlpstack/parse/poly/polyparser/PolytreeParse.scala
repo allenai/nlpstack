@@ -388,6 +388,11 @@ object PolytreeParse {
               WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
             } else {
               None
+            },
+            goldPos = if (useGoldPosTags) {
+              Some(row(iFinePos))
+            } else {
+              None
             }
           )
         )
