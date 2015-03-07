@@ -120,6 +120,15 @@ case class TokenPropertyFeature(property: Symbol)
   }
 }
 
+case class TagHistogramFeature(tagHistogram: TagHistogram) extends TokenFeature {
+
+  @transient val featureName: Symbol = 'tagHist
+
+  override def apply(sentence: Sentence, tokenIndex: Int): Seq[(FeatureName, Double)] = {
+    tagHistogram.getFeatures(sentence.tokens(tokenIndex).word) map { x => x -> 1.0 }
+  }
+}
+
 /** The KeywordFeature maps a token to its word representation, if its word appears in the
   * argument set `keywords`. Otherwise its apply function will return an empty set.
   *

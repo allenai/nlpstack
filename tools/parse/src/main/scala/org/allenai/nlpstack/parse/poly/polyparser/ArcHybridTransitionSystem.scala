@@ -48,8 +48,9 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
   * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcHybridTransitionSystem(
+    tagHistogram: TagHistogram,
     brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(brownClusters) {
+) extends DependencyParsingTransitionSystem(tagHistogram, brownClusters) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier

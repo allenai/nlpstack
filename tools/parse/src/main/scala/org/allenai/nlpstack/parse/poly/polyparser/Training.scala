@@ -67,8 +67,20 @@ object Training {
         Seq[BrownClusters]()
       }
     }
+
+    val largeTrainingSource: PolytreeParseSource = {
+      val largeTrainingFiles =
+        "question-bank/stanford-patch-1.0/stan3-4-ch-dependencies/qbank.train.conllx,wsj/original/stan3-4-ch-dependencies/wsj.train.conllx"
+      MultiPolytreeParseSource(largeTrainingFiles.split(",") map { path =>
+        InMemoryPolytreeParseSource.getParseSource(
+          path,
+          ConllX(true), config.dataSource
+        )
+      })
+    }
+    val tagHistogram = TagHistogram.trainTagHistogram(largeTrainingSource, 3)
     val transitionSystem: TransitionSystem =
-      ArcEagerTransitionSystem(clusters)
+      ArcEagerTransitionSystem(tagHistogram, clusters)
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
@@ -91,10 +103,11 @@ object Training {
     )
     val parser = RerankingTransitionParser(parserConfig)
 
+    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
+      config.dataSource, ParseFile.defaultOracleNbest)
+
     println("Saving models.")
     TransitionParser.save(parser, config.outputPath)
 
-    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
-      config.dataSource, ParseFile.defaultOracleNbest)
   }
 }

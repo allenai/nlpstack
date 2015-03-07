@@ -1,12 +1,9 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.util.Scanner
-
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.ml.FeatureName
 import scopt.OptionParser
-
-import scala.io.StdIn
+import spray.json.DefaultJsonProtocol._
 
 private case class TagHistogramConfig(goldFilenames: String = "", dataSource: String = "")
 
@@ -47,7 +44,19 @@ object TagHistogram {
         )
       })
 
-    val qualifyingThreshold = 5
+    val tagHistogram = trainTagHistogram(trainingSource, 3)
+
+    Seq("the", "bank", "pirate", "Shift", "newspaper", "stock", "diet") foreach { word =>
+      tagHistogram.getFeatures(Symbol(word)) foreach { feat =>
+        println(s"$word: $feat")
+      }
+    }
+  }
+
+  def trainTagHistogram(
+    trainingSource: PolytreeParseSource,
+    qualifyingThreshold: Int
+  ): TagHistogram = {
     var wordHistogram = Map[Symbol, Int]()
     for {
       sent <- trainingSource.sentenceIterator
@@ -90,32 +99,19 @@ object TagHistogram {
         }
       }
     }
-
-    val tagHistogram = TagHistogram(commonWords.toSet, posWordHistogram, cposWordHistogram)
-
-    Seq("the", "bank", "pirate", "Shift", "newspaper", "stock", "diet") foreach { word =>
-      tagHistogram.getFeatures(Symbol(word)) foreach { feat =>
-        println(s"$word: $feat")
-      }
-    }
-
-    /*
-    tagHistogram.words foreach { word =>
-      tagHistogram.getFeatures(word) foreach { feat =>
-        println(s"$word: $feat")
-      }
-    }
-    */
+    TagHistogram(commonWords.toSet, posWordHistogram.toSeq, cposWordHistogram.toSeq)
   }
+
+  implicit val jsFormat = jsonFormat3(TagHistogram.apply)
 }
 
 case class TagHistogram(
     commonWords: Set[Symbol],
-    posWordHistogram: Map[(Symbol, Symbol), Int],
-    cposWordHistogram: Map[(Symbol, Symbol), Int]
+    posWordHistogram: Seq[((Symbol, Symbol), Int)],
+    cposWordHistogram: Seq[((Symbol, Symbol), Int)]
 ) {
 
-  val word2PosHistogram: Map[Symbol, Map[Symbol, Int]] = {
+  @transient private val word2PosHistogram: Map[Symbol, Map[Symbol, Int]] = {
     var tempHistogram = Map[Symbol, Map[Symbol, Int]]()
     for {
       ((word, pos), count) <- posWordHistogram
@@ -126,7 +122,7 @@ case class TagHistogram(
     tempHistogram
   }
 
-  val word2CposHistogram: Map[Symbol, Seq[(Symbol, Int)]] = {
+  @transient private val word2CposHistogram: Map[Symbol, Seq[(Symbol, Int)]] = {
     var tempHistogram = Map[Symbol, Seq[(Symbol, Int)]]()
     for {
       ((word, cpos), count) <- cposWordHistogram
@@ -173,10 +169,13 @@ case class TagHistogram(
     val matchingSuffixes = WordClusters.suffixes filter { suffix =>
       wordStr.toLowerCase.endsWith(suffix.name.toLowerCase)
     }
-
-    Seq(FeatureName(Seq('rare))) ++
-      (lexicalProperties.toSeq map { x => FeatureName(Seq(x)) }) ++
+    //val matchingPrefixes = WordClusters.prefixes filter { prefix =>
+    //  wordStr.toLowerCase.endsWith(prefix.name.toLowerCase)
+    //}
+    //Seq(FeatureName(Seq('rare))) ++
+    (lexicalProperties.toSeq map { x => FeatureName(Seq(x)) }) ++
       (matchingSuffixes.toSeq map { suffix => FeatureName(Seq('suffix, suffix)) })
+    //(matchingPrefixes.toSeq map { prefix => FeatureName(Seq('prefix, prefix)) })
   }
 
   private def getCommonWordFeatures(word: Symbol): Seq[FeatureName] = {

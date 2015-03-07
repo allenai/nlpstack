@@ -2,6 +2,7 @@ package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.core.{ PostaggedToken, Tokenizer, Token => NLPStackToken }
+import org.allenai.nlpstack.parse.poly.polyparser.TagHistogram
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName, BrownClusters }

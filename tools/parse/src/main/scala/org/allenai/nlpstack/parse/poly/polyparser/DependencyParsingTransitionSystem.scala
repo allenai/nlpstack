@@ -14,17 +14,20 @@ object DependencyParserModes {
   val RIGHTLABEL: Int = 2
 }
 
-abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownClusters] = Seq())
-    extends TransitionSystem {
+abstract class DependencyParsingTransitionSystem(
+    tagHistogram: TagHistogram,
+    brownClusters: Seq[BrownClusters] = Seq()
+) extends TransitionSystem {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
   @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
     TokenPositionFeature,
-    TokenPropertyFeature('factorieCpos),
-    TokenPropertyFeature('factoriePos),
+    //TokenPropertyFeature('factorieCpos),
+    //TokenPropertyFeature('factoriePos),
     TokenPropertyFeature('brown0),
+    TagHistogramFeature(tagHistogram),
     KeywordFeature(DependencyParsingTransitionSystem.keywords)
   ))
 
