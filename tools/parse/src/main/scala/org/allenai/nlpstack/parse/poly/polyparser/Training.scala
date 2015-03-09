@@ -71,6 +71,7 @@ object Training {
     val largeTrainingSource: PolytreeParseSource = {
       val largeTrainingFiles =
         "question-bank/stanford-patch-1.0/stan3-4-ch-dependencies/qbank.train.conllx,wsj/original/stan3-4-ch-dependencies/wsj.train.conllx"
+      //"question-bank/stanford-patch-1.0/stan3-4-ch-dependencies/qbank.train.conllx"
       MultiPolytreeParseSource(largeTrainingFiles.split(",") map { path =>
         InMemoryPolytreeParseSource.getParseSource(
           path,

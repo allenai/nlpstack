@@ -142,6 +142,23 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
     }))
   }
 
+  @transient lazy val taggedWithStanford: Sentence = {
+    val words: IndexedSeq[String] = tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    val taggedTokens: IndexedSeq[PostaggedToken] =
+      Sentence.stanTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    Sentence(NexusToken +: (taggedTokens.zip(tokens.tail) map {
+      case (tagged, untagged) =>
+        untagged.updateProperties(Map(
+          'factoriePos -> Set(Symbol(tagged.postag)),
+          'factorieCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+            tagged.postag, "X"
+          )))
+        ))
+    }))
+  }
+
   @transient def taggedWithLexicalProperties: Sentence = {
     Sentence(tokens map { tok =>
       val tokStr = tok.word.name
@@ -181,6 +198,9 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
 }
 
 object Sentence {
+
+  private val stanTagger = new StanfordPostagger()
+
   implicit val sentenceJsonFormat = jsonFormat1(Sentence.apply)
 }
 

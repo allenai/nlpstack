@@ -24,8 +24,10 @@ abstract class DependencyParsingTransitionSystem(
 
   @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
     TokenPositionFeature,
-    //TokenPropertyFeature('factorieCpos),
-    //TokenPropertyFeature('factoriePos),
+    TokenPropertyFeature('factorieCpos),
+    TokenPropertyFeature('factoriePos),
+    //TokenPropertyFeature('stanCpos),
+    //TokenPropertyFeature('stanPos),
     TokenPropertyFeature('brown0),
     TagHistogramFeature(tagHistogram),
     KeywordFeature(DependencyParsingTransitionSystem.keywords)
@@ -45,6 +47,7 @@ abstract class DependencyParsingTransitionSystem(
     }
     val augmentedSentence: Option[AnnotatedSentence] = sentence map { sent =>
       val taggedSentence = sent.taggedWithFactorie
+        .taggedWithStanford
         .taggedWithBrownClusters(brownClusters)
         .taggedWithLexicalProperties
       tokenFeatureTagger.tag(taggedSentence)
