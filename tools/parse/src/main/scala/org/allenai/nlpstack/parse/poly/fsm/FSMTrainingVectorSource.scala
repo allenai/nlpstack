@@ -25,20 +25,28 @@ abstract class FSMTrainingVectorSource(
 
   def getVectorIterator: Iterator[FSMTrainingVector]
 
-  lazy val tasks: Iterable[ClassificationTask] = taskHelper(Set(), getVectorIterator)
-
-  @tailrec
-  private def taskHelper(
-    resultSoFar: Set[ClassificationTask],
-    vectorIter: Iterator[FSMTrainingVector]
-  ): Set[ClassificationTask] = {
-
-    if (!vectorIter.hasNext) {
-      resultSoFar
-    } else {
-      taskHelper(resultSoFar + vectorIter.next().task, vectorIter)
-    }
-  }
+  /** Returns the set of tasks associated with the training vectors in this source.
+    *
+    * In a perhaps over-careful attempt to avoid having all the non-uniqued tasks being stored in
+    * memory simultaneously, this was originally implemented as:
+    *
+    * format: OFF
+    * lazy val tasks: Iterable[ClassificationTask] = taskHelper(Set(), getVectorIterator)
+    * tailrec private def taskHelper(
+    *   resultSoFar: Set[ClassificationTask],
+    *   vectorIter: Iterator[FSMTrainingVector]
+    * ): Set[ClassificationTask] = {
+    *
+    *  if (!vectorIter.hasNext) {
+    *    resultSoFar
+    *  } else {
+    *    taskHelper(resultSoFar + vectorIter.next().task, vectorIter)
+    *  }
+    * }
+    * format: ON
+    *
+    */
+  lazy val tasks: Set[ClassificationTask] = getVectorIterator.map(_.task).toSet
 
   def groupVectorIteratorsByTask: Iterator[(ClassificationTask, Iterator[FSMTrainingVector])] = {
     tasks.iterator map { task =>
