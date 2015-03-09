@@ -43,6 +43,7 @@ abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownCluster
     val augmentedSentence: Option[AnnotatedSentence] = sentence map { sent =>
       val taggedSentence = sent.taggedWithFactorie
         .taggedWithBrownClusters(brownClusters)
+        .taggedWithLexicalProperties
       tokenFeatureTagger.tag(taggedSentence)
 
       // override factorie tags with requested tags
@@ -108,21 +109,17 @@ case class LabelLeftArc(val label: Symbol) extends TransitionParserStateTransiti
       val gretelChildren: Set[Int] =
         state.children.getOrElse(gretel, Set.empty[Int])
       state.copy(
-        arcLabels = state.arcLabels +
-        (Set(crumb, gretel) -> label),
+        arcLabels = state.arcLabels + (Set(crumb, gretel) -> label),
         parserMode = DependencyParserModes.TRANSITION,
-        children = state.children +
-        (gretel -> (gretelChildren + crumb))
+        children = state.children + (gretel -> (gretelChildren + crumb))
       )
     } else {
       val crumbChildren: Set[Int] =
         state.children.getOrElse(crumb, Set.empty[Int])
       state.copy(
-        arcLabels = state.arcLabels +
-        (Set(crumb, gretel) -> label),
+        arcLabels = state.arcLabels + (Set(crumb, gretel) -> label),
         parserMode = DependencyParserModes.TRANSITION,
-        children = state.children +
-        (crumb -> (crumbChildren + gretel))
+        children = state.children + (crumb -> (crumbChildren + gretel))
       )
     }
   }
@@ -145,21 +142,17 @@ case class LabelRightArc(val label: Symbol) extends TransitionParserStateTransit
       val gretelChildren: Set[Int] =
         state.children.getOrElse(gretel, Set.empty[Int])
       state.copy(
-        arcLabels = state.arcLabels +
-        (Set(crumb, gretel) -> label),
+        arcLabels = state.arcLabels + (Set(crumb, gretel) -> label),
         parserMode = DependencyParserModes.TRANSITION,
-        children = state.children +
-        (gretel -> (gretelChildren + crumb))
+        children = state.children + (gretel -> (gretelChildren + crumb))
       )
     } else {
       val crumbChildren: Set[Int] =
         state.children.getOrElse(crumb, Set.empty[Int])
       state.copy(
-        arcLabels = state.arcLabels +
-        (Set(crumb, gretel) -> label),
+        arcLabels = state.arcLabels + (Set(crumb, gretel) -> label),
         parserMode = DependencyParserModes.TRANSITION,
-        children = state.children +
-        (crumb -> (crumbChildren + gretel))
+        children = state.children + (crumb -> (crumbChildren + gretel))
       )
     }
   }

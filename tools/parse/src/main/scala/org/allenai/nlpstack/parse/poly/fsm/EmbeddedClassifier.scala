@@ -1,5 +1,9 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
+import java.io.{ InputStream, File, PrintWriter }
+
+import org.allenai.common.Resource
+import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.decisiontree.{
   FeatureVector => DTFeatureVector,
   FeatureVectorSource => DTFeatureVectorSource,
@@ -7,6 +11,7 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
 }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
+import spray.json._
 import scala.collection.immutable.HashSet
 
 /** An EmbeddedClassifier wraps a
@@ -41,22 +46,6 @@ case class EmbeddedClassifier(
       createDTFeatureVector(featureVector)
     )
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
-
-    /*
-    val categoryCounts: Map[Int, Double] = decisionTree.categoryCounts(
-      createDTFeatureVector(featureVector)) mapValues { _.toDouble }
-    val defaultCount: Double = 0.1
-    val smoothedCategoryCounts =
-      (transitions.zipWithIndex map { case (transition, transitionIndex) =>
-        val categoryCount: Double = categoryCounts.getOrElse(transitionIndex, defaultCount)
-        (transition, categoryCount)
-      }).toMap
-    val normalizer: Double = smoothedCategoryCounts.values.sum
-    val result = smoothedCategoryCounts mapValues { case count =>
-      count / normalizer
-    }
-    result
-    */
   }
 
   private def createDTFeatureVector(featureVector: FeatureVector): DTFeatureVector = {
@@ -96,30 +85,52 @@ class DTCostFunctionTrainer(
       trainingVectorSource.groupVectorIteratorsByTask
 
     var progressCounter = 1
-    (taskTrainingVectors map {
-      case (task, trainingVectorIter) => {
-        val trainingVectors = trainingVectorIter.toIterable
-        println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}" +
-          s"(${task.filenameFriendlyName}) has ${trainingVectors.size} training vectors")
+    val taskClassifierSeq = taskTrainingVectors map {
+      case (task, trainingVectorIter) =>
+        val classifier: TransitionClassifier =
+          trainClassifier(progressCounter, task, trainingVectorIter)
+        val tempFile: File = File.createTempFile("temp", "ecl")
+        tempFile.deleteOnExit()
+        Resource.using(new PrintWriter(tempFile)) { writer =>
+          writer.println(classifier.toJson.compactPrint)
+        }
         progressCounter += 1
-        val vectors: DTFeatureVectorSource =
-          createDTFeatureVectorSource(task, trainingVectors.iterator)
-        println("Now training.")
-        val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
-        val featureMap: Seq[(Int, FeatureName)] =
-          featureNames.zipWithIndex filter {
-            case (_, featIndex) =>
-              inducedClassifier.allFeatures.contains(featIndex)
-          } map {
-            case (feat, featIndex) =>
-              (featIndex, feat)
+        (task, tempFile)
+    }
+    taskClassifierSeq.toMap mapValues {
+      case classifierFile =>
+        Resource.using(classifierFile.toURI.toURL.openStream()) { stream =>
+          val jsVal = Util.getJsValueFromStream(stream)
+          jsVal match {
+            case JsObject(values) =>
+            case _ => deserializationError("Unexpected JsValue type. Must be " +
+              "JsObject.")
           }
-        (task, new EmbeddedClassifier(
-          inducedClassifier,
-          transitions, featureMap, featureNames.size
-        ))
-      }
-    }).toMap
+          jsVal.convertTo[TransitionClassifier]
+        }
+    }
+  }
+
+  private def trainClassifier(progressCounter: Int, task: ClassificationTask,
+    trainingVectorIter: Iterator[FSMTrainingVector]): EmbeddedClassifier = {
+
+    println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
+    val vectors: DTFeatureVectorSource =
+      createDTFeatureVectorSource(
+        task,
+        trainingVectorIter
+      )
+    println("Now training.")
+    val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
+    val featureMap: Seq[(Int, FeatureName)] =
+      featureNames.zipWithIndex filter {
+        case (_, featIndex) =>
+          inducedClassifier.allFeatures.contains(featIndex)
+      } map { _.swap }
+    new EmbeddedClassifier(
+      inducedClassifier,
+      transitions, featureMap, featureNames.size
+    )
   }
 
   private def createDTFeatureVectorSource(

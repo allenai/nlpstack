@@ -27,7 +27,7 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
         } yield (FeatureName(List(tokenTrans.name, stateRef.name, sym)), 1.0))
     }
   }
-  override def toString: String = s"tokenTransformFeature.${stateRef.name}"
+  override def toString(): String = s"tokenTransformFeature.${stateRef.name}"
 }
 
 case class OfflineTokenFeature(val stateRef: StateRef)
@@ -45,7 +45,35 @@ case class OfflineTokenFeature(val stateRef: StateRef)
     }
   }
 
-  override def toString: String = s"offlineTokenFeature.${stateRef.name}"
+  override def toString(): String = s"offlineTokenFeature.${stateRef.name}"
+}
+
+/** The TokenLinkFeature makes a feature for every arc label between any pair of tokens from two
+  * token sets.
+  *
+  * @param stateRef1 the first token set
+  * @param stateRef2 the second token set
+  */
+case class TokenLinkFeature(stateRef1: StateRef, stateRef2: StateRef)
+    extends StateFeature {
+
+  override def apply(state: State): FeatureVector = {
+    state match {
+      case tpState: TransitionParserState =>
+        FeatureVector(
+          for {
+            tokenIndex1 <- stateRef1(tpState).toSeq
+            tokenIndex2 <- stateRef2(tpState).toSeq
+            arcLabel <- tpState.arcLabels.get(Set(tokenIndex1, tokenIndex2))
+          } yield {
+            FeatureName(Seq(stateRef1.name, Symbol("to"),
+              stateRef2.name, Symbol("label"), arcLabel)) -> 1.0
+          }
+        )
+    }
+  }
+
+  override def toString(): String = s"tokenLinkFeature.${stateRef1.name}.${stateRef2.name}"
 }
 
 case object PreviousLinkDirection extends StateFeature {
@@ -61,13 +89,13 @@ case object PreviousLinkDirection extends StateFeature {
     }
   }
 
-  override def toString: String = s"prevLink"
+  override def toString(): String = s"prevLink"
 }
 
 case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
     extends StateFeature {
 
-  @transient val featureName = 'tokenCardinality
+  @transient val featureName = 'card
 
   override def apply(state: State): FeatureVector = {
     state match {
@@ -83,5 +111,5 @@ case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
     }
   }
 
-  override def toString: String = s"tokenCardinalityFeature"
+  override def toString(): String = s"tokenCardinalityFeature"
 }

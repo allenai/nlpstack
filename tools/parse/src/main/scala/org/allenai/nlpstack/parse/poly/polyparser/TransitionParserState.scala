@@ -42,11 +42,39 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
 
   @transient val sentence = annotatedSentence.sentence
 
-  def getGretels(nodeIndex: Int): Set[Int] = {
+  /** Gets the set of gretels of the specified token in the partial parse tree
+    * represented by this state.
+    *
+    * @param token the token (index) of interest
+    * @return the set of that token's gretels
+    */
+  def getGretels(token: Int): Set[Int] = {
     (breadcrumb filter {
       case (gretel, crumb) =>
-        crumb == nodeIndex
+        crumb == token
     }).keySet
+  }
+
+  /** Gets the set of parents of the specified token in the partial parse tree
+    * represented by this state.
+    *
+    * @param token the token (index) of interest
+    * @return the set of that token's parents
+    */
+  def getParents(token: Int): Set[Int] = {
+    parents.getOrElse(token, Set())
+  }
+
+  /** Maps each node (that has parents) to the set of its parents. */
+  private lazy val parents: Map[Int, Set[Int]] = {
+    val childParentPairs: Seq[(Int, Int)] = for {
+      (parent, childSet) <- children.toSeq
+      child <- childSet
+    } yield (child, parent)
+    (childParentPairs groupBy (_._1)).mapValues {
+      case intPairSeq: Seq[(Int, Int)] =>
+        (intPairSeq map { _._2 }).toSet
+    }
   }
 
   /** Returns whether the buffer has been exhausted. */
