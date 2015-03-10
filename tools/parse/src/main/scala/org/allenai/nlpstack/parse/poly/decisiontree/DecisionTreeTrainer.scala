@@ -1,7 +1,5 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import org.allenai.nlpstack.parse.poly.core.Util
-
 import scala.collection.mutable
 import scala.util.Random
 
@@ -229,18 +227,20 @@ class DecisionTreeTrainer(
         node.featureVectorSubset.forall(data.getNthVector(_).outcome ==
           data.getNthVector(node.featureVectorSubset.head).outcome))) {
 
-        val (featuresToExamine, featuresToIgnore) = {
+        val featuresToExamine = {
           val shuffled = Random.shuffle(node.featureSubset)
-          (shuffled.take(featuresExaminedPerNode), shuffled.drop(featuresExaminedPerNode))
+          shuffled.take(featuresExaminedPerNode)
         }
 
         // can be expensive
-        val infoGainByFeature: Seq[(Int, Double)] =
-          computeInformationGainUnoptimized(
+        val infoGainByFeature: Seq[(Int, Double)] = {
+          //computeInformationGain(
+          computeSplitQuality(
             data, node.featureVectorSubset, featuresToExamine
           ) filter {
-            case (_, gain) => gain > 0 // we get rid of features with zero information gain
+            case (_, gain) => gain > 1.0 // we get rid of features with low information gain
           }
+        }
 
         if (infoGainByFeature.nonEmpty) {
           val (bestFeature, _) = infoGainByFeature maxBy { case (_, gain) => gain }
@@ -248,12 +248,7 @@ class DecisionTreeTrainer(
           val subsets = node.featureVectorSubset groupBy {
             j => data.getNthVector(j).getFeature(bestFeature)
           }
-          val childFeatureSubset = {
-            val nonzeroFeatures = infoGainByFeature map { case (feature, _) => feature }
-            val bestFeatureIndex = nonzeroFeatures.indexOf(bestFeature)
-            featuresToIgnore ++ nonzeroFeatures.take(bestFeatureIndex) ++
-              nonzeroFeatures.drop(bestFeatureIndex + 1)
-          }
+          val childFeatureSubset = node.featureSubset diff Seq(bestFeature)
           for ((featVal, childFeatureVectorSubset) <- subsets) {
             val child = new Node(Some(data), childFeatureVectorSubset, childFeatureSubset,
               node.depth + 1)
@@ -306,9 +301,10 @@ class DecisionTreeTrainer(
     }
   }
 
-  private def computeInformationGainUnoptimized(
+  private def computeInformationGain(
     data: FeatureVectorSource,
-    featureVectorSubset: Seq[Int], featureSubset: Seq[Int]
+    featureVectorSubset: Seq[Int],
+    featureSubset: Seq[Int]
   ): Seq[(Int, Double)] = {
 
     require(featureVectorSubset.nonEmpty)
@@ -353,5 +349,64 @@ class DecisionTreeTrainer(
     val normalizer = frequencies.sum
     math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
   }
-}
 
+  private def computeSplitQuality(
+    data: FeatureVectorSource,
+    featureVectorSubset: Seq[Int],
+    featureSubset: Seq[Int]
+  ): Seq[(Int, Double)] = {
+
+    require(featureVectorSubset.nonEmpty)
+    require(featureSubset.nonEmpty)
+    val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map {
+      data.getNthVector(_)
+    }
+    val baselineOutcomeDistribution = getEmpiricalOutcomeDistribution(featureVectorSubstream)
+    val informationGainByFeatureValue: Iterable[Double] = for {
+      feature <- featureSubset
+    } yield {
+      val outcomesByFeatureValue: Map[Int, Seq[Int]] =
+        featureVectorSubstream groupBy { x =>
+          x.getFeature(feature)
+        } mapValues { featureVecs =>
+          featureVecs flatMap { featureVec => featureVec.outcome }
+        }
+      val outcomeHistograms: Seq[Map[Int, Int]] =
+        (outcomesByFeatureValue.values map { outcomes =>
+          outcomes groupBy { x => x } mapValues { _.size }
+        }).toSeq
+      val result = (outcomeHistograms map { outcomeHistogram =>
+        computeMultinomialLogProbability(baselineOutcomeDistribution, outcomeHistogram)
+      }).sum
+      //println(s"$result: $feature")
+      result
+    }
+    featureSubset.zip(informationGainByFeatureValue)
+  }
+
+  private def getEmpiricalOutcomeDistribution(
+    featureVectorSubstream: Seq[FeatureVector]
+  ): Map[Int, Double] = {
+
+    val outcomes: Seq[Int] = featureVectorSubstream flatMap { featureVec => featureVec.outcome }
+    val outcomeHistogram: Map[Int, Int] = outcomes groupBy { x => x } mapValues { _.size }
+    val numOutcomes = outcomes.size
+    require(numOutcomes > 0, "Cannot compute an empirical distribution on an empty sequence")
+    outcomeHistogram mapValues { outcomeCount =>
+      outcomeCount.toFloat / numOutcomes
+    }
+  }
+
+  private def computeMultinomialLogProbability(
+    multinoulli: Map[Int, Double],
+    histogram: Map[Int, Int]
+  ): Double = {
+
+    val n = histogram.values.sum
+    val positiveResult = (n * math.log(n)) + (histogram map {
+      case (outcome, outcomeCount) =>
+        outcomeCount * (math.log(multinoulli(outcome)) - math.log(outcomeCount))
+    }).sum
+    -positiveResult
+  }
+}
