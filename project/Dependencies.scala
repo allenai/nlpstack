@@ -12,17 +12,19 @@ object Dependencies extends CoreDependencies {
   val clearVersion = "2.0.2"
   val clear = clearGroup % "clearnlp" % clearVersion
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3"
-    exclude("net.sf.jwordnet", "jwnl"))
+    exclude ("net.sf.jwordnet", "jwnl"))
 
   val stanfordCoreNlp = "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1"
   val stanfordCoreNlpModels = "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1" classifier "models"
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
-    exclude("junit", "junit")
-    exclude("commons-logging", "commons-logging"))
+    exclude ("junit", "junit")
+    exclude ("commons-logging", "commons-logging"))
   val factorieWordnet = "cc.factorie.app.nlp" % "wordnet" % "1.0"
 
   val testingLibraries = Seq(allenAiTestkit % "test")
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
+
+  val loggingDependencies = Seq(Logging.slf4jApi, Logging.logbackCore, Logging.logbackClassic)
 }

@@ -8,5 +8,3 @@ libraryDependencies ++= Seq(
   sprayCan,
   sprayRouting,
   typesafeConfig)
-
-addLoggingDependencies(libraryDependencies)

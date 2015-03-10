@@ -95,15 +95,15 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-    var subtreeFiles: Seq[File] = Seq() // TODO: do we need a var here?
-    Range(0, numDecisionTrees) foreach { _ =>
+    val subtreeFiles = Seq.fill(numDecisionTrees) {
       dtTrainer(data) match {
         case dt: DecisionTree =>
           val tempFile: File = File.createTempFile("temp.", ".dt")
+          tempFile.deleteOnExit()
           Resource.using(new PrintWriter(tempFile)) { writer =>
             writer.println(dt.toJson.compactPrint)
           }
-          subtreeFiles = tempFile +: subtreeFiles
+          tempFile
       }
     }
     val subtrees: Seq[DecisionTree] = subtreeFiles map {
@@ -111,11 +111,10 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
         Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>
           val jsVal = Util.getJsValueFromStream(stream)
           jsVal match {
-            case JsObject(values) =>
+            case JsObject(_) => jsVal.convertTo[DecisionTree]
             case _ => deserializationError("Unexpected JsValue type. Must be " +
               "JsObject.")
           }
-          jsVal.convertTo[DecisionTree]
         }
     }
     RandomForest(data.allOutcomes, subtrees)

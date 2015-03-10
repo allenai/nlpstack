@@ -85,23 +85,21 @@ class DTCostFunctionTrainer(
       trainingVectorSource.groupVectorIteratorsByTask
 
     var progressCounter = 1
-    var taskClassifierSeq: Seq[(ClassificationTask, File)] = Seq() // TODO: do we need a var here?
-    taskTrainingVectors foreach {
+    val taskClassifierSeq = taskTrainingVectors map {
       case (task, trainingVectorIter) =>
         val classifier: TransitionClassifier =
           trainClassifier(progressCounter, task, trainingVectorIter)
-        val tempFile: File = File.createTempFile("temp", "ecl");
+        val tempFile: File = File.createTempFile("temp", "ecl")
+        tempFile.deleteOnExit()
         Resource.using(new PrintWriter(tempFile)) { writer =>
           writer.println(classifier.toJson.compactPrint)
         }
         progressCounter += 1
-        println(s"Saved $tempFile.")
-        System.gc()
-        taskClassifierSeq = (task, tempFile) +: taskClassifierSeq
+        (task, tempFile)
     }
     taskClassifierSeq.toMap mapValues {
       case classifierFile =>
-        val classifier = Resource.using(classifierFile.toURI.toURL.openStream()) { stream =>
+        Resource.using(classifierFile.toURI.toURL.openStream()) { stream =>
           val jsVal = Util.getJsValueFromStream(stream)
           jsVal match {
             case JsObject(values) =>
@@ -110,7 +108,6 @@ class DTCostFunctionTrainer(
           }
           jsVal.convertTo[TransitionClassifier]
         }
-        classifier
     }
   }
 
@@ -132,10 +129,7 @@ class DTCostFunctionTrainer(
       featureNames.zipWithIndex filter {
         case (_, featIndex) =>
           inducedClassifier.allFeatures.contains(featIndex)
-      } map {
-        case (feat, featIndex) =>
-          (featIndex, feat)
-      }
+      } map { _.swap }
     new EmbeddedClassifier(
       inducedClassifier,
       transitions, featureMap, featureNames.size
