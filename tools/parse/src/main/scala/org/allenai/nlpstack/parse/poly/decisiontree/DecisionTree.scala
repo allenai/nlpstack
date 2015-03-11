@@ -2,7 +2,6 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 
 import spray.json._
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 /** Immutable decision tree for integer-valued features and outcomes.
   *
@@ -81,9 +80,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     outcomeHistograms map { cc =>
-      (ProbabilisticClassifier.normalizeDistribution(
+      ProbabilisticClassifier.normalizeDistribution(
         (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
-      )).toMap
+      ).toMap
     }
   }
 

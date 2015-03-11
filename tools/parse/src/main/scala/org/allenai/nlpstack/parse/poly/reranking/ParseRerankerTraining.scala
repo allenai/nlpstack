@@ -126,7 +126,7 @@ object ParseRerankerTraining {
     testData.labeledVectors foreach { x => println(x) }
 
     println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 10, 100))
+    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 10, 100, "entropy"))
     val classifier: WrapperClassifier = trainer(trainingData)
     evaluate(trainingData, classifier)
     evaluate(testData, classifier)

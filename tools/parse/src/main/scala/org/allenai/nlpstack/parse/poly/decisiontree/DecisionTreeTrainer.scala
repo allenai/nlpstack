@@ -1,7 +1,5 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import org.allenai.nlpstack.parse.poly.core.Util
-
 import scala.collection.mutable
 import scala.util.Random
 
@@ -116,10 +114,10 @@ private class Node(data: Option[FeatureVectorSource], val featureVectorSubset: S
       node.splittingFeature
     }
     val dtOutcomeCounts: IndexedSeq[Map[Int, Int]] = nodes.toIndexedSeq map { node =>
-      (node.outcomeCounts map {
+      node.outcomeCounts map {
         case (k, v) =>
           k -> (v + node.outcomeCounts.getOrElse(k, 0))
-      })
+      }
     }
     new DecisionTree(outcomes, dtChild, dtSplittingFeature, dtOutcomeCounts)
   }
@@ -174,6 +172,7 @@ private class Node(data: Option[FeatureVectorSource], val featureVectorSubset: S
 //param validationPercentage percentage of the training vectors to hold out for validation
 class DecisionTreeTrainer(
     validationPercentage: Double,
+    informationGainMetric: String,
     featuresExaminedPerNode: Int = Integer.MAX_VALUE,
     maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
@@ -229,18 +228,27 @@ class DecisionTreeTrainer(
         node.featureVectorSubset.forall(data.getNthVector(_).outcome ==
           data.getNthVector(node.featureVectorSubset.head).outcome))) {
 
-        val (featuresToExamine, featuresToIgnore) = {
+        val featuresToExamine = {
           val shuffled = Random.shuffle(node.featureSubset)
-          (shuffled.take(featuresExaminedPerNode), shuffled.drop(featuresExaminedPerNode))
+          shuffled.take(featuresExaminedPerNode)
         }
 
-        // can be expensive
-        val infoGainByFeature: Seq[(Int, Double)] =
-          computeInformationGainUnoptimized(
-            data, node.featureVectorSubset, featuresToExamine
-          ) filter {
-            case (_, gain) => gain > 0 // we get rid of features with zero information gain
-          }
+        // Computes information gain of each selected feature.
+        // Can be expensive.
+        val infoGainByFeature: Seq[(Int, Double)] = informationGainMetric match {
+          case "entropy" =>
+            computeEntropyBasedInformationGain(
+              data, node.featureVectorSubset, featuresToExamine
+            ) filter {
+              case (_, gain) => gain > 0 // we get rid of features with low information gain
+            }
+          case "multinomial" =>
+            computeMultinomialBasedInformationGain(
+              data, node.featureVectorSubset, featuresToExamine
+            ) filter {
+              case (_, gain) => gain > 1.0 // we get rid of features with low information gain
+            }
+        }
 
         if (infoGainByFeature.nonEmpty) {
           val (bestFeature, _) = infoGainByFeature maxBy { case (_, gain) => gain }
@@ -248,12 +256,7 @@ class DecisionTreeTrainer(
           val subsets = node.featureVectorSubset groupBy {
             j => data.getNthVector(j).getFeature(bestFeature)
           }
-          val childFeatureSubset = {
-            val nonzeroFeatures = infoGainByFeature map { case (feature, _) => feature }
-            val bestFeatureIndex = nonzeroFeatures.indexOf(bestFeature)
-            featuresToIgnore ++ nonzeroFeatures.take(bestFeatureIndex) ++
-              nonzeroFeatures.drop(bestFeatureIndex + 1)
-          }
+          val childFeatureSubset = node.featureSubset diff Seq(bestFeature)
           for ((featVal, childFeatureVectorSubset) <- subsets) {
             val child = new Node(Some(data), childFeatureVectorSubset, childFeatureSubset,
               node.depth + 1)
@@ -306,17 +309,37 @@ class DecisionTreeTrainer(
     }
   }
 
-  private def computeInformationGainUnoptimized(
+  /** Computes the standard entropy-based information gain metric for decision tree growing.
+    *
+    * @param data a source of feature vectors
+    * @param featureVectorSubset the indices of the feature vectors that interest us
+    * @param featureSubset the indices of the features that interest us
+    * @return a sequence of pairs (FEATURE, GAIN), where GAIN is FEATURE's information gain
+    */
+  private def computeEntropyBasedInformationGain(
     data: FeatureVectorSource,
-    featureVectorSubset: Seq[Int], featureSubset: Seq[Int]
+    featureVectorSubset: Seq[Int],
+    featureSubset: Seq[Int]
   ): Seq[(Int, Double)] = {
+
+    def computeOutcomeEntropy(featureVectorSubstream: Seq[FeatureVector]) = {
+      val outcomeHistogram: Map[Int, Int] =
+        featureVectorSubstream groupBy { _.outcome.get } mapValues { _.size }
+      computeEntropy(outcomeHistogram)
+    }
+
+    def computeEntropy(histogram: Map[Int, Int]) = {
+      val frequencies = histogram.values
+      val unnormalizedEntropy = (frequencies map { freq =>
+        freq.toDouble * math.log(freq)
+      }).sum
+      val normalizer = frequencies.sum
+      math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
+    }
 
     require(featureVectorSubset.nonEmpty)
     require(featureSubset.nonEmpty)
-
-    val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map {
-      data.getNthVector(_)
-    }
+    val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map data.getNthVector
     val unsplitEntropy = computeOutcomeEntropy(featureVectorSubstream)
     val informationGainByFeatureValue: Iterable[Double] = for {
       feature <- featureSubset
@@ -330,28 +353,67 @@ class DecisionTreeTrainer(
     featureSubset.zip(informationGainByFeatureValue)
   }
 
-  /** Computes the entropy of the outcome distribution of a set of feature vectors.
+  /** Computes a multinomial-based information gain metric for decision tree growing.
     *
-    * The argument provides a stream of FeatureVector objects, each of which is labeled with an
-    * outcome. The normalized histogram of the outcome frequencies is a probability distribution.
-    * This function returns the entropy of that distribution.
+    * Essentially, this rewards partitions such that each partition is unlikely to be generated
+    * from the base multinoulli distribution, according to the multinomial distribution.
     *
-    * @param featureVectorSubstream the sequence of feature vectors that interest us
-    * @return the entropy of the outcome distribution, as described above
+    * @param data a source of feature vectors
+    * @param featureVectorSubset the indices of the feature vectors that interest us
+    * @param featureSubset the indices of the features that interest us
+    * @return a sequence of pairs (FEATURE, GAIN), where GAIN is FEATURE's information gain
     */
-  private def computeOutcomeEntropy(featureVectorSubstream: Seq[FeatureVector]) = {
-    val outcomeHistogram: Map[Int, Int] =
-      featureVectorSubstream groupBy { _.outcome.get } mapValues { _.size }
-    computeEntropy(outcomeHistogram)
-  }
+  private def computeMultinomialBasedInformationGain(
+    data: FeatureVectorSource,
+    featureVectorSubset: Seq[Int],
+    featureSubset: Seq[Int]
+  ): Seq[(Int, Double)] = {
 
-  private def computeEntropy(histogram: Map[Int, Int]) = {
-    val frequencies = histogram.values
-    val unnormalizedEntropy = (frequencies map { freq =>
-      freq.toDouble * math.log(freq)
-    }).sum
-    val normalizer = frequencies.sum
-    math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
+    def getEmpiricalOutcomeDistribution(
+      featureVectorSubstream: Seq[FeatureVector]
+    ): Map[Int, Double] = {
+      val outcomes: Seq[Int] = featureVectorSubstream flatMap { featureVec => featureVec.outcome }
+      val outcomeHistogram: Map[Int, Int] = outcomes groupBy { x => x } mapValues { _.size }
+      val numOutcomes = outcomes.size
+      require(numOutcomes > 0, "Cannot compute an empirical distribution on an empty sequence")
+      outcomeHistogram mapValues { outcomeCount =>
+        outcomeCount.toFloat / numOutcomes
+      }
+    }
+
+    def computeMultinomialNegativeLogProbability(
+      multinoulli: Map[Int, Double],
+      histogram: Map[Int, Int]
+    ): Double = {
+      val n = histogram.values.sum
+      val positiveResult = (n * math.log(n)) + (histogram map {
+        case (outcome, outcomeCount) =>
+          outcomeCount * (math.log(multinoulli(outcome)) - math.log(outcomeCount))
+      }).sum
+      -positiveResult
+    }
+
+    require(featureVectorSubset.nonEmpty)
+    require(featureSubset.nonEmpty)
+    val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map data.getNthVector
+    val baselineOutcomeDistribution = getEmpiricalOutcomeDistribution(featureVectorSubstream)
+    val informationGainByFeatureValue: Iterable[Double] = for {
+      feature <- featureSubset
+    } yield {
+      val outcomesByFeatureValue: Map[Int, Seq[Int]] =
+        featureVectorSubstream groupBy { featureVec =>
+          featureVec.getFeature(feature)
+        } mapValues { featureVecs =>
+          featureVecs flatMap { featureVec => featureVec.outcome }
+        }
+      val outcomeHistograms: Seq[Map[Int, Int]] =
+        (outcomesByFeatureValue.values map { outcomes =>
+          outcomes groupBy { x => x } mapValues { _.size }
+        }).toSeq
+      (outcomeHistograms map { outcomeHistogram =>
+        computeMultinomialNegativeLogProbability(baselineOutcomeDistribution, outcomeHistogram)
+      }).sum
+    }
+    featureSubset.zip(informationGainByFeatureValue)
   }
 }
-

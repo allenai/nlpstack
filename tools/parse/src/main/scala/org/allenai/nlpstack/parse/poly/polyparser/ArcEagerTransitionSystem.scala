@@ -20,9 +20,9 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
               StateTransition.applicable(ArcEagerRightArc('NONE), Some(state))
             ))
           case DependencyParserModes.LEFTLABEL =>
-            Some(SimpleTask("dt-leftlabel"))
+            Some(SimpleTask("leftlabel"))
           case DependencyParserModes.RIGHTLABEL =>
-            Some(SimpleTask("dt-rightlabel"))
+            Some(SimpleTask("rightlabel"))
           case _ => None
         }
       case _ => None
