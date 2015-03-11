@@ -3,8 +3,8 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 class OmnibusTrainer()
     extends ProbabilisticClassifierTrainer {
 
-  val dtTrainer = new DecisionTreeTrainer(0.3)
-  val rfTrainer = new OneVersusAllTrainer(new RandomForestTrainer(0, 10, 100))
+  val dtTrainer = new RandomForestTrainer(0, 30, 100, EntropyGainMetric(0))
+  val rfTrainer = new RandomForestTrainer(0, 10, 100, EntropyGainMetric(0))
 
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
     val trainer = data.classificationTask.filenameFriendlyName match {

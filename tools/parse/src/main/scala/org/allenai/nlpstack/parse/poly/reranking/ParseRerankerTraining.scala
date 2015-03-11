@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.core.WordClusters
-import org.allenai.nlpstack.parse.poly.decisiontree.RandomForestTrainer
+import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Reranker, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
@@ -126,7 +126,9 @@ object ParseRerankerTraining {
     testData.labeledVectors foreach { x => println(x) }
 
     println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(new RandomForestTrainer(0, 10, 100))
+    val trainer = new WrapperClassifierTrainer(
+      new RandomForestTrainer(0, 10, 100, EntropyGainMetric(0))
+    )
     val classifier: WrapperClassifier = trainer(trainingData)
     evaluate(trainingData, classifier)
     evaluate(testData, classifier)
