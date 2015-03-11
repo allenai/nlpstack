@@ -168,11 +168,23 @@ private class Node(data: Option[FeatureVectorSource], val featureVectorSubset: S
   }
 }
 
-/** Functions for training decision trees. */
-//param validationPercentage percentage of the training vectors to hold out for validation
+sealed trait InformationGainMetric {
+  val minimumGain: Double
+}
+case class EntropyGainMetric(minimumGain: Double) extends InformationGainMetric
+case class MultinomialGainMetric(minimumGain: Double) extends InformationGainMetric
+
+/** A DecisionTreeTrainer trains decision trees from data.
+  *
+  * @param validationPercentage the percentage of data to "hold out" for pruning
+  * @param informationGainMetric the information gain metric to use ("entropy" or "multinomial")
+  * @param featuresExaminedPerNode for each node, the number of randomly selected features
+  * to consider as potential splitting features
+  * @param maximumDepth the maximum desired depth of the trained decision tree
+  */
 class DecisionTreeTrainer(
     validationPercentage: Double,
-    informationGainMetric: String,
+    informationGainMetric: InformationGainMetric,
     featuresExaminedPerNode: Int = Integer.MAX_VALUE,
     maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
@@ -235,19 +247,18 @@ class DecisionTreeTrainer(
 
         // Computes information gain of each selected feature.
         // Can be expensive.
-        val infoGainByFeature: Seq[(Int, Double)] = informationGainMetric match {
-          case "entropy" =>
+        val infoGainByFeature: Seq[(Int, Double)] = (informationGainMetric match {
+          case EntropyGainMetric(_) =>
             computeEntropyBasedInformationGain(
               data, node.featureVectorSubset, featuresToExamine
-            ) filter {
-              case (_, gain) => gain > 0 // we get rid of features with low information gain
-            }
-          case "multinomial" =>
+            )
+          case MultinomialGainMetric(_) =>
             computeMultinomialBasedInformationGain(
               data, node.featureVectorSubset, featuresToExamine
-            ) filter {
-              case (_, gain) => gain > 1.0 // we get rid of features with low information gain
-            }
+            )
+        }) filter {
+          case (_, gain) =>
+            gain > informationGainMetric.minimumGain // get rid of features with low info gain
         }
 
         if (infoGainByFeature.nonEmpty) {
@@ -323,18 +334,17 @@ class DecisionTreeTrainer(
   ): Seq[(Int, Double)] = {
 
     def computeOutcomeEntropy(featureVectorSubstream: Seq[FeatureVector]) = {
+      def computeEntropy(histogram: Map[Int, Int]) = {
+        val frequencies = histogram.values
+        val unnormalizedEntropy = (frequencies map { freq =>
+          freq.toDouble * math.log(freq)
+        }).sum
+        val normalizer = frequencies.sum
+        math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
+      }
       val outcomeHistogram: Map[Int, Int] =
         featureVectorSubstream groupBy { _.outcome.get } mapValues { _.size }
       computeEntropy(outcomeHistogram)
-    }
-
-    def computeEntropy(histogram: Map[Int, Int]) = {
-      val frequencies = histogram.values
-      val unnormalizedEntropy = (frequencies map { freq =>
-        freq.toDouble * math.log(freq)
-      }).sum
-      val normalizer = frequencies.sum
-      math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
     }
 
     require(featureVectorSubset.nonEmpty)

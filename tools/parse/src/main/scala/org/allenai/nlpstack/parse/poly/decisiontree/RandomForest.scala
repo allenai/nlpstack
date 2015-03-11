@@ -82,11 +82,11 @@ object RandomForest {
   * selected features to consider at each node
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-  featuresExaminedPerNode: Int, informationGainMetric: String, useBagging: Boolean = false,
+  featuresExaminedPerNode: Int, gainMetric: InformationGainMetric, useBagging: Boolean = false,
   maximumDepthPerTree: Int = Integer.MAX_VALUE)
     extends ProbabilisticClassifierTrainer {
 
-  private val dtTrainer = new DecisionTreeTrainer(validationPercentage, informationGainMetric,
+  private val dtTrainer = new DecisionTreeTrainer(validationPercentage, gainMetric,
     featuresExaminedPerNode, maximumDepth = maximumDepthPerTree)
 
   /** Induces a RandomForest from a set of feature vectors.

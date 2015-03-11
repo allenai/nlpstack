@@ -20,9 +20,9 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
               StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
             ))
           case DependencyParserModes.LEFTLABEL =>
-            Some(SimpleTask("leftlabel"))
+            Some(SimpleTask("dt-leftlabel"))
           case DependencyParserModes.RIGHTLABEL =>
-            Some(SimpleTask("rightlabel"))
+            Some(SimpleTask("dt-rightlabel"))
           case _ => None
         }
       case _ => None
