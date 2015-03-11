@@ -14,7 +14,10 @@ object DependencyParserModes {
   val RIGHTLABEL: Int = 2
 }
 
-abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownClusters] = Seq())
+abstract class DependencyParsingTransitionSystem(
+  brownClusters: Seq[BrownClusters] = Seq(),
+  verbnetClassMap: Map[Symbol, Set[Symbol]]
+)
     extends TransitionSystem {
 
   @transient
@@ -25,6 +28,7 @@ abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownCluster
     TokenPropertyFeature('factorieCpos),
     TokenPropertyFeature('factoriePos),
     TokenPropertyFeature('brown0),
+    TokenPropertyFeature('verbnetClasses),
     KeywordFeature(DependencyParsingTransitionSystem.keywords)
   ))
 
@@ -43,6 +47,7 @@ abstract class DependencyParsingTransitionSystem(brownClusters: Seq[BrownCluster
     val augmentedSentence: Option[AnnotatedSentence] = sentence map { sent =>
       val taggedSentence = sent.taggedWithFactorie
         .taggedWithBrownClusters(brownClusters)
+        .taggedWithVerbnetClasses(verbnetClassMap)
       tokenFeatureTagger.tag(taggedSentence)
 
       // override factorie tags with requested tags

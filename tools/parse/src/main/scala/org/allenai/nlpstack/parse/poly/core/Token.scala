@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.core.{ PostaggedToken, Tokenizer, Token => NLPStackToken }
+import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken, Tokenizer, Token => NLPStackToken }
+import org.allenai.nlpstack.lemmatize._
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName, BrownClusters }
@@ -125,13 +126,18 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
     val taggedTokens: IndexedSeq[PostaggedToken] =
       defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
-    Sentence(NexusToken +: (taggedTokens.zip(tokens.tail) map {
+    val lemmatizedTaggedTokens: IndexedSeq[Lemmatized[PostaggedToken]] =
+      taggedTokens map {
+        x => Lemmatized[PostaggedToken](x, MorphaStemmer.lemmatize(x.string, x.postag))
+      }
+    Sentence(NexusToken +: (lemmatizedTaggedTokens.zip(tokens.tail) map {
       case (tagged, untagged) =>
         untagged.updateProperties(Map(
-          'factoriePos -> Set(Symbol(tagged.postag)),
+          'factoriePos -> Set(Symbol(tagged.token.postag)),
           'factorieCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
-            tagged.postag, "X"
-          )))
+            tagged.token.postag, "X"
+          ))),
+          'factorieLemma -> Set(Symbol(tagged.lemma))
         ))
       //Token(untagged.word, untagged.properties.updated('factoriePos, Set(Symbol(tagged.postag)))
       //  .updated('factorieCpos,
@@ -173,6 +179,20 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
       Symbol(s"brown${clusterId}") ->
         Set(cluster.getMostSpecificCluster(Symbol(tok.word.name.toLowerCase)))
     }).toMap))
+  }
+
+  @transient def taggedWithVerbnetClasses(verbnetClasses: Map[Symbol, Set[Symbol]]): Sentence = {
+    Sentence(for {
+      tok <- tokens
+    } yield {
+      val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
+      val tokVerbnetClasses = if (verbnetClasses.contains(Symbol(tokLemmaLC))) {
+        verbnetClasses(Symbol(tokLemmaLC))
+      } else {
+        Set.empty[Symbol]
+      }
+      tok.updateProperties(Map('verbnetClasses -> tokVerbnetClasses))
+    })
   }
 }
 
