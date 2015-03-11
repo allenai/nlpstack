@@ -25,6 +25,7 @@ object VerbnetUtil {
   def getVerbnetClassMap(verbnetConfigFilePath: String): Map[Symbol, Set[Symbol]] = {
     // Get Verbnet local path.
     val config = ConfigFactory.parseFile(new File(verbnetConfigFilePath))
+
     val verbnetConfig = config.getConfig("verbnet")
     val groupName = verbnetConfig.getString("group")
     val artifactName = verbnetConfig.getString("name")

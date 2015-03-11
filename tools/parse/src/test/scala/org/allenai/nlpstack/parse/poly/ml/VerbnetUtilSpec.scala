@@ -7,13 +7,9 @@ import org.allenai.nlpstack.parse.poly.core.{ Token, Sentence }
 
 class VerbnetUtilSpec extends UnitSpec with Logging {
 
-  val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
-    "org.allenai.nlp.resources",
-    "verbnet-3.2",
-    1
-  )
+  val verbnetConfigPath = "src/main/resources/polyparser.config"
 
-  val verbnetClasses = VerbnetUtil.getVerbnetClassMap(verbnetPath.toString)
+  val verbnetClasses = VerbnetUtil.getVerbnetClassMap(verbnetConfigPath)
 
   "VerbnetUtil.getVerbnetClasses" should
     "return the correct answer for verbs present in VerbNet" in {
