@@ -53,7 +53,7 @@ object ParseFile {
     }
     val config: ParseFileConfig = optionParser.parse(args, ParseFileConfig()).get
     val parser: TransitionParser = TransitionParser.load(config.configFilename)
-    fullParseEvaluation(parser, config.testFilename, ConllX(false), config.dataSource,
+    fullParseEvaluation(parser, config.testFilename, ConllX(true), config.dataSource,
       config.oracleNbest)
   }
 

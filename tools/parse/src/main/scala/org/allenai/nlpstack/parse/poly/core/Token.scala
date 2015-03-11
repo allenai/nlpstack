@@ -37,7 +37,7 @@ case class Token(val word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map())
 object Token {
   implicit val tokenJsonFormat = jsonFormat2(Token.apply)
 
-  def createProperties1(word: String, goldCpos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
+  def createProperties(word: String, goldCpos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
     val propertyMap = Map('lcase -> Set(Symbol(word.toLowerCase)))
     goldCpos match {
       case Some(cpos) => propertyMap.updated('cpos, Set(Symbol(cpos)))
@@ -46,14 +46,14 @@ object Token {
   }
 
   def create(word: String, coarsePos: String): Token = {
-    Token(Symbol(word), createProperties1(word, Some(coarsePos)))
+    Token(Symbol(word), createProperties(word, Some(coarsePos)))
   }
 
   val propertyNotFound = 'notFound
 }
 
 /** The NexusToken is the "zeroth" token of a dependency parse. */
-object NexusToken extends Token('nexus, Token.createProperties1("nexus", Some("nexus")))
+object NexusToken extends Token('nexus, Token.createProperties("nexus", Some("nexus")))
 
 /** A Sentence is a sequence of tokens.
   *
@@ -119,8 +119,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
     parenIntervals
   }
 
-  @transient
-  lazy val taggedWithFactorie: Sentence = {
+  @transient lazy val taggedWithFactorie: Sentence = {
     val words: IndexedSeq[String] = tokens.tail map { tok => tok.word.name }
     val nlpStackTokens: IndexedSeq[NLPStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
@@ -139,9 +138,6 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
           ))),
           'factorieLemma -> Set(Symbol(tagged.lemma))
         ))
-      //Token(untagged.word, untagged.properties.updated('factoriePos, Set(Symbol(tagged.postag)))
-      //  .updated('factorieCpos,
-      //    Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X")))))
     }))
   }
 
@@ -165,6 +161,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
         case _ => Set[Symbol]()
       }
       tok.updateProperties(Map(
+        'lcase -> Set(Symbol(tokStr.toLowerCase)),
         'lexical -> (firstLetterCapital ++ existsCapital ++ allCaps ++ existsNumber)
       ))
     })
