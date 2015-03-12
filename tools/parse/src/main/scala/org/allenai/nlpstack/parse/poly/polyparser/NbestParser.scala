@@ -88,7 +88,6 @@ object NbestParser {
   */
 class NbestParser(config: ParserConfiguration) {
 
-  val baseParser: NbestSearch = new NbestSearch(config.parsingCostFunction)
   val reranker: Reranker = new Reranker(config.rerankingFunction)
 
   def parse(
@@ -96,9 +95,11 @@ class NbestParser(config: ParserConfiguration) {
     constraints: Set[TransitionConstraint] = Set()
   ): Set[(PolytreeParse, Double)] = {
 
+    val parsingCostFunction =
+      config.parsingCostFunctionFactory.buildCostFunction(sentence, constraints)
+    val baseParser: NbestSearch = new NbestSearch(parsingCostFunction)
     val optNbestList: Option[NbestList] =
-      config.parsingCostFunction.transitionSystem.initialState(
-        sentence,
+      parsingCostFunction.transitionSystem.initialState(
         constraints.toSeq
       ) map { initState =>
         baseParser.find(initState, config.parsingNbestSize, constraints)

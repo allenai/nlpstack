@@ -4,6 +4,18 @@ import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters, S
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
+case class ArcEagerTransitionSystemFactory(
+    brownClusters: Seq[BrownClusters] = Seq()
+) extends TransitionSystemFactory {
+
+  def buildTransitionSystem(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint]
+  ): TransitionSystem = {
+    new ArcEagerTransitionSystem(marbleBlock, constraints, brownClusters)
+  }
+}
+
 /** The ArcEagerTaskIdentifier identifies the ClassificationTask associated with a particular
   * state of the arc-eager transition system.
   */
@@ -46,27 +58,117 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
   * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcEagerTransitionSystem(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint],
     brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(brownClusters) {
+) extends DependencyParsingTransitionSystem(marbleBlock, brownClusters) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcEagerTaskIdentifier
 
+  @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
+    TokenPositionFeature,
+    TokenPropertyFeature('factorieCpos),
+    TokenPropertyFeature('factoriePos),
+    TokenPropertyFeature('brown0),
+    KeywordFeature(DependencyParsingTransitionSystem.keywords)
+  ))
+
+  val annotatedSentence: AnnotatedSentence = {
+    val taggedSentence = sentence.taggedWithFactorie
+      .taggedWithBrownClusters(brownClusters)
+      .taggedWithLexicalProperties
+
+    // override factorie tags with requested tags
+    val requestedCposConstraints: Map[Int, RequestedCpos] =
+      (constraints flatMap { constraint: TransitionConstraint =>
+        constraint match {
+          case cposConstraint: RequestedCpos => Some(cposConstraint)
+          case _ => None
+        }
+      } map { constraint =>
+        (constraint.tokenIndex, constraint)
+      }).toMap
+    val overriddenSentence: Sentence = Sentence(
+      Range(0, taggedSentence.tokens.size) map { i =>
+        requestedCposConstraints.get(i)
+      } zip taggedSentence.tokens map {
+        case (maybeConstraint, tok) =>
+          maybeConstraint match {
+            case Some(constraint) =>
+              tok.updateProperties(Map(
+                'factorieCpos -> Set(constraint.cpos),
+                'factoriePos -> Set()
+              ))
+            case None => tok
+          }
+      }
+    )
+    tokenFeatureTagger.tag(overriddenSentence)
+  }
+
+  val labelingFeature =
+    FeatureUnion(List(
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+        BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
+        PreviousLinkGrandgretelRef,
+        TransitiveRef(StackRef(0), Seq(TokenGretels)),
+        TransitiveRef(StackRef(1), Seq(TokenGretels)),
+        TransitiveRef(BufferRef(0), Seq(TokenGretels)),
+        TransitiveRef(StackRef(0), Seq(TokenCrumb)),
+        StackLeftGretelsRef(0), StackRightGretelsRef(0))),
+      new OfflineTokenFeature(annotatedSentence, StackRef(0)),
+      new OfflineTokenFeature(annotatedSentence, StackRef(1)),
+      new OfflineTokenFeature(annotatedSentence, StackRef(2)),
+      new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
+      new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
+      new OfflineTokenFeature(annotatedSentence, PreviousLinkCrumbRef),
+      new OfflineTokenFeature(annotatedSentence, PreviousLinkGretelRef),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, StackLeftGretelsRef(0)),
+      new OfflineTokenFeature(annotatedSentence, StackRightGretelsRef(0)),
+      new OfflineTokenFeature(annotatedSentence, FirstRef),
+      new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
+    ))
+
+  val defaultFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
+      TransitiveRef(StackRef(0), Seq(TokenGretels)),
+      TransitiveRef(StackRef(1), Seq(TokenGretels)),
+      TransitiveRef(BufferRef(0), Seq(TokenGretels)),
+      TransitiveRef(StackRef(0), Seq(TokenCrumb)),
+      StackLeftGretelsRef(0), StackRightGretelsRef(1))),
+    new OfflineTokenFeature(annotatedSentence, StackRef(0)),
+    new OfflineTokenFeature(annotatedSentence, StackRef(1)),
+    new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
+    new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenCrumb))),
+    new OfflineTokenFeature(annotatedSentence, FirstRef),
+    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
+  ))
+
   override def computeFeature(state: State): FeatureVector = {
-    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
-      case Some(x) if x.startsWith("dt-") => ArcEagerTransitionSystem.labelingFeature(state)
-      case _ => ArcEagerTransitionSystem.defaultFeature(state)
+    taskIdentifier(state) map { ident => ident.filenameFriendlyName } match {
+      case Some(x) if x.startsWith("dt-") => labelingFeature(state)
+      case _ => defaultFeature(state)
     }
   }
 
   override def systemSpecificInitialState(
-    annotatedSentence: AnnotatedSentence
+    sentence: Sentence
   ): TransitionParserState = {
-    new TransitionParserState(Vector(0), 1, Map(0 -> -1), Map(), Map(), annotatedSentence, None,
+    new TransitionParserState(Vector(0), 1, Map(0 -> -1), Map(), Map(), sentence, None,
       DependencyParserModes.TRANSITION)
   }
 
-  override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
+  override def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
       case parse: PolytreeParse =>
         Some(new ArcEagerGuidedCostFunction(parse, this))
@@ -94,58 +196,13 @@ case object ArcEagerTransitionSystem {
   val keywords = WordClusters.commonWords ++ WordClusters.puncWords ++
     WordClusters.stopWords
 
-  val labelingFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-      BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
-      PreviousLinkGrandgretelRef,
-      TransitiveRef(StackRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(1), Seq(TokenGretels)),
-      TransitiveRef(BufferRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(0), Seq(TokenCrumb)),
-      StackLeftGretelsRef(0), StackRightGretelsRef(0))),
-    new OfflineTokenFeature(StackRef(0)),
-    new OfflineTokenFeature(StackRef(1)),
-    new OfflineTokenFeature(StackRef(2)),
-    new OfflineTokenFeature(BufferRef(0)),
-    new OfflineTokenFeature(BufferRef(1)),
-    new OfflineTokenFeature(PreviousLinkCrumbRef),
-    new OfflineTokenFeature(PreviousLinkGretelRef),
-    new OfflineTokenFeature(TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(StackRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(StackRef(1), Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(BufferRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(StackLeftGretelsRef(0)),
-    new OfflineTokenFeature(StackRightGretelsRef(0)),
-    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
-    new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
-  ))
-
-  val defaultFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
-      TransitiveRef(StackRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(1), Seq(TokenGretels)),
-      TransitiveRef(BufferRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(0), Seq(TokenCrumb)),
-      StackLeftGretelsRef(0), StackRightGretelsRef(1))),
-    new OfflineTokenFeature(StackRef(0)),
-    new OfflineTokenFeature(StackRef(1)),
-    new OfflineTokenFeature(BufferRef(0)),
-    new OfflineTokenFeature(BufferRef(1)),
-    new OfflineTokenFeature(TransitiveRef(StackRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(StackRef(1), Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(BufferRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(TransitiveRef(StackRef(0), Seq(TokenCrumb))),
-    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
-    new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
-  ))
 }
 
 /** The ArcEagerShift operator pops the next buffer item and pushes it onto the stack. */
 case object ArcEagerShift extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
-    (state.bufferPosition + 1 < state.sentence.size)
+    state.bufferPosition + 1 < state.sentence.size
   }
 
   override def advanceState(state: TransitionParserState): State = {
@@ -184,7 +241,7 @@ case object ArcEagerReduce extends TransitionParserStateTransition {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerLeftArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcEagerLeftArc(label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     state match {
@@ -215,7 +272,7 @@ case class ArcEagerLeftArc(val label: Symbol = 'NONE) extends TransitionParserSt
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerRightArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcEagerRightArc(label: Symbol = 'NONE) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     state match {

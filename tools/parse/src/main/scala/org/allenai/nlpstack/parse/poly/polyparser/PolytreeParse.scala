@@ -51,6 +51,8 @@ case class PolytreeParse(
   require(sentence.size == children.size)
   require(sentence.size == arclabels.size)
 
+  override def marbleBlock: MarbleBlock = sentence
+
   @transient
   val tokens: Seq[Token] = sentence.tokens
 

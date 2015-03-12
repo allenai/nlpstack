@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters }
+import org.allenai.nlpstack.parse.poly.core.{ WordClusters, AnnotatedSentence, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
@@ -48,27 +48,120 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
   * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcHybridTransitionSystem(
+    marbleBlock: MarbleBlock,
     brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(brownClusters) {
+) extends DependencyParsingTransitionSystem(marbleBlock, brownClusters) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
+  @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
+    TokenPositionFeature,
+    TokenPropertyFeature('factorieCpos),
+    TokenPropertyFeature('factoriePos),
+    TokenPropertyFeature('brown0),
+    KeywordFeature(DependencyParsingTransitionSystem.keywords)
+  ))
+
+  val annotatedSentence: AnnotatedSentence = {
+    val taggedSentence = sentence.taggedWithFactorie
+      .taggedWithBrownClusters(brownClusters)
+      .taggedWithLexicalProperties
+    tokenFeatureTagger.tag(taggedSentence)
+
+    // TODO: re-enable
+    // override factorie tags with requested tags
+    /*
+    val requestedCposConstraints: Map[Int, RequestedCpos] =
+      (constraints flatMap { constraint: TransitionConstraint =>
+        constraint match {
+          case cposConstraint: RequestedCpos => Some(cposConstraint)
+          case _ => None
+        }
+      } map { constraint =>
+        (constraint.tokenIndex, constraint)
+      }).toMap
+    val overriddenSentence: Sentence = Sentence(
+      Range(0, taggedSentence.tokens.size) map { i =>
+        requestedCposConstraints.get(i)
+      } zip taggedSentence.tokens map {
+        case (maybeConstraint, tok) =>
+          maybeConstraint match {
+            case Some(constraint) =>
+              tok.updateProperties(Map(
+                'factorieCpos -> Set(constraint.cpos),
+                'factoriePos -> Set()
+              ))
+            case None => tok
+          }
+      }
+    )
+    tokenFeatureTagger.tag(overriddenSentence)
+    */
+  }
+
+  val labelingFeature =
+    FeatureUnion(List(
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+        BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
+        PreviousLinkGrandgretelRef,
+        TransitiveRef(StackRef(0), Seq(TokenGretels)),
+        TransitiveRef(StackRef(1), Seq(TokenGretels)),
+        TransitiveRef(BufferRef(0), Seq(TokenGretels)),
+        TransitiveRef(StackRef(0), Seq(TokenCrumb)),
+        StackLeftGretelsRef(0), StackRightGretelsRef(0))),
+      new OfflineTokenFeature(annotatedSentence, StackRef(0)),
+      new OfflineTokenFeature(annotatedSentence, StackRef(1)),
+      new OfflineTokenFeature(annotatedSentence, StackRef(2)),
+      new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
+      new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
+      new OfflineTokenFeature(annotatedSentence, PreviousLinkCrumbRef),
+      new OfflineTokenFeature(annotatedSentence, PreviousLinkGretelRef),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
+      new OfflineTokenFeature(annotatedSentence, StackLeftGretelsRef(0)),
+      new OfflineTokenFeature(annotatedSentence, StackRightGretelsRef(0)),
+      new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
+      new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
+    ))
+
+  val defaultFeature = FeatureUnion(List(
+    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
+      TransitiveRef(StackRef(0), Seq(TokenGretels)),
+      TransitiveRef(StackRef(1), Seq(TokenGretels)),
+      TransitiveRef(BufferRef(0), Seq(TokenGretels)),
+      TransitiveRef(StackRef(0), Seq(TokenCrumb)),
+      StackLeftGretelsRef(0), StackRightGretelsRef(1))),
+    new OfflineTokenFeature(annotatedSentence, StackRef(0)),
+    new OfflineTokenFeature(annotatedSentence, StackRef(1)),
+    new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
+    new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
+    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenCrumb))),
+    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords))),
+    new TokenTransformFeature(FirstRef, Set(TokenPropertyTransform('factorieCpos)))
+  ))
+
   override def computeFeature(state: State): FeatureVector = {
     (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
-      case Some(x) if x.startsWith("dt-") => ArcHybridTransitionSystem.labelingFeature(state)
-      case _ => ArcHybridTransitionSystem.transitionFeature(state)
+      case Some(x) if x.startsWith("dt-") => labelingFeature(state)
+      case _ => defaultFeature(state)
     }
   }
 
   override def systemSpecificInitialState(
-    annotatedSentence: AnnotatedSentence
+    sentence: Sentence
   ): TransitionParserState = {
-    new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), annotatedSentence,
+    new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), sentence,
       None, DependencyParserModes.TRANSITION)
   }
 
-  override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
+  override def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
       case parse: PolytreeParse =>
         Some(new ArcHybridGuidedCostFunction(parse, this))
@@ -86,91 +179,6 @@ case class ArcHybridTransitionSystem(
       case _ => TransitionSystem.trivialConstraint
     }
   }
-}
-
-case object ArcHybridTransitionSystem {
-
-  private val previousLinkFeatures: Seq[StateFeature] = (for {
-    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
-    )
-  }).flatten
-
-  private val linkFeatures: Seq[StateFeature] = (for {
-    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
-    )
-  }).flatten
-
-  private val offlineTransitiveFeatures: Seq[StateFeature] = for {
-    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
-  }
-
-  private val offlinePreviousLinkFeatures: Seq[StateFeature] = for {
-    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
-  }
-
-  val transitionFeature = FeatureUnion(
-    Seq(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(StackRef(2)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(LastRef),
-      new OfflineTokenFeature(FirstRef)
-    )
-  )
-
-  val labelingFeature = FeatureUnion(
-    Seq(
-      new TokenLinkFeature(PreviousLinkCrumbRef, PreviousLinkGretelRef),
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(StackRef(2)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(PreviousLinkCrumbRef),
-      new OfflineTokenFeature(PreviousLinkGretelRef),
-      new OfflineTokenFeature(LastRef),
-      new OfflineTokenFeature(FirstRef)
-    )
-  )
-
 }
 
 /** The ArcHybridShift operator pops the next buffer item and pushes it onto the stack. */

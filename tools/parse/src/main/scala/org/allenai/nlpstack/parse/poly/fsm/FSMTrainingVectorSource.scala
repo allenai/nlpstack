@@ -19,7 +19,7 @@ case class FSMTrainingVector(task: ClassificationTask, transition: StateTransiti
 }
 
 abstract class FSMTrainingVectorSource(
-    transitionSystem: TransitionSystem,
+    transitionSystemFactory: TransitionSystemFactory,
     baseCostFunction: Option[StateCostFunction]
 ) {
 
@@ -61,17 +61,19 @@ abstract class FSMTrainingVectorSource(
     *
     * Note that this function is implemented using tail-recursion.
     *
-    * @param marbleBlock the marble block
+    * @param sculpture the sculpture to generate feature vectors from
     * @return a list of training vectors
     */
-  protected def generateVectors(marbleBlock: MarbleBlock): List[FSMTrainingVector] = {
-    //TODO: shouldn't this be sculpture?
-    transitionSystem.guidedCostFunction(marbleBlock) match {
+  protected def generateVectors(sculpture: Sculpture): List[FSMTrainingVector] = {
+    val transitionSystem =
+      transitionSystemFactory.buildTransitionSystem(sculpture.marbleBlock, Set())
+    transitionSystem.guidedCostFunction(sculpture) match {
       case Some(costFunction) =>
         val search = new GreedySearch(costFunction)
-        val initialState = transitionSystem.initialState(marbleBlock, Seq())
+        val initialState = transitionSystem.initialState(Seq())
         initialState flatMap { initState => search.find(initState, Set()) } match {
           case Some(walk) => generateVectorsHelper(
+            transitionSystem,
             walk.steps map {
               _.transition
             },
@@ -84,6 +86,7 @@ abstract class FSMTrainingVectorSource(
   }
 
   @tailrec private def generateVectorsHelper(
+    transitionSystem: TransitionSystem,
     transitions: Seq[StateTransition],
     initState: Option[State],
     trainingVectorsSoFar: List[FSMTrainingVector]
@@ -93,7 +96,6 @@ abstract class FSMTrainingVectorSource(
       case None => trainingVectorsSoFar
       case Some(initialState) =>
         val task = transitionSystem.taskIdentifier(initialState)
-        //val featureVector = transitionSystem.feature(initialState)
         if (transitions.isEmpty) {
           trainingVectorsSoFar
         } else {
@@ -111,7 +113,7 @@ abstract class FSMTrainingVectorSource(
               }
             }
           }
-          generateVectorsHelper(transitions.tail, (transitions.head)(initState), //TODO: task.get?
+          generateVectorsHelper(transitionSystem, transitions.tail, (transitions.head)(initState),
             FSMTrainingVector(task.get, nextTransition, transitionSystem, initialState)
               +: trainingVectorsSoFar)
         }

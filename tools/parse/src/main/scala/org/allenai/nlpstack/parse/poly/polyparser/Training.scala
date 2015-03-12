@@ -67,8 +67,8 @@ object Training {
         Seq[BrownClusters]()
       }
     }
-    val transitionSystem: TransitionSystem =
-      ArcEagerTransitionSystem(clusters)
+    val transitionSystemFactory: TransitionSystemFactory =
+      ArcEagerTransitionSystemFactory(clusters)
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
@@ -76,17 +76,17 @@ object Training {
       new OmnibusTrainer()
     val trainingVectorSource = new GoldParseTrainingVectorSource(
       trainingSource,
-      transitionSystem, baseCostFunction
+      transitionSystemFactory, baseCostFunction
     )
-    val parsingCostFunction: StateCostFunction = {
+    val parsingCostFunctionFactory: StateCostFunctionFactory = {
       val trainer =
-        new DTCostFunctionTrainer(classifierTrainer, transitionSystem,
+        new DTCostFunctionTrainer(classifierTrainer, transitionSystemFactory,
           trainingVectorSource, baseCostFunction)
-      trainer.costFunction
+      trainer.costFunctionFactory
     }
     val parsingNbestSize = 5
     val parserConfig = ParserConfiguration(
-      parsingCostFunction,
+      parsingCostFunctionFactory,
       BaseCostRerankingFunction, parsingNbestSize
     )
     val parser = RerankingTransitionParser(parserConfig)

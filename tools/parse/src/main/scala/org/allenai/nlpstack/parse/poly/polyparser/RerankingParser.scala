@@ -10,7 +10,6 @@ import org.allenai.nlpstack.parse.poly.fsm._
   */
 case class RerankingTransitionParser(val config: ParserConfiguration) extends TransitionParser {
 
-  @transient val baseParser: NbestSearch = new NbestSearch(config.parsingCostFunction)
   @transient val reranker: Reranker = new Reranker(config.rerankingFunction)
 
   def parse(
@@ -18,9 +17,11 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     constraints: Set[TransitionConstraint] = Set()
   ): Option[PolytreeParse] = {
 
+    val parsingCostFunction =
+      config.parsingCostFunctionFactory.buildCostFunction(sentence, constraints)
+    val baseParser = new NbestSearch(parsingCostFunction)
     val nbestList: Option[NbestList] =
-      config.parsingCostFunction.transitionSystem.initialState(
-        sentence,
+      parsingCostFunction.transitionSystem.initialState(
         constraints.toSeq
       ) map { initState =>
         // Only do full reranking in the absence of constraints.
