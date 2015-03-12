@@ -46,8 +46,9 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
   * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcEagerTransitionSystem(
-    brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(brownClusters) {
+    brownClusters: Seq[BrownClusters] = Seq(),
+    verbnetClassMap: Map[Symbol, Set[Symbol]] = Map.empty
+) extends DependencyParsingTransitionSystem(brownClusters, verbnetClassMap) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcEagerTaskIdentifier

@@ -22,9 +22,9 @@ object TransitionSystem {
 
   implicit object TransitionSystemJsonFormat extends RootJsonFormat[TransitionSystem] {
     implicit val arcEagerFormat =
-      jsonFormat1(ArcEagerTransitionSystem.apply).pack("type" -> "ArcEagerTransitionSystem")
+      jsonFormat2(ArcEagerTransitionSystem.apply).pack("type" -> "ArcEagerTransitionSystem")
     implicit val arcHybridFormat =
-      jsonFormat1(ArcHybridTransitionSystem.apply).pack("type" -> "ArcHybridTransitionSystem")
+      jsonFormat2(ArcHybridTransitionSystem.apply).pack("type" -> "ArcHybridTransitionSystem")
 
     def write(transitionSystem: TransitionSystem): JsValue = transitionSystem match {
       //case ParseLabelerTransitionSystem => JsString("ParseLabelerTransitionSystem")
