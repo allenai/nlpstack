@@ -179,7 +179,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
   }
 
   @transient def taggedWithVerbnetClasses(verbnetClasses: Map[Symbol, Set[Symbol]]): Sentence = {
-    Sentence(for {
+    val result = Sentence(for {
       tok <- tokens
     } yield {
       val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
@@ -190,6 +190,8 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
       }
       tok.updateProperties(Map('verbnetClasses -> tokVerbnetClasses))
     })
+    println(result)
+    result
   }
 }
 
