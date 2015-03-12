@@ -74,7 +74,7 @@ class DTCostFunctionTrainer(
     extends StateCostFunctionTrainer(transitionSystem, trainingVectorSource) {
 
   override def costFunction: StateCostFunction = new ClassifierBasedCostFunction(
-    transitionSystem, transitions, taskClassifiers.toList, featureNames, baseCostFunction
+    transitionSystem, transitions, taskClassifiers.toList, baseCostFunction
   )
 
   private val transitionIndices: Map[StateTransition, Int] = transitions

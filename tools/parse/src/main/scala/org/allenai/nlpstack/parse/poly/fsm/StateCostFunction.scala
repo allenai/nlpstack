@@ -45,9 +45,8 @@ object StateCostFunction {
 }
 
 case class ClassifierBasedCostFunction(
-  transitionSystem: TransitionSystem, transitions: IndexedSeq[StateTransition],
+  transitionSystem: TransitionSystem, transitions: Seq[StateTransition],
   taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
-  featureNames: List[FeatureName],
   baseCostFunction: Option[StateCostFunction] = None
 )
     extends StateCostFunction {
