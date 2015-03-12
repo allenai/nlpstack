@@ -15,7 +15,6 @@ object Dependencies extends CoreDependencies {
     exclude("net.sf.jwordnet", "jwnl"))
 
   val stanfordCoreNlp = "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1"
-  val stanfordCoreNlpModels = "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1" classifier "models"
 
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
     exclude("junit", "junit")

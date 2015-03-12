@@ -138,7 +138,6 @@ object NlpstackBuild extends Build {
       name := "nlpstack-postag",
       libraryDependencies ++= Seq(
         stanfordCoreNlp,
-        stanfordCoreNlpModels,
         factorie,
         opennlp,
         datastore,

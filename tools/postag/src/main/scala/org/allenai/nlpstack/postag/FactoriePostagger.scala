@@ -29,11 +29,11 @@ class FactoriePostagger extends Postagger {
 object FactoriePostagger {
   private val tagger =
     new OntonotesForwardPosTagger(
-      Datastore.filePath(
-      "cc.factorie.app.nlp.pos",
-      "OntonotesForwardPosTagger.factorie",
-      1
-    ).toUri.toURL
+        Datastore.filePath(
+        "cc.factorie.app.nlp.pos",
+        "OntonotesForwardPosTagger.factorie",
+        1
+      ).toUri.toURL
     )
 
   object factorieFormat extends Format[Seq[PostaggedToken], FactorieDocument] {
