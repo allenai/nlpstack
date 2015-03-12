@@ -48,25 +48,45 @@ object StateRef {
         JsObject(bufferRefFormat.write(bufferRef).asJsObject.fields +
           ("type" -> JsString("BufferRef")))
       }
-      case stackWindowRef: StackWindowRef => {
-        JsObject(stackWindowRefFormat.write(stackWindowRef).asJsObject.fields +
-          ("type" -> JsString("StackWindowRef")))
-      }
-      case bufferWindowRef: BufferWindowRef => {
-        JsObject(bufferWindowRefFormat.write(bufferWindowRef).asJsObject.fields +
-          ("type" -> JsString("BufferWindowRef")))
-      }
       case breadcrumbRef: BreadcrumbRef => {
         JsObject(breadcrumbRefFormat.write(breadcrumbRef).asJsObject.fields +
           ("type" -> JsString("BreadcrumbRef")))
       }
-      case stackGretelsRef: StackGretelsRef => {
-        JsObject(stackGretelsRefFormat.write(stackGretelsRef).asJsObject.fields +
-          ("type" -> JsString("StackGretelsRef")))
-      }
       case stackChildrenRef: StackChildrenRef => {
         JsObject(stackChildrenRefFormat.write(stackChildrenRef).asJsObject.fields +
           ("type" -> JsString("StackChildrenRef")))
+      }
+      case stackChildRef: StackChildRef => {
+        JsObject(stackChildRefFormat.write(stackChildRef).asJsObject.fields +
+          ("type" -> JsString("StackChildRef")))
+      }
+      case bufferChildrenRef: BufferChildrenRef => {
+        JsObject(bufferChildrenRefFormat.write(bufferChildrenRef).asJsObject.fields +
+          ("type" -> JsString("BufferChildrenRef")))
+      }
+      case bufferChildRef: BufferChildRef => {
+        JsObject(bufferChildRefFormat.write(bufferChildRef).asJsObject.fields +
+          ("type" -> JsString("BufferChildRef")))
+      }
+      case stackParentsRef: StackParentsRef => {
+        JsObject(stackParentsRefFormat.write(stackParentsRef).asJsObject.fields +
+          ("type" -> JsString("StackParentsRef")))
+      }
+      case stackParentRef: StackParentRef => {
+        JsObject(stackParentRefFormat.write(stackParentRef).asJsObject.fields +
+          ("type" -> JsString("StackParentRef")))
+      }
+      case bufferParentsRef: BufferParentsRef => {
+        JsObject(bufferParentsRefFormat.write(bufferParentsRef).asJsObject.fields +
+          ("type" -> JsString("BufferParentsRef")))
+      }
+      case bufferParentRef: BufferParentRef => {
+        JsObject(bufferParentRefFormat.write(bufferParentRef).asJsObject.fields +
+          ("type" -> JsString("BufferParentRef")))
+      }
+      case stackGretelsRef: StackGretelsRef => {
+        JsObject(stackGretelsRefFormat.write(stackGretelsRef).asJsObject.fields +
+          ("type" -> JsString("StackGretelsRef")))
       }
       case stackLeftGretelsRef: StackLeftGretelsRef => {
         JsObject(stackLeftGretelsRefFormat.write(stackLeftGretelsRef).asJsObject.fields +
@@ -79,10 +99,6 @@ object StateRef {
       case bufferGretelsRef: BufferGretelsRef => {
         JsObject(bufferGretelsRefFormat.write(bufferGretelsRef).asJsObject.fields +
           ("type" -> JsString("BufferGretelsRef")))
-      }
-      case bufferChildrenRef: BufferChildrenRef => {
-        JsObject(bufferChildrenRefFormat.write(bufferChildrenRef).asJsObject.fields +
-          ("type" -> JsString("BufferChildrenRef")))
       }
       case bufferLeftGretelsRef: BufferLeftGretelsRef => {
         JsObject(bufferLeftGretelsRefFormat.write(bufferLeftGretelsRef).asJsObject.fields +
@@ -106,15 +122,20 @@ object StateRef {
       case JsObject(values) => values("type") match {
         case JsString("StackRef") => stackRefFormat.read(value)
         case JsString("BufferRef") => bufferRefFormat.read(value)
-        case JsString("StackWindowRef") => stackWindowRefFormat.read(value)
-        case JsString("BufferWindowRef") => bufferWindowRefFormat.read(value)
         case JsString("BreadcrumbRef") => breadcrumbRefFormat.read(value)
-        case JsString("StackGretelsRef") => stackGretelsRefFormat.read(value)
         case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
+        case JsString("StackChildRef") => stackChildRefFormat.read(value)
+        case JsString("BufferChildrenRef") => bufferChildrenRefFormat.read(value)
+        case JsString("BufferChildRef") => bufferChildRefFormat.read(value)
+        case JsString("StackParentsRef") => stackParentsRefFormat.read(value)
+        case JsString("StackParentRef") => stackParentRefFormat.read(value)
+        case JsString("BufferParentsRef") => bufferParentsRefFormat.read(value)
+        case JsString("BufferParentRef") => bufferParentRefFormat.read(value)
+
+        case JsString("StackGretelsRef") => stackGretelsRefFormat.read(value)
         case JsString("StackLeftGretelsRef") => stackLeftGretelsRefFormat.read(value)
         case JsString("StackRightGretelsRef") => stackRightGretelsRefFormat.read(value)
         case JsString("BufferGretelsRef") => bufferGretelsRefFormat.read(value)
-        case JsString("BufferChildrenRef") => bufferChildrenRefFormat.read(value)
         case JsString("BufferLeftGretelsRef") => bufferLeftGretelsRefFormat.read(value)
         case JsString("BufferRightGretelsRef") => bufferRightGretelsRefFormat.read(value)
         case x => deserializationError(s"Invalid identifier for StateRef: $x")
@@ -125,20 +146,30 @@ object StateRef {
 
   val stackRefFormat: RootJsonFormat[StackRef] = jsonFormat1(StackRef.apply)
   val bufferRefFormat: RootJsonFormat[BufferRef] = jsonFormat1(BufferRef.apply)
-  val stackWindowRefFormat: RootJsonFormat[StackWindowRef] = jsonFormat1(StackWindowRef.apply)
-  val bufferWindowRefFormat: RootJsonFormat[BufferWindowRef] = jsonFormat1(BufferWindowRef.apply)
   val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
-  val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
   val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] =
     jsonFormat1(StackChildrenRef.apply)
+  val stackChildRefFormat: RootJsonFormat[StackChildRef] =
+    jsonFormat2(StackChildRef.apply)
+  val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] =
+    jsonFormat1(BufferChildrenRef.apply)
+  val bufferChildRefFormat: RootJsonFormat[BufferChildRef] =
+    jsonFormat2(BufferChildRef.apply)
+  val stackParentsRefFormat: RootJsonFormat[StackParentsRef] =
+    jsonFormat1(StackParentsRef.apply)
+  val stackParentRefFormat: RootJsonFormat[StackParentRef] =
+    jsonFormat2(StackParentRef.apply)
+  val bufferParentsRefFormat: RootJsonFormat[BufferParentsRef] =
+    jsonFormat1(BufferParentsRef.apply)
+  val bufferParentRefFormat: RootJsonFormat[BufferParentRef] =
+    jsonFormat2(BufferParentRef.apply)
+  val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
   val stackLeftGretelsRefFormat: RootJsonFormat[StackLeftGretelsRef] =
     jsonFormat1(StackLeftGretelsRef.apply)
   val stackRightGretelsRefFormat: RootJsonFormat[StackRightGretelsRef] =
     jsonFormat1(StackRightGretelsRef.apply)
   val bufferGretelsRefFormat: RootJsonFormat[BufferGretelsRef] =
     jsonFormat1(BufferGretelsRef.apply)
-  val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] =
-    jsonFormat1(BufferChildrenRef.apply)
   val bufferLeftGretelsRefFormat: RootJsonFormat[BufferLeftGretelsRef] =
     jsonFormat1(BufferLeftGretelsRef.apply)
   val bufferRightGretelsRefFormat: RootJsonFormat[BufferRightGretelsRef] =
@@ -158,7 +189,7 @@ case class StackRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackRef" + index)
+  override val name: Symbol = Symbol("s" + index)
 }
 
 /** A BufferRef is a StateRef (see above) whose apply operation returns the `index`th element of
@@ -179,29 +210,212 @@ case class BufferRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferRef" + index)
+  override val name: Symbol = Symbol("b" + index)
 }
 
-case class StackWindowRef(val index: Int) extends StateRef {
-  require(index >= 0, "the index of a StackWindowRef must be a nonnegative integer")
+/** A FirstRef is a StateRef (see above) whose apply operation returns the first element of
+  * the sentence.
+  */
+case object FirstRef extends StateRef {
 
   override def apply(state: TransitionParserState): Seq[Int] = {
-    Range(0, index) flatMap { x => BufferRef(x)(state) }
+    if (state.sentence.tokens.size > 1) {
+      Seq(1)
+    } else {
+      Seq()
+    }
   }
 
   @transient
-  override val name: Symbol = Symbol("stackWindowRef" + index)
+  override val name: Symbol = Symbol("first")
 }
 
-case class BufferWindowRef(val index: Int) extends StateRef {
-  require(index >= 0, "the index of a BufferWindowRef must be a nonnegative integer")
+/** A LastRef is a StateRef (see above) whose apply operation returns the final element of
+  * the sentence.
+  */
+case object LastRef extends StateRef {
 
   override def apply(state: TransitionParserState): Seq[Int] = {
-    Range(0, index) flatMap { x => BufferRef(x)(state) }
+    Seq(state.sentence.tokens.size - 1)
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferWindowRef" + index)
+  override val name: Symbol = Symbol("last")
+}
+
+sealed abstract class TokenNeighbors
+    extends ((TransitionParserState, Int) => Set[Int]) {
+
+  /** Provides a symbolic representation of the TokenNeighborhood,
+    * used for creating feature names.
+    */
+  def name: Symbol
+}
+
+case object TokenChildren extends TokenNeighbors {
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    state.children.getOrElse(token, Set())
+  }
+
+  @transient override val name: Symbol = Symbol("c")
+}
+
+case class TokenChild(childIndex: Int) extends TokenNeighbors {
+  require(childIndex >= 0, "the child index of a TokenChild must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    Set(TokenChildren(state, token).toSeq.sorted.lift(childIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"c$childIndex")
+}
+
+case object TokenParents extends TokenNeighbors {
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    state.getParents(token).toSet
+  }
+
+  @transient override val name: Symbol = Symbol("p")
+}
+
+case class TokenParent(parentIndex: Int) extends TokenNeighbors {
+  require(parentIndex >= 0, "the parent index of a TokenParent must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    Set(TokenParents(state, token).toSeq.sorted.lift(parentIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"p$parentIndex")
+}
+
+case object TokenGretels extends TokenNeighbors {
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    state.getGretels(token)
+  }
+
+  @transient override val name: Symbol = Symbol("g")
+}
+
+case class TokenGretel(gretelIndex: Int) extends TokenNeighbors {
+  require(gretelIndex >= 0, "the gretel index of a TokenGretel must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    Set(TokenGretels(state, token).toSeq.sorted.lift(gretelIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"g$gretelIndex")
+}
+
+case object TokenCrumb extends TokenNeighbors {
+  override def apply(state: TransitionParserState, token: Int): Set[Int] = {
+    Set(state.breadcrumb.get(token)).flatten -- Set(-1)
+  }
+
+  @transient override val name: Symbol = Symbol("p")
+}
+
+// TODO: currently cannot be serialized
+case class TransitiveRef(stateRef: StateRef, neighbors: Seq[TokenNeighbors]) extends StateRef {
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    (neighbors.foldLeft(stateRef(state).toSet)((tokens, neighbor) =>
+      tokens.flatMap(tok => neighbor(state, tok)))).toSeq.sorted
+  }
+
+  @transient override val name: Symbol =
+    Symbol(s"${stateRef.name.name}${(neighbors map { _.name.name }).mkString("")}")
+}
+
+// ************
+// Beyond this line, these StateRefs should be preserved temporarily for legacy models, but are
+// not needed in the future and should be regarded as deprecated.
+
+case class StackChildrenRef(stackIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    StackRef(stackIndex)(state) flatMap { nodeIndex =>
+      state.children.getOrElse(nodeIndex, Seq()).toSeq.sorted
+    }
+  }
+
+  @transient override val name: Symbol = Symbol(s"s${stackIndex}c")
+}
+
+case class StackChildRef(val stackIndex: Int, val childIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the stack index of a StackChildRef must be a nonnegative integer")
+  require(childIndex >= 0, "the child index of a StackChildRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Seq(StackChildrenRef(stackIndex)(state).lift(childIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"s${stackIndex}c${childIndex}")
+}
+
+case class BufferChildrenRef(val bufferIndex: Int) extends StateRef {
+  require(bufferIndex >= 0, "the index of a BufferChildrenRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    BufferRef(bufferIndex)(state) flatMap { nodeIndex => state.children.getOrElse(nodeIndex, Seq()) }
+  }
+
+  @transient override val name: Symbol = Symbol(s"b${bufferIndex}c")
+}
+
+case class BufferChildRef(val bufferIndex: Int, val childIndex: Int) extends StateRef {
+  require(childIndex >= 0, "the child index of a BufferChildRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Seq(BufferChildrenRef(bufferIndex)(state).lift(childIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"b${bufferIndex}c${childIndex}")
+}
+
+case class StackParentsRef(stackIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the index of a StackParentsRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    StackRef(stackIndex)(state) flatMap { nodeIndex =>
+      state.getParents(nodeIndex)
+    }
+  }
+
+  @transient override val name: Symbol = Symbol(s"s${stackIndex}p")
+}
+
+case class StackParentRef(val stackIndex: Int, val parentIndex: Int) extends StateRef {
+  require(stackIndex >= 0, "the stack index of a StackParentRef must be a nonnegative integer")
+  require(parentIndex >= 0, "the parent index of a StackParentRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Seq(StackParentsRef(stackIndex)(state).lift(parentIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"s${stackIndex}p${parentIndex}")
+}
+
+case class BufferParentsRef(bufferIndex: Int) extends StateRef {
+  require(bufferIndex >= 0, "the index of a BufferParentsRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
+      state.getParents(nodeIndex)
+    }
+  }
+
+  @transient override val name: Symbol = Symbol(s"b${bufferIndex}p")
+}
+
+case class BufferParentRef(val bufferIndex: Int, val parentIndex: Int) extends StateRef {
+  require(bufferIndex >= 0, "the buffer index of a BufferParentRef must be a nonnegative integer")
+  require(parentIndex >= 0, "the parent index of a BufferParentRef must be a nonnegative integer")
+
+  override def apply(state: TransitionParserState): Seq[Int] = {
+    Seq(BufferParentsRef(bufferIndex)(state).lift(parentIndex)).flatten
+  }
+
+  @transient override val name: Symbol = Symbol(s"b${bufferIndex}p${parentIndex}")
 }
 
 case class StackGretelsRef(val index: Int) extends StateRef {
@@ -212,18 +426,7 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackGretelRef" + index)
-}
-
-case class StackChildrenRef(val index: Int) extends StateRef {
-  require(index >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
-
-  override def apply(state: TransitionParserState): Seq[Int] = {
-    StackRef(index)(state) flatMap { nodeIndex => state.children.getOrElse(nodeIndex, Seq()) }
-  }
-
-  @transient
-  override val name: Symbol = Symbol("stackChildrenRef" + index)
+  override val name: Symbol = Symbol("sg" + index)
 }
 
 case class StackLeftGretelsRef(val index: Int) extends StateRef {
@@ -238,7 +441,7 @@ case class StackLeftGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackLeftGretelRef" + index)
+  override val name: Symbol = Symbol("sgl" + index)
 }
 
 case class StackRightGretelsRef(val index: Int) extends StateRef {
@@ -253,7 +456,7 @@ case class StackRightGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("stackRightGretelRef" + index)
+  override val name: Symbol = Symbol("sgr" + index)
 }
 
 case class BufferGretelsRef(val index: Int) extends StateRef {
@@ -264,18 +467,7 @@ case class BufferGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferGretelRef" + index)
-}
-
-case class BufferChildrenRef(val index: Int) extends StateRef {
-  require(index >= 0, "the index of a BufferChildrenRef must be a nonnegative integer")
-
-  override def apply(state: TransitionParserState): Seq[Int] = {
-    BufferRef(index)(state) flatMap { nodeIndex => state.children.getOrElse(nodeIndex, Seq()) }
-  }
-
-  @transient
-  override val name: Symbol = Symbol("bufferChildrenRef" + index)
+  override val name: Symbol = Symbol("bg" + index)
 }
 
 case class BufferLeftGretelsRef(val index: Int) extends StateRef {
@@ -290,7 +482,7 @@ case class BufferLeftGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferLeftGretelRef" + index)
+  override val name: Symbol = Symbol("bgl" + index)
 }
 
 case class BufferRightGretelsRef(val index: Int) extends StateRef {
@@ -305,7 +497,7 @@ case class BufferRightGretelsRef(val index: Int) extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("bufferRightGretelRef" + index)
+  override val name: Symbol = Symbol("bgr" + index)
 }
 
 /** A BreadcrumbRef is a StateRef (see above) whose apply operation returns the breadcrumb of
@@ -338,7 +530,7 @@ case object PreviousLinkCrumbRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkCrumb")
+  override val name: Symbol = Symbol("pc")
 }
 
 case object PreviousLinkCrumbGretelRef extends StateRef {
@@ -348,7 +540,7 @@ case object PreviousLinkCrumbGretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkCrumbGretel")
+  override val name: Symbol = Symbol("pcg")
 }
 
 case object PreviousLinkGretelRef extends StateRef {
@@ -361,7 +553,7 @@ case object PreviousLinkGretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkGretel")
+  override val name: Symbol = Symbol("pg")
 }
 
 case object PreviousLinkGrandgretelRef extends StateRef {
@@ -371,35 +563,6 @@ case object PreviousLinkGrandgretelRef extends StateRef {
   }
 
   @transient
-  override val name: Symbol = Symbol("prevLinkGrandgretel")
+  override val name: Symbol = Symbol("pgg")
 }
 
-/** A LastRef is a StateRef (see above) whose apply operation returns the final element of
-  * the sentence.
-  */
-case object LastRef extends StateRef {
-
-  override def apply(state: TransitionParserState): Seq[Int] = {
-    Seq(state.sentence.tokens.size - 1)
-  }
-
-  @transient
-  override val name: Symbol = Symbol("lastRef")
-}
-
-/** A FirstRef is a StateRef (see above) whose apply operation returns the first element of
-  * the sentence.
-  */
-case object FirstRef extends StateRef {
-
-  override def apply(state: TransitionParserState): Seq[Int] = {
-    if (state.sentence.tokens.size > 1) {
-      Seq(1)
-    } else {
-      Seq()
-    }
-  }
-
-  @transient
-  override val name: Symbol = Symbol("firstRef")
-}

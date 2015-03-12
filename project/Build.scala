@@ -29,7 +29,7 @@ object NlpstackBuild extends Build {
     Revolver.settings ++
     releaseSettings ++
     Seq(
-      javaOptions += s"-Dlogback.configurationFile=${file(".")}/conf/logback-test.xml",
+      javaOptions += s"-Dlogback.configurationFile=${file(".")}/conf/logback.xml",
       fork := true,
       organization := "org.allenai.nlpstack",
       crossScalaVersions := Seq("2.11.5"),
@@ -58,6 +58,7 @@ object NlpstackBuild extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "joda-time" % "joda-time" % "2.7",
         "org.apache.commons" % "commons-compress" % "1.8"),
+        "org.allenai.common" % "common-core_2.11" % "2015.01.23-0"),
       PublishTo.sonatype)
 
   lazy val tools = Project(

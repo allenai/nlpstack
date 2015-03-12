@@ -54,7 +54,7 @@ class PolytreeParserSpec extends UnitSpec {
       """amod(banks-3, Big-1)
          |nn(banks-3, investment-2)
          |nsubj(refused-4, banks-3)
-         |ccomp(say-13, refused-4)
+         |root(ROOT-0, refused-4)
          |aux(step-6, to-5)
          |xcomp(refused-4, step-6)
          |prt(step-6, up-7)
@@ -63,8 +63,8 @@ class PolytreeParserSpec extends UnitSpec {
          |pobj(to-8, plate-10)
          |punct(say-13, ,-11)
          |nsubj(say-13, traders-12)
-         |root(ROOT-0, say-13)
-         |punct(say-13, .-14)""".stripMargin
+         |ccomp(refused-4, say-13)
+         |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
 }

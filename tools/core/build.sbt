@@ -13,4 +13,4 @@ libraryDependencies ++= Seq(
 dependencyOverrides ++= Set(
   "org.scala-lang.modules" %% "scala-xml" % "1.0.2")
 
-addLoggingDependencies(libraryDependencies)
+libraryDependencies ++= loggingDependencies

@@ -51,7 +51,6 @@ object Training {
           }
     }
     val config: ParserTrainingConfig = optionParser.parse(args, ParserTrainingConfig()).get
-
     val trainingSource: PolytreeParseSource =
       MultiPolytreeParseSource(config.trainingPath.split(",") map { path =>
         InMemoryPolytreeParseSource.getParseSource(
@@ -59,7 +58,6 @@ object Training {
           ConllX(true), config.dataSource
         )
       })
-
     val clusters: Seq[BrownClusters] = {
       if (config.clustersPath != "") {
         config.clustersPath.split(",") map { path =>
@@ -69,10 +67,8 @@ object Training {
         Seq[BrownClusters]()
       }
     }
-
-    println("Determining task identifier.")
     val transitionSystem: TransitionSystem =
-      ArcHybridTransitionSystem(clusters)
+      ArcEagerTransitionSystem(clusters)
 
     println("Training parser.")
     val baseCostFunction = None // TODO: fix this
@@ -98,7 +94,7 @@ object Training {
     println("Saving models.")
     TransitionParser.save(parser, config.outputPath)
 
-    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(false),
+    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
       config.dataSource, ParseFile.defaultOracleNbest)
   }
 }

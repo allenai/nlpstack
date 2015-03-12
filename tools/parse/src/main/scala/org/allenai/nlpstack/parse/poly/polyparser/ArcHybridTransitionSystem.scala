@@ -90,49 +90,87 @@ case class ArcHybridTransitionSystem(
 
 case object ArcHybridTransitionSystem {
 
-  val labelingFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-      BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
-      PreviousLinkGrandgretelRef, StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
-      StackRightGretelsRef(0), BufferGretelsRef(0))),
-    new OfflineTokenFeature(StackRef(0)),
-    new OfflineTokenFeature(StackRef(1)),
-    new OfflineTokenFeature(StackRef(2)),
-    new OfflineTokenFeature(BufferRef(0)),
-    new OfflineTokenFeature(BufferRef(1)),
-    new OfflineTokenFeature(PreviousLinkCrumbRef),
-    new OfflineTokenFeature(PreviousLinkGretelRef),
-    new OfflineTokenFeature(PreviousLinkCrumbGretelRef),
-    new OfflineTokenFeature(PreviousLinkGrandgretelRef),
-    new OfflineTokenFeature(StackGretelsRef(0)),
-    new OfflineTokenFeature(StackLeftGretelsRef(0)),
-    new OfflineTokenFeature(StackRightGretelsRef(0)),
-    new OfflineTokenFeature(StackGretelsRef(1)),
-    new OfflineTokenFeature(BufferGretelsRef(0)),
-    new OfflineTokenFeature(LastRef),
-    new OfflineTokenFeature(FirstRef)
-  ))
+  private val previousLinkFeatures: Seq[StateFeature] = (for {
+    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
+    neighbors <- Seq(
+      Seq(TokenChildren), Seq(TokenParents),
+      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
+      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
+    )
+  } yield {
+    Seq(
+      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
+    )
+  }).flatten
 
-  val transitionFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-      BufferRef(1), StackGretelsRef(0), StackGretelsRef(1), StackLeftGretelsRef(0),
-      StackRightGretelsRef(0), BufferGretelsRef(0))),
-    new OfflineTokenFeature(StackRef(0)),
-    new OfflineTokenFeature(StackRef(1)),
-    new OfflineTokenFeature(StackRef(2)),
-    new OfflineTokenFeature(BufferRef(0)),
-    new OfflineTokenFeature(BufferRef(1)),
-    new OfflineTokenFeature(StackChildrenRef(0)),
-    new OfflineTokenFeature(StackChildrenRef(1)),
-    new OfflineTokenFeature(BufferChildrenRef(0)),
-    new OfflineTokenFeature(StackGretelsRef(0)),
-    new OfflineTokenFeature(StackLeftGretelsRef(0)),
-    new OfflineTokenFeature(StackRightGretelsRef(0)),
-    new OfflineTokenFeature(StackGretelsRef(1)),
-    new OfflineTokenFeature(BufferGretelsRef(0)),
-    new OfflineTokenFeature(LastRef),
-    new OfflineTokenFeature(FirstRef)
-  ))
+  private val linkFeatures: Seq[StateFeature] = (for {
+    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
+    neighbors <- Seq(
+      Seq(TokenChildren), Seq(TokenParents),
+      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
+      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
+    )
+  } yield {
+    Seq(
+      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
+    )
+  }).flatten
+
+  private val offlineTransitiveFeatures: Seq[StateFeature] = for {
+    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
+    neighbors <- Seq(
+      Seq(TokenChildren), Seq(TokenParents),
+      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
+      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
+      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
+    )
+  } yield {
+    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
+  }
+
+  private val offlinePreviousLinkFeatures: Seq[StateFeature] = for {
+    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
+    neighbors <- Seq(
+      Seq(TokenChildren), Seq(TokenParents),
+      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
+      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
+      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
+    )
+  } yield {
+    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
+  }
+
+  val transitionFeature = FeatureUnion(
+    Seq(
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+        BufferRef(1))),
+      new OfflineTokenFeature(StackRef(0)),
+      new OfflineTokenFeature(StackRef(1)),
+      new OfflineTokenFeature(StackRef(2)),
+      new OfflineTokenFeature(BufferRef(0)),
+      new OfflineTokenFeature(BufferRef(1)),
+      new OfflineTokenFeature(LastRef),
+      new OfflineTokenFeature(FirstRef)
+    )
+  )
+
+  val labelingFeature = FeatureUnion(
+    Seq(
+      new TokenLinkFeature(PreviousLinkCrumbRef, PreviousLinkGretelRef),
+      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
+        BufferRef(1))),
+      new OfflineTokenFeature(StackRef(0)),
+      new OfflineTokenFeature(StackRef(1)),
+      new OfflineTokenFeature(StackRef(2)),
+      new OfflineTokenFeature(BufferRef(0)),
+      new OfflineTokenFeature(BufferRef(1)),
+      new OfflineTokenFeature(PreviousLinkCrumbRef),
+      new OfflineTokenFeature(PreviousLinkGretelRef),
+      new OfflineTokenFeature(LastRef),
+      new OfflineTokenFeature(FirstRef)
+    )
+  )
+
 }
 
 /** The ArcHybridShift operator pops the next buffer item and pushes it onto the stack. */
