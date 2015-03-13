@@ -1,9 +1,8 @@
 package org.allenai.nlpstack.parse.poly.fsm
 // scalastyle:off
 
-import org.allenai.common.testkit.UnitSpec
-
 case class AlphabetBlock(letter: Symbol) extends State with MarbleBlock with Sculpture {
+  override val marbleBlock: MarbleBlock = this
   override val isFinal: Boolean = (letter == 'H)
   override def asSculpture: Option[Sculpture] = Some(this)
 }
@@ -62,9 +61,8 @@ case object Backward extends StateTransition {
     'E -> 'D, 'F -> 'E, 'G -> 'F, 'H -> 'G)
 }
 
-case object AlphabetBlockTransitionSystem extends TransitionSystem {
-  def initialState(
-    marbleBlock: MarbleBlock,
+case class AlphabetBlockTransitionSystem(marbleBlock: MarbleBlock) extends TransitionSystem {
+  override def initialState(
     constraints: Seq[TransitionConstraint]
   ): Option[State] = {
 
@@ -76,7 +74,7 @@ case object AlphabetBlockTransitionSystem extends TransitionSystem {
 
   override val taskIdentifier: TaskIdentifier = new SimpleTaskIdentifier("alpha")
 
-  def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] = None
+  def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] = None
 
   private val feature: StateFeature = FeatureUnion(Seq())
 
@@ -89,28 +87,18 @@ case object AlphabetBlockTransitionSystem extends TransitionSystem {
     }
   }
 
-  def interpretConstraint(constraint: TransitionConstraint): ((State, StateTransition) => Boolean) = {
+  def interpretConstraint(
+    constraint: TransitionConstraint
+  ): ((State, StateTransition) => Boolean) = {
     TransitionSystem.trivialConstraint
   }
 }
 
-case object AlphabetBlockCostFunction1 extends StateCostFunction {
+case class AlphabetBlockCostFunction1(transitionSystem: TransitionSystem)
+    extends StateCostFunction {
 
   override def apply(state: State): Map[StateTransition, Double] = {
     Map(Forward -> 1, Backward -> 2, Flip -> 3)
   }
-
-  def transitionSystem: TransitionSystem = AlphabetBlockTransitionSystem
 }
 
-class SearchSpec extends UnitSpec {
-
-  "NostalgicSearch.getPromisingWalks" should "return the right answer" in {
-    val initialState: State =
-      AlphabetBlockTransitionSystem.initialState(AlphabetBlock('B), Seq()).get
-    val search: NostalgicSearch = new NostalgicSearch(AlphabetBlockCostFunction1, 10000)
-    //println(search.getPromisingWalks(Walk(initialState, Seq()), 0.0))
-    val nbestSearch: NbestSearch = new NbestSearch(AlphabetBlockCostFunction1)
-    //println(nbestSearch.find(initialState, 5))
-  }
-}

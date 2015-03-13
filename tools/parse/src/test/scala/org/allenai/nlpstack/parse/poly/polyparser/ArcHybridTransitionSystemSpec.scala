@@ -76,8 +76,8 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   )
 
   "Calling GuidedCostFunction's apply" should "duplicate the steps needed to create parse1" in {
-    val transitionSystem = ArcHybridTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse1.sentence, Seq()).get
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse1).get
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
@@ -101,8 +101,8 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   it should "duplicate the steps needed to create parse2" in {
-    val transitionSystem = ArcHybridTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse2.sentence, Seq()).get
+    val transitionSystem = ArcHybridTransitionSystem(parse2.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse2).get
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
@@ -123,8 +123,8 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   it should "recreate parse1" in {
-    val transitionSystem = ArcHybridTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse1.sentence, Seq()).get
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse1).get
     val greedySearch = new GreedySearch(costFunction)
     val finalState = greedySearch.find(initialState, Set()) flatMap { walk => walk.finalState }
@@ -139,8 +139,8 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   it should "recreate parse2" in {
-    val transitionSystem = ArcHybridTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse2.sentence, Seq()).get
+    val transitionSystem = ArcHybridTransitionSystem(parse2.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse2).get
     val greedySearch = new GreedySearch(costFunction)
     val finalState = greedySearch.find(initialState, Set()) flatMap { walk => walk.finalState }
@@ -155,10 +155,10 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   "The ForbiddenEdge's interpretation" should "return true for a left arc" in {
-    val transitionSystem = ArcHybridTransitionSystem()
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation = ArcHybridForbiddenArcInterpretation(ForbiddenEdge(2, 3))
     val state = StateTransition.applyTransitionSequence(
-      transitionSystem.initialState(parse1, Seq()).get,
+      transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
@@ -171,10 +171,10 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   it should "return true for a right arc" in {
-    val transitionSystem = ArcHybridTransitionSystem()
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation = ArcHybridForbiddenArcInterpretation(ForbiddenEdge(4, 5))
     val state = StateTransition.applyTransitionSequence(
-      transitionSystem.initialState(parse1, Seq()).get,
+      transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
@@ -192,13 +192,13 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   "The ForbiddenArcLabel's interpretation" should "return true for a mislabeled left arc" in {
-    val transitionSystem = ArcHybridTransitionSystem()
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'DET))
     val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, 'DET))
     val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, 'DET))
     val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'POBJ))
     val state = StateTransition.applyTransitionSequence(
-      transitionSystem.initialState(parse1, Seq()).get,
+      transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc()
@@ -211,13 +211,13 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   }
 
   it should "return true for a mislabeled right arc" in {
-    val transitionSystem = ArcHybridTransitionSystem()
+    val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'POBJ))
     val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, 'POBJ))
     val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, 'POBJ))
     val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'DET))
     val state = StateTransition.applyTransitionSequence(
-      transitionSystem.initialState(parse1, Seq()).get,
+      transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),

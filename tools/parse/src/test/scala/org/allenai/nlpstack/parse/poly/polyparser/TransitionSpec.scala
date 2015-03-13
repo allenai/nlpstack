@@ -23,10 +23,10 @@ class TransitionSpec extends UnitSpec {
   val arcLabels1: Map[Set[Int], Symbol] = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj)
 
   val state1: TransitionParserState = TransitionParserState(Vector(2, 0), 3, breadcrumb1,
-    children1, arcLabels1, AnnotatedSentence(Sentence(tokens1), IndexedSeq()))
+    children1, arcLabels1, Sentence(tokens1))
 
   val state1b: TransitionParserState = TransitionParserState(Vector(4, 3, 2, 0), 5, breadcrumb1,
-    children1, arcLabels1, AnnotatedSentence(Sentence(tokens1), IndexedSeq()))
+    children1, arcLabels1, Sentence(tokens1))
 
   val tokens2: Vector[Token] = Vector(NexusToken, Token('we), Token('saw), Token('it))
 
@@ -38,16 +38,16 @@ class TransitionSpec extends UnitSpec {
     'nsubj, Set(2, 3) -> 'dobj)
 
   val state2a: TransitionParserState = TransitionParserState(Vector(2, 0), 3, breadcrumb2,
-    children2, arcLabels2, AnnotatedSentence(Sentence(tokens2), IndexedSeq()))
+    children2, arcLabels2, Sentence(tokens2))
 
   val state2b: TransitionParserState = TransitionParserState(Vector(3, 2, 0), 4, breadcrumb2,
-    children2, arcLabels2, AnnotatedSentence(Sentence(tokens2), IndexedSeq()))
+    children2, arcLabels2, Sentence(tokens2))
 
   val state2c: TransitionParserState = TransitionParserState(Vector(), 3, breadcrumb2,
-    children2, arcLabels2, AnnotatedSentence(Sentence(tokens2), IndexedSeq()))
+    children2, arcLabels2, Sentence(tokens2))
 
   val state2d: TransitionParserState = TransitionParserState(Vector(0), 3, breadcrumb2,
-    children2, arcLabels2, AnnotatedSentence(Sentence(tokens2), IndexedSeq()))
+    children2, arcLabels2, Sentence(tokens2))
 
   val tokens3: Vector[Token] = Vector(NexusToken, Token('we), Token('saw), Token('it), Token('fast))
 
@@ -58,18 +58,18 @@ class TransitionSpec extends UnitSpec {
   val arcLabels3: Map[Set[Int], Symbol] = Map(Set(2, 1) -> 'nsubj, Set(2, 3) -> 'dobj)
 
   val state3a: TransitionParserState = TransitionParserState(Vector(3, 2, 0), 4, breadcrumb3,
-    children3, arcLabels3, AnnotatedSentence(Sentence(tokens3), IndexedSeq()))
+    children3, arcLabels3, Sentence(tokens3))
 
   "Calling shift's apply" should "give back a shifted state" in {
     ArcEagerShift(Some(state1)) shouldBe
       Some(TransitionParserState(Vector(3, 2, 0), 4, state1.breadcrumb,
-        state1.children, state1.arcLabels, state1.annotatedSentence))
+        state1.children, state1.arcLabels, state1.sentence))
   }
 
   "Calling reduce's apply" should "give back a reduced state" in {
     ArcEagerReduce(Some(state2b)) shouldBe
       Some(TransitionParserState(Vector(2, 0), 4, state2b.breadcrumb,
-        state2b.children, state2b.arcLabels, state2b.annotatedSentence))
+        state2b.children, state2b.arcLabels, state2b.sentence))
   }
 
   "Calling left arc's apply" should "have a left arc in the returned state" in {
@@ -78,7 +78,7 @@ class TransitionSpec extends UnitSpec {
         state1b.breadcrumb + (4 -> 5),
         state1b.children,
         state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence,
+        state1b.sentence,
         Some(5 -> 4),
         DependencyParserModes.LEFTLABEL))
   }
@@ -89,7 +89,7 @@ class TransitionSpec extends UnitSpec {
         state1b.breadcrumb + (5 -> 4),
         state1b.children,
         state1b.arcLabels + (Set(4, 5) -> 'dummy),
-        state1b.annotatedSentence,
+        state1b.sentence,
         Some(4 -> 5),
         DependencyParserModes.RIGHTLABEL))
   }
