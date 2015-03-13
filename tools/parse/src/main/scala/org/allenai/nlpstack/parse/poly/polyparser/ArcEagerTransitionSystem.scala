@@ -1,18 +1,23 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTransform, AnnotatedSentence, WordClusters, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
+/** Factory object for ArcEagerTransitionSystems.
+  *
+  * @param taggers a sequence of sentence transforms to use on input sentences (e.g. you might
+  * want to part-of-speech-tag the tokens.
+  */
 case class ArcEagerTransitionSystemFactory(
-    brownClusters: Seq[BrownClusters] = Seq()
+    taggers: Seq[SentenceTransform]
 ) extends TransitionSystemFactory {
 
   def buildTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
-    new ArcEagerTransitionSystem(marbleBlock, constraints, brownClusters)
+    new ArcEagerTransitionSystem(marbleBlock, constraints, taggers)
   }
 }
 
@@ -55,104 +60,15 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
   * The LeftArc operator creates an arc from the next buffer item to the top element
   * of the stack, then performs a Reduce operation.
   *
-  * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcEagerTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint],
-    brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(marbleBlock, brownClusters) {
+    taggers: Seq[SentenceTransform]
+) extends DependencyParsingTransitionSystem(marbleBlock, constraints, taggers) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcEagerTaskIdentifier
-
-  @transient private val tokenFeatureTagger = new TokenFeatureTagger(Seq(
-    TokenPositionFeature,
-    TokenPropertyFeature('factorieCpos),
-    TokenPropertyFeature('factoriePos),
-    TokenPropertyFeature('brown0),
-    KeywordFeature(DependencyParsingTransitionSystem.keywords)
-  ))
-
-  val annotatedSentence: AnnotatedSentence = {
-    val taggedSentence = sentence.taggedWithFactorie
-      .taggedWithBrownClusters(brownClusters)
-      .taggedWithLexicalProperties
-
-    // override factorie tags with requested tags
-    val requestedCposConstraints: Map[Int, RequestedCpos] =
-      (constraints flatMap { constraint: TransitionConstraint =>
-        constraint match {
-          case cposConstraint: RequestedCpos => Some(cposConstraint)
-          case _ => None
-        }
-      } map { constraint =>
-        (constraint.tokenIndex, constraint)
-      }).toMap
-    val overriddenSentence: Sentence = Sentence(
-      Range(0, taggedSentence.tokens.size) map { i =>
-        requestedCposConstraints.get(i)
-      } zip taggedSentence.tokens map {
-        case (maybeConstraint, tok) =>
-          maybeConstraint match {
-            case Some(constraint) =>
-              tok.updateProperties(Map(
-                'factorieCpos -> Set(constraint.cpos),
-                'factoriePos -> Set()
-              ))
-            case None => tok
-          }
-      }
-    )
-    tokenFeatureTagger.tag(overriddenSentence)
-  }
-
-  val labelingFeature =
-    FeatureUnion(List(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1), PreviousLinkCrumbRef, PreviousLinkGretelRef, PreviousLinkCrumbGretelRef,
-        PreviousLinkGrandgretelRef,
-        TransitiveRef(StackRef(0), Seq(TokenGretels)),
-        TransitiveRef(StackRef(1), Seq(TokenGretels)),
-        TransitiveRef(BufferRef(0), Seq(TokenGretels)),
-        TransitiveRef(StackRef(0), Seq(TokenCrumb)),
-        StackLeftGretelsRef(0), StackRightGretelsRef(0))),
-      new OfflineTokenFeature(annotatedSentence, StackRef(0)),
-      new OfflineTokenFeature(annotatedSentence, StackRef(1)),
-      new OfflineTokenFeature(annotatedSentence, StackRef(2)),
-      new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
-      new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
-      new OfflineTokenFeature(annotatedSentence, PreviousLinkCrumbRef),
-      new OfflineTokenFeature(annotatedSentence, PreviousLinkGretelRef),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, StackLeftGretelsRef(0)),
-      new OfflineTokenFeature(annotatedSentence, StackRightGretelsRef(0)),
-      new OfflineTokenFeature(annotatedSentence, FirstRef),
-      new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
-    ))
-
-  val defaultFeature = FeatureUnion(List(
-    new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), BufferRef(0), BufferRef(1),
-      TransitiveRef(StackRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(1), Seq(TokenGretels)),
-      TransitiveRef(BufferRef(0), Seq(TokenGretels)),
-      TransitiveRef(StackRef(0), Seq(TokenCrumb)),
-      StackLeftGretelsRef(0), StackRightGretelsRef(1))),
-    new OfflineTokenFeature(annotatedSentence, StackRef(0)),
-    new OfflineTokenFeature(annotatedSentence, StackRef(1)),
-    new OfflineTokenFeature(annotatedSentence, BufferRef(0)),
-    new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
-    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
-    new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
-    new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenCrumb))),
-    new OfflineTokenFeature(annotatedSentence, FirstRef),
-    new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
-  ))
 
   override def computeFeature(state: State): FeatureVector = {
     taskIdentifier(state) map { ident => ident.filenameFriendlyName } match {

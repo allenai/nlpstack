@@ -55,14 +55,14 @@ case class GoldParseSource(
   *
   * @param goldParses the data source for the parse trees
   * @param transitionSystemFactory the transition system factory to use (for generating states)
-  * @param baseCostFunction a trained cost function to adapt (optional)
+  * @param baseCostFunctionFactory a trained cost function factory to adapt (optional)
   */
 case class GoldParseTrainingVectorSource(
   goldParses: PolytreeParseSource,
   transitionSystemFactory: TransitionSystemFactory,
-  baseCostFunction: Option[StateCostFunction] = None
+  baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
 )
-    extends FSMTrainingVectorSource(transitionSystemFactory, baseCostFunction) {
+    extends FSMTrainingVectorSource(transitionSystemFactory, baseCostFunctionFactory) {
 
   def getVectorIterator: Iterator[FSMTrainingVector] = {
     for {

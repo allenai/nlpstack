@@ -1,13 +1,16 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.core.{ BrownClustersTagger, LexicalPropertiesTagger, FactorieSentenceTagger, SentenceTransform }
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
 
-private case class ParserTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
+private case class ParserTrainingConfig(
+  clustersPath: String = "",
   trainingPath: String = "",
-  outputPath: String = "", testPath: String = "", dataSource: String = "")
+  outputPath: String = "", testPath: String = "", dataSource: String = ""
+)
 
 object Training {
 
@@ -28,8 +31,6 @@ object Training {
     */
   def main(args: Array[String]) {
     val optionParser = new OptionParser[ParserTrainingConfig]("Trainer") {
-      opt[String]('b', "base") valueName ("<file>") action
-        { (x, c) => c.copy(baseModelPath = x) } text ("an optional base model file to adapt")
       opt[String]('t', "train") required () valueName ("<file>") action
         { (x, c) => c.copy(trainingPath = x) } text ("the path to the training files " +
           "(in ConllX format, comma-separated filenames)")
@@ -67,21 +68,22 @@ object Training {
         Seq[BrownClusters]()
       }
     }
+    val taggers: Seq[SentenceTransform] =
+      Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcEagerTransitionSystemFactory(clusters)
+      ArcEagerTransitionSystemFactory(taggers)
 
     println("Training parser.")
-    val baseCostFunction = None // TODO: fix this
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
     val trainingVectorSource = new GoldParseTrainingVectorSource(
       trainingSource,
-      transitionSystemFactory, baseCostFunction
+      transitionSystemFactory, None
     )
     val parsingCostFunctionFactory: StateCostFunctionFactory = {
       val trainer =
         new DTCostFunctionTrainer(classifierTrainer, transitionSystemFactory,
-          trainingVectorSource, baseCostFunction)
+          trainingVectorSource, None)
       trainer.costFunctionFactory
     }
     val parsingNbestSize = 5

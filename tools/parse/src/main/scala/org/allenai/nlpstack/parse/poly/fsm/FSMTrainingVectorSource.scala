@@ -20,7 +20,7 @@ case class FSMTrainingVector(task: ClassificationTask, transition: StateTransiti
 
 abstract class FSMTrainingVectorSource(
     transitionSystemFactory: TransitionSystemFactory,
-    baseCostFunction: Option[StateCostFunction]
+    baseCostFunctionFactory: Option[StateCostFunctionFactory]
 ) {
 
   def getVectorIterator: Iterator[FSMTrainingVector]
@@ -67,6 +67,8 @@ abstract class FSMTrainingVectorSource(
   protected def generateVectors(sculpture: Sculpture): List[FSMTrainingVector] = {
     val transitionSystem =
       transitionSystemFactory.buildTransitionSystem(sculpture.marbleBlock, Set())
+    val baseCostFunction =
+      baseCostFunctionFactory map { fact => fact.buildCostFunction(sculpture.marbleBlock, Set())}
     transitionSystem.guidedCostFunction(sculpture) match {
       case Some(costFunction) =>
         val search = new GreedySearch(costFunction)
@@ -74,6 +76,7 @@ abstract class FSMTrainingVectorSource(
         initialState flatMap { initState => search.find(initState, Set()) } match {
           case Some(walk) => generateVectorsHelper(
             transitionSystem,
+            baseCostFunction,
             walk.steps map {
               _.transition
             },
@@ -87,6 +90,7 @@ abstract class FSMTrainingVectorSource(
 
   @tailrec private def generateVectorsHelper(
     transitionSystem: TransitionSystem,
+    baseCostFunction: Option[StateCostFunction],
     transitions: Seq[StateTransition],
     initState: Option[State],
     trainingVectorsSoFar: List[FSMTrainingVector]
@@ -113,7 +117,8 @@ abstract class FSMTrainingVectorSource(
               }
             }
           }
-          generateVectorsHelper(transitionSystem, transitions.tail, (transitions.head)(initState),
+          generateVectorsHelper(transitionSystem, baseCostFunction,
+            transitions.tail, (transitions.head)(initState),
             FSMTrainingVector(task.get, nextTransition, transitionSystem, initialState)
               +: trainingVectorsSoFar)
         }
