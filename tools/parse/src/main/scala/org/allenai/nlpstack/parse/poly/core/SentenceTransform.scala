@@ -121,6 +121,9 @@ case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends SentenceTra
   }
 }
 
+/** The FactorieLemmatizer tags the tokens of an input sentence with their lemmas, according
+  * to the Factorie lemmatizer.
+  */
 case object FactorieLemmatizer extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {
@@ -142,6 +145,7 @@ case object FactorieLemmatizer extends SentenceTransform {
   }
 }
 
+/** The VerbnetTagger tags the tokens of an input sentence with their Verbnet classes. */
 case class VerbnetTagger(verbnetClasses: Map[Symbol, Set[Symbol]]) extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {

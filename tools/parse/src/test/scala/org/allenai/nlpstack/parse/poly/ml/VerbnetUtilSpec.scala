@@ -3,7 +3,7 @@ package org.allenai.nlpstack.parse.poly.ml
 import org.allenai.common.Logging
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.datastore._
-import org.allenai.nlpstack.parse.poly.core.{ Token, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ FactorieSentenceTagger, VerbnetTagger, Token, Sentence }
 
 class VerbnetUtilSpec extends UnitSpec with Logging {
 
@@ -43,7 +43,8 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
   )
 
   "Sentence.taggedWithVerbnetClasses" should "return the correct answer" in {
-    sentence1.taggedWithFactorie.taggedWithVerbnetClasses(verbnetClasses) shouldBe
+    val verbnetTagger = VerbnetTagger(verbnetClasses)
+    verbnetTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
       Sentence(IndexedSeq(
         Token('nexus, Map(
           'lcase -> Set('nexus), 'cpos -> Set('nexus), 'verbnetClasses -> Set()

@@ -6,7 +6,7 @@ import spray.json.DefaultJsonProtocol._
   *
   * @param word the surface form of the token
   */
-case class Token(val word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map()) {
+case class Token(word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map()) {
   def getProperty(propertyName: Symbol): Set[Symbol] = {
     properties.getOrElse(propertyName, Set())
   }

@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ BrownClustersTagger, LexicalPropertiesTagger, FactorieSentenceTagger, SentenceTransform }
+import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, VerbnetUtil }
@@ -78,7 +78,8 @@ object Training {
       case _ => Map.empty[Symbol, Set[Symbol]]
     }
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))
+      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
+        BrownClustersTagger(clusters))
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
 
