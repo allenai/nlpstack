@@ -2,8 +2,6 @@ package org.allenai.nlpstack.parse.poly.core
 
 import spray.json.DefaultJsonProtocol._
 
-import scala.collection.mutable.Stack
-
 /** A Token is the basic atom of a sentence.
   *
   * @param word the surface form of the token
@@ -48,4 +46,3 @@ object Token {
 
 /** The NexusToken is the "zeroth" token of a dependency parse. */
 object NexusToken extends Token('nexus, Token.createProperties("nexus", Some("nexus")))
-

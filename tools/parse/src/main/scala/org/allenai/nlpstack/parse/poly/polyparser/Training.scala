@@ -3,13 +3,16 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.nlpstack.parse.poly.core.{ BrownClustersTagger, LexicalPropertiesTagger, FactorieSentenceTagger, SentenceTransform }
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, VerbnetUtil }
 import scopt.OptionParser
 
 private case class ParserTrainingConfig(
-  clustersPath: String = "",
+  clustersPath: Option[String] = None,
+  verbnetConfigPath: Option[String] = None,
   trainingPath: String = "",
-  outputPath: String = "", testPath: String = "", dataSource: String = ""
+  outputPath: String = "",
+  testPath: String = "",
+  dataSource: String = ""
 )
 
 object Training {
@@ -35,8 +38,11 @@ object Training {
         { (x, c) => c.copy(trainingPath = x) } text ("the path to the training files " +
           "(in ConllX format, comma-separated filenames)")
       opt[String]('c', "clusters") valueName ("<file>") action
-        { (x, c) => c.copy(clustersPath = x) } text ("the path to the Brown cluster files " +
+        { (x, c) => c.copy(clustersPath = Some(x)) } text ("the path to the Brown cluster files " +
           "(in Liang format, comma-separated filenames)")
+      opt[String]('v', "verbnet") valueName ("<file>") action
+        { (x, c) => c.copy(verbnetConfigPath = Some(x)) } text ("the path to a config file" +
+          "containing datastore location info to access Verbnet resource.")
       opt[String]('o', "output") required () valueName ("<file>") action
         { (x, c) => c.copy(outputPath = x) } text ("where to direct the output files")
       opt[String]('x', "test") required () valueName ("<file>") action
@@ -59,14 +65,17 @@ object Training {
           ConllX(true), config.dataSource
         )
       })
-    val clusters: Seq[BrownClusters] = {
-      if (config.clustersPath != "") {
-        config.clustersPath.split(",") map { path =>
-          BrownClusters.fromLiangFormat(path)
-        }
-      } else {
-        Seq[BrownClusters]()
+
+    val clusters: Seq[BrownClusters] = config.clustersPath match {
+      case Some(clustersPath) => clustersPath.split(",") map { path =>
+        BrownClusters.fromLiangFormat(path)
       }
+      case _ => Seq.empty[BrownClusters]
+    }
+
+    val verbnetClassMap: Map[Symbol, Set[Symbol]] = config.verbnetConfigPath match {
+      case Some(polyparserConfigPathVal) => VerbnetUtil.getVerbnetClassMap(polyparserConfigPathVal)
+      case _ => Map.empty[Symbol, Set[Symbol]]
     }
     val taggers: Seq[SentenceTransform] =
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))

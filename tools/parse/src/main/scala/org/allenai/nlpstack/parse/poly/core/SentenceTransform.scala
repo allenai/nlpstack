@@ -1,8 +1,9 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.core.{ PostaggedToken, Tokenizer, Token => NLPStackToken }
+import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Tokenizer }
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import org.allenai.nlpstack.postag._
+import org.allenai.nlpstack.lemmatize._
 
 import org.allenai.common.json._
 import spray.json.DefaultJsonProtocol._
@@ -119,3 +120,43 @@ case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends SentenceTra
     }).toMap))
   }
 }
+
+case object FactorieLemmatizer extends SentenceTransform {
+
+  override def transform(sentence: Sentence): Sentence = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    val taggedTokens: IndexedSeq[PostaggedToken] =
+      defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    val lemmatizedTaggedTokens: IndexedSeq[Lemmatized[PostaggedToken]] =
+      taggedTokens map {
+        x => Lemmatized[PostaggedToken](x, MorphaStemmer.lemmatize(x.string, x.postag))
+      }
+    Sentence(NexusToken +: (lemmatizedTaggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+        untagged.updateProperties(Map(
+          'factorieLemma -> Set(Symbol(tagged.lemma))
+        ))
+    }))
+  }
+}
+
+case class VerbnetTagger(verbnetClasses: Map[Symbol, Set[Symbol]]) extends SentenceTransform {
+
+  override def transform(sentence: Sentence): Sentence = {
+    val lemmatized = FactorieLemmatizer.transform(sentence)
+    Sentence(for {
+      tok <- lemmatized.tokens
+    } yield {
+      val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
+      val tokVerbnetClasses = if (verbnetClasses.contains(Symbol(tokLemmaLC))) {
+        verbnetClasses(Symbol(tokLemmaLC))
+      } else {
+        Set.empty[Symbol]
+      }
+      tok.updateProperties(Map('verbnetClasses -> tokVerbnetClasses))
+    })
+  }
+}
+

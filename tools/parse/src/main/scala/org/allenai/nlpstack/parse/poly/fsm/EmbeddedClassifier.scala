@@ -145,6 +145,7 @@ class DTCostFunctionTrainer(
 
   private def createDTFeatureVector(trainingVector: FSMTrainingVector): DTFeatureVector = {
     val featureVector = trainingVector.featureVector
+    println(featureVector)
     val trueAttributeNames: Seq[FeatureName] =
       featureVector.values filter { _._2 != 0 } map { _._1 }
     val trueAttributes: HashSet[Int] =
