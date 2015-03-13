@@ -14,6 +14,8 @@ object Dependencies extends CoreDependencies {
   val opennlp = ("org.apache.opennlp" % "opennlp-tools" % "1.5.3"
     exclude ("net.sf.jwordnet", "jwnl"))
 
+  val stanfordCoreNlp = "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1"
+
   val factorie = ("cc.factorie" %% "factorie" % "1.1.1"
     exclude ("junit", "junit")
     exclude ("commons-logging", "commons-logging"))
