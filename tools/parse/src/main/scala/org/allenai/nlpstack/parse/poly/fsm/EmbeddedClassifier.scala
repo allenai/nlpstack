@@ -68,14 +68,15 @@ case class EmbeddedClassifier(
   */
 class DTCostFunctionTrainer(
   classifierTrainer: ProbabilisticClassifierTrainer,
-  transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource,
-  baseCostFunction: Option[StateCostFunction]
+  transitionSystemFactory: TransitionSystemFactory, trainingVectorSource: FSMTrainingVectorSource,
+  baseCostFunctionFactory: Option[StateCostFunctionFactory]
 )
-    extends StateCostFunctionTrainer(transitionSystem, trainingVectorSource) {
+    extends StateCostFunctionTrainer(transitionSystemFactory, trainingVectorSource) {
 
-  override def costFunction: StateCostFunction = new ClassifierBasedCostFunction(
-    transitionSystem, transitions, taskClassifiers.toList, featureNames, baseCostFunction
-  )
+  override def costFunctionFactory: StateCostFunctionFactory =
+    new ClassifierBasedCostFunctionFactory(
+      transitionSystemFactory, transitions, taskClassifiers.toList, baseCostFunctionFactory
+    )
 
   private val transitionIndices: Map[StateTransition, Int] = transitions
     .view.zipWithIndex.toMap

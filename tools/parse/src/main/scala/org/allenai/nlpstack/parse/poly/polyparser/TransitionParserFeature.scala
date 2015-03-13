@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.core.AnnotatedSentence
 import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
@@ -30,7 +31,7 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
   override def toString(): String = s"tokenTransformFeature.${stateRef.name}"
 }
 
-case class OfflineTokenFeature(val stateRef: StateRef)
+case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, val stateRef: StateRef)
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
@@ -39,7 +40,7 @@ case class OfflineTokenFeature(val stateRef: StateRef)
         FeatureVector(
           for {
             tokenIndex <- stateRef(tpState).toSeq
-            origFeatureVectorMapping <- tpState.annotatedSentence.annotation(tokenIndex).values
+            origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
           } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
         )
     }

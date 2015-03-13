@@ -13,7 +13,9 @@ import spray.json._
   * As an example, consider a transition-based parser. A MarbleBlock would be a sentence to be
   * parsed, whereas a Sculpture would be a parse tree for that sentence.
   */
-trait Sculpture
+trait Sculpture {
+  def marbleBlock: MarbleBlock
+}
 
 object Sculpture {
 

@@ -1,22 +1,24 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{AnnotatedSentence, Sentence, NexusToken, Token}
+import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import spray.json._
 
 object TokenTransformTestData {
   // scalastyle:off
 
   /** This represents the following parser state:
+    * format: OFF
     *
-    *   ---------
-    *   |        |
-    *   |        V
+    * ---------
+    * |        |
+    * |        V
     * NEXUS_0  saw_2  |||  cat_5  with_6  a_7  telescope_8
-    *            |         /   \
-    *            V        V    V
-    *          we_1     a_3  white_4
+    *          |         /   \
+    *          V        V    V
+    *        we_1     a_3  white_4
     *
+    * format: ON
     */
   val state1: TransitionParserState = TransitionParserState(
     stack = Vector(2, 0),
@@ -24,16 +26,16 @@ object TokenTransformTestData {
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0, 3 -> 5, 4 -> 5),
     children = Map(0 -> Set(2), 2 -> Set(1), 5 -> Set(3, 4)),
     arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token.create("we", "NN"), Token.create("saw", "VBD"),
         Token.create("a", "DET"),
         Token.create("white", "JJ"), Token.create("cat", "NN"), Token.create("with", "IN"),
-        Token.create("a", "DT"), Token.create("telescope", "NN"))),
-      IndexedSeq()))
+        Token.create("a", "DT"), Token.create("telescope", "NN")))
+  )
 
   /** Bogus state to test IsBracketedTransform
     * sentence:
-    *   "with the help of animals (insects and birds) flowers can be pollinated (fertilized)."
+    * "with the help of animals (insects and birds) flowers can be pollinated (fertilized)."
     */
   val state2: TransitionParserState = TransitionParserState(
     stack = Vector(0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18),
@@ -41,7 +43,7 @@ object TokenTransformTestData {
     breadcrumb = Map.empty,
     children = Map.empty,
     arcLabels = Map.empty,
-    annotatedSentence =  AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
         Token.create("help", "NN"),
         Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("(", "-LRB-"),
@@ -49,12 +51,12 @@ object TokenTransformTestData {
         Token.create(")", "-RRB-"), Token.create("flowers", "NNS"),
         Token.create("can", "MD"), Token.create("be", "VB"), Token.create("pollinated", "VBN"),
         Token.create("(", "-LRB-"), Token.create("fertilized", "VBN"), Token.create(")", "-RRB-"),
-        Token.create(".", "."))),
-      IndexedSeq()))
+        Token.create(".", ".")))
+  )
 
   /** Bogus state to test IsBracketedTransform
     * sentence:
-    *   "with the help of animals ((insects) and birds) flowers can be pollinated."
+    * "with the help of animals ((insects) and birds) flowers can be pollinated."
     */
   val state3: TransitionParserState = TransitionParserState(
     stack = Vector(5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
@@ -62,19 +64,19 @@ object TokenTransformTestData {
     breadcrumb = Map.empty,
     children = Map.empty,
     arcLabels = Map.empty,
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
         Token.create("help", "NN"),
         Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("(", "-LRB-"),
         Token.create("(", "-LRB-"), Token.create("insects", "NNS"), Token.create(")", "-RRB-"),
         Token.create("and", "CC"), Token.create("birds", "NNS"), Token.create(")", "-RRB-"),
         Token.create("flowers", "NNS"), Token.create("can", "MD"), Token.create("be", "VB"),
-        Token.create("pollinated", "VBN"))),
-      IndexedSeq()))
+        Token.create("pollinated", "VBN")))
+  )
 
   /** Bogus state to test IsBracketedTransform
     * sentence:
-    *   "with the help of animals insects and birds) flowers can be pollinated (fertilized."
+    * "with the help of animals insects and birds) flowers can be pollinated (fertilized."
     */
   val state4: TransitionParserState = TransitionParserState(
     stack = Vector(0, 1, 7, 8, 9, 10, 12, 13, 14, 15, 16),
@@ -82,7 +84,7 @@ object TokenTransformTestData {
     breadcrumb = Map.empty,
     children = Map.empty,
     arcLabels = Map.empty,
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
         Token.create("help", "NN"),
         Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("insects", "NNS"),
@@ -90,8 +92,8 @@ object TokenTransformTestData {
         Token.create("birds", "NNS"), Token.create(")", "-RRB-"), Token.create("flowers", "NNS"),
         Token.create("can", "MD"), Token.create("be", "VB"),
         Token.create("pollinated", "VBN"), Token.create("(", "-LRB-"), Token.create("fertilized", "VBN"),
-        Token.create(".", "."))),
-      IndexedSeq()))
+        Token.create(".", ".")))
+  )
 }
 /*
 class TokenTransformSpec extends UnitSpec {

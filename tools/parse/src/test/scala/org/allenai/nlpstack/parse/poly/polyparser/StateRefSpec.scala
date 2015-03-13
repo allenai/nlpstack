@@ -26,11 +26,9 @@ class StateRefSpec extends UnitSpec {
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0),
     children = Map(0 -> Set(2), 2 -> Set(1)),
     arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj),
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
-        Token('white), Token('cat), Token('with), Token('a), Token('telescope))),
-      IndexedSeq()
-    )
+        Token('white), Token('cat), Token('with), Token('a), Token('telescope)))
   )
 
   val state2: TransitionParserState = TransitionParserState(
@@ -39,7 +37,7 @@ class StateRefSpec extends UnitSpec {
     breadcrumb = Map(0 -> -1, 1 -> 2, 5 -> 2, 3 -> 5, 4 -> 5),
     children = Map(2 -> Set(1, 5), 3 -> Set(5), 4 -> Set(5)),
     arcLabels = Map(Set(1, 2) -> 'nsubj, Set(2, 5) -> 'dobj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(
         NexusToken,
         Token('we, Map('cpos -> Set('PRON))),
@@ -50,9 +48,7 @@ class StateRefSpec extends UnitSpec {
         Token('with, Map('cpos -> Set('ADP))),
         Token('a, Map('cpos -> Set('DET))),
         Token('telescope, Map('cpos -> Set('NOUN)))
-      )),
-      IndexedSeq()
-    )
+      ))
   )
 
   "Calling TransitiveRef's apply" should "give the correct answers" in {

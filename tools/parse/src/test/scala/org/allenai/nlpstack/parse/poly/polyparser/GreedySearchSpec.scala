@@ -40,10 +40,11 @@ class GreedySearchSpec extends UnitSpec {
   )
 
   "Calling GreedySearch's find" should "re-create parse1" in {
-    val costFunction = new ArcEagerGuidedCostFunction(parse1, ArcEagerTransitionSystem())
+    val transitionSystem = ArcEagerTransitionSystem(parse1.sentence, Set(), Seq())
+    val costFunction = new ArcEagerGuidedCostFunction(parse1, transitionSystem)
     val parser = new GreedySearch(costFunction)
     val bestWalk = parser.find(
-      costFunction.transitionSystem.initialState(parse1.sentence, Seq()).get,
+      costFunction.transitionSystem.initialState(Seq()).get,
       constraints = Set()
     )
     bestWalk map { _.transitions } shouldBe Some(List(
@@ -66,20 +67,22 @@ class GreedySearchSpec extends UnitSpec {
   }
 
   it should "have a failure if we create an impossible constraint" in {
-    val costFunction = new ArcEagerGuidedCostFunction(parse1, ArcEagerTransitionSystem())
+    val transitionSystem = ArcEagerTransitionSystem(parse1.sentence, Set(), Seq())
+    val costFunction = new ArcEagerGuidedCostFunction(parse1, transitionSystem)
     val parser = new GreedySearch(costFunction)
     val bestWalk = parser.find(
-      costFunction.transitionSystem.initialState(parse1.sentence, Seq()).get,
+      costFunction.transitionSystem.initialState(Seq()).get,
       constraints = Set(ForbiddenEdge(3, 4))
     )
     bestWalk shouldBe None
   }
 
   it should "recreate parse1 if we only forbid unnecessary arcs" in {
-    val costFunction = new ArcEagerGuidedCostFunction(parse1, ArcEagerTransitionSystem())
+    val transitionSystem = ArcEagerTransitionSystem(parse1.sentence, Set(), Seq())
+    val costFunction = new ArcEagerGuidedCostFunction(parse1, transitionSystem)
     val parser = new GreedySearch(costFunction)
     val bestWalk = parser.find(
-      costFunction.transitionSystem.initialState(parse1.sentence, Seq()).get,
+      costFunction.transitionSystem.initialState(Seq()).get,
       constraints = Set(ForbiddenEdge(3, 5), ForbiddenEdge(1, 3))
     )
     bestWalk map { _.transitions } shouldBe Some(List(

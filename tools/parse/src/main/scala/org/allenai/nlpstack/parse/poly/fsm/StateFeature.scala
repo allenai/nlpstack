@@ -55,7 +55,7 @@ object StateFeature {
   val tokenTransformFeatureFormat: RootJsonFormat[TokenTransformFeature] =
     jsonFormat2(TokenTransformFeature.apply)
   val offlineTokenFeatureFormat: RootJsonFormat[OfflineTokenFeature] =
-    jsonFormat1(OfflineTokenFeature.apply)
+    jsonFormat2(OfflineTokenFeature.apply)
   val tokenCardinalityFeatureFormat: RootJsonFormat[TokenCardinalityFeature] =
     jsonFormat1(TokenCardinalityFeature.apply)
   val featureUnionFormat: RootJsonFormat[FeatureUnion] = jsonFormat1(FeatureUnion.apply)

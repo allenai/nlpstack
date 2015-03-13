@@ -71,8 +71,8 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
   )
 
   "Calling GuidedCostFunction's apply" should "duplicate the steps needed to create parse1" in {
-    val transitionSystem = ArcEagerTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse1.sentence, Seq()).get
+    val transitionSystem = ArcEagerTransitionSystem(parse1.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse1).get
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions } shouldBe Some(List(
@@ -95,8 +95,8 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
   }
 
   it should "duplicate the steps needed to create parse2" in {
-    val transitionSystem = ArcEagerTransitionSystem()
-    val initialState: State = transitionSystem.initialState(parse2.sentence, Seq()).get
+    val transitionSystem = ArcEagerTransitionSystem(parse2.sentence, Set(), Seq())
+    val initialState: State = transitionSystem.initialState(Seq()).get
     val costFunction: StateCostFunction = transitionSystem.guidedCostFunction(parse2).get
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(

@@ -33,14 +33,12 @@ import org.allenai.nlpstack.parse.poly.fsm.{
   * @param breadcrumb the breadcrumbs of the partially constructed PolytreeParse
   * @param children the children of the partially constructed PolytreeParse
   * @param arcLabels the arc labels of the partially constructed PolytreeParse
-  * @param annotatedSentence the sentence we want to parse
+  * @param sentence the sentence we want to parse
   */
 case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int,
     val breadcrumb: Map[Int, Int], val children: Map[Int, Set[Int]],
-    val arcLabels: Map[Set[Int], Symbol], val annotatedSentence: AnnotatedSentence,
+    val arcLabels: Map[Set[Int], Symbol], val sentence: Sentence,
     val previousLink: Option[(Int, Int)] = None, val parserMode: Int = 0) extends State {
-
-  @transient val sentence = annotatedSentence.sentence
 
   /** Gets the set of gretels of the specified token in the partial parse tree
     * represented by this state.

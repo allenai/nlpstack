@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
-import org.allenai.nlpstack.parse.poly.fsm.TransitionSystem
+import org.allenai.nlpstack.parse.poly.fsm.{ TransitionSystemFactory, TransitionSystem }
 
 class ArcEagerConstraintsSpec extends UnitSpec {
   // scalastyle:off
@@ -26,14 +26,12 @@ class ArcEagerConstraintsSpec extends UnitSpec {
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0, 3 -> 5, 4 -> 5),
     children = Map(0 -> Set(2), 2 -> Set(1), 5 -> Set(3, 4)),
     arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
-    annotatedSentence = AnnotatedSentence(
-      Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
-        Token('white), Token('cat), Token('with), Token('a), Token('telescope))),
-      IndexedSeq()
-    )
+    sentence = Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
+        Token('white), Token('cat), Token('with), Token('a), Token('telescope)))
   )
 
-  val arcEagerSystem: TransitionSystem = new ArcEagerTransitionSystem
+  val arcEagerFactory: TransitionSystemFactory = new ArcEagerTransitionSystemFactory(Seq())
+  val arcEagerSystem = arcEagerFactory.buildTransitionSystem(state1.sentence, Set())
 
   "Calling ForbiddenEdge's .apply" should "return false for a Shift transition" in {
     val constraint = ForbiddenEdge(2, 5)

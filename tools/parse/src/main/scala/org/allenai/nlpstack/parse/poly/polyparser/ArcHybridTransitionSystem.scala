@@ -1,8 +1,25 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, WordClusters }
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTransform, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
+import org.allenai.nlpstack.parse.poly.ml.FeatureVector
+
+/** Factory object for ArcHybridTransitionSystems.
+  *
+  * @param taggers a sequence of sentence transforms to use on input sentences (e.g. you might
+  * want to part-of-speech-tag the tokens.
+  */
+case class ArcHybridTransitionSystemFactory(
+    taggers: Seq[SentenceTransform]
+) extends TransitionSystemFactory {
+
+  def buildTransitionSystem(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint]
+  ): TransitionSystem = {
+    new ArcHybridTransitionSystem(marbleBlock, constraints, taggers)
+  }
+}
 
 /** The ArcHybridTaskIdentifier identifies the ClassificationTask associated with a particular
   * state of the arc-hybrid transition system.
@@ -44,31 +61,31 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
   * An important property of the ArcHybridTransitionSystem is that the only element that can
   * get a breadcrumb via an operator is the top of the stack. Thus the stack top is the "focal
   * point" of this transition system.
-  *
-  * @param brownClusters an optional set of Brown clusters to use for creating features
   */
 case class ArcHybridTransitionSystem(
-    brownClusters: Seq[BrownClusters] = Seq()
-) extends DependencyParsingTransitionSystem(brownClusters) {
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint],
+    taggers: Seq[SentenceTransform]
+) extends DependencyParsingTransitionSystem(marbleBlock, constraints, taggers) {
 
   @transient
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
   override def computeFeature(state: State): FeatureVector = {
     (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
-      case Some(x) if x.startsWith("dt-") => ArcHybridTransitionSystem.labelingFeature(state)
-      case _ => ArcHybridTransitionSystem.transitionFeature(state)
+      case Some(x) if x.startsWith("dt-") => labelingFeature(state)
+      case _ => defaultFeature(state)
     }
   }
 
   override def systemSpecificInitialState(
-    annotatedSentence: AnnotatedSentence
+    sentence: Sentence
   ): TransitionParserState = {
-    new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), annotatedSentence,
+    new TransitionParserState(Vector(), 1, Map(0 -> -1), Map(), Map(), sentence,
       None, DependencyParserModes.TRANSITION)
   }
 
-  override def guidedCostFunction(goldObj: MarbleBlock): Option[StateCostFunction] =
+  override def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
       case parse: PolytreeParse =>
         Some(new ArcHybridGuidedCostFunction(parse, this))
@@ -86,91 +103,6 @@ case class ArcHybridTransitionSystem(
       case _ => TransitionSystem.trivialConstraint
     }
   }
-}
-
-case object ArcHybridTransitionSystem {
-
-  private val previousLinkFeatures: Seq[StateFeature] = (for {
-    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
-    )
-  }).flatten
-
-  private val linkFeatures: Seq[StateFeature] = (for {
-    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    Seq(
-      new TokenLinkFeature(stateRef, TransitiveRef(stateRef, neighbors))
-    )
-  }).flatten
-
-  private val offlineTransitiveFeatures: Seq[StateFeature] = for {
-    stateRef <- Seq(StackRef(0), StackRef(1), BufferRef(0))
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
-  }
-
-  private val offlinePreviousLinkFeatures: Seq[StateFeature] = for {
-    stateRef <- Seq(PreviousLinkCrumbRef, PreviousLinkGretelRef)
-    neighbors <- Seq(
-      Seq(TokenChildren), Seq(TokenParents),
-      Seq(TokenChildren, TokenParents), Seq(TokenParents, TokenChildren),
-      Seq(TokenChild(0)), Seq(TokenChild(1)), Seq(TokenChild(2)), Seq(TokenChild(3)),
-      Seq(TokenParent(0)), Seq(TokenParent(1)), Seq(TokenParent(2)), Seq(TokenParent(3))
-    )
-  } yield {
-    new OfflineTokenFeature(TransitiveRef(stateRef, neighbors))
-  }
-
-  val transitionFeature = FeatureUnion(
-    Seq(
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(StackRef(2)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(LastRef),
-      new OfflineTokenFeature(FirstRef)
-    )
-  )
-
-  val labelingFeature = FeatureUnion(
-    Seq(
-      new TokenLinkFeature(PreviousLinkCrumbRef, PreviousLinkGretelRef),
-      new TokenCardinalityFeature(Seq(StackRef(0), StackRef(1), StackRef(2), BufferRef(0),
-        BufferRef(1))),
-      new OfflineTokenFeature(StackRef(0)),
-      new OfflineTokenFeature(StackRef(1)),
-      new OfflineTokenFeature(StackRef(2)),
-      new OfflineTokenFeature(BufferRef(0)),
-      new OfflineTokenFeature(BufferRef(1)),
-      new OfflineTokenFeature(PreviousLinkCrumbRef),
-      new OfflineTokenFeature(PreviousLinkGretelRef),
-      new OfflineTokenFeature(LastRef),
-      new OfflineTokenFeature(FirstRef)
-    )
-  )
-
 }
 
 /** The ArcHybridShift operator pops the next buffer item and pushes it onto the stack. */

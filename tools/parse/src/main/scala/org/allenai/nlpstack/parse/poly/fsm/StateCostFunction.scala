@@ -29,6 +29,7 @@ abstract class StateCostFunction extends (State => Map[StateTransition, Double])
 }
 
 object StateCostFunction {
+  /*
   implicit object StateJsonFormat extends RootJsonFormat[StateCostFunction] {
     implicit val classifierBasedCostFunctionFormat =
       jsonFormat5(ClassifierBasedCostFunction.apply).pack("type" -> "ClassifierBasedCostFunction")
@@ -42,15 +43,15 @@ object StateCostFunction {
       classifierBasedCostFunctionFormat
     )
   }
+  */
 }
 
 case class ClassifierBasedCostFunction(
-  transitionSystem: TransitionSystem, transitions: IndexedSeq[StateTransition],
-  taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
-  featureNames: List[FeatureName],
-  baseCostFunction: Option[StateCostFunction] = None
-)
-    extends StateCostFunction {
+    transitionSystem: TransitionSystem, transitions: Seq[StateTransition],
+    taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
+    marbleBlock: MarbleBlock,
+    baseCostFunction: Option[StateCostFunction]
+) extends StateCostFunction {
 
   @transient
   lazy val taskClassifiers = taskClassifierList.toMap
@@ -134,4 +135,51 @@ case class ClassifierBasedCostFunction(
     transitionDistribution(state, minProb) mapValues (-Math.log(_))
   }
 
+}
+
+trait StateCostFunctionFactory {
+  def buildCostFunction(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint]
+  ): StateCostFunction
+}
+
+object StateCostFunctionFactory {
+  implicit object StateCostFunctionFactoryJsonFormat
+      extends RootJsonFormat[StateCostFunctionFactory] {
+
+    implicit val classifierBasedCostFunctionFactoryFormat =
+      jsonFormat4(ClassifierBasedCostFunctionFactory.apply).pack(
+        "type" -> "ClassifierBasedCostFunctionFactory"
+      )
+
+    def write(costFunctionFactory: StateCostFunctionFactory): JsValue = costFunctionFactory match {
+      case cbFactory: ClassifierBasedCostFunctionFactory => cbFactory.toJson
+      case x => deserializationError(s"Cannot serialize this cost function factory type: $x")
+    }
+
+    def read(value: JsValue): StateCostFunctionFactory = value.asJsObject.unpackWith(
+      classifierBasedCostFunctionFactoryFormat
+    )
+  }
+}
+
+case class ClassifierBasedCostFunctionFactory(
+    transitionSystemFactory: TransitionSystemFactory, transitions: Seq[StateTransition],
+    taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
+    baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
+) extends StateCostFunctionFactory {
+
+  def buildCostFunction(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint]
+  ): StateCostFunction = {
+
+    val transitionSystem = transitionSystemFactory.buildTransitionSystem(marbleBlock, constraints)
+    val baseCostFunction = baseCostFunctionFactory map { fact =>
+      fact.buildCostFunction(marbleBlock, constraints)
+    }
+    new ClassifierBasedCostFunction(transitionSystem, transitions, taskClassifierList,
+      marbleBlock, baseCostFunction)
+  }
 }

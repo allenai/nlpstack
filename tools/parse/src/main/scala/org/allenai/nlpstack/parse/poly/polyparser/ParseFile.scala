@@ -104,7 +104,7 @@ object ParseFile {
         val oracleRerankingFunction: RerankingFunction =
           ParseRerankingFunction(oracleScore)
         val oracleParserConfig = ParserConfiguration(
-          rerankingParser.config.parsingCostFunction,
+          rerankingParser.config.parsingCostFunctionFactory,
           oracleRerankingFunction, oracleNbestSize
         )
         val parser = RerankingTransitionParser(oracleParserConfig)

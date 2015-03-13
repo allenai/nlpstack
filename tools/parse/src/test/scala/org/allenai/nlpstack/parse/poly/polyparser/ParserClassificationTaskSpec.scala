@@ -25,13 +25,11 @@ class ParserClassificationTaskSpec extends UnitSpec {
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0),
     children = Map(0 -> Set(2), 2 -> Set(1)),
     arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj),
-    annotatedSentence = AnnotatedSentence(
+    sentence =
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
         Token('white), Token('cat, Map('cpos -> Set('noun))),
         Token('with, Map('cpos -> Set('prep))), Token('a),
-        Token('telescope))),
-      IndexedSeq()
-    )
+        Token('telescope)))
   )
 
   "Serializing a ApplicabilitySignature" should "preserve it" in {

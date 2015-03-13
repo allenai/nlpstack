@@ -9,11 +9,11 @@ import org.allenai.nlpstack.parse.poly.ml.FeatureName
   * @param trainingVectorSource a source of training vectors
   */
 abstract class StateCostFunctionTrainer(
-    transitionSystem: TransitionSystem, trainingVectorSource: FSMTrainingVectorSource
+    transitionSystemFactory: TransitionSystemFactory, trainingVectorSource: FSMTrainingVectorSource
 ) {
 
-  /** The trained cost function. */
-  def costFunction: StateCostFunction
+  /** The trained cost function factory. */
+  def costFunctionFactory: StateCostFunctionFactory
 
   protected val featureNames: List[FeatureName] =
     FSMTrainingVectorSource.collectFeatureNames(trainingVectorSource).toList
