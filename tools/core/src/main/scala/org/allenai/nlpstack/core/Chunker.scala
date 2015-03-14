@@ -67,7 +67,13 @@ object Chunker {
               nextToken.drop(hyphen + 1)
             }
           }
-          (chunkType, Interval.open(nextIndex, chunkTokens.toSeq.lastOption.map(_._2 + 1).getOrElse(nextIndex + 1)))
+          (
+            chunkType,
+            Interval.open(
+              nextIndex,
+              chunkTokens.toSeq.lastOption.map(_._2 + 1).getOrElse(nextIndex + 1)
+            )
+          )
         }
 
         intervals = intervals :+ interval
@@ -81,7 +87,10 @@ object Chunker {
 
   def tokensFrom(chunks: Seq[String], postags: Seq[String], tokens: Seq[Token]) = {
     val postaggedTokens = Postagger.tokensFrom(postags, tokens)
-    (chunks zip postaggedTokens).map { case (chunk, postaggedToken) => ChunkedToken(postaggedToken, chunk) }
+    (chunks zip postaggedTokens).map {
+      case (chunk, postaggedToken) =>
+        ChunkedToken(postaggedToken, chunk)
+    }
   }
 
   class stringFormat(val delim: String) extends Format[Seq[ChunkedToken], String] {

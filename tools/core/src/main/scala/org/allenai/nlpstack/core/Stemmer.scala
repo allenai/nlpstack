@@ -25,10 +25,12 @@ trait PostaggedStemmer {
   def lemmatize(word: String, postag: String) = this.stem(Stemmer.normalize(word), postag)
 
   /** Stem a token with a postag. */
-  def stemPostaggedToken[T <: PostaggedToken](token: T): Lemmatized[T] = Lemmatized(token, this.stem(token.string, token.postag))
+  def stemPostaggedToken[T <: PostaggedToken](token: T): Lemmatized[T] =
+    Lemmatized(token, this.stem(token.string, token.postag))
 
   /** Lemmatize a token with a postag. */
-  def lemmatizePostaggedToken[T <: PostaggedToken](token: T): Lemmatized[T] = Lemmatized(token, this.lemmatize(token.string, token.postag))
+  def lemmatizePostaggedToken[T <: PostaggedToken](token: T): Lemmatized[T] =
+    Lemmatized(token, this.lemmatize(token.string, token.postag))
 }
 
 object Stemmer {

@@ -19,12 +19,15 @@ abstract class Postagger {
 object Postagger {
   val subjectPronouns = immutable.Set("i", "you", "he", "she", "it", "they", "we")
   val objectPronouns = immutable.Set("me", "you", "him", "her", "it", "us", "them")
-  val reflexivePronouns = immutable.Set("myself", "yourself", "himself", "itself", "themself", "ourselves", "yourselves", "themselves")
-  val possessivePronouns = immutable.Set("mine", "yours", "his", "hers", "its", "ours", "theirs", "whose")
+  val reflexivePronouns = immutable.Set("myself", "yourself", "himself", "itself", "themself",
+    "ourselves", "yourselves", "themselves")
+  val possessivePronouns = immutable.Set("mine", "yours", "his", "hers", "its", "ours", "theirs",
+    "whose")
   val pronouns = subjectPronouns ++ objectPronouns ++ reflexivePronouns ++ possessivePronouns
 
   val articles = immutable.Set("a", "an", "the")
-  val possessives = immutable.Set("my", "your", "his", "her", "its", "one's", "our", "your", "their")
+  val possessives = immutable.Set("my", "your", "his", "her", "its", "one's", "our", "your",
+    "their")
 
   val whWords = immutable.Set("what", "which", "who", "whose", "that", "where", "when")
 

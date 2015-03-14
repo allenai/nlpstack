@@ -25,7 +25,8 @@ object Tokenizer {
 
     for (string <- strings) {
       val leftOffset = offset
-      assume(sent startsWith string, "Wrong sentence prefix: '" + string + "' of " + "'" + sentence + "'")
+      assume(sent startsWith string, "Wrong sentence prefix: '" + string + "' of " + "'" +
+        sentence + "'")
 
       sent = sent.drop(string.length)
       val skip = sent.takeWhile(c => c.isWhitespace || c.isControl).length

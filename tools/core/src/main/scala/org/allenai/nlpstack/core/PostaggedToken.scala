@@ -10,8 +10,11 @@ import spray.json._
   * @param  postag  the PENN-style part-of-speech tag of the token
   * @param  chunk   the chunk tag of the token in BIO format
   */
-class PostaggedToken(val postagSymbol: Symbol, override val string: String, override val offset: Int)
-    extends Token(string, offset) {
+class PostaggedToken(
+    val postagSymbol: Symbol,
+    override val string: String,
+    override val offset: Int
+) extends Token(string, offset) {
   def postag = postagSymbol.name
   require(postag.forall(!_.isWhitespace), "postag contains whitespace: " + postag)
 
@@ -73,9 +76,11 @@ object PostaggedToken {
   def apply(postag: String, string: String, offset: Int): PostaggedToken =
     new PostaggedToken(Symbol(postag), string, offset)
 
-  def apply(token: Token, postag: String): PostaggedToken = PostaggedToken(postag, token.string, token.offset)
+  def apply(token: Token, postag: String): PostaggedToken =
+    PostaggedToken(postag, token.string, token.offset)
 
-  def unapply(token: PostaggedToken): Option[(String, String, Int)] = Some((token.postag, token.string, token.offset))
+  def unapply(token: PostaggedToken): Option[(String, String, Int)] =
+    Some((token.postag, token.string, token.offset))
 
   implicit object postaggedTokenJsonFormat extends RootJsonFormat[PostaggedToken] {
     def write(t: PostaggedToken) = JsObject(Token.tokenJsonFormat.write(t).fields +
@@ -93,7 +98,10 @@ object PostaggedToken {
 
   object bratFormat extends Format[PostaggedToken, String] {
     def write(token: PostaggedToken): String = {
-      Iterator(token.postag + " " + token.offset + " " + token.offsets.end, token.string).mkString("\t")
+      Iterator(
+        token.postag + " " + token.offset + " " + token.offsets.end,
+        token.string
+      ).mkString("\t")
     }
 
     def read(string: String): PostaggedToken = {

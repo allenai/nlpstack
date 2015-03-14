@@ -25,29 +25,49 @@ object DependencyPattern {
     def textNodeMatcher: Parser[NodeMatcher[TokenDependencyNode]] = "text=" ~> """\w+""".r ^^ { s =>
       new TextNodeMatcher(s)
     }
-    def regexNodeMatcher(implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] = "regex=" ~> """[^<>{}:\p{Space}]+""".r ^^ { r =>
-      new RegexNodeMatcher(new Regex(r))(lemmatizer)
-    }
-    def postagNodeMatcher: Parser[NodeMatcher[TokenDependencyNode]] = "postag=" ~> """[^:}\p{Space}]+""".r ^^ { postag =>
-      new PostagNodeMatcher(postag)
-    }
+    def regexNodeMatcher(implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] =
+      "regex=" ~> """[^<>{}:\p{Space}]+""".r ^^ { r =>
+        new RegexNodeMatcher(new Regex(r))(lemmatizer)
+      }
+    def postagNodeMatcher: Parser[NodeMatcher[TokenDependencyNode]] =
+      "postag=" ~> """[^:}\p{Space}]+""".r ^^ { postag =>
+        new PostagNodeMatcher(postag)
+      }
 
-    def simpleNodeMatcher(implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] = regexNodeMatcher(lemmatizer) | postagNodeMatcher | textNodeMatcher
-    def simpleNodeMatcherSeq(implicit lemmatizer: Stemmer): Parser[List[NodeMatcher[TokenDependencyNode]]] = (simpleNodeMatcher(lemmatizer) ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) ^^ { case m ~ ":" ~ ms => m :: ms }) | (simpleNodeMatcher(lemmatizer) ^^ { case m => List(m) })
+    def simpleNodeMatcher(implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] =
+      regexNodeMatcher(lemmatizer) | postagNodeMatcher | textNodeMatcher
+    def simpleNodeMatcherSeq(
+      implicit
+      lemmatizer: Stemmer
+    ): Parser[List[NodeMatcher[TokenDependencyNode]]] =
+      (simpleNodeMatcher(lemmatizer) ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) ^^ { case m ~ ":" ~ ms => m :: ms }) | (simpleNodeMatcher(lemmatizer) ^^ { case m => List(m) })
 
-    def trivialCaptureNodeMatcher: Parser[CaptureNodeMatcher[TokenDependencyNode]] = "{" ~> """\w+""".r <~ "}" ^^ { s => new CaptureNodeMatcher[TokenDependencyNode](s) }
-    def nestedCaptureNodeMatcher(implicit lemmatizer: Stemmer): Parser[CaptureNodeMatcher[TokenDependencyNode]] = "{" ~> """\w+""".r ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) <~ "}" ^^ {
-      case alias ~ ":" ~ seq =>
-        seq match {
-          case x :: Nil => new CaptureNodeMatcher[TokenDependencyNode](alias, x)
-          case seq @ x :: xs => new CaptureNodeMatcher[TokenDependencyNode](alias, new ConjunctiveNodeMatcher(seq.toSet))
-          case Nil => throw new IllegalArgumentException()
-        }
-    }
+    def trivialCaptureNodeMatcher: Parser[CaptureNodeMatcher[TokenDependencyNode]] =
+      "{" ~> """\w+""".r <~ "}" ^^ { s => new CaptureNodeMatcher[TokenDependencyNode](s) }
+    def nestedCaptureNodeMatcher(
+      implicit
+      lemmatizer: Stemmer
+    ): Parser[CaptureNodeMatcher[TokenDependencyNode]] =
+      "{" ~> """\w+""".r ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) <~ "}" ^^ {
+        case alias ~ ":" ~ seq =>
+          seq match {
+            case x :: Nil => new CaptureNodeMatcher[TokenDependencyNode](alias, x)
+            case seq @ x :: xs =>
+              new CaptureNodeMatcher[TokenDependencyNode](
+                alias,
+                new ConjunctiveNodeMatcher(seq.toSet)
+              )
+            case Nil => throw new IllegalArgumentException()
+          }
+      }
 
-    def captureNodeMatcher(implicit lemmatizer: Stemmer) = nestedCaptureNodeMatcher(lemmatizer) | trivialCaptureNodeMatcher
+    def captureNodeMatcher(implicit lemmatizer: Stemmer) =
+      nestedCaptureNodeMatcher(lemmatizer) | trivialCaptureNodeMatcher
 
-    def nodeMatcher[V](implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] = simpleNodeMatcher(lemmatizer) | captureNodeMatcher(lemmatizer) | ("""\w+""" ^^ { s => new TextNodeMatcher(s) })
+    def nodeMatcher[V](implicit lemmatizer: Stemmer): Parser[NodeMatcher[TokenDependencyNode]] =
+      simpleNodeMatcher(lemmatizer) |
+        captureNodeMatcher(lemmatizer) |
+        ("""\w+""" ^^ { s => new TextNodeMatcher(s) })
 
     def regexEdgeMatcher = "regex=" ~> """[^<>{}:\p{Space}]+""".r ^^ {
       case regex =>
@@ -56,32 +76,43 @@ object DependencyPattern {
     def simpleEdgeMatcher = """[^<>{}:\p{Space}]+""".r ^^ { s => new LabelEdgeMatcher(s) }
     def edgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] = regexEdgeMatcher | simpleEdgeMatcher
 
-    def trivialCaptureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] = "{" ~> """\w+""".r <~ "}" ^^ {
-      case alias =>
-        new CaptureEdgeMatcher(alias, new TrivialEdgeMatcher)
-    }
-    def complexCaptureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] = "{" ~> """\w+""".r ~ ":" ~ edgeMatcher <~ "}" ^^ {
-      case alias ~ ":" ~ m =>
-        new CaptureEdgeMatcher(alias, m)
-    }
-    def captureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] = trivialCaptureEdgeMatcher | complexCaptureEdgeMatcher
+    def trivialCaptureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] =
+      "{" ~> """\w+""".r <~ "}" ^^ {
+        case alias =>
+          new CaptureEdgeMatcher(alias, new TrivialEdgeMatcher)
+      }
+    def complexCaptureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] =
+      "{" ~> """\w+""".r ~ ":" ~ edgeMatcher <~ "}" ^^ {
+        case alias ~ ":" ~ m =>
+          new CaptureEdgeMatcher(alias, m)
+      }
+    def captureEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] =
+      trivialCaptureEdgeMatcher | complexCaptureEdgeMatcher
 
-    def complexEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] = edgeMatcher | captureEdgeMatcher
+    def complexEdgeMatcher: Parser[EdgeMatcher[TokenDependencyNode]] =
+      edgeMatcher | captureEdgeMatcher
 
     def upEdgeMatcher = "<" ~> complexEdgeMatcher <~ "<" ^^ {
-      case c: CaptureEdgeMatcher[_] => new CaptureEdgeMatcher[TokenDependencyNode](c.alias, new DirectedEdgeMatcher(Direction.Up, c.matcher))
+      case c: CaptureEdgeMatcher[_] => new CaptureEdgeMatcher[TokenDependencyNode](
+        c.alias,
+        new DirectedEdgeMatcher(Direction.Up, c.matcher)
+      )
       case m => new DirectedEdgeMatcher(Direction.Up, m)
     }
     def downEdgeMatcher = ">" ~> complexEdgeMatcher <~ ">" ^^ {
-      case c: CaptureEdgeMatcher[_] => new CaptureEdgeMatcher[TokenDependencyNode](c.alias, new DirectedEdgeMatcher(Direction.Down, c.matcher))
+      case c: CaptureEdgeMatcher[_] =>
+        new CaptureEdgeMatcher[TokenDependencyNode](
+          c.alias,
+          new DirectedEdgeMatcher(Direction.Down, c.matcher)
+        )
       case m => new DirectedEdgeMatcher(Direction.Down, m)
     }
 
     def directedEdgeMatcher = upEdgeMatcher | downEdgeMatcher
 
-    // def edgeMatcher[V]: Parser[EdgeMatcher[TokenDependencyNode]] = (captureUpEdgeMatcherPostag | captureDownEdgeMatcherPostag | captureUpEdgeMatcher | captureDownEdgeMatcher | upEdgeMatcher | downEdgeMatcher) ^^ { s => s.asInstanceOf[EdgeMatcher[TokenDependencyNode]] }
-
-    def chain[V](implicit lemmatizer: Stemmer): Parser[List[Matcher[TokenDependencyNode]]] = nodeMatcher(lemmatizer) ~ directedEdgeMatcher ~ chain ^^ { case n ~ e ~ ch => n :: e :: ch } | nodeMatcher ^^ { List(_) }
+    def chain[V](implicit lemmatizer: Stemmer): Parser[List[Matcher[TokenDependencyNode]]] =
+      nodeMatcher(lemmatizer) ~ directedEdgeMatcher ~ chain ^^ { case n ~ e ~ ch => n :: e :: ch } |
+        nodeMatcher ^^ { List(_) }
 
     def parse(s: String)(implicit lemmatizer: Stemmer) = {
       parseAll(chain(lemmatizer), s)
@@ -93,7 +124,8 @@ object DependencyPattern {
         case fail: Failure =>
           throw new IllegalArgumentException("improper pattern syntax. " + fail.msg + ": " + s)
         case error: Error =>
-          throw new IllegalArgumentException("error on pattern syntax '" + s + "': " + error.toString)
+          throw new IllegalArgumentException("error on pattern syntax '" + s + "': " +
+            error.toString)
       }
     }
   }
@@ -107,7 +139,9 @@ object DependencyPattern {
           parser(pickled)(lemmatizer)
         }
       } catch {
-        case e: Throwable => e.printStackTrace(); throw new DependencyPatternSerializationException(e.getMessage(), e)
+        case e: Throwable =>
+          e.printStackTrace()
+          throw new DependencyPatternSerializationException(e.getMessage(), e)
       }
     }
 
@@ -121,7 +155,9 @@ object DependencyPattern {
     */
   def create(bipath: Bipath[TokenDependencyNode]) = new Pattern[TokenDependencyNode](
     bipath.path.map(dedge => DependencyEdgeMatcher(dedge)),
-    new TokenDependencyNodeMatcher(bipath.path.head.start) :: bipath.path.map(dedge => new TokenDependencyNodeMatcher(dedge.end))
+    new TokenDependencyNodeMatcher(bipath.path.head.start) :: bipath.path.map { dedge =>
+      new TokenDependencyNodeMatcher(dedge.end)
+    }
   )
 
   @deprecated("Use stringFormat instead.", "2.4.5")
@@ -194,7 +230,8 @@ class RegexEdgeMatcher(val labelRegex: Regex) extends DependencyEdgeMatcher {
   override def toStringF(f: String => String) = f("regex=" + labelRegex.toString)
   def canEqual(that: Any) = that.isInstanceOf[RegexEdgeMatcher]
   override def equals(that: Any) = that match {
-    case that: RegexEdgeMatcher => (that canEqual this) && this.labelRegex.toString == that.labelRegex.toString
+    case that: RegexEdgeMatcher => (that canEqual this) &&
+      this.labelRegex.toString == that.labelRegex.toString
     case _ => false
   }
   override def hashCode = this.labelRegex.toString.hashCode
@@ -211,7 +248,9 @@ class TokenDependencyNodeMatcher(val text: String, val postag: String)
   override def toStringF(f: String => String) = f(text)
   def canEqual(that: Any) = that.isInstanceOf[TokenDependencyNodeMatcher]
   override def equals(that: Any) = that match {
-    case that: TokenDependencyNodeMatcher => (that canEqual this) && this.text == that.text && this.postag == that.postag
+    case that: TokenDependencyNodeMatcher => (that canEqual this) &&
+      this.text == that.text &&
+      this.postag == that.postag
     case _ => false
   }
   override def hashCode = text.hashCode + 39 * postag.hashCode
@@ -253,7 +292,8 @@ class PostagNodeMatcher(val postag: String) extends BaseNodeMatcher[TokenDepende
   override def hashCode = postag.hashCode + 39
 }
 
-class RegexNodeMatcher(val regex: Regex)(implicit lemmatizer: Stemmer) extends BaseNodeMatcher[TokenDependencyNode] {
+class RegexNodeMatcher(val regex: Regex)(implicit lemmatizer: Stemmer)
+    extends BaseNodeMatcher[TokenDependencyNode] {
   override def matches(node: TokenDependencyNode) = node.lemma match {
     case regex() => true
     case _ => false
@@ -268,7 +308,8 @@ class RegexNodeMatcher(val regex: Regex)(implicit lemmatizer: Stemmer) extends B
   override def toStringF(f: String => String) = f("regex=" + regex.toString)
   def canEqual(that: Any) = that.isInstanceOf[RegexNodeMatcher]
   override def equals(that: Any) = that match {
-    case that: RegexNodeMatcher => (that canEqual this) && this.regex.toString == that.regex.toString
+    case that: RegexNodeMatcher => (that canEqual this) &&
+      this.regex.toString == that.regex.toString
     case _ => false
   }
   override def hashCode = this.regex.toString.hashCode
