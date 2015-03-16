@@ -18,7 +18,9 @@ trait DependencyParser {
     * @param tokens the tokenized string to parse
     * @return a tuple with the resultant POS tagged tokens and dependency graph
     */
-  def dependencyGraphTokenized(postagger: Postagger)(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
+  def dependencyGraphTokenized(
+    postagger: Postagger
+  )(tokens: Seq[Token]): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postagTokenized(tokens)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }
@@ -29,7 +31,9 @@ trait DependencyParser {
     * @param string the string to parse
     * @return a tuple with the resultant POS tagged tokens and dependency graph
     */
-  def dependencyGraph(tokenizer: Tokenizer, postagger: Postagger)(string: String): (Seq[PostaggedToken], DependencyGraph) = {
+  def dependencyGraph(
+    tokenizer: Tokenizer, postagger: Postagger
+  )(string: String): (Seq[PostaggedToken], DependencyGraph) = {
     val postaggedTokens = postagger.postag(tokenizer)(string)
     (postaggedTokens, dependencyGraphPostagged(postaggedTokens))
   }

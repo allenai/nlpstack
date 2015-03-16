@@ -358,7 +358,12 @@ class Graph[T](val vertices: Set[T], val edges: Set[Edge[T]]) {
       builder ++= "%s;\n".format(quote(vertex.toString))
     }
     for (edge <- edges) {
-      builder ++= "%s -> %s [label=%s];\n".format(quote(edge.source.toString), quote(edge.dest.toString), quote(edge.label))
+      builder ++=
+        "%s -> %s [label=%s];\n".format(
+          quote(edge.source.toString),
+          quote(edge.dest.toString),
+          quote(edge.label)
+        )
     }
     builder ++= "}\n"
 

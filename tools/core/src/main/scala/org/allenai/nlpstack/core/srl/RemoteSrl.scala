@@ -7,7 +7,8 @@ import org.allenai.nlpstack.core.remote.Remote
 
 import scala.concurrent.ExecutionContext
 
-class RemoteSrl(val urlString: String)(implicit executionContext: ExecutionContext) extends Srl with Remote {
+class RemoteSrl(val urlString: String)(implicit executionContext: ExecutionContext)
+    extends Srl with Remote {
   def apply(tokens: Seq[PostaggedToken], dgraph: DependencyGraph) = {
     val response = this.post(DependencyParser.multilineStringFormat.write(tokens -> dgraph))
     if (response.isEmpty) {

@@ -14,8 +14,11 @@ import scala.collection.immutable
   * This richer representation may include the text of the original sentence,
   * the original nodes (before collapsing), and the original dependencies.
   */
-class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[DependencyNode], edges: Set[Edge[DependencyNode]])
-    extends Graph[DependencyNode](vertices, edges) {
+class DependencyGraph private (
+    val root: Option[DependencyNode],
+    vertices: Set[DependencyNode],
+    edges: Set[Edge[DependencyNode]]
+) extends Graph[DependencyNode](vertices, edges) {
 
   val nodes = vertices
   val dependencies = edges
@@ -32,7 +35,7 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       g = new Graph[DependencyNode](g.vertices, g.edges.map { e =>
         e.label match {
           case "prep" | "prepc" =>
-            val qualifier = if (graph.dedges(e.dest) exists { case DownEdge(e) => e.label == "pcomp" case _ => false }) "c" else ""
+            val qualifier = if (graph.dedges(e.dest) exists { case DownEdge(e) => e.label == "pcomp" case _ => false }) "c" else "" // scalastyle:ignore
             e.copy(label = e.label + qualifier + "_" + e.dest.string.toLowerCase.replaceAll(" ", "_"))
           case _ => e
         }
@@ -68,21 +71,30 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
 
     /** Collapse multi-word prepositions into a single node.  This will make illegal nodes. */
     def collapseMultiwordPrepositions(graph: Graph[DependencyNode]): Graph[DependencyNode] = {
-      val preps = graph.edges.filter(edge => edge.label == "prep" || edge.label == "pcomp").toList.sortBy(_.dest.id)(Ordering[Int].reverse)
+      val preps = graph.edges.filter { edge =>
+        edge.label == "prep" || edge.label == "pcomp"
+      }.toList.sortBy(_.dest.id)(Ordering[Int].reverse)
 
       // follow up prep, advmod, dep, amod edges
-      def cond(e: Graph.Edge[DependencyNode]) = e.label == "prep" || e.label == "advmod" || e.label == "dep" || e.label == "amod"
+      def cond(e: Graph.Edge[DependencyNode]) = e.label == "prep" ||
+        e.label == "advmod" ||
+        e.label == "dep" ||
+        e.label == "amod"
 
       preps.foldLeft(graph) {
         case (graph, prep) =>
           if (!(graph.edges contains prep)) graph else {
             val last = prep.dest
-            val predecessors = graph.vertices.filter(_.id <= last.id).toList.sortBy(_.id)(Ordering[Int].reverse)
+            val predecessors = graph.vertices.filter {
+              _.id <= last.id
+            }.toList.sortBy(_.id)(Ordering[Int].reverse)
 
-            DependencyGraph.reversedSplitMultiwordPrepositions.filter(p => predecessors.map(_.string).startsWith(p)).toSeq match {
+            DependencyGraph.reversedSplitMultiwordPrepositions.filter { p =>
+              predecessors.map(_.string).startsWith(p)
+            }.toSeq match {
               case Seq() => graph
               case mtches =>
-                val removeVertices = predecessors.take(mtches.maxBy(_.length).length).drop(1).flatMap(graph.inferiors(_, _.dest != last)).toSet.toList.sorted
+                val removeVertices = predecessors.take(mtches.maxBy(_.length).length).drop(1).flatMap(graph.inferiors(_, _.dest != last)).toSet.toList.sorted // scalastyle:ignore
                 val joinVertices = removeVertices :+ last
 
                 // keep last connected in case we remove some
@@ -107,7 +119,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
 
                   val text = joinVertices.iterator.map(_.string).mkString(" ")
                   new Graph[DependencyNode](
-                    extraEdges ++ graph.edges.filterNot(_.vertices exists (removeVertices contains _))
+                    extraEdges ++
+                      graph.edges.filterNot(_.vertices exists (removeVertices contains _))
                   ).map(vertex =>
                     if (vertex == prep.dest) {
                       new DependencyNode(-1, text) // these nodes are only temporary
@@ -126,7 +139,9 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
         // conj edges to a node with no children
         edge.label == "conj" &&
           // source of conj edges has a child cc edge
-          graph.dedges(edge.source).exists { case DownEdge(e) => e.label == "cc" case _ => false }).foldLeft(graph) {
+          graph.dedges(edge.source).exists {
+            case DownEdge(e) => e.label == "cc" case _ => false
+          }).foldLeft(graph) {
         case (graph, conj) =>
           val ccNodes = graph.dedges(conj.source).filter {
             case DownEdge(e) => e.label == "cc"
@@ -144,7 +159,8 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
               }
           }
 
-          val newEdges = scala.collection.Set[Edge[DependencyNode]]() ++ graph.edges - conj + conj.copy(label = "conj_" + bestCC.string)
+          val newEdges = scala.collection.Set[Edge[DependencyNode]]() ++
+            graph.edges - conj + conj.copy(label = "conj_" + bestCC.string)
 
           new Graph[DependencyNode](graph.vertices, newEdges)
       }
@@ -187,7 +203,9 @@ class DependencyGraph private (val root: Option[DependencyNode], vertices: Set[D
       */
     def distributeConjunctions(graph: Graph[DependencyNode]) = {
       // find components connected by conj_and
-      val components = graph.components(e => (e.label equalsIgnoreCase "conj_and") || e.label == "conj_&")
+      val components = graph.components { e =>
+        (e.label equalsIgnoreCase "conj_and") || e.label == "conj_&"
+      }
 
       val newEdges = components.flatMap { vertices =>
         val dedges = vertices.flatMap(graph.dedges(_))
@@ -315,7 +333,11 @@ object DependencyGraph {
 
   type JoinedDependencyGraph = Graph[JoinedDependencyNode]
 
-  def apply(root: Option[DependencyNode], vertices: Set[DependencyNode], edges: Set[Edge[DependencyNode]]): DependencyGraph = {
+  def apply(
+    root: Option[DependencyNode],
+    vertices: Set[DependencyNode],
+    edges: Set[Edge[DependencyNode]]
+  ): DependencyGraph = {
     import org.allenai.nlpstack.core.parse.graph.Dependency.DependencyOrdering
 
     val sortedVertices = immutable.SortedSet.empty[DependencyNode] ++ vertices
@@ -401,13 +423,14 @@ object DependencyGraph {
       }
 
       // increment all dependency node ids
-      val incrementedDeps: immutable.SortedSet[Dependency] = immutable.SortedSet[Dependency]() ++ root ++
-        graph.dependencies.map { dep =>
-          dep.copy(
-            source = dep.source.copy(id = dep.source.id + 1),
-            dest = dep.dest.copy(id = dep.dest.id + 1)
-          )
-        }
+      val incrementedDeps: immutable.SortedSet[Dependency] =
+        immutable.SortedSet[Dependency]() ++ root ++
+          graph.dependencies.map { dep =>
+            dep.copy(
+              source = dep.source.copy(id = dep.source.id + 1),
+              dest = dep.dest.copy(id = dep.dest.id + 1)
+            )
+          }
 
       // serialize dependencies on first line
       val pickledDeps = incrementedDeps.iterator map Dependency.stringFormat.write
@@ -445,5 +468,6 @@ object DependencyGraph {
   class SerializationException(message: String, cause: Throwable)
     extends RuntimeException(message, cause)
 
-  val reversedSplitMultiwordPrepositions = Postagger.complexPrepositions.map(_.split(" ").toList.reverse)
+  val reversedSplitMultiwordPrepositions =
+    Postagger.complexPrepositions.map(_.split(" ").toList.reverse)
 }

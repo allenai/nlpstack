@@ -11,8 +11,12 @@ import spray.json._
   * @param  postag  the PENN-style part-of-speech tag of the token
   * @param  chunk   the chunk tag of the token in BIO format
   */
-class ChunkedToken(val chunkSymbol: Symbol, override val postagSymbol: Symbol, override val string: String, override val offset: Int)
-    extends PostaggedToken(postagSymbol, string, offset) {
+class ChunkedToken(
+    val chunkSymbol: Symbol,
+    override val postagSymbol: Symbol,
+    override val string: String,
+    override val offset: Int
+) extends PostaggedToken(postagSymbol, string, offset) {
   def chunk = chunkSymbol.name
   require(chunk.forall(!_.isWhitespace), "chunk contains whitespace: " + chunk)
 
@@ -35,7 +39,9 @@ object ChunkedToken {
   def apply(token: PostaggedToken, chunk: String): ChunkedToken =
     new ChunkedToken(Symbol(chunk), token.postagSymbol, token.string, token.offset)
 
-  def unapply(token: ChunkedToken): Option[(String, String, String, Int)] = Some((token.chunk, token.postag, token.string, token.offset))
+  def unapply(token: ChunkedToken): Option[(String, String, String, Int)] = {
+    Some((token.chunk, token.postag, token.string, token.offset))
+  }
 
   implicit object chunkedTokenJsonFormat extends RootJsonFormat[ChunkedToken] {
     def write(t: ChunkedToken) = JsObject(PostaggedToken.postaggedTokenJsonFormat.write(t).fields +

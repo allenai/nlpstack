@@ -40,7 +40,9 @@ object DependencyPattern {
       implicit
       lemmatizer: Stemmer
     ): Parser[List[NodeMatcher[TokenDependencyNode]]] =
-      (simpleNodeMatcher(lemmatizer) ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) ^^ { case m ~ ":" ~ ms => m :: ms }) | (simpleNodeMatcher(lemmatizer) ^^ { case m => List(m) })
+      (simpleNodeMatcher(lemmatizer) ~ ":" ~ simpleNodeMatcherSeq(lemmatizer) ^^ {
+        case m ~ ":" ~ ms => m :: ms
+      }) | (simpleNodeMatcher(lemmatizer) ^^ { case m => List(m) })
 
     def trivialCaptureNodeMatcher: Parser[CaptureNodeMatcher[TokenDependencyNode]] =
       "{" ~> """\w+""".r <~ "}" ^^ { s => new CaptureNodeMatcher[TokenDependencyNode](s) }

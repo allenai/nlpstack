@@ -24,7 +24,9 @@ abstract class ParseTree(
   def value = token
 
   def iterator = {
-    def preorder(node: ParseTree): List[ParseTree] = node :: node.children.toList.flatMap(preorder(_))
+    def preorder(node: ParseTree): List[ParseTree] = {
+      node :: node.children.toList.flatMap(preorder(_))
+    }
     preorder(this).iterator
   }
 
@@ -55,7 +57,8 @@ abstract class ParseTree(
         case node: ParseTreePostag => "invtriangle"
         case node: ParseTreeToken => "circle"
       }
-      writer.append(indent + node.index + " [label=" + quote(nodeString(node)) + ", shape=" + quote(shape) + "]\n")
+      writer.append(indent + node.index + " [label=" + quote(nodeString(node)) +
+        ", shape=" + quote(shape) + "]\n")
     }
 
     for (node <- this) {
@@ -67,6 +70,19 @@ abstract class ParseTree(
   }
 }
 
-class ParseTreePhrase(token: String, index: Int, children: Array[ParseTree]) extends ParseTree(token, index, children) {}
-class ParseTreePostag(token: String, index: Int, children: Array[ParseTree]) extends ParseTree(token, index, children) {}
-class ParseTreeToken(token: String, index: Int, children: Array[ParseTree]) extends ParseTree(token, index, children) {}
+class ParseTreePhrase(
+  token: String, index: Int,
+  children: Array[ParseTree]
+) extends ParseTree(token, index, children)
+
+class ParseTreePostag(
+  token: String,
+  index: Int,
+  children: Array[ParseTree]
+) extends ParseTree(token, index, children)
+
+class ParseTreeToken(
+  token: String,
+  index: Int,
+  children: Array[ParseTree]
+) extends ParseTree(token, index, children)
