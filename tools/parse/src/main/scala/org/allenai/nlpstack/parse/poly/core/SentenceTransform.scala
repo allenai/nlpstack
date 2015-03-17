@@ -30,6 +30,8 @@ object SentenceTransform {
     def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
       case FactorieSentenceTagger =>
         JsString("FactorieSentenceTagger")
+      case StanfordSentenceTagger =>
+        JsString("StanfordSentenceTagger")
       case LexicalPropertiesTagger =>
         JsString("LexicalPropertiesTagger")
       case brownClustersTagger: BrownClustersTagger =>
@@ -39,6 +41,7 @@ object SentenceTransform {
     def read(value: JsValue): SentenceTransform = value match {
       case JsString(typeid) => typeid match {
         case "FactorieSentenceTagger" => FactorieSentenceTagger
+        case "StanfordSentenceTagger" => StanfordSentenceTagger
         case "LexicalPropertiesTagger" => LexicalPropertiesTagger
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
@@ -64,8 +67,33 @@ case object FactorieSentenceTagger extends SentenceTransform {
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
         untagged.updateProperties(Map(
-          'factoriePos -> Set(Symbol(tagged.postag)),
-          'factorieCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          'autoPos -> Set(Symbol(tagged.postag)),
+          'autoCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+            tagged.postag, "X"
+          )))
+        ))
+    }))
+  }
+}
+
+/** The StanfordSentenceTagger tags an input sentence with automatic part-of-speech tags
+  * from the Stanford tagger.
+  */
+case object StanfordSentenceTagger extends SentenceTransform {
+
+  @transient private val stanfordTagger = new StanfordPostagger()
+
+  def transform(sentence: Sentence): Sentence = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    val taggedTokens: IndexedSeq[PostaggedToken] =
+      stanfordTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+        untagged.updateProperties(Map(
+          'autoPos -> Set(Symbol(tagged.postag)),
+          'autoCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
             tagged.postag, "X"
           )))
         ))

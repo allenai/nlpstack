@@ -367,10 +367,11 @@ object PolytreeParse {
     conllLines: Iterator[String],
     useGoldPosTags: Boolean
   ): PolytreeParse = {
-
     val rows: List[Array[String]] = (for {
       line <- conllLines
-    } yield line.split("\t")).toList
+    } yield {
+      line.split("\t")
+    }).toList
 
     // For the following, note that each row has 10 elements. The relevant elements are:
     // - row(0) is the word position (in the sentence)

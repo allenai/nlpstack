@@ -38,6 +38,6 @@ object StanfordPostagger {
       "english-left3words-3.4.1",
       1
     )
-    new MaxentTagger(filePath.toString + "/english-left3words-distsim.tagger")
+    new MaxentTagger(filePath.toString + "/english-left3words/english-left3words-distsim.tagger")
   }
 }

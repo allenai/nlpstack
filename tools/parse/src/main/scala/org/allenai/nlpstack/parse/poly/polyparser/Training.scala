@@ -78,7 +78,7 @@ object Training {
       case _ => Map.empty[Symbol, Set[Symbol]]
     }
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
+      Seq(FactorieSentenceTagger, StanfordSentenceTagger, LexicalPropertiesTagger,
         BrownClustersTagger(clusters))
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
