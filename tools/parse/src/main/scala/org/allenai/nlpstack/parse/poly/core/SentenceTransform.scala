@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Tokenizer }
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -34,6 +34,8 @@ object SentenceTransform {
         JsString("LexicalPropertiesTagger")
       case brownClustersTagger: BrownClustersTagger =>
         brownClustersTagger.toJson
+      case verbnetTagger: VerbnetTagger =>
+        JsString("VerbnetTagger")
     }
 
     def read(value: JsValue): SentenceTransform = value match {
@@ -145,21 +147,19 @@ case object FactorieLemmatizer extends SentenceTransform {
   }
 }
 
-/** The VerbnetTagger tags the tokens of an input sentence with their Verbnet classes. */
-case class VerbnetTagger(verbnetClasses: Map[Symbol, Set[Symbol]]) extends SentenceTransform {
-
+/** The VerbnetTagger tags the tokens of an input sentence with their Verbnet classes.
+  */
+case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
   override def transform(sentence: Sentence): Sentence = {
     val lemmatized = FactorieLemmatizer.transform(sentence)
     Sentence(for {
       tok <- lemmatized.tokens
     } yield {
       val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
-      val tokVerbnetClasses = if (verbnetClasses.contains(Symbol(tokLemmaLC))) {
-        verbnetClasses(Symbol(tokLemmaLC))
-      } else {
-        Set.empty[Symbol]
-      }
-      tok.updateProperties(Map('verbnetClasses -> tokVerbnetClasses))
+      val tokVerbnetPrimaryFrames = verbnet.getVerbnetFramePrimaryNames(tokLemmaLC)
+      val tokVerbnetSecondaryFrames = verbnet.getVerbnetFrameSecondaryNames(tokLemmaLC)
+      tok.updateProperties(Map('verbnetPrimaryFrames -> tokVerbnetPrimaryFrames))
+      tok.updateProperties(Map('verbnetSecondaryFrames -> tokVerbnetSecondaryFrames))
     })
   }
 }

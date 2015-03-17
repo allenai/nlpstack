@@ -1,9 +1,7 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{Token, Sentence}
-
+import org.allenai.nlpstack.parse.poly.core.{ Token, Sentence }
 
 class BrownClustersSpec extends UnitSpec {
 
@@ -24,7 +22,6 @@ class BrownClustersSpec extends UnitSpec {
 
   val sentence1 = Sentence(IndexedSeq(Token('apple), Token('and), Token('cherry), Token('beet)))
 
-
   "BrownClusters.getAllClusters" should "return the correct answer" in {
     clusters1.getAllClusters('turnip).size shouldBe 4
     clusters1.getAllClusters('turnip) shouldBe clusters1.getAllClusters('beet)
@@ -34,7 +31,7 @@ class BrownClustersSpec extends UnitSpec {
   it should "return zero for an unknown word" in {
     clusters1.getAllClusters('rutabaga) shouldBe List(Symbol("0"))
   }
-/*
+  /*
   "Sentence.taggedWithBrownClusters" should "return the correct answer" in {
     sentence1.taggedWithBrownClusters(Seq(clusters1, clusters2)) shouldBe
       Sentence(Seq(
