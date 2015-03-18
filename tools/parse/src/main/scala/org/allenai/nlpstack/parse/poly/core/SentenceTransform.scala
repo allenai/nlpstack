@@ -158,8 +158,12 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
       val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
       val tokVerbnetPrimaryFrames = verbnet.getVerbnetFramePrimaryNames(tokLemmaLC)
       val tokVerbnetSecondaryFrames = verbnet.getVerbnetFrameSecondaryNames(tokLemmaLC)
-      tok.updateProperties(Map('verbnetPrimaryFrames -> tokVerbnetPrimaryFrames))
-      tok.updateProperties(Map('verbnetSecondaryFrames -> tokVerbnetSecondaryFrames))
+      tok.updateProperties(
+        Map(
+          'verbnetPrimaryFrames -> tokVerbnetPrimaryFrames,
+          'verbnetSecondaryFrames -> tokVerbnetSecondaryFrames
+        )
+      )
     })
   }
 }

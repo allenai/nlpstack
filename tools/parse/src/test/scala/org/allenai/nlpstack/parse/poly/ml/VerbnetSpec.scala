@@ -65,45 +65,81 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
     verbnetTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
       Sentence(IndexedSeq(
         Token('nexus, Map(
-          'lcase -> Set('nexus), 'cpos -> Set('nexus), 'verbnetClasses -> Set()
+          'lcase -> Set('nexus),
+          'cpos -> Set('nexus),
+          'verbnetPrimaryFrames -> Set(),
+          'verbnetSecondaryFrames -> Set()
         )),
         Token('tigers, Map(
           'factoriePos -> Set('NNS),
           'factorieCpos -> Set('NOUN),
           'factorieLemma -> Set('tiger),
-          'verbnetClasses -> Set()
+          'verbnetPrimaryFrames -> Set(),
+          'verbnetSecondaryFrames -> Set()
         )),
         Token('roar, Map(
           'factoriePos -> Set('NN),
           'factorieCpos -> Set('NOUN),
           'factorieLemma -> Set('roar),
-          'verbnetClasses ->
+          'verbnetPrimaryFrames ->
             Set(
-              Symbol("run-51.3.2"),
-              Symbol("weather-57"),
-              Symbol("animal_sounds-38"),
-              Symbol("manner_speaking-37.3"),
-              Symbol("sound_emission-43.2")
+              Symbol("NP V PP.location"), Symbol("NP V PP.recipient how S_INF"),
+              Symbol("NP V S_INF"), Symbol("NP V NP PP.recipient"), Symbol("NP V PP.recipient"),
+              Symbol("PP.location V NP"), Symbol("NP V NP.theme"), Symbol("NP V PP.recipient S_INF"),
+              Symbol("NP V S-Quote"), Symbol("It V PP.theme"), Symbol("NP V that S"),
+              Symbol("NP V PP.recipient that S"), Symbol("NP V"), Symbol("NP.location V PP.theme"),
+              Symbol("NP.location V PP.agent"), Symbol("NP V PP.topic"),
+              Symbol("NP V PP.recipient S-Quote"), Symbol("There V NP PP"), Symbol("It V"),
+              Symbol("NP V how S_INF"), Symbol("It V NP.theme"), Symbol("There V PP NP"),
+              Symbol("NP V NP")
+            ),
+          'verbnetSecondaryFrames ->
+            Set(
+              Symbol("NP; Expletive Subject, Theme Object"), Symbol("NP; Theme Object"),
+              Symbol("PP; Location Subject, with-PP"), Symbol("PP; Topic-PP"),
+              Symbol("PP-QUOT; Recipient-PP"), Symbol("QUOT"),
+              Symbol("NP-PP; Expletive-there Subject"), Symbol("PP-HOW-TO-INF; Recipient-PP"),
+              Symbol("PP; over-PP"), Symbol("NP-PP; Recipient-PP"), Symbol("There-insertion"),
+              Symbol("HOW-TO-INF"), Symbol("PP-TO-INF-OC; Recipient-PP"),
+              Symbol("PP-NP; Expletive-there Subject"), Symbol("PP; Location-PP"),
+              Symbol("Locative Inversion"), Symbol("PP; Expletive Subject, Theme-PP"),
+              Symbol("Intransitive; Expletive Subject"), Symbol("Basic Intransitive; inchoative"),
+              Symbol("NP; Causative variant"), Symbol("PP-S; Recipient-PP"),
+              Symbol("Basic Intransitive"), Symbol("TO-INF-AC"), Symbol("PP; Recipient-PP"),
+              Symbol("S"), Symbol("Basic Transitive")
             )
         )),
         Token('and, Map(
           'factoriePos -> Set('CC),
           'factorieCpos -> Set('CONJ),
           'factorieLemma -> Set('and),
-          'verbnetClasses -> Set()
+          'verbnetPrimaryFrames -> Set(),
+          'verbnetSecondaryFrames -> Set()
         )),
         Token('run, Map(
           'factoriePos -> Set('VB),
           'factorieCpos -> Set('VERB),
           'factorieLemma -> Set('run),
-          'verbnetClasses ->
+          'verbnetPrimaryFrames ->
             Set(
-              Symbol("swarm-47.5.1-1"),
-              Symbol("meander-47.7"),
-              Symbol("carry-11.4"),
-              Symbol("preparing-26.3-1"),
-              Symbol("run-51.3.2-2-1"),
-              Symbol("bump-18.4")
+              Symbol("NP V PP.location"), Symbol("NP V NP PP.destination PP.initial_location"),
+              Symbol("PP.location V NP"), Symbol("NP V NP PP.destination"),
+              Symbol("NP V NP PP.beneficiary"), Symbol("NP V NP PP.initial_location PP.destination"),
+              Symbol("NP V NP.beneficiary NP"), Symbol("There V NP PP"),
+              Symbol("PP.location V PP.theme"), Symbol("NP V NP PP.initial_location"),
+              Symbol("There V PP NP"), Symbol("NP V NP")
+            ),
+          'verbnetSecondaryFrames ->
+            Set(
+              Symbol("NP-PP; Goal-PP"), Symbol("Basic Transitive; with accompanied motion"),
+              Symbol("PP; Location Subject, with-PP"), Symbol("NP-PP; Initial_Location-PP"),
+              Symbol("NP-PP; Expletive-there Subject"),
+              Symbol("NP-PP; for-PP"), Symbol("NP-NP; Beneficiary Object"),
+              Symbol("Locative Preposition Drop"), Symbol("NP-PP-PP; Initial_Location-PP Goal-PP"),
+              Symbol("PP; against-PP"), Symbol("PP-NP; Expletive-there Subject"),
+              Symbol("NP-PP-PP; Goal-PP Initial_Location-PP"), Symbol("Locative Inversion"),
+              Symbol("PP; locative-PP"),
+              Symbol("Basic Transitive"), Symbol("PP; path-PP")
             )
         ))
       ))
