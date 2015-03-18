@@ -14,7 +14,9 @@ object Frame {
     pickled match {
       case pickledRegex(relation, arguments) =>
         val rel = Relation.deserialize(dgraph)(relation)
-        val args = arguments.split(",\\s+") filter (!_.trim.isEmpty) map Argument.deserialize(dgraph)
+        val args = arguments.split(",\\s+").
+          filter(!_.trim.isEmpty).
+          map(Argument.deserialize(dgraph))
         Frame(rel, args)
       case _ => throw new IllegalArgumentException("Could not deserialize: " + pickled)
     }
@@ -31,7 +33,9 @@ object Relation {
   def fromString(node: DependencyNode, string: String) = {
     val (name, sense) = string match {
       case relationRegex(name, sense) => (name, sense)
-      case _ => throw new MatchError("Could not create relation with node " + node + " from string: " + string)
+      case _ => throw new MatchError(
+        "Could not create relation with node " + node + " from string: " + string
+      )
     }
 
     // replace restricted characters

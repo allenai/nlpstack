@@ -38,25 +38,32 @@ object Whatswrong {
     }
   }
 
-  implicit def tokenizePostag(implicit tokenizer: WhatswrongTokenizer[Token]): WhatswrongTokenizer[PostaggedToken] = new WhatswrongTokenizer[PostaggedToken] {
+  implicit def tokenizePostag(
+    implicit
+    tokenizer: WhatswrongTokenizer[Token]
+  ): WhatswrongTokenizer[PostaggedToken] = new WhatswrongTokenizer[PostaggedToken] {
     def tokenize(source: PostaggedToken, target: com.googlecode.whatswrong.Token) {
       tokenizer.tokenize(source, target)
       target.addProperty(new TokenProperty("postag", 1), source.postag)
     }
   }
 
-  implicit def tokenizeChunk(implicit tokenizer: WhatswrongTokenizer[PostaggedToken]): WhatswrongTokenizer[ChunkedToken] = new WhatswrongTokenizer[ChunkedToken] {
+  implicit def tokenizeChunk(
+    implicit
+    tokenizer: WhatswrongTokenizer[PostaggedToken]
+  ): WhatswrongTokenizer[ChunkedToken] = new WhatswrongTokenizer[ChunkedToken] {
     def tokenize(source: ChunkedToken, target: com.googlecode.whatswrong.Token) {
       tokenizer.tokenize(source, target)
       target.addProperty(new TokenProperty("chunk", 2), source.chunk)
     }
   }
 
-  implicit def tokenizeNode: WhatswrongTokenizer[DependencyNode] = new WhatswrongTokenizer[DependencyNode] {
-    def tokenize(source: DependencyNode, target: com.googlecode.whatswrong.Token) = {
-      target.addProperty(new TokenProperty("text", 0), source.string)
+  implicit def tokenizeNode: WhatswrongTokenizer[DependencyNode] =
+    new WhatswrongTokenizer[DependencyNode] {
+      def tokenize(source: DependencyNode, target: com.googlecode.whatswrong.Token) = {
+        target.addProperty(new TokenProperty("text", 0), source.string)
+      }
     }
-  }
 
   def seq2Instance[A](seq: Seq[A])(implicit tokenizer: WhatswrongTokenizer[A]) = {
     val inst = new NLPInstance()
@@ -83,7 +90,11 @@ object Whatswrong {
   }
 
   def render(inst: NLPInstance) = {
-    val bi = new BufferedImage(Whatswrong.MAX_WIDTH, Whatswrong.MAX_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    val bi = new BufferedImage(
+      Whatswrong.MAX_WIDTH,
+      Whatswrong.MAX_HEIGHT,
+      BufferedImage.TYPE_INT_ARGB
+    )
     val graphic: java.awt.Graphics2D = bi.createGraphics()
     val dimensions = renderer.synchronized {
       renderer.render(inst, graphic)
@@ -92,7 +103,10 @@ object Whatswrong {
     bi.getSubimage(0, 0, dimensions.width, dimensions.height)
   }
 
-  def writeSeq2Graphic[A](implicit tokenizer: WhatswrongTokenizer[A]) = new Writer[Seq[A], BufferedImage] {
+  def writeSeq2Graphic[A](
+    implicit
+    tokenizer: WhatswrongTokenizer[A]
+  ) = new Writer[Seq[A], BufferedImage] {
     override def write(tokens: Seq[A]): BufferedImage = {
       val inst = seq2Instance[A](tokens)
       render(inst)
@@ -115,7 +129,12 @@ object Whatswrong {
       val (graph, frame) = srl
       val inst = graph2Instance(graph)
       var indices = Set.empty[Int]
-      inst.addSpan(frame.relation.node.id, frame.relation.node.id, frame.relation.toString, "relation")
+      inst.addSpan(
+        frame.relation.node.id,
+        frame.relation.node.id,
+        frame.relation.toString,
+        "relation"
+      )
       indices += frame.relation.node.id
       for (argument <- frame.arguments) {
         inst.addSpan(argument.node.id, argument.node.id, argument.role.label, "argument")

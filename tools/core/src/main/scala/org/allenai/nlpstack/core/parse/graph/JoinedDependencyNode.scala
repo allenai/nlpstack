@@ -26,7 +26,9 @@ object JoinedDependencyNode {
     * @throws  IllegalArgumentException  there is no superior of the set
     * @return  the superior node of the set
     */
-  implicit def directedMerge(graph: Graph[JoinedDependencyNode])(nodes: Traversable[JoinedDependencyNode]) = {
+  implicit def directedMerge(
+    graph: Graph[JoinedDependencyNode]
+  )(nodes: Traversable[JoinedDependencyNode]) = {
     if (nodes.isEmpty) throw new IllegalArgumentException("argument nodes empty")
     val sorted = nodes.toList.sortBy(_.span)
     val strings = sorted.map(_.string)
@@ -35,7 +37,8 @@ object JoinedDependencyNode {
     // or at least that the spans are
     val spans = sorted.map(_.span)
     if (!(Interval.span(spans) forall (point => spans.exists(span => span contains point)))) {
-      throw new IllegalArgumentException("A set of non-adjacent intervals cannot be merged: " + nodes.mkString(", "))
+      throw new IllegalArgumentException("A set of non-adjacent intervals cannot be merged: " +
+        nodes.mkString(", "))
     }
 
     new JoinedDependencyNode(sorted.flatMap(_.ids).sorted, strings)

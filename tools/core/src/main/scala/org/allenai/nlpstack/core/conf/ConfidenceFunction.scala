@@ -9,7 +9,8 @@ import java.io.{ BufferedOutputStream, File, FileOutputStream, OutputStream }
   * @tparam  E  the extraction to rank
   * @param  featureSet  the features to use
   */
-abstract class ConfidenceFunction[E](val featureSet: FeatureSet[E, Double]) extends Function[E, Double] {
+abstract class ConfidenceFunction[E](val featureSet: FeatureSet[E, Double])
+    extends Function[E, Double] {
   def apply(that: E): Double
 
   def save(output: OutputStream): Unit

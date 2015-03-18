@@ -16,7 +16,8 @@ abstract class Type {
   def tokenInterval: Interval
   def text: String
 
-  def matchText[E <: Token](seq: Seq[E]): String = seq.iterator.slice(tokenInterval.start, tokenInterval.end).map(_.string).mkString(" ")
+  def matchText[E <: Token](seq: Seq[E]): String =
+    seq.iterator.slice(tokenInterval.start, tokenInterval.end).map(_.string).mkString(" ")
   def tokens[E <: Token](seq: Seq[E]): Seq[E] = seq.slice(tokenInterval.start, tokenInterval.end)
 }
 

@@ -16,7 +16,8 @@ class Match[T](
     val edgeGroups: Map[String, Match.EdgeGroup[T]]
 ) {
   // extend Object
-  override def toString = bipath.toString + ": " + nodeGroups.toString + " and " + edgeGroups.toString
+  override def toString = bipath.toString + ": " + nodeGroups.toString + " and " +
+    edgeGroups.toString
 
   def groups: Map[String, Match.Group] = nodeGroups ++ edgeGroups
 
