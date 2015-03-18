@@ -1,14 +1,19 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.common.Config.EnhancedConfig
+import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, VerbnetUtil }
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
 import scopt.OptionParser
+
+import com.typesafe.config.{ Config, ConfigFactory }
+import java.io.{ File, FileWriter, Writer }
 
 private case class ParserTrainingConfig(
   clustersPath: Option[String] = None,
-  verbnetConfigPath: Option[String] = None,
+  taggersConfigPath: Option[String] = None,
   trainingPath: String = "",
   outputPath: String = "",
   testPath: String = "",
@@ -40,9 +45,10 @@ object Training {
       opt[String]('c', "clusters") valueName ("<file>") action
         { (x, c) => c.copy(clustersPath = Some(x)) } text ("the path to the Brown cluster files " +
           "(in Liang format, comma-separated filenames)")
-      opt[String]('v', "verbnet") valueName ("<file>") action
-        { (x, c) => c.copy(verbnetConfigPath = Some(x)) } text ("the path to a config file" +
-          "containing datastore location info to access Verbnet resource.")
+      opt[String]('n', "feature-taggers-config") valueName ("<file>") action
+        { (x, c) => c.copy(taggersConfigPath = Some(x)) } text ("the path to a config file" +
+          "containing config information required for the required taggers. Currently contains" +
+          "datastore location info to access Verbnet resources for the Verbnet tagger.")
       opt[String]('o', "output") required () valueName ("<file>") action
         { (x, c) => c.copy(outputPath = x) } text ("where to direct the output files")
       opt[String]('x', "test") required () valueName ("<file>") action
@@ -57,29 +63,45 @@ object Training {
             }
           }
     }
-    val config: ParserTrainingConfig = optionParser.parse(args, ParserTrainingConfig()).get
+    val trainingConfig: ParserTrainingConfig = optionParser.parse(args, ParserTrainingConfig()).get
     val trainingSource: PolytreeParseSource =
-      MultiPolytreeParseSource(config.trainingPath.split(",") map { path =>
+      MultiPolytreeParseSource(trainingConfig.trainingPath.split(",") map { path =>
         InMemoryPolytreeParseSource.getParseSource(
           path,
-          ConllX(true), config.dataSource
+          ConllX(true), trainingConfig.dataSource
         )
       })
 
-    val clusters: Seq[BrownClusters] = config.clustersPath match {
+    // Read in taggers config file if specified. This will contain config info necessary to
+    // initialize the required feature taggers (currently contais only Verbnet config).
+    val taggersConfigOption =
+      trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
+
+    val clusters: Seq[BrownClusters] = trainingConfig.clustersPath match {
       case Some(clustersPath) => clustersPath.split(",") map { path =>
         BrownClusters.fromLiangFormat(path)
       }
       case _ => Seq.empty[BrownClusters]
     }
 
-    val verbnetClassMap: Map[Symbol, Set[Symbol]] = config.verbnetConfigPath match {
-      case Some(polyparserConfigPathVal) => VerbnetUtil.getVerbnetClassMap(polyparserConfigPathVal)
-      case _ => Map.empty[Symbol, Set[Symbol]]
+    val maybeVerbnetTagger: Option[VerbnetTagger] = for {
+      taggersConfig <- taggersConfigOption
+      verbnetConfig <- taggersConfig.get[Config]("verbnet")
+      groupName <- verbnetConfig.get[String]("group")
+      artifactName <- verbnetConfig.get[String]("name")
+      version <- verbnetConfig.get[Int]("version")
+    } yield {
+      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
+        groupName,
+        artifactName,
+        version
+      )
+      VerbnetTagger(new Verbnet(verbnetPath))
     }
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, StanfordSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters))
+      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
+        BrownClustersTagger(clusters), maybeVerbnetTagger).flatten
+
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
 
@@ -104,9 +126,9 @@ object Training {
     val parser = RerankingTransitionParser(parserConfig)
 
     println("Saving models.")
-    TransitionParser.save(parser, config.outputPath)
+    TransitionParser.save(parser, trainingConfig.outputPath)
 
-    ParseFile.fullParseEvaluation(parser, config.testPath, ConllX(true),
-      config.dataSource, ParseFile.defaultOracleNbest)
+    ParseFile.fullParseEvaluation(parser, trainingConfig.testPath, ConllX(true),
+      trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }
 }

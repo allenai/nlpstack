@@ -64,6 +64,8 @@ abstract class DependencyParsingTransitionSystem(
       TokenPropertyFeature('autoCpos),
       TokenPropertyFeature('autoPos),
       TokenPropertyFeature('brown0),
+      TokenPropertyFeature('verbnetPrimaryFrames),
+      TokenPropertyFeature('verbnetSecondaryFrames),
       KeywordFeature(DependencyParsingTransitionSystem.keywords)
     ))
     tokenFeatureTagger.tag(overriddenSentence)
