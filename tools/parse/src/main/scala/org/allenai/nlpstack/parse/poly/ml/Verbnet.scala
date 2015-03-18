@@ -78,7 +78,7 @@ case class Verbnet(verbnetPath: Path) {
   def getVerbnetFramePrimaryNames(verb: String): Set[Symbol] = {
     // Get frames
     val verbFrames = getVerbnetFrames(verb)
-    verbFrames.map(x => Symbol(x.getPrimaryType.getID))
+    verbFrames.map(x => Symbol(x.getPrimaryType.getID.replaceAll("""\s+""", "-")))
   }
 
   /* Returns the set of secondary names for all frames within all classes 
@@ -91,7 +91,7 @@ case class Verbnet(verbnetPath: Path) {
     for (verbFrame <- verbFrames) {
       val secondaryType = verbFrame.getSecondaryType
       if (secondaryType != null) {
-        secondaryFrameNames += Symbol(secondaryType.getID)
+        secondaryFrameNames += Symbol(secondaryType.getID.replaceAll("""\s+""", "-"))
       }
     }
     secondaryFrameNames.toSet

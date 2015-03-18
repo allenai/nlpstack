@@ -84,25 +84,24 @@ object Training {
       case _ => Seq.empty[BrownClusters]
     }
 
-    var taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters))
-
-    for {
+    val verbnetTaggerOption: Option[VerbnetTagger] = for {
       taggersConfig <- taggersConfigOption
       verbnetConfig <- taggersConfig.get[Config]("verbnet")
       groupName <- verbnetConfig.get[String]("group")
       artifactName <- verbnetConfig.get[String]("name")
       version <- verbnetConfig.get[Int]("version")
-    } {
+    } yield {
       val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
         groupName,
         artifactName,
         version
       )
-      val verbnet = new Verbnet(verbnetPath)
-      taggers :+= VerbnetTagger(verbnet)
+      VerbnetTagger(new Verbnet(verbnetPath))
     }
+
+    val taggers: Seq[SentenceTransform] =
+      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
+        BrownClustersTagger(clusters)) ++ verbnetTaggerOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
