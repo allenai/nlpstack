@@ -27,6 +27,9 @@ object SentenceTransform {
     implicit val brownClustersTaggerFormat =
       jsonFormat1(BrownClustersTagger.apply).pack("type" -> "BrownClustersTagger")
 
+    implicit val verbnetTaggerFormat =
+      jsonFormat1(VerbnetTagger.apply).pack("type" -> "VerbnetTagger")
+
     def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
       case FactorieSentenceTagger =>
         JsString("FactorieSentenceTagger")
@@ -37,7 +40,7 @@ object SentenceTransform {
       case brownClustersTagger: BrownClustersTagger =>
         brownClustersTagger.toJson
       case verbnetTagger: VerbnetTagger =>
-        JsString("VerbnetTagger")
+        verbnetTagger.toJson
     }
 
     def read(value: JsValue): SentenceTransform = value match {
@@ -48,7 +51,8 @@ object SentenceTransform {
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
-        brownClustersTaggerFormat
+        brownClustersTaggerFormat,
+        verbnetTaggerFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
@@ -86,6 +90,8 @@ case object StanfordSentenceTagger extends SentenceTransform {
   @transient private val stanfordTagger = new StanfordPostagger()
 
   def transform(sentence: Sentence): Sentence = {
+    sentence
+    /*
     val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
     val nlpStackTokens: IndexedSeq[NLPStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
@@ -100,6 +106,7 @@ case object StanfordSentenceTagger extends SentenceTransform {
           )))
         ))
     }))
+    */
   }
 }
 
@@ -188,8 +195,8 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
       val tokVerbnetSecondaryFrames = verbnet.getVerbnetFrameSecondaryNames(tokLemmaLC)
       tok.updateProperties(
         Map(
-          'verbnetPrimaryFrames -> tokVerbnetPrimaryFrames,
-          'verbnetSecondaryFrames -> tokVerbnetSecondaryFrames
+          'verbnetPrimaryFrames -> tokVerbnetPrimaryFrames
+        //'verbnetSecondaryFrames -> tokVerbnetSecondaryFrames
         )
       )
     })

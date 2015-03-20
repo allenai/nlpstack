@@ -68,6 +68,11 @@ object ParseRerankerTraining {
       }
     }
 
+    val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
+      clArgs.otherGoldParseFilename,
+      ConllX(true, makePoly = true), clArgs.dataSource
+    )
+
     println("Creating training vectors.")
     val nbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.nbestFilenames)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
@@ -118,21 +123,46 @@ object ParseRerankerTraining {
 
     println("Creating test vectors.")
     val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
-    val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
-      clArgs.otherGoldParseFilename,
-      ConllX(true, makePoly = true), clArgs.dataSource
-    )
     val testData = createTrainingData(otherGoldParseSource, otherNbestSource, feature)
     testData.labeledVectors foreach { x => println(x) }
 
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 10, 100, EntropyGainMetric(0))
+      new RandomForestTrainer(0, 20, 200, EntropyGainMetric(0))
     )
     val classifier: WrapperClassifier = trainer(trainingData)
+
+    val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
+
+    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
+    val candidateParses: Iterator[PolytreeParse] = {
+      (otherGoldParseSource.sentenceIterator map { sent =>
+        parser.parse(sent)
+      }).flatten
+    }
+    val scoredCandidates = candidateParses map { candidateParse =>
+      (candidateParse, rerankingFunction(candidateParse, 0.0))
+      //(candidateParse, candidateParse.sentence.size)
+    }
+    val sortedCandidates = scoredCandidates.toSeq sortBy { case (_, score) => score } map { case (cand, _) => cand }
+    val percentagesToPlot = Seq(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+    val scoringFunction = PathAccuracyScore(otherGoldParseSource, true, false)
+    val pathAccuracies = percentagesToPlot map { percentage =>
+      val candidateSubset = sortedCandidates.take((percentage * sortedCandidates.size).toInt)
+      val numerator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._1 }).sum
+      val denominator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._2 }).sum
+      numerator.toFloat / denominator
+    }
+    (percentagesToPlot zip pathAccuracies) foreach {
+      case (percentage, accuracy) =>
+        println(s"$percentage: $accuracy")
+    }
+
+    println("Evaluating classifier.")
     evaluate(trainingData, classifier)
     evaluate(testData, classifier)
 
+    /*
     println("Creating reranker.")
     val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
     val reranker: Reranker = new Reranker(rerankingFunction)
@@ -149,12 +179,11 @@ object ParseRerankerTraining {
         }
       }
     val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, true),
-      PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false),
-      WeirdnessAnalyzer(rerankingFunction))
+      PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false))
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
 
-    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
+    //val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
     parser match {
       case rankingParser: RerankingTransitionParser =>
         val revisedConfig = rankingParser.config.copy(
@@ -165,6 +194,7 @@ object ParseRerankerTraining {
         TransitionParser.save(revisedParser, clArgs.rerankerFilename)
         ParseFile.parseTestSet(revisedParser, otherGoldParseSource)
     }
+    */
   }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
@@ -235,11 +265,15 @@ case class WeirdParseNodeRerankingFunction(
 ) extends RerankingFunction {
 
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
-    sculpture match {
-      case parse: PolytreeParse =>
+    val result = sculpture match {
+      case parse: PolytreeParse => {
+        println(s"Number of nodes: ${parse.sentence.size}")
+        println(s"Number of weird nodes: ${getWeirdNodes(parse).size}")
         getWeirdNodes(parse).size.toDouble
+      }
       case _ => Double.MaxValue
     }
+    result
   }
 
   /** Gets the set of "weird" tokens in a parse.

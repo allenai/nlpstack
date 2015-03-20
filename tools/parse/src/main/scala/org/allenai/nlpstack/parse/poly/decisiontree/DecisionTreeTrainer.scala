@@ -228,6 +228,7 @@ class DecisionTreeTrainer(
 
     val root = new Node(Some(data), featureVectorSubset,
       (0 to data.numFeatures - 1).toIndexedSeq, depth = 0)
+    println(s"Number of training features: ${root.featureSubset.size}")
     val stack = mutable.Stack[Node]()
     stack.push(root)
     while (stack.nonEmpty) {
