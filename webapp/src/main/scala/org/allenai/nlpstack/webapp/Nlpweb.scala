@@ -26,7 +26,11 @@ object Nlpweb {
       implicit val timeout = Timeout(30.seconds)
 
       // IO is a scala object with an apply method that returns an ActorRef.
-      IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = config.getInt("nlpstack.webapp.port"))
+      IO(Http) ? Http.Bind(
+        service,
+        interface = "0.0.0.0",
+        port = config.getInt("nlpstack.webapp.port")
+      )
     }
   }
 }

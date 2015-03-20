@@ -10,7 +10,9 @@ case class FrameHierarchy(frame: Frame, children: Seq[FrameHierarchy]) {
     } else {
       1 + children.iterator.map(_.height).max
     }
-  override def toString = frame.toString + (if (children.size > 0) (" < " + children.mkString(", ")) else "")
+  override def toString = {
+    frame.toString + (if (children.size > 0) (" < " + children.mkString(", ")) else "")
+  }
 }
 
 object FrameHierarchy {

@@ -32,7 +32,12 @@ object Dependencies {
       buffer.toString
     }
 
-    def dotWithHighlights(sentence: Sent, title: String, specialNodes: Set[DependencyNode], specialEdges: Set[Edge[DependencyNode]]): String = {
+    def dotWithHighlights(
+      sentence: Sent,
+      title: String,
+      specialNodes: Set[DependencyNode],
+      specialEdges: Set[Edge[DependencyNode]]
+    ): String = {
       val buffer = new StringBuffer(4092)
       printDotWithHighlights(sentence, buffer, title, specialNodes, specialEdges)
       buffer.toString
@@ -50,7 +55,13 @@ object Dependencies {
       printDot(sentence, writer, title, Map.empty, Map.empty)
     }
 
-    def printDotWithHighlights(sentence: Sent, writer: java.lang.Appendable, title: String, specialNodes: Set[DependencyNode], specialEdges: Set[Edge[DependencyNode]]) {
+    def printDotWithHighlights(
+      sentence: Sent,
+      writer: java.lang.Appendable,
+      title: String,
+      specialNodes: Set[DependencyNode],
+      specialEdges: Set[Edge[DependencyNode]]
+    ) {
       val filledNodes = specialNodes zip Stream.continually("style=filled,fillcolor=lightgray")
 
       val nodeStyle = filledNodes
@@ -60,7 +71,13 @@ object Dependencies {
       printDot(sentence, writer, title, nodeStyle.toMap, edgeStyle.toMap)
     }
 
-    def printDot(sentence: Sent, writer: java.lang.Appendable, title: String, nodeStyle: Map[DependencyNode, String], edgeStyle: Map[Edge[DependencyNode], String]) {
+    def printDot(
+      sentence: Sent,
+      writer: java.lang.Appendable,
+      title: String,
+      nodeStyle: Map[DependencyNode, String],
+      edgeStyle: Map[Edge[DependencyNode], String]
+    ) {
       def quote(string: String) = "\"" + string + "\""
       def escape(string: String) = string.replaceAll("\"", "''")
       def nodeString(node: DependencyNode) = {
@@ -101,23 +118,25 @@ object Dependencies {
       }
 
       writer.append("\n")
-      for (dep <- sentence.dgraph.edges.toSeq.sortBy(edge => (edge.source.id, edge.dest.id, edge.label))) {
-        val color = dep.label match {
-          case "neg" => Some("red")
-          case "amod" | "advmod" => Some("lightblue")
-          case "det" | "punct" => Some("lightgrey")
-          case "aux" => Some("grey")
-          case x if x startsWith "prep" => Some("blue")
-          case _ => None
+      val sortedEdges =
+        for (dep <- sentence.dgraph.edges.toSeq.sortBy(edge => (edge.source.id, edge.dest.id, edge.label))) { // scalastyle:ignore
+          val color = dep.label match {
+            case "neg" => Some("red")
+            case "amod" | "advmod" => Some("lightblue")
+            case "det" | "punct" => Some("lightgrey")
+            case "aux" => Some("grey")
+            case x if x startsWith "prep" => Some("blue")
+            case _ => None
+          }
+
+          var parts = List("label=\"" + dep.label + "\"")
+          if (color.isDefined) parts ::= "color=\"" + color.get + "\""
+          if (edgeStyle.contains(dep)) parts ::= edgeStyle(dep)
+
+          val brackets = "[" + parts.mkString(",") + "]"
+          writer.append(indent + quote(nodeString(dep.source)) + " -> " +
+            quote(nodeString(dep.dest)) + " " + brackets + "\n")
         }
-
-        var parts = List("label=\"" + dep.label + "\"")
-        if (color.isDefined) parts ::= "color=\"" + color.get + "\""
-        if (edgeStyle.contains(dep)) parts ::= edgeStyle(dep)
-
-        val brackets = "[" + parts.mkString(",") + "]"
-        writer.append(indent + quote(nodeString(dep.source)) + " -> " + quote(nodeString(dep.dest)) + " " + brackets + "\n")
-      }
       writer.append("}")
     }
   }

@@ -20,7 +20,8 @@ class OpenNlpPostagger extends Postagger {
 
 object OpenNlpPostagger {
   private val defaultModelName = "en-pos-maxent.bin"
-  private val model = Resource.using(this.getClass.getClassLoader.getResourceAsStream(defaultModelName)) { is =>
-    new POSModel(is)
-  }
+  private val model =
+    Resource.using(this.getClass.getClassLoader.getResourceAsStream(defaultModelName)) { is =>
+      new POSModel(is)
+    }
 }

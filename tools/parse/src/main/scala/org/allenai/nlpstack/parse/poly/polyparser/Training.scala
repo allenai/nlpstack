@@ -84,7 +84,7 @@ object Training {
       case _ => Seq.empty[BrownClusters]
     }
 
-    val maybeVerbnet: Option[Verbnet] = for {
+    val verbnetTaggerOption: Option[VerbnetTagger] = for {
       taggersConfig <- taggersConfigOption
       verbnetConfig <- taggersConfig.get[Config]("verbnet")
       groupName <- verbnetConfig.get[String]("group")
@@ -96,14 +96,12 @@ object Training {
         artifactName,
         version
       )
-      new Verbnet(verbnetPath.toString)
+      VerbnetTagger(new Verbnet(verbnetPath.toString))
     }
-
-    val maybeVerbnetTagger = maybeVerbnet map { vbnet => new VerbnetTagger(vbnet) }
 
     val taggers: Seq[SentenceTransform] =
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ Seq(maybeVerbnetTagger).flatten
+        BrownClustersTagger(clusters)) ++ verbnetTaggerOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
@@ -127,19 +125,6 @@ object Training {
       BaseCostRerankingFunction, parsingNbestSize
     )
     val parser = RerankingTransitionParser(parserConfig)
-
-    maybeVerbnet map { verbnet =>
-      println("*** PRIMARY FRAMES ***")
-      verbnet.primaryDeliveries.toSeq sortBy { _._2 } foreach {
-        case (frame, count) =>
-          println(s"$frame: $count")
-      }
-      println("*** SECONDARY FRAMES ***")
-      verbnet.secondaryDeliveries.toSeq sortBy { _._2 } foreach {
-        case (frame, count) =>
-          println(s"$frame: $count")
-      }
-    }
 
     println("Saving models.")
     TransitionParser.save(parser, trainingConfig.outputPath)

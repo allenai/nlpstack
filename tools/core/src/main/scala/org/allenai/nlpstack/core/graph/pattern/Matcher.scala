@@ -17,7 +17,8 @@ sealed abstract class EdgeMatcher[T] extends Matcher[T] {
   def matches(edge: DirectedEdge[T]) = this.matchText(edge).isDefined
   def matchText(edge: DirectedEdge[T]): Option[String]
 
-  def canMatch(edge: Graph.Edge[T]): Boolean = this.matches(new UpEdge(edge)) || this.matches(new DownEdge(edge))
+  def canMatch(edge: Graph.Edge[T]): Boolean = this.matches(new UpEdge(edge)) ||
+    this.matches(new DownEdge(edge))
   def flip: EdgeMatcher[T]
 
   def baseEdgeMatcher: BaseEdgeMatcher[T]
@@ -38,7 +39,10 @@ abstract class WrappedEdgeMatcher[T](val matcher: EdgeMatcher[T]) extends EdgeMa
   override def baseEdgeMatcher = matcher.baseEdgeMatcher
 }
 
-class DirectedEdgeMatcher[T](val direction: Direction, matcher: EdgeMatcher[T]) extends WrappedEdgeMatcher[T](matcher) {
+class DirectedEdgeMatcher[T](
+    val direction: Direction,
+    matcher: EdgeMatcher[T]
+) extends WrappedEdgeMatcher[T](matcher) {
   def matchText(edge: DirectedEdge[T]) =
     if (edge.dir == direction) {
       matcher.matchText(edge)
@@ -58,7 +62,8 @@ class DirectedEdgeMatcher[T](val direction: Direction, matcher: EdgeMatcher[T]) 
   override def toStringF(f: String => String) = f(symbol + matcher.toStringF(f) + symbol)
   override def canEqual(that: Any) = that.isInstanceOf[DirectedEdgeMatcher[_]]
   override def equals(that: Any) = that match {
-    case that: DirectedEdgeMatcher[_] => (that canEqual this) && this.direction == that.direction && super.equals(that)
+    case that: DirectedEdgeMatcher[_] => (that canEqual this) &&
+      this.direction == that.direction && super.equals(that)
     case _ => false
   }
   override def hashCode = direction.hashCode + 39 * matcher.hashCode
@@ -71,19 +76,23 @@ class TrivialEdgeMatcher[T] extends BaseEdgeMatcher[T] {
   def flip = this
 }
 
-class CaptureEdgeMatcher[T](val alias: String, matcher: EdgeMatcher[T]) extends WrappedEdgeMatcher[T](matcher) {
+class CaptureEdgeMatcher[T](val alias: String, matcher: EdgeMatcher[T])
+    extends WrappedEdgeMatcher[T](matcher) {
   override def matchText(edge: DirectedEdge[T]) = matcher.matchText(edge)
   override def flip = new CaptureEdgeMatcher(alias, matcher.flip)
 
   // extend Object
   override def toStringF(f: String => String) = f(matcher match {
     case _: TrivialEdgeMatcher[_] => "{" + alias + "}"
-    case d: DirectedEdgeMatcher[_] => d.symbol + "{" + alias + ":" + d.matcher.toStringF(f) + "}" + d.symbol
+    case d: DirectedEdgeMatcher[_] => d.symbol + "{" + alias + ":" + d.matcher.toStringF(f) + "}" +
+      d.symbol
     case m: EdgeMatcher[_] => "{" + alias + ":" + m.toStringF(f) + "}"
   })
   override def canEqual(that: Any) = that.isInstanceOf[CaptureEdgeMatcher[_]]
   override def equals(that: Any) = that match {
-    case that: CaptureEdgeMatcher[_] => (that canEqual this) && this.alias == that.alias && super.equals(that)
+    case that: CaptureEdgeMatcher[_] => (that canEqual this) &&
+      this.alias == that.alias &&
+      super.equals(that)
     case _ => false
   }
   override def hashCode = alias.hashCode + 39 * matcher.hashCode
@@ -134,7 +143,8 @@ class ConjunctiveNodeMatcher[T](val matchers: Set[NodeMatcher[T]])
 
   override def baseNodeMatchers = this.matchers.toSeq.flatMap(_.baseNodeMatchers)
 
-  override def toStringF(f: String => String) = f(matchers.iterator.map(_.toStringF(f)).mkString(":"))
+  override def toStringF(f: String => String) =
+    f(matchers.iterator.map(_.toStringF(f)).mkString(":"))
   def canEqual(that: Any) = that.isInstanceOf[ConjunctiveNodeMatcher[_]]
   override def equals(that: Any) = that match {
     case that: ConjunctiveNodeMatcher[_] => (that canEqual this) && this.matchers == that.matchers
@@ -179,7 +189,8 @@ class CaptureNodeMatcher[T](val alias: String, matcher: NodeMatcher[T])
     }) + "}")
   override def canEqual(that: Any) = that.isInstanceOf[CaptureNodeMatcher[_]]
   override def equals(that: Any) = that match {
-    case that: CaptureNodeMatcher[_] => (that canEqual this) && this.alias == that.alias && super.equals(that)
+    case that: CaptureNodeMatcher[_] =>
+      (that canEqual this) && this.alias == that.alias && super.equals(that)
     case _ => false
   }
   override def hashCode = alias.hashCode + 39 * matcher.hashCode

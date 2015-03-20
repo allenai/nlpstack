@@ -20,7 +20,8 @@ object CorefResolver {
   object multilineStringFormat extends StringFormat("\n")
   object singlelineStringFormat extends StringFormat(";")
 
-  class StringFormat(val separator: String) extends Format[(DependencyGraph, Seq[Referent]), String] {
+  class StringFormat(val separator: String)
+      extends Format[(DependencyGraph, Seq[Referent]), String] {
     private val dgraphStringFormat = new DependencyGraph.StringFormat(separator)
 
     private val regex =

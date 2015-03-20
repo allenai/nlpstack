@@ -3,7 +3,12 @@ package org.allenai.nlpstack.tokenize
 import org.allenai.nlpstack.core.{ FactorieUtilities, Format, Tokenizer, Token }
 import org.allenai.nlpstack.tokenize.FactorieTokenizer.factorieFormat
 
-import cc.factorie.app.nlp.{ Document => FactorieDocument, Token => FactorieToken, DocumentAnnotatorPipeline, MutableDocumentAnnotatorMap }
+import cc.factorie.app.nlp.{
+  Document => FactorieDocument,
+  Token => FactorieToken,
+  DocumentAnnotatorPipeline,
+  MutableDocumentAnnotatorMap
+}
 import cc.factorie.app.nlp.segment.DeterministicTokenizer
 
 class FactorieTokenizer extends Tokenizer {

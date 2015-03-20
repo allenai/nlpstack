@@ -5,7 +5,8 @@ import org.allenai.nlpstack.core.Format
 import scala.util.matching.Regex
 
 object Dependency {
-  val Serialized = new Regex("""(\p{Graph}+)\(\s*(\p{Graph}*?-\d\d*?),\s*(\p{Graph}*?-\d\d*)\s*\)""")
+  val Serialized =
+    new Regex("""(\p{Graph}+)\(\s*(\p{Graph}*?-\d\d*?),\s*(\p{Graph}*?-\d\d*)\s*\)""")
 
   implicit object DependencyOrdering extends Ordering[Dependency] {
     def compare(a: Dependency, b: Dependency) = {
@@ -17,7 +18,8 @@ object Dependency {
 
   object stringFormat extends Format[Dependency, String] {
     def write(dep: Dependency): String = {
-      dep.label + "(" + DependencyNode.stringFormat.write(dep.source) + ", " + DependencyNode.stringFormat.write(dep.dest) + ")"
+      dep.label + "(" + DependencyNode.stringFormat.write(dep.source) + ", " +
+        DependencyNode.stringFormat.write(dep.dest) + ")"
     }
 
     def read(pickled: String): Dependency = try {
@@ -28,7 +30,11 @@ object Dependency {
         label
       )
     } catch {
-      case e: Throwable => throw new Dependency.SerializationException("could not deserialize dependency: " + pickled, e)
+      case e: Throwable =>
+        throw new Dependency.SerializationException(
+          "could not deserialize dependency: " + pickled,
+          e
+        )
     }
   }
 
@@ -40,7 +46,11 @@ object Dependency {
 }
 
 object Dependencies {
-  def serialize(deps: Iterable[Dependency]) = (deps.iterator).map(Dependency.stringFormat.write(_)).mkString("; ")
+  def serialize(deps: Iterable[Dependency]) = {
+    deps.iterator.map {
+      Dependency.stringFormat.write(_)
+    }.mkString("; ")
+  }
   def deserialize(string: String): Seq[Dependency] = string.split("""\s*(?:;|\n)\s*""").
     map(Dependency.stringFormat.read(_))
 

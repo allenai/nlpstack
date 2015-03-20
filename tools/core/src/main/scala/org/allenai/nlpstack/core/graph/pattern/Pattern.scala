@@ -22,7 +22,9 @@ class Pattern[T](
       (m, (i % 2)) match {
         case (m: NodeMatcher[_], 0) =>
         case (m: EdgeMatcher[_], 1) =>
-        case _ => throw new IllegalArgumentException("matchers must start with a node matcher and alternate")
+        case _ => throw new IllegalArgumentException(
+          "matchers must start with a node matcher and alternate"
+        )
       }
   }
 
@@ -68,7 +70,9 @@ class Pattern[T](
     ): List[Match[T]] = matchers match {
 
       case (m: CaptureNodeMatcher[_]) :: xs =>
-        m.matchText(vertex).map(text => rec(xs, vertex, edges, (m.alias, Match.NodeGroup(vertex, text)) :: nodeGroups, edgeGroups)).getOrElse(List())
+        m.matchText(vertex).map { text =>
+          rec(xs, vertex, edges, (m.alias, Match.NodeGroup(vertex, text)) :: nodeGroups, edgeGroups)
+        }.getOrElse(List())
       case (m: NodeMatcher[_]) :: xs if m.matches(vertex) =>
         if (m.matches(vertex)) {
           rec(xs, vertex, edges, nodeGroups, edgeGroups)
@@ -84,7 +88,8 @@ class Pattern[T](
         }.flatMap {
           case (dedge, matchText) =>
             val groups = m match {
-              case m: CaptureEdgeMatcher[_] => (m.alias, Match.EdgeGroup(dedge, matchText)) :: edgeGroups
+              case m: CaptureEdgeMatcher[_] =>
+                (m.alias, Match.EdgeGroup(dedge, matchText)) :: edgeGroups
               case _ => edgeGroups
             }
             // we found one, so recurse
