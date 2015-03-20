@@ -3,7 +3,6 @@ package org.allenai.nlpstack.parse.poly.core
 import org.allenai.common.immutable.Interval
 import org.allenai.common.testkit.UnitSpec
 
-
 object TokenSpecTestData {
   // scalastyle:off
 
@@ -125,7 +124,5 @@ class TokenSpec extends UnitSpec {
     TokenSpecTestData.sent4.parenIntervals shouldBe
       Set(Interval.closed(0, 7), Interval.closed(0, 10), Interval.closed(15, 17))
   }
-
-
 
 }

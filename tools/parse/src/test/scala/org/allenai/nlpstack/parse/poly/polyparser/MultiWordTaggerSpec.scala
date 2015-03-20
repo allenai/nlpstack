@@ -1,12 +1,12 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{Sentence, Token}
+import org.allenai.nlpstack.parse.poly.core.{ Sentence, Token }
 
 class MultiWordTaggerSpec extends UnitSpec {
   // scalastyle:off
 
-  import MultiWordTagger.{mweSymbol, symbolFor, mweValue}
+  import MultiWordTagger.{ mweSymbol, symbolFor, mweValue }
 
   val string = "I like pizza because of the Ninja Turtles"
   val sentence = Sentence(string.split(" ").map(x => Token(Symbol(x))))

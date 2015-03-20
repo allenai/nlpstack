@@ -3,7 +3,6 @@ package org.allenai.nlpstack.parse.poly.core
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 
-
 class PositionTreeSpec extends UnitSpec {
   // scalastyle:off
 
@@ -28,7 +27,8 @@ class PositionTreeSpec extends UnitSpec {
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
     arclabels = Vector(Set((3, 'root)), Set((2, 'det)), Set((1, 'det), (3, 'nsubj)),
-      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj))))
+      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj)))
+  )
 
   val cparse1 = parse1.asConstituencyParse
 
@@ -36,18 +36,18 @@ class PositionTreeSpec extends UnitSpec {
     (Position(Seq()), PositionTreeNode(Map('name -> "a"))),
     (Position(Seq(0)), PositionTreeNode(Map('name -> "b"))),
     (Position(Seq(1)), PositionTreeNode(Map('name -> "c"))),
-    (Position(Seq(0,0)), PositionTreeNode(Map('name -> "d"))),
-    (Position(Seq(1,0)), PositionTreeNode(Map('name -> "e"))),
-    (Position(Seq(0,1)), PositionTreeNode(Map('name -> "f")))
+    (Position(Seq(0, 0)), PositionTreeNode(Map('name -> "d"))),
+    (Position(Seq(1, 0)), PositionTreeNode(Map('name -> "e"))),
+    (Position(Seq(0, 1)), PositionTreeNode(Map('name -> "f")))
   ))
 
   "Calling Position.getChild" should "return the correct child" in {
     Position(Seq()).getChild(7) shouldBe Position(Seq(7))
-    Position(Seq(3,2,5)).getChild(7) shouldBe Position(Seq(7,3,2,5))
+    Position(Seq(3, 2, 5)).getChild(7) shouldBe Position(Seq(7, 3, 2, 5))
   }
 
   "Calling Position.parent" should "return the correct parent" in {
-    Position(Seq(3,2,5)).parent shouldBe Some(Position(Seq(2,5)))
+    Position(Seq(3, 2, 5)).parent shouldBe Some(Position(Seq(2, 5)))
   }
 
   it should "return None if called on the root position" in {
@@ -55,38 +55,40 @@ class PositionTreeSpec extends UnitSpec {
   }
 
   "Calling Position.isDescendantOf" should "return true" in {
-    Position(Seq(3,2,5)).isDescendentOf(Position(Seq(2,5))) shouldBe true
-    Position(Seq(3,2,5)).isDescendentOf(Position(Seq(5))) shouldBe true
-    Position(Seq(3,2,5)).isDescendentOf(Position.root) shouldBe true
+    Position(Seq(3, 2, 5)).isDescendentOf(Position(Seq(2, 5))) shouldBe true
+    Position(Seq(3, 2, 5)).isDescendentOf(Position(Seq(5))) shouldBe true
+    Position(Seq(3, 2, 5)).isDescendentOf(Position.root) shouldBe true
   }
 
   it should "return true when called on itself" in {
-    Position(Seq(3,2,5)).isDescendentOf(Position(Seq(3,2,5))) shouldBe true
+    Position(Seq(3, 2, 5)).isDescendentOf(Position(Seq(3, 2, 5))) shouldBe true
   }
 
   it should "return false" in {
-    Position(Seq(2,5)).isDescendentOf(Position(Seq(3,2,5))) shouldBe false
-    Position(Seq(2,5)).isDescendentOf(Position(Seq(3,5))) shouldBe false
-    Position(Seq(2,5)).isDescendentOf(Position(Seq(2,4))) shouldBe false
+    Position(Seq(2, 5)).isDescendentOf(Position(Seq(3, 2, 5))) shouldBe false
+    Position(Seq(2, 5)).isDescendentOf(Position(Seq(3, 5))) shouldBe false
+    Position(Seq(2, 5)).isDescendentOf(Position(Seq(2, 4))) shouldBe false
   }
 
   "Calling Position.depthFirstPreorder" should "return the correct sorted order" in {
     Position.depthFirstPreorder(Seq(
-      Position(Seq(0,0)), Position(Seq(0)), Position(Seq(1,0)),
-      Position(Seq(1)), Position(Seq(0,1)), Position.root
+      Position(Seq(0, 0)), Position(Seq(0)), Position(Seq(1, 0)),
+      Position(Seq(1)), Position(Seq(0, 1)), Position.root
     )) shouldBe {
       Seq(
-        Position.root, Position(Seq(0)), Position(Seq(0,0)), Position(Seq(1,0)),
-        Position(Seq(1)), Position(Seq(0,1))
+        Position.root, Position(Seq(0)), Position(Seq(0, 0)), Position(Seq(1, 0)),
+        Position(Seq(1)), Position(Seq(0, 1))
       )
     }
   }
 
   "Calling PositionTree.getChildren" should "return the correct children" in {
     cparse1.getChildren(Position.root) shouldBe Seq(
-      Position(Seq(0)), Position(Seq(1)), Position(Seq(2)))
+      Position(Seq(0)), Position(Seq(1)), Position(Seq(2))
+    )
     cparse1.getChildren(Position(Seq(2))) shouldBe Seq(
-      Position(Seq(0, 2)), Position(Seq(1, 2)))
+      Position(Seq(0, 2)), Position(Seq(1, 2))
+    )
     cparse1.getChildren(Position(Seq(0, 2))) shouldBe Seq.empty
   }
 

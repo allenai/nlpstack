@@ -22,15 +22,19 @@ class FeatureVectorSpec extends UnitSpec {
   }
 
   "Calling subtractVectors" should "return the correct difference vector" in {
-    FeatureVector.subtractVectors(FeatureVector(Seq(nameA -> 1, nameB -> 5)),
-      FeatureVector(Seq(nameA -> 3, nameC -> 4))).featureMap shouldBe
-        Map(nameA -> -2, nameB -> 5, nameC -> -4)
+    FeatureVector.subtractVectors(
+      FeatureVector(Seq(nameA -> 1, nameB -> 5)),
+      FeatureVector(Seq(nameA -> 3, nameC -> 4))
+    ).featureMap shouldBe
+      Map(nameA -> -2, nameB -> 5, nameC -> -4)
   }
 
   "Calling mergeVectors" should "prioritize mappings in the first vector" in {
-    FeatureVector.mergeVectors(FeatureVector(Seq(nameA -> 0.5, nameB -> 0.3)),
-      FeatureVector(Seq(nameA -> 0.7, nameC -> 0.4))).featureMap shouldBe
-        Map(nameA -> 0.5, nameB -> 0.3, nameC -> 0.4)
+    FeatureVector.mergeVectors(
+      FeatureVector(Seq(nameA -> 0.5, nameB -> 0.3)),
+      FeatureVector(Seq(nameA -> 0.7, nameC -> 0.4))
+    ).featureMap shouldBe
+      Map(nameA -> 0.5, nameB -> 0.3, nameC -> 0.4)
   }
 
   "Serializing a FeatureVector" should "preserve the vector" in {

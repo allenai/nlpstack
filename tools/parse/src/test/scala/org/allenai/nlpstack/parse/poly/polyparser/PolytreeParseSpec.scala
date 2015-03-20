@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.nlpstack.parse.poly.core.{Sentence, NexusToken, Token}
+import org.allenai.nlpstack.parse.poly.core.{ Sentence, NexusToken, Token }
 
 object PolytreeParseTestData {
   // scalastyle:off
@@ -46,16 +46,19 @@ class PolytreeParseSpec extends UnitSpec {
     *
     */
   val parse2 = PolytreeParse(
-    sentence = Sentence(Vector(NexusToken,
+    sentence = Sentence(Vector(
+      NexusToken,
       Token('the, Map('cpos -> Set('DT))),
       Token('cat, Map('cpos -> Set('NN))),
       Token('sat, Map('cpos -> Set('VB))),
       Token('by, Map('cpos -> Set('IN))),
-      Token('me, Map('cpos -> Set('PRP))))),
+      Token('me, Map('cpos -> Set('PRP)))
+    )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
     arclabels = Vector(Set((3, 'root)), Set((2, 'det)), Set((1, 'det), (3, 'nsubj)),
-      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj))))
+      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj)))
+  )
 
   /** This represents the following polytree parse:
     *
@@ -73,16 +76,19 @@ class PolytreeParseSpec extends UnitSpec {
     *
     */
   val parse3 = PolytreeParse(
-    sentence = Sentence(Vector(NexusToken,
+    sentence = Sentence(Vector(
+      NexusToken,
       Token('the, Map('cpos -> Set('DT))),
       Token('cat, Map('cpos -> Set('NN))),
       Token('gave, Map('cpos -> Set('VB))),
       Token('me, Map('cpos -> Set('NN))),
-      Token('it, Map('cpos -> Set('NN))))),
+      Token('it, Map('cpos -> Set('NN)))
+    )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 3),
     children = Vector(Set(3), Set(2), Set(), Set(2, 4, 5), Set(), Set()),
     arclabels = Vector(Set((3, 'root)), Set((2, 'det)), Set((1, 'det), (3, 'nsubj)),
-      Set((0, 'root), (2, 'nsubj), (4, 'dobj), (5, 'iobj)), Set((3, 'dobj)), Set((4, 'iobj))))
+      Set((0, 'root), (2, 'nsubj), (4, 'dobj), (5, 'iobj)), Set((3, 'dobj)), Set((4, 'iobj)))
+  )
 
   "Calling .siblings" should "return the correct result for parse2" in {
     parse2.siblings(1) shouldBe Set()
@@ -102,12 +108,12 @@ class PolytreeParseSpec extends UnitSpec {
 
   "Creating a PolytreeParse" should
     "throw an IllegalArgumentException if the input vectors have differing lengths" in {
-    val tokens1Bad = PolytreeParseTestData.tokens1.init
-    intercept[IllegalArgumentException] {
-      new PolytreeParse(Sentence(tokens1Bad), PolytreeParseTestData.breadcrumb1,
-        PolytreeParseTestData.children1, PolytreeParseTestData.arclabels1)
+      val tokens1Bad = PolytreeParseTestData.tokens1.init
+      intercept[IllegalArgumentException] {
+        new PolytreeParse(Sentence(tokens1Bad), PolytreeParseTestData.breadcrumb1,
+          PolytreeParseTestData.children1, PolytreeParseTestData.arclabels1)
+      }
     }
-  }
 
   it should "throw an IllegalArgumentException if the nexus breadcrumb is not -1" in {
     val breadcrumb1Bad = 0 +: PolytreeParseTestData.breadcrumb1.tail
@@ -120,7 +126,8 @@ class PolytreeParseSpec extends UnitSpec {
   "Calling .arcLabelByEndNodes" should "compute the correct value for parse1" in {
     PolytreeParseTestData.parse1.arcLabelByEndNodes shouldBe Map(
       Set(0, 2) -> 'root, Set(1, 2) -> 'nsubj, Set(2, 5) -> 'dobj, Set(2, 6) -> 'prep,
-      Set(3, 5) -> 'det, Set(4, 5) -> 'amod, Set(6, 8) -> 'pobj, Set(7, 8) -> 'det)
+      Set(3, 5) -> 'det, Set(4, 5) -> 'amod, Set(6, 8) -> 'pobj, Set(7, 8) -> 'det
+    )
   }
 
   "Calling .areNeighbors" should "return true for a (head, tail) arc" in {
@@ -143,7 +150,6 @@ class PolytreeParseSpec extends UnitSpec {
   "Calling .depthFirstPreorder" should "return the nodes in the correct order" in {
     PolytreeParseTestData.parse1.depthFirstPreorder shouldBe Vector(0, 2, 1, 5, 3, 4, 6, 8, 7)
   }
-
 
   "Calling .relativeCposMap" should "return the correct result for parse2" in {
     parse2.relativeCposMap(1) shouldBe Tuple2((true, 'DT), 0)
