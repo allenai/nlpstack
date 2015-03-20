@@ -11,7 +11,7 @@ import java.nio.file.Path
 import spray.json._
 import DefaultJsonProtocol._
 
-/** An object that uses JVerbnet, a 3rd party Wrapper library for Verbnet data
+/** A class that uses JVerbnet, a 3rd party Wrapper library for Verbnet data
   * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various vernbet
   * features for a verb.
   */
@@ -63,13 +63,7 @@ case class Verbnet(verbnetPath: Path) {
   def getVerbnetFrames(verb: String): Set[IFrame] = {
     // Get all classes
     val verbClasses = getVerbnetClasses(verb)
-    // Create set of verb frames to populate
-    val verbFrames = new scala.collection.mutable.HashSet[IFrame]
-    // Iterate through the classes to get all frames within each class.
-    for (verbClass <- verbClasses) {
-      verbFrames ++= verbClass.getFrames
-    }
-    verbFrames.toSet
+    verbClasses flatMap { verbClass => verbClass.getFrames }
   }
 
   /* Returns the set of primary names for all frames within all classes 
@@ -78,7 +72,28 @@ case class Verbnet(verbnetPath: Path) {
   def getVerbnetFramePrimaryNames(verb: String): Set[Symbol] = {
     // Get frames
     val verbFrames = getVerbnetFrames(verb)
-    verbFrames.map(x => Symbol(x.getPrimaryType.getID.replaceAll("""\s+""", "-")))
+    // Split the frame name into its constituents, for e.g., "NP", "V" and "PP.result" from
+    // the fram name "NP V PP.result". Then strip the part following a dot, if it exists, from
+    // each of the constituents. For e.g., "PP.result" becomes "PP", so the entire frame name
+    // will become "NP V PP". Then replace whitespaces with dashes, to get "NP-V-PP".
+    val frames = (for {
+      verbFrame <- verbFrames
+    } yield {
+      val primaryName = verbFrame.getPrimaryType.getID
+      val constituents = primaryName.split("""\s+""")
+      val modConstituents = for {
+        constituent <- constituents
+      } yield {
+        val pattern = """^(.+)\..+$""".r
+        val patternMatch = pattern.findFirstMatchIn(constituent)
+        patternMatch match {
+          case Some(x) => x.group(1)
+          case None => constituent
+        }
+      }
+      modConstituents.mkString("-")
+    }).map(x => Symbol(x)).toSet
+    frames
   }
 
   /* Returns the set of secondary names for all frames within all classes 
@@ -87,13 +102,8 @@ case class Verbnet(verbnetPath: Path) {
   def getVerbnetFrameSecondaryNames(verb: String): Set[Symbol] = {
     // Get frames
     val verbFrames = getVerbnetFrames(verb)
-    val secondaryFrameNames = new scala.collection.mutable.HashSet[Symbol]
-    for (verbFrame <- verbFrames) {
-      val secondaryType = verbFrame.getSecondaryType
-      if (secondaryType != null) {
-        secondaryFrameNames += Symbol(secondaryType.getID.replaceAll("""\s+""", "-"))
-      }
-    }
-    secondaryFrameNames.toSet
+    verbFrames.map(_.getSecondaryType).filter(secondaryType => secondaryType != null).map(
+      secondaryType => Symbol(secondaryType.getID.replaceAll("""\s+""", "-"))
+    )
   }
 }
