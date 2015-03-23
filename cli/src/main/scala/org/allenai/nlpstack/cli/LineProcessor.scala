@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.cli
 
 import org.allenai.common.Timing
+import org.allenai.common.ParIterator.ParIteratorEnrichment
 
 import akka.actor._
 import akka.io.IO
@@ -14,6 +15,7 @@ import spray.util.LoggingContext
 
 import scala.concurrent.duration._
 import scala.io.{ Codec, Source }
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.{ File, PrintWriter }
 
 abstract class LineProcessor(name: String) {
@@ -24,8 +26,7 @@ abstract class LineProcessor(name: String) {
     port: Int = typesafeConfig.getInt(s"nlpstack.tools.$name.defaultPort"),
     outputFile: Option[File] = None,
     inputFile: Option[File] = None,
-    parallel: Boolean = false,
-    parallelBatchSize: Int = 1000
+    parallel: Boolean = false
   )
 
   val parser = new scopt.OptionParser[Config](name) {
@@ -47,10 +48,6 @@ abstract class LineProcessor(name: String) {
     opt[Unit]("parallel").action { (_, c: Config) =>
       c.copy(parallel = true)
     }.text("parallel execution")
-
-    opt[Int]("parallelBatchSize").action { (size, c: Config) =>
-      c.copy(parallelBatchSize = size)
-    }.text("number of lines to read into memory during parallel execution")
 
     help("help").text("print this usage text")
   }
@@ -74,11 +71,6 @@ abstract class LineProcessor(name: String) {
     }
   }
 
-  def handle(writer: PrintWriter, line: String): Unit = {
-    writer.println(process(line))
-    writer.flush()
-  }
-
   def process(line: String): String
 
   def runCli(config: Config) {
@@ -93,11 +85,11 @@ abstract class LineProcessor(name: String) {
     }
 
     val duration = Timing.time {
-      val lineBatches = source.getLines.grouped(config.parallelBatchSize) map { batch =>
-        if (config.parallel) batch.toIndexedSeq.par else batch
-      }
-      for (batch <- lineBatches; line <- batch) {
-        handle(writer, line)
+      val processedLines =
+        if (config.parallel) source.getLines().parMap(process) else source.getLines().map(process)
+
+      processedLines.foreach { line =>
+        writer.println(line)
         writer.println()
       }
     }

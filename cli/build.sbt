@@ -8,3 +8,7 @@ libraryDependencies ++= Seq(
   sprayCan,
   sprayRouting,
   typesafeConfig)
+
+fork in run := true
+
+javaOptions += "-Xmx8G"
