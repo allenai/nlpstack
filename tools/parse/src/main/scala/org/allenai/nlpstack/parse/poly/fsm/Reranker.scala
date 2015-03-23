@@ -25,6 +25,17 @@ class Reranker(rerankingFunction: RerankingFunction) {
     sortedCandidates.headOption
   }
 
+  def rerankWithScore(nbestList: NbestList): Option[(Sculpture, Double)] = {
+    val rescoredCandidates: Seq[(Sculpture, Double)] = {
+      (nbestList.scoredSculptures map {
+        case (sculpture, baseCost) =>
+          (sculpture, rerankingFunction(sculpture, baseCost))
+      }).toSeq
+    }
+    val sortedCandidates = rescoredCandidates sortBy { _._2 }
+    sortedCandidates.headOption
+  }
+
   /** Applies the reranker to every nbest list in a corpus.
     *
     * @param nbestCorpus corpus of nbest lists

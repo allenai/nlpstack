@@ -63,6 +63,8 @@ abstract class DependencyParsingTransitionSystem(
       TokenPositionFeature,
       TokenPropertyFeature('autoCpos),
       TokenPropertyFeature('autoPos),
+      TokenPropertyFeature('disputedCpos),
+      TokenPropertyFeature('disputedPos),
       TokenPropertyFeature('brown0),
       TokenPropertyFeature('verbnetPrimaryFrames),
       TokenPropertyFeature('verbnetSecondaryFrames),

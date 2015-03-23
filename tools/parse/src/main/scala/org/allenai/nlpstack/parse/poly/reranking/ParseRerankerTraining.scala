@@ -58,116 +58,28 @@ object ParseRerankerTraining {
     }
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
-    val clusters: Seq[BrownClusters] = {
-      if (clArgs.clustersPath != "") {
-        clArgs.clustersPath.split(",") map { path =>
-          BrownClusters.fromLiangFormat(path)
-        }
-      } else {
-        Seq[BrownClusters]()
-      }
-    }
 
-    val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
-      clArgs.otherGoldParseFilename,
-      ConllX(true, makePoly = true), clArgs.dataSource
-    )
-
-    println("Creating training vectors.")
+    println("Creating reranker.")
     val nbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.nbestFilenames)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val feature = new ParseNodeFeatureUnion(Seq(
-      TransformedNeighborhoodFeature(Seq(
-        ("children", AllChildrenExtractor)
-      ), Seq(
-        ("card", CardinalityNhTransform)
-      )),
-      TransformedNeighborhoodFeature(Seq(
-        ("self", SelfExtractor),
-        ("parent", EachParentExtractor),
-        ("child", EachChildExtractor),
-        ("parent1", SpecificParentExtractor(0)),
-        ("parent2", SpecificParentExtractor(1)),
-        ("parent3", SpecificParentExtractor(2)),
-        ("parent4", SpecificParentExtractor(3)),
-        ("child1", SpecificChildExtractor(0)),
-        ("child2", SpecificChildExtractor(1)),
-        ("child3", SpecificChildExtractor(2)),
-        ("child4", SpecificChildExtractor(3)),
-        ("child5", SpecificChildExtractor(4))
-      ), Seq(
-        ("cpos", PropertyNhTransform('cpos)),
-        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
-        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-      )),
-      TransformedNeighborhoodFeature(Seq(
-        ("parent1", SelfAndSpecificParentExtractor(0)),
-        ("parent2", SelfAndSpecificParentExtractor(1)),
-        ("parent3", SelfAndSpecificParentExtractor(2)),
-        ("parent4", SelfAndSpecificParentExtractor(3)),
-        ("child1", SelfAndSpecificChildExtractor(0)),
-        ("child2", SelfAndSpecificChildExtractor(1)),
-        ("child3", SelfAndSpecificChildExtractor(2)),
-        ("child4", SelfAndSpecificChildExtractor(3)),
-        ("child5", SelfAndSpecificChildExtractor(4))
-      ), Seq(
-        ("alabel", ArclabelNhTransform),
-        ("direction", DirectionNhTransform)
-      ))
-    ))
+    val (rerankingFunction, classifier) = trainRerankingFunction(goldParseSource, nbestSource)
 
-    val trainingData = createTrainingData(goldParseSource, nbestSource, feature)
-
-    println("Creating test vectors.")
-    val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
-    val testData = createTrainingData(otherGoldParseSource, otherNbestSource, feature)
-    testData.labeledVectors foreach { x => println(x) }
-
-    println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 20, 200, EntropyGainMetric(0))
+    println("Evaluating test vectors.")
+    val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
+      clArgs.otherGoldParseFilename,
+      ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val classifier: WrapperClassifier = trainer(trainingData)
-
-    val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
-
-    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
-    val candidateParses: Iterator[PolytreeParse] = {
-      (otherGoldParseSource.sentenceIterator map { sent =>
-        parser.parse(sent)
-      }).flatten
-    }
-    val scoredCandidates = candidateParses map { candidateParse =>
-      (candidateParse, rerankingFunction(candidateParse, 0.0))
-      //(candidateParse, candidateParse.sentence.size)
-    }
-    val sortedCandidates = scoredCandidates.toSeq sortBy { case (_, score) => score } map { case (cand, _) => cand }
-    val percentagesToPlot = Seq(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-    val scoringFunction = PathAccuracyScore(otherGoldParseSource, true, false)
-    val pathAccuracies = percentagesToPlot map { percentage =>
-      val candidateSubset = sortedCandidates.take((percentage * sortedCandidates.size).toInt)
-      val numerator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._1 }).sum
-      val denominator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._2 }).sum
-      numerator.toFloat / denominator
-    }
-    (percentagesToPlot zip pathAccuracies) foreach {
-      case (percentage, accuracy) =>
-        println(s"$percentage: $accuracy")
-    }
-
-    println("Evaluating classifier.")
-    evaluate(trainingData, classifier)
+    val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
+    val testData =
+      createTrainingData(otherGoldParseSource, otherNbestSource, defaultParseNodeFeature)
+    testData.labeledVectors foreach { x => println(x) }
     evaluate(testData, classifier)
 
-    /*
-    println("Creating reranker.")
-    val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
-    val reranker: Reranker = new Reranker(rerankingFunction)
-
     println("Reranking.")
+    val reranker: Reranker = new Reranker(rerankingFunction)
     val candidateParses =
       for {
         parsePool <- otherNbestSource.poolIterator
@@ -183,7 +95,8 @@ object ParseRerankerTraining {
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
 
-    //val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
+    /*
+    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
     parser match {
       case rankingParser: RerankingTransitionParser =>
         val revisedConfig = rankingParser.config.copy(
@@ -195,6 +108,63 @@ object ParseRerankerTraining {
         ParseFile.parseTestSet(revisedParser, otherGoldParseSource)
     }
     */
+  }
+
+  val defaultParseNodeFeature = new ParseNodeFeatureUnion(Seq(
+    TransformedNeighborhoodFeature(Seq(
+      ("children", AllChildrenExtractor)
+    ), Seq(
+      ("card", CardinalityNhTransform)
+    )),
+    TransformedNeighborhoodFeature(Seq(
+      ("self", SelfExtractor),
+      ("parent", EachParentExtractor),
+      ("child", EachChildExtractor),
+      ("parent1", SpecificParentExtractor(0)),
+      ("parent2", SpecificParentExtractor(1)),
+      ("parent3", SpecificParentExtractor(2)),
+      ("parent4", SpecificParentExtractor(3)),
+      ("child1", SpecificChildExtractor(0)),
+      ("child2", SpecificChildExtractor(1)),
+      ("child3", SpecificChildExtractor(2)),
+      ("child4", SpecificChildExtractor(3)),
+      ("child5", SpecificChildExtractor(4))
+    ), Seq(
+      ("cpos", PropertyNhTransform('cpos)),
+      ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+      ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
+    )),
+    TransformedNeighborhoodFeature(Seq(
+      ("parent1", SelfAndSpecificParentExtractor(0)),
+      ("parent2", SelfAndSpecificParentExtractor(1)),
+      ("parent3", SelfAndSpecificParentExtractor(2)),
+      ("parent4", SelfAndSpecificParentExtractor(3)),
+      ("child1", SelfAndSpecificChildExtractor(0)),
+      ("child2", SelfAndSpecificChildExtractor(1)),
+      ("child3", SelfAndSpecificChildExtractor(2)),
+      ("child4", SelfAndSpecificChildExtractor(3)),
+      ("child5", SelfAndSpecificChildExtractor(4))
+    ), Seq(
+      ("alabel", ArclabelNhTransform),
+      ("direction", DirectionNhTransform)
+    ))
+  ))
+
+  def trainRerankingFunction(
+    goldParseSource: PolytreeParseSource,
+    nbestSource: ParsePoolSource
+  ): (RerankingFunction, WrapperClassifier) = {
+
+    println("Creating training vectors.")
+    val trainingData = createTrainingData(goldParseSource, nbestSource, defaultParseNodeFeature)
+    println("Training classifier.")
+    val trainer = new WrapperClassifierTrainer(
+      new RandomForestTrainer(0, 5, 50, EntropyGainMetric(0))
+    )
+    val classifier: WrapperClassifier = trainer(trainingData)
+    println("Evaluating classifier.")
+    evaluate(trainingData, classifier)
+    (WeirdParseNodeRerankingFunction(classifier, defaultParseNodeFeature, 0.3), classifier)
   }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,

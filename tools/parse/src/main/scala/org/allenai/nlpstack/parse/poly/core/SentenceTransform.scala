@@ -35,6 +35,8 @@ object SentenceTransform {
         JsString("FactorieSentenceTagger")
       case StanfordSentenceTagger =>
         JsString("StanfordSentenceTagger")
+      case MultiSentenceTagger =>
+        JsString("MultiSentenceTagger")
       case LexicalPropertiesTagger =>
         JsString("LexicalPropertiesTagger")
       case brownClustersTagger: BrownClustersTagger =>
@@ -47,6 +49,7 @@ object SentenceTransform {
       case JsString(typeid) => typeid match {
         case "FactorieSentenceTagger" => FactorieSentenceTagger
         case "StanfordSentenceTagger" => StanfordSentenceTagger
+        case "MultiSentenceTagger" => MultiSentenceTagger
         case "LexicalPropertiesTagger" => LexicalPropertiesTagger
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
@@ -72,11 +75,13 @@ case object FactorieSentenceTagger extends SentenceTransform {
       defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
+        val autoPos = Symbol(tagged.postag)
+        val autoCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          autoPos.name, "X"
+        ))
         untagged.updateProperties(Map(
-          'autoPos -> Set(Symbol(tagged.postag)),
-          'autoCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
-            tagged.postag, "X"
-          )))
+          'autoPos -> Set(autoPos),
+          'autoCpos -> Set(autoCpos)
         ))
     }))
   }
@@ -90,8 +95,6 @@ case object StanfordSentenceTagger extends SentenceTransform {
   @transient private val stanfordTagger = new StanfordPostagger()
 
   def transform(sentence: Sentence): Sentence = {
-    sentence
-    /*
     val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
     val nlpStackTokens: IndexedSeq[NLPStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
@@ -99,14 +102,60 @@ case object StanfordSentenceTagger extends SentenceTransform {
       stanfordTagger.postagTokenized(nlpStackTokens).toIndexedSeq
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
+        val autoPos = Symbol(tagged.postag)
+        val autoCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          autoPos.name, "X"
+        ))
         untagged.updateProperties(Map(
-          'autoPos -> Set(Symbol(tagged.postag)),
-          'autoCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
-            tagged.postag, "X"
-          )))
+          'autoPos -> Set(autoPos),
+          'autoCpos -> Set(autoCpos)
         ))
     }))
-    */
+  }
+}
+
+/** The MultiSentenceTagger tags an input sentence with automatic part-of-speech tags
+  * from the Stanford tagger.
+  */
+case object MultiSentenceTagger extends SentenceTransform {
+
+  @transient private val stanfordTagger = new StanfordPostagger()
+
+  def transform(sentence: Sentence): Sentence = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    val stanfordTaggedTokens: IndexedSeq[PostaggedToken] =
+      stanfordTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    val factorieTaggedTokens: IndexedSeq[PostaggedToken] =
+      defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    Sentence(NexusToken +: (stanfordTaggedTokens.zip(factorieTaggedTokens).zip(sentence.tokens.tail) map {
+      case ((stanTagged, factTagged), untagged) =>
+        val stanPos = Symbol(stanTagged.postag)
+        val stanCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          stanPos.name, "X"
+        ))
+        val factPos = Symbol(factTagged.postag)
+        val factCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          factPos.name, "X"
+        ))
+        if (stanPos == factPos) {
+          untagged.updateProperties(Map(
+            'autoPos -> Set(stanPos),
+            'autoCpos -> Set(stanCpos)
+          ))
+        } else if (stanCpos == factCpos) {
+          untagged.updateProperties(Map(
+            'disputedPos -> Set(stanPos, factPos),
+            'autoCpos -> Set(stanCpos)
+          ))
+        } else {
+          untagged.updateProperties(Map(
+            'disputedPos -> Set(stanPos, factPos),
+            'disputedCpos -> Set(stanCpos, factCpos)
+          ))
+        }
+    }))
   }
 }
 
