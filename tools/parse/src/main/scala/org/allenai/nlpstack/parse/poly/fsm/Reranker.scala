@@ -1,6 +1,9 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
+import java.io.{ InputStream, File, PrintWriter }
 import org.allenai.common.json._
+import org.allenai.common.Resource
+import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.reranking.{
   WeirdParseNodeRerankingFunction,
   LinearParseRerankingFunction
@@ -86,6 +89,24 @@ object RerankingFunction {
         weirdParseNodeRerankingFunctionFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
+    }
+  }
+
+  def load(filename: String): RerankingFunction = {
+    Resource.using(new File(filename).toURI.toURL.openStream()) { stream =>
+      val jsVal = Util.getJsValueFromStream(stream)
+      jsVal match {
+        case JsObject(values) =>
+        case _ => deserializationError("Unexpected JsValue type. Must be " +
+          "JsObject.")
+      }
+      jsVal.convertTo[RerankingFunction]
+    }
+  }
+
+  def save(rerankingFunction: RerankingFunction, filename: String): Unit = {
+    Resource.using(new PrintWriter(new File(filename))) { writer =>
+      writer.println(rerankingFunction.toJson.compactPrint)
     }
   }
 }

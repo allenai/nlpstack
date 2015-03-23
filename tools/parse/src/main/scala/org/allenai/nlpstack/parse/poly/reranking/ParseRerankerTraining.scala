@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
+import org.allenai.common.Config.EnhancedConfig
+import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
 import org.allenai.nlpstack.parse.poly.eval._
@@ -8,10 +10,14 @@ import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
+import com.typesafe.config.{ Config, ConfigFactory }
+import java.io.File
+
 case class PRTCommandLine(
   nbestFilenames: String = "", otherNbestFilename: String = "", parserFilename: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
-  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = ""
+  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = "",
+  taggersConfigPathOption: Option[String] = None
 )
 
 /** A toy command-line that shows the way towards possibly better parse reranking.
@@ -55,17 +61,46 @@ object ParseRerankerTraining {
               failure(s"unsupported data source: ${x}")
             }
           }
+      opt[String]('n', "feature-taggers-config") valueName ("<file>") action
+        { (x, c) => c.copy(taggersConfigPathOption = Some(x)) } text ("the path to a config file" +
+          "containing config information required for the required taggers. Currently contains" +
+          "datastore location info to access Verbnet resources for the Verbnet tagger.")
     }
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
 
     println("Creating reranker.")
+
+    // Read in taggers config file if specified. This will contain config info necessary to
+    // initialize the required feature taggers (currently contais only Verbnet config).
+    val taggersConfigOption =
+      clArgs.taggersConfigPathOption map (x => ConfigFactory.parseFile(new File(x)))
+
+    val verbnetTransformOption: Option[(String, VerbnetTransform)] = for {
+      taggersConfig <- taggersConfigOption
+      verbnetConfig <- taggersConfig.get[Config]("verbnet")
+      groupName <- verbnetConfig.get[String]("group")
+      artifactName <- verbnetConfig.get[String]("name")
+      version <- verbnetConfig.get[Int]("version")
+    } yield {
+      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
+        groupName,
+        artifactName,
+        version
+      )
+      ("verbnet", VerbnetTransform(new Verbnet(verbnetPath.toString)))
+    }
+    val feature = defaultParseNodeFeature(verbnetTransformOption)
+    val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
+    println("Creating training vectors.")
+
     val nbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.nbestFilenames)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val (rerankingFunction, classifier) = trainRerankingFunction(goldParseSource, nbestSource)
+    val (rerankingFunction: RerankingFunction, classifier) =
+      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, nbestSource)
 
     println("Evaluating test vectors.")
     val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
@@ -74,10 +109,14 @@ object ParseRerankerTraining {
     )
     val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
     val testData =
-      createTrainingData(otherGoldParseSource, otherNbestSource, defaultParseNodeFeature)
+      createTrainingData(otherGoldParseSource, otherNbestSource, feature)
     testData.labeledVectors foreach { x => println(x) }
     evaluate(testData, classifier)
 
+    println("Saving reranking function.")
+    RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
+
+    /*
     println("Reranking.")
     val reranker: Reranker = new Reranker(rerankingFunction)
     val candidateParses =
@@ -94,6 +133,7 @@ object ParseRerankerTraining {
       PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false))
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
+    */
 
     /*
     val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
@@ -110,7 +150,7 @@ object ParseRerankerTraining {
     */
   }
 
-  val defaultParseNodeFeature = new ParseNodeFeatureUnion(Seq(
+  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
     TransformedNeighborhoodFeature(Seq(
       ("children", AllChildrenExtractor)
     ), Seq(
@@ -133,7 +173,7 @@ object ParseRerankerTraining {
       ("cpos", PropertyNhTransform('cpos)),
       ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
       ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-    )),
+    ) ++ verbnetTransformOption),
     TransformedNeighborhoodFeature(Seq(
       ("parent1", SelfAndSpecificParentExtractor(0)),
       ("parent2", SelfAndSpecificParentExtractor(1)),
@@ -149,23 +189,6 @@ object ParseRerankerTraining {
       ("direction", DirectionNhTransform)
     ))
   ))
-
-  def trainRerankingFunction(
-    goldParseSource: PolytreeParseSource,
-    nbestSource: ParsePoolSource
-  ): (RerankingFunction, WrapperClassifier) = {
-
-    println("Creating training vectors.")
-    val trainingData = createTrainingData(goldParseSource, nbestSource, defaultParseNodeFeature)
-    println("Training classifier.")
-    val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 5, 50, EntropyGainMetric(0))
-    )
-    val classifier: WrapperClassifier = trainer(trainingData)
-    println("Evaluating classifier.")
-    evaluate(trainingData, classifier)
-    (WeirdParseNodeRerankingFunction(classifier, defaultParseNodeFeature, 0.3), classifier)
-  }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {
@@ -218,6 +241,27 @@ object ParseRerankerTraining {
     println(total)
     println(s"Accuracy: ${numCorrect.toFloat / total}")
   }
+}
+
+case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
+
+  def trainRerankingFunction(
+    goldParseSource: PolytreeParseSource,
+    nbestSource: ParsePoolSource
+  ): (RerankingFunction, WrapperClassifier) = {
+
+    println("Creating training vectors.")
+    val trainingData = ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
+    println("Training classifier.")
+    val trainer = new WrapperClassifierTrainer(
+      new RandomForestTrainer(0, 5, 50, EntropyGainMetric(0))
+    )
+    val classifier: WrapperClassifier = trainer(trainingData)
+    println("Evaluating classifier.")
+    ParseRerankerTraining.evaluate(trainingData, classifier)
+    (WeirdParseNodeRerankingFunction(classifier, parseNodeFeature, 0.3), classifier)
+  }
+
 }
 
 /** This reranking function attempts to rerank parses based on how many "weird" nodes they have,

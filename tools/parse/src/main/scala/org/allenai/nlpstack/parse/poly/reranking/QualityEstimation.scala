@@ -48,8 +48,8 @@ object QualityEstimation {
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val (rerankingFunction, classifier) =
-      ParseRerankerTraining.trainRerankingFunction(goldParseSource, nbestSource)
+    //val (rerankingFunction, classifier) =
+    //  ParseRerankerTraining.trainRerankingFunction(goldParseSource, nbestSource)
 
     val parser: RerankingTransitionParser = TransitionParser.load(clArgs.parserFilename) match {
       case rerankParser: RerankingTransitionParser => rerankParser
@@ -68,8 +68,8 @@ object QualityEstimation {
     //val scoredCandidates = candidateParses // model score
     val scoredCandidates = candidateParses map {
       case (candidateParse, modelCost) =>
-        (candidateParse, rerankingFunction(candidateParse, 0.0)) // weird nodes
-      //(candidateParse, candidateParse.sentence.size)  // sentence length
+        //(candidateParse, rerankingFunction(candidateParse, 0.0)) // weird nodes
+        (candidateParse, candidateParse.sentence.size) // sentence length
       //(candidateParse, -scoringFunction(candidateParse))  // oracle
     }
     val sortedCandidates = scoredCandidates.toSeq sortBy { case (_, score) => score } map { case (cand, _) => cand }

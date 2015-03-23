@@ -1,7 +1,9 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.ml.FeatureName
+import org.allenai.nlpstack.lemmatize.MorphaStemmer
+import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken }
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, Verbnet }
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -42,6 +44,7 @@ object NeighborhoodTransform {
         suffixNeighborhoodTransform.toJson
       case keywordNeighborhoodTransform: KeywordNhTransform =>
         keywordNeighborhoodTransform.toJson
+      case verbnetTransform: VerbnetTransform => JsString("VerbnetTransform")
     }
 
     def read(value: JsValue): NeighborhoodTransform = value match {
@@ -110,6 +113,27 @@ case class KeywordNhTransform(keywords: Seq[String])
       } map { suffix =>
         FeatureName(Seq(Symbol(suffix.toLowerCase)))
       }
+    }
+  }
+}
+
+/** Creates a feature per frame for all verbnet frames corresponding to the tokens
+  * in the input neighborhood.
+  *
+  * @param keywords the set of words to consider
+  */
+case class VerbnetTransform(verbnet: Verbnet)
+    extends NeighborhoodTransform {
+
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    for {
+      tokIx <- event.tokens
+      featureName <- verbnet.getVerbnetFramePrimaryNames(MorphaStemmer.lemmatize(
+        parse.tokens(tokIx).word.toString,
+        parse.tokens(tokIx).getDeterministicProperty('factoriePos).toString
+      ))
+    } yield {
+      FeatureName(Seq(featureName))
     }
   }
 }
