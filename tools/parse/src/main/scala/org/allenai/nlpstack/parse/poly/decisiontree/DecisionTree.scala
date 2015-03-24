@@ -20,8 +20,6 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Map[Int, Int]])
     extends ProbabilisticClassifier {
 
-  println(s"Decision tree size: ${splittingFeature.size}.")
-
   /*
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
     var pathMap = Map[Int, Seq[(Int, Int)]]()
