@@ -111,13 +111,13 @@ object TransitionParser {
   def loadFromStream(stream: InputStream): TransitionParser = {
     println("Loading parser.")
     System.gc()
-    val initialMemory: Double = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
+    val initialMemory = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
     val result = convertJsValueToConfig(Util.getJsValueFromStream(stream))
     System.gc()
-    val memoryAfterLoading: Double = Runtime.getRuntime.totalMemory -
-      Runtime.getRuntime.freeMemory()
-    println("Parser memory footprint: %.1f MB".format((memoryAfterLoading - initialMemory)
-      / Math.pow(10.0, 6.0)))
+    val memoryAfterLoading = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
+    println("Parser memory footprint: %.1f MB".format(
+      (memoryAfterLoading - initialMemory).toDouble / Math.pow(10.0, 6.0)
+    ))
     result
   }
 

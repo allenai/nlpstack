@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
+import org.allenai.common.Config.EnhancedConfig
+import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
 import org.allenai.nlpstack.parse.poly.eval._
@@ -8,10 +10,14 @@ import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
+import com.typesafe.config.{ Config, ConfigFactory }
+import java.io.File
+
 case class PRTCommandLine(
   nbestFilenames: String = "", otherNbestFilename: String = "", parserFilename: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
-  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = ""
+  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = "",
+  taggersConfigPathOption: Option[String] = None
 )
 
 /** A toy command-line that shows the way towards possibly better parse reranking.
@@ -55,6 +61,10 @@ object ParseRerankerTraining {
               failure(s"unsupported data source: ${x}")
             }
           }
+      opt[String]('n', "feature-taggers-config") valueName ("<file>") action
+        { (x, c) => c.copy(taggersConfigPathOption = Some(x)) } text ("the path to a config file" +
+          "containing config information required for the required taggers. Currently contains" +
+          "datastore location info to access Verbnet resources for the Verbnet tagger.")
     }
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
@@ -66,6 +76,26 @@ object ParseRerankerTraining {
       } else {
         Seq[BrownClusters]()
       }
+    }
+
+    // Read in taggers config file if specified. This will contain config info necessary to
+    // initialize the required feature taggers (currently contais only Verbnet config).
+    val taggersConfigOption =
+      clArgs.taggersConfigPathOption map (x => ConfigFactory.parseFile(new File(x)))
+
+    val verbnetTransformOption: Option[(String, VerbnetTransform)] = for {
+      taggersConfig <- taggersConfigOption
+      verbnetConfig <- taggersConfig.get[Config]("verbnet")
+      groupName <- verbnetConfig.get[String]("group")
+      artifactName <- verbnetConfig.get[String]("name")
+      version <- verbnetConfig.get[Int]("version")
+    } yield {
+      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
+        groupName,
+        artifactName,
+        version
+      )
+      ("verbnet", VerbnetTransform(new Verbnet(verbnetPath)))
     }
 
     println("Creating training vectors.")
@@ -97,7 +127,7 @@ object ParseRerankerTraining {
         ("cpos", PropertyNhTransform('cpos)),
         ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
         ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-      )),
+      ) ++ verbnetTransformOption),
       TransformedNeighborhoodFeature(Seq(
         ("parent1", SelfAndSpecificParentExtractor(0)),
         ("parent2", SelfAndSpecificParentExtractor(1)),
