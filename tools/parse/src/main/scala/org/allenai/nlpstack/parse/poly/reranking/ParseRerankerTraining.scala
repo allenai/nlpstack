@@ -4,8 +4,7 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core.WordClusters
 import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
-import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Reranker, Sculpture }
+import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
@@ -20,11 +19,11 @@ case class PRTCommandLine(
   taggersConfigPathOption: Option[String] = None
 )
 
-/** A toy command-line that shows the way towards possibly better parse reranking.
+/** A command-line that shows the way towards possibly better parse reranking.
   *
   * This trains a "weirdness" classifier that learns to classify parse tree nodes as "weird"
-  * or not "weird," and then reranks parses based on how many of their nodes are classified as
-  * "weird."
+  * or not "weird," which can be used to rerank parses based on how many of their nodes
+  * are classified as "weird."
   */
 object ParseRerankerTraining {
 
@@ -61,7 +60,7 @@ object ParseRerankerTraining {
               failure(s"unsupported data source: ${x}")
             }
           }
-      opt[String]('n', "feature-taggers-config") valueName ("<file>") action
+      opt[String]('t', "feature-taggers-config") valueName ("<file>") action
         { (x, c) => c.copy(taggersConfigPathOption = Some(x)) } text ("the path to a config file" +
           "containing config information required for the required taggers. Currently contains" +
           "datastore location info to access Verbnet resources for the Verbnet tagger.")
@@ -92,9 +91,8 @@ object ParseRerankerTraining {
     }
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
-    println("Creating training vectors.")
 
-    val nbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.nbestFilenames)
+    val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
@@ -115,39 +113,6 @@ object ParseRerankerTraining {
 
     println("Saving reranking function.")
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
-
-    /*
-    println("Reranking.")
-    val reranker: Reranker = new Reranker(rerankingFunction)
-    val candidateParses =
-      for {
-        parsePool <- otherNbestSource.poolIterator
-      } yield {
-        val candidate: Option[Sculpture] = reranker(parsePool.toNbestList)
-        candidate match {
-          case Some(parse: PolytreeParse) => Some(parse)
-          case _ => None
-        }
-      }
-    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, true),
-      PathAccuracy(true, true), PathAccuracy(false, false), PathAccuracy(true, false))
-    stats foreach { stat => stat.reset() }
-    ParseEvaluator.evaluate(candidateParses, otherGoldParseSource.parseIterator, stats)
-    */
-
-    /*
-    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
-    parser match {
-      case rankingParser: RerankingTransitionParser =>
-        val revisedConfig = rankingParser.config.copy(
-          parsingNbestSize = 10,
-          rerankingFunction = rerankingFunction
-        )
-        val revisedParser = RerankingTransitionParser(revisedConfig)
-        TransitionParser.save(revisedParser, clArgs.rerankerFilename)
-        ParseFile.parseTestSet(revisedParser, otherGoldParseSource)
-    }
-    */
   }
 
   def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
@@ -193,9 +158,11 @@ object ParseRerankerTraining {
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {
 
+    println("Creating gold parse map.")
     val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
       (parse.sentence.asWhitespaceSeparatedString, parse)
     }).toMap
+    println("Creating positive examples.")
     val positiveExamples: Iterable[(FeatureVector, Int)] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
@@ -204,6 +171,7 @@ object ParseRerankerTraining {
           (feature(goldParse, tokenIndex), 1)
         }
       }).toIterable
+    println("Creating negative examples.")
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
       Range(0, 4) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
@@ -252,9 +220,12 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
 
     println("Creating training vectors.")
     val trainingData = ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
+    //trainingData.labeledVectors foreach { case (vec, label) =>
+    //  println(vec)
+    //}
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 5, 50, EntropyGainMetric(0))
+      new RandomForestTrainer(0, 10, 200, EntropyGainMetric(0))
     )
     val classifier: WrapperClassifier = trainer(trainingData)
     println("Evaluating classifier.")
@@ -281,8 +252,6 @@ case class WeirdParseNodeRerankingFunction(
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     val result = sculpture match {
       case parse: PolytreeParse => {
-        println(s"Number of nodes: ${parse.sentence.size}")
-        println(s"Number of weird nodes: ${getWeirdNodes(parse).size}")
         getWeirdNodes(parse).size.toDouble
       }
       case _ => Double.MaxValue
@@ -308,38 +277,4 @@ case class WeirdParseNodeRerankingFunction(
         node
     }
   }
-}
-
-/** A parse statistic that outputs weirdness statistics for a candidate parse.
-  *
-  * @param rerankingFunction the weirdness reranking function
-  */
-case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
-    extends ParseStatistic {
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    if (candidateParse != None) {
-      val scoringFunction = PathAccuracyScore(
-        InMemoryPolytreeParseSource(Seq(goldParse)),
-        ignorePunctuation = true, ignorePathLabels = false
-      )
-      scoringFunction.getRatio(candidateParse.get) match {
-        case (correctIncrement, totalIncrement) =>
-          if (totalIncrement > 0 && correctIncrement.toFloat / totalIncrement < 0.5) {
-            println(s"sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
-            println(s"candidate: ${candidateParse.get}")
-            println(s"gold: $goldParse")
-            val weirdGoldNodes = rerankingFunction.getWeirdNodes(goldParse)
-            weirdGoldNodes foreach { node => println(s"Weird gold node: $node") }
-            val weirdCandidateNodes = rerankingFunction.getWeirdNodes(candidateParse.get)
-            weirdCandidateNodes foreach { node => println(s"Weird candidate node: $node") }
-            println("")
-          }
-      }
-    }
-  }
-
-  override def report(): Unit = {}
-
-  override def reset(): Unit = {}
 }

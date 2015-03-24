@@ -5,6 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
 
 import scala.annotation.tailrec
+import scala.compat.Platform
 import scala.io.Source
 import spray.json.DefaultJsonProtocol._
 import org.allenai.nlpstack.core.PostaggedToken
@@ -313,7 +314,7 @@ object PolytreeParse {
     makePoly: Boolean): Iterator[PolytreeParse] = {
 
     val rawIter =
-      fromConllHelper(Source.fromFile(filename).getLines, useGoldPosTags = useGoldPosTags).iterator
+      fromConllHelper(Source.fromFile(filename).getLines, useGoldPosTags = useGoldPosTags) //.iterator
     if (makePoly) {
       rawIter map { x => PolytreeParse.arcInverterStanford(x) }
     } else {
@@ -347,20 +348,28 @@ object PolytreeParse {
   private def fromConllHelper(
     fileLines: Iterator[String],
     useGoldPosTags: Boolean
-  ): Stream[PolytreeParse] = {
+  ): Iterator[PolytreeParse] = {
 
-    val (nextParseLines, rest) = fileLines.span(_.nonEmpty)
-    constructFromConllString(nextParseLines, useGoldPosTags) #:: (if (rest.hasNext) {
-      rest.next()
-      if (rest.hasNext) {
-        // check for more in case last line in file is newline
-        fromConllHelper(rest, useGoldPosTags)
-      } else {
-        Stream.empty
+    // Groups the lines of the file by parse (parses are identified via a blank line
+    // in the file).
+    def groupby[T](iter: Iterator[T])(startsGroup: T => Boolean): Iterator[Iterator[T]] =
+      new Iterator[Iterator[T]] {
+        val base = iter.buffered
+        var prev: Iterator[T] = Iterator.empty
+        override def hasNext = base.hasNext
+        override def next() = {
+          while (prev.hasNext) prev.next() // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          prev = Iterator(base.next()) ++ new Iterator[T] {
+            var hasMore = true
+            override def hasNext = { hasMore = hasMore && base.hasNext && !startsGroup(base.head); hasMore }
+            override def next() = if (hasNext) base.next() else Iterator.empty.next()
+          }
+          prev
+        }
       }
-    } else {
-      Stream.empty
-    })
+    groupby(fileLines)(_.isEmpty) map { lineIterator =>
+      constructFromConllString(lineIterator, useGoldPosTags)
+    }
   }
 
   private def constructFromConllString(
@@ -368,7 +377,7 @@ object PolytreeParse {
     useGoldPosTags: Boolean
   ): PolytreeParse = {
     val rows: List[Array[String]] = (for {
-      line <- conllLines
+      line <- conllLines filter { _.nonEmpty }
     } yield {
       line.split("\t")
     }).toList
