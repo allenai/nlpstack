@@ -68,9 +68,6 @@ case class GoldParseTrainingVectorSource(
     for {
       goldParse <- goldParses.parseIterator
       vector <- generateVectors(goldParse)
-    } yield {
-      //println(vector)
-      vector
-    }
+    } yield vector
   }
 }

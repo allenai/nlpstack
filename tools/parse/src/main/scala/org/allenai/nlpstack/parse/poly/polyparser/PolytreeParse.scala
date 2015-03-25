@@ -314,7 +314,7 @@ object PolytreeParse {
     makePoly: Boolean): Iterator[PolytreeParse] = {
 
     val rawIter =
-      fromConllHelper(Source.fromFile(filename).getLines, useGoldPosTags = useGoldPosTags) //.iterator
+      fromConllHelper(Source.fromFile(filename).getLines, useGoldPosTags = useGoldPosTags)
     if (makePoly) {
       rawIter map { x => PolytreeParse.arcInverterStanford(x) }
     } else {
