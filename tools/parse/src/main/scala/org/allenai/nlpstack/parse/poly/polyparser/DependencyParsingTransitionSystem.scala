@@ -52,8 +52,8 @@ abstract class DependencyParsingTransitionSystem(
           maybeConstraint match {
             case Some(constraint) =>
               tok.updateProperties(Map(
-                'factorieCpos -> Set(constraint.cpos),
-                'factoriePos -> Set()
+                'autoCpos -> Set(constraint.cpos),
+                'autoPos -> Set()
               ))
             case None => tok
           }
@@ -61,8 +61,10 @@ abstract class DependencyParsingTransitionSystem(
     )
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
-      TokenPropertyFeature('factorieCpos),
-      TokenPropertyFeature('factoriePos),
+      TokenPropertyFeature('autoCpos),
+      TokenPropertyFeature('autoPos),
+      TokenPropertyFeature('disputedCpos),
+      TokenPropertyFeature('disputedPos),
       TokenPropertyFeature('brown0),
       TokenPropertyFeature('verbnetPrimaryFrames),
       TokenPropertyFeature('verbnetSecondaryFrames),

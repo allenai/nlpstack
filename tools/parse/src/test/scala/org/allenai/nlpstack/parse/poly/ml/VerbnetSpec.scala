@@ -27,7 +27,7 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
     version
   )
 
-  val verbnet = new Verbnet(verbnetPath)
+  val verbnet = new Verbnet(verbnetPath.toString)
 
   "VerbnetUtil.getVerbnetClasses" should
     "return the correct answer for verbs present in VerbNet" in {
@@ -70,14 +70,14 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
           'verbnetPrimaryFrames -> Set()
         )),
         Token('tigers, Map(
-          'factoriePos -> Set('NNS),
-          'factorieCpos -> Set('NOUN),
+          'autoPos -> Set('NNS),
+          'autoCpos -> Set('NOUN),
           'factorieLemma -> Set('tiger),
           'verbnetPrimaryFrames -> Set()
         )),
         Token('roar, Map(
-          'factoriePos -> Set('NN),
-          'factorieCpos -> Set('NOUN),
+          'autoPos -> Set('NN),
+          'autoCpos -> Set('NOUN),
           'factorieLemma -> Set('roar),
           'verbnetPrimaryFrames ->
             Set(
@@ -93,14 +93,14 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
             )
         )),
         Token('and, Map(
-          'factoriePos -> Set('CC),
-          'factorieCpos -> Set('CONJ),
+          'autoPos -> Set('CC),
+          'autoCpos -> Set('CONJ),
           'factorieLemma -> Set('and),
           'verbnetPrimaryFrames -> Set()
         )),
         Token('run, Map(
-          'factoriePos -> Set('VB),
-          'factorieCpos -> Set('VERB),
+          'autoPos -> Set('VB),
+          'autoCpos -> Set('VERB),
           'factorieLemma -> Set('run),
           'verbnetPrimaryFrames ->
             Set(

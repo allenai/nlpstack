@@ -7,19 +7,21 @@ class PositionTreeSpec extends UnitSpec {
   // scalastyle:off
 
   /** This represents the following polytree parse:
+    * format: OFF
     *
-    *   NEXUS_0
-    *       |
-    *       |       the_1--
-    *       |              \
-    *       |               -->cat_2
-    *       \              /
-    *        -----> sat_3--
-    *          /
-    *   by_4 --
-    *          \
-    *           --> me_5
+    * NEXUS_0
+    *     |
+    *     |       the_1--
+    *     |              \
+    *     |               -->cat_2
+    *     \              /
+    *      -----> sat_3--
+    *        /
+    * by_4 --
+    *        \
+    *         --> me_5
     *
+    * format: ON
     */
   val parse1 = PolytreeParse(
     sentence = Sentence(Vector(NexusToken, Token('the), Token('cat), Token('sat),

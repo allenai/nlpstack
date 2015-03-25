@@ -96,7 +96,7 @@ object Training {
         artifactName,
         version
       )
-      VerbnetTagger(new Verbnet(verbnetPath))
+      VerbnetTagger(new Verbnet(verbnetPath.toString))
     }
 
     val taggers: Seq[SentenceTransform] =

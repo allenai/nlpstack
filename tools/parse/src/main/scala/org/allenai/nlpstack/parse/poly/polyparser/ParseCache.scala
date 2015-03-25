@@ -68,6 +68,7 @@ case class ParseCache(
       case Some(parse) =>
         Some(parse)
       case None =>
+        println(s"**CACHE MISS**: ${sentence.asWhitespaceSeparatedString}")
         fallbackParser.parse(sentence, constraints)
     }
   }
