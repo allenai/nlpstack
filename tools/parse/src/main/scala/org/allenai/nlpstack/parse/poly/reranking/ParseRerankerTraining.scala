@@ -238,8 +238,30 @@ object ParseRerankerTraining {
           }
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
-            val badNodeFamilies: Set[LabeledFamily] =
-              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet)
+            // Utility function to take a family and filter out token details. Returns a tuple of
+            // just the node index of the root node and the arc labels and child node indices for
+            // the outgoing arcs.
+            def labeledFamilyNoTokenInfo(labeledFamily: LabeledFamily): (Int, Set[(Symbol, Int)]) = {
+              (
+                labeledFamily.node.tokenIndex,
+                (labeledFamily.childArcsForNode map { arc => (arc._1, arc._2.tokenIndex) }).toSet
+              )
+            }
+            // Keep only families in the candidate parse that are not in the gold parse because
+            // we are extracting "bad" families. Token property information
+            // may not tally since the gold parse will not contain all token properties.
+            val goldParseLabeledFamiliesNoTokenInfo: Set[(Int, Set[(Symbol, Int)])] =
+              goldParse.labeledFamilies.map {
+                labeledFamily => labeledFamilyNoTokenInfo(labeledFamily)
+              }.toSet
+
+            val badNodeFamilies: Set[LabeledFamily] = (candidateParse.labeledFamilies.filter(
+              candidateLabeledFamily =>
+                !goldParseLabeledFamiliesNoTokenInfo.contains(
+                  labeledFamilyNoTokenInfo(candidateLabeledFamily)
+                )
+            )).toSet
+
             badNodeFamilies map { badNodeLabeledFamily =>
               new LabeledFeatureVectorPerParseFamily(
                 candidateParse.sentence.asWhitespaceSeparatedString,
@@ -314,16 +336,23 @@ object ParseRerankerTraining {
   def printFamiliesAndVectors(
     classifierResults: Iterable[LabeledFeatureVectorClassified], pw: PrintWriter
   ): Unit = {
-    for (result <- classifierResults) {
-      // Write Label Family out in the following format:
-      // <NodeIx> -> (<ArcLabel>, <ChildNode>), (<ArcLabel> <ChildNode>), ...
-      val labeledFamily = result.labeledVectorPerParseFamily.family
-      pw.write(labeledFamily.node + " -> ")
-      val familyStrs = labeledFamily.childArcsForNode map (family =>
-        "(" + family._1.toString + ", " + family._2 + ")")
-      pw.write(familyStrs.mkString + "\n")
-      // Write Feature Vector out with tab in between the family output and the feature vector
-      //pw.write("\t" + result.labeledVectorPerParseFamily.featureVector.toString + "\n")
+    val sentenceResultsMap = classifierResults.groupBy(_.labeledVectorPerParseFamily.sentence)
+    for ((sentence, classifierResults) <- sentenceResultsMap) {
+      pw.write(s"\nsentence:${sentence}:\n")
+      for (result <- classifierResults) {
+        // Write Label Family out in the following format:
+        //(<NodeIx>, <NodeTokenString>) -> (<ArcLabel>, (<ChildNodeIx>, <ChildNodeTokenString>)),
+        // (<ArcLabel> (<ChildNodeIx>, <ChildNodeTokenString>)), ...
+        val labeledFamily = result.labeledVectorPerParseFamily.family
+        pw.write("(" + labeledFamily.node.tokenIndex + ", " + labeledFamily.node.token.word.name +
+          ") " + " -> ")
+        val familyStrs = labeledFamily.childArcsForNode map (family =>
+          "(" + family._1.name + ", " + "(" + family._2.tokenIndex + ", " +
+            family._2.token.word.name + "))")
+        pw.write(familyStrs.mkString(", "))
+        // Write Feature Vector out, separating it from the family output by a tab.
+        pw.write("\t" + result.labeledVectorPerParseFamily.featureVector.toString + "\n")
+      }
     }
   }
 }
