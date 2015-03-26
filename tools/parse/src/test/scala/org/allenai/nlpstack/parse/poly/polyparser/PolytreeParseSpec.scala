@@ -31,19 +31,21 @@ class PolytreeParseSpec extends UnitSpec {
   // scalastyle:off
 
   /** This represents the following polytree parse:
+    * format: OFF
     *
-    *   NEXUS_0
-    *       |
-    *       |       the_1--
-    *       |              \
-    *       |               -->cat_2
-    *       \              /
-    *        -----> sat_3--
-    *          /
-    *   by_4 --
-    *          \
-    *           --> me_5
+    * NEXUS_0
+    *     |
+    *     |       the_1--
+    *     |              \
+    *     |               -->cat_2
+    *     \              /
+    *      -----> sat_3--
+    *        /
+    * by_4 --
+    *        \
+    *         --> me_5
     *
+    * format: ON
     */
   val parse2 = PolytreeParse(
     sentence = Sentence(Vector(
@@ -62,17 +64,17 @@ class PolytreeParseSpec extends UnitSpec {
 
   /** This represents the following polytree parse:
     *
-    *   NEXUS_0
-    *       |
-    *       |       the_1--
-    *       |              \
-    *       |               -->cat_2
-    *       \              /
-    *        -----> gave_3-
-    *                     \ \
-    *                     \  -->me_4
-    *                     \
-    *                      --> it_5
+    * NEXUS_0
+    *     |
+    *     |       the_1--
+    *     |              \
+    *     |               -->cat_2
+    *     \              /
+    *      -----> gave_3-
+    *                   \ \
+    *                   \  -->me_4
+    *                   \
+    *                    --> it_5
     *
     */
   val parse3 = PolytreeParse(

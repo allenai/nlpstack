@@ -27,25 +27,32 @@ object SentenceTransform {
     implicit val brownClustersTaggerFormat =
       jsonFormat1(BrownClustersTagger.apply).pack("type" -> "BrownClustersTagger")
 
+    implicit val verbnetTaggerFormat =
+      jsonFormat1(VerbnetTagger.apply).pack("type" -> "VerbnetTagger")
+
     def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
       case FactorieSentenceTagger =>
         JsString("FactorieSentenceTagger")
+      case StanfordSentenceTagger =>
+        JsString("StanfordSentenceTagger")
       case LexicalPropertiesTagger =>
         JsString("LexicalPropertiesTagger")
       case brownClustersTagger: BrownClustersTagger =>
         brownClustersTagger.toJson
       case verbnetTagger: VerbnetTagger =>
-        JsString("VerbnetTagger")
+        verbnetTagger.toJson
     }
 
     def read(value: JsValue): SentenceTransform = value match {
       case JsString(typeid) => typeid match {
         case "FactorieSentenceTagger" => FactorieSentenceTagger
+        case "StanfordSentenceTagger" => StanfordSentenceTagger
         case "LexicalPropertiesTagger" => LexicalPropertiesTagger
         case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
-        brownClustersTaggerFormat
+        brownClustersTaggerFormat,
+        verbnetTaggerFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
@@ -65,11 +72,40 @@ case object FactorieSentenceTagger extends SentenceTransform {
       defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
+        val autoPos = Symbol(tagged.postag)
+        val autoCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          autoPos.name, "X"
+        ))
         untagged.updateProperties(Map(
-          'factoriePos -> Set(Symbol(tagged.postag)),
-          'factorieCpos -> Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
-            tagged.postag, "X"
-          )))
+          'autoPos -> Set(autoPos),
+          'autoCpos -> Set(autoCpos)
+        ))
+    }))
+  }
+}
+
+/** The StanfordSentenceTagger tags an input sentence with automatic part-of-speech tags
+  * from the Stanford tagger.
+  */
+case object StanfordSentenceTagger extends SentenceTransform {
+
+  @transient private val stanfordTagger = new StanfordPostagger()
+
+  def transform(sentence: Sentence): Sentence = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    val taggedTokens: IndexedSeq[PostaggedToken] =
+      stanfordTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+        val autoPos = Symbol(tagged.postag)
+        val autoCpos = Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(
+          autoPos.name, "X"
+        ))
+        untagged.updateProperties(Map(
+          'autoPos -> Set(autoPos),
+          'autoCpos -> Set(autoCpos)
         ))
     }))
   }

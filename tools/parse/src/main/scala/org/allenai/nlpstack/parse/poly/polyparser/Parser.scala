@@ -57,9 +57,9 @@ object Parser {
         core.Token(
           word = Symbol(tok.string),
           Map(
-            'factoriePos ->
+            'autoPos ->
               Set(Symbol(tok.postag)),
-            'factorieCpos ->
+            'autoCpos ->
               Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, tok.postag)))
           )
         )

@@ -3,6 +3,7 @@ package org.allenai.nlpstack.cli
 import org.allenai.nlpstack.core._
 import org.allenai.nlpstack.tokenize._
 import org.allenai.nlpstack.postag.FactoriePostagger
+import org.allenai.nlpstack.postag.StanfordPostagger
 
 abstract class PostaggerMain extends LineProcessor("postagger") {
   def tokenizer: Tokenizer
@@ -16,4 +17,9 @@ abstract class PostaggerMain extends LineProcessor("postagger") {
 object FactoriePostaggerMain extends PostaggerMain {
   override val tokenizer = defaultTokenizer
   override val postagger = new FactoriePostagger()
+}
+
+object StanfordPostaggerMain extends PostaggerMain {
+  override val tokenizer = defaultTokenizer
+  override val postagger = new StanfordPostagger()
 }

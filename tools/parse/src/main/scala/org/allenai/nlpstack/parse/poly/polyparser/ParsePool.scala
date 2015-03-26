@@ -35,6 +35,15 @@ trait ParsePoolSource {
   def poolIterator: Iterator[ParsePool]
 }
 
+case class InMemoryParsePoolSource(inputIterator: Iterator[ParsePool]) extends ParsePoolSource {
+
+  private val cachedPools = inputIterator.toIterable
+
+  override def poolIterator: Iterator[ParsePool] = {
+    cachedPools.iterator
+  }
+}
+
 case class FileBasedParsePoolSource(filename: String) extends ParsePoolSource {
 
   override def poolIterator: Iterator[ParsePool] = {

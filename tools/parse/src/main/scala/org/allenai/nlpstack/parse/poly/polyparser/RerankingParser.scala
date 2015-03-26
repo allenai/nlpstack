@@ -12,6 +12,41 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
 
   @transient val reranker: Reranker = new Reranker(config.rerankingFunction)
 
+  def parseWithScore(
+    sentence: Sentence,
+    constraints: Set[TransitionConstraint] = Set()
+  ): Option[(PolytreeParse, Double)] = {
+
+    val parsingCostFunction =
+      config.parsingCostFunctionFactory.buildCostFunction(sentence, constraints)
+    val baseParser = new NbestSearch(parsingCostFunction)
+    val nbestList: Option[NbestList] =
+      parsingCostFunction.transitionSystem.initialState(
+        constraints.toSeq
+      ) map { initState =>
+        // Only do full reranking in the absence of constraints.
+        if (constraints.isEmpty) {
+          baseParser.find(initState, config.parsingNbestSize, constraints)
+        } else {
+          baseParser.find(initState, 1, constraints)
+        }
+      }
+    val mappedNbestList: Option[NbestList] = nbestList map { x =>
+      NbestList(x.scoredSculptures)
+    }
+    val candidate: Option[(Sculpture, Double)] = mappedNbestList flatMap { nbList => reranker.rerankWithScore(nbList) }
+    candidate match {
+      case Some((parse: PolytreeParse, cost)) =>
+
+        val mappedParse = parse.copy(sentence = Sentence(
+          FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
+            tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
+          }
+        ))
+        Some((mappedParse, cost))
+      case _ => None
+    }
+  }
   def parse(
     sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set()

@@ -33,6 +33,8 @@ object NeighborhoodTransform {
       jsonFormat1(SuffixNhTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
     implicit val keywordNeighborhoodTransformFormat =
       jsonFormat1(KeywordNhTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
+    implicit val verbnetTransformFormat =
+      jsonFormat1(VerbnetTransform.apply).pack("type" -> "VerbnetTransform")
 
     def write(feature: NeighborhoodTransform): JsValue = feature match {
       case ArclabelNhTransform => JsString("ArcLabelNeighborhoodTransform")
@@ -44,7 +46,8 @@ object NeighborhoodTransform {
         suffixNeighborhoodTransform.toJson
       case keywordNeighborhoodTransform: KeywordNhTransform =>
         keywordNeighborhoodTransform.toJson
-      case verbnetTransform: VerbnetTransform => JsString("VerbnetTransform")
+      case verbnetTransform: VerbnetTransform =>
+        verbnetTransform.toJson
     }
 
     def read(value: JsValue): NeighborhoodTransform = value match {
@@ -56,7 +59,8 @@ object NeighborhoodTransform {
       }
       case jsObj: JsObject => jsObj.unpackWith(
         propertyNhTransformFormat,
-        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat
+        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat,
+        verbnetTransformFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
