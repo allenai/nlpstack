@@ -74,7 +74,7 @@ object ParseRerankerTraining {
           "datastore location info to access Verbnet resources for the Verbnet tagger.")
       opt[String]('l', "classifier-output-log") valueName ("<string>") action
         { (x, c) => c.copy(classifierOutputLogPathOption = Some(x)) } text ("path of required " +
-          "output log file containing False Positives and True Negatives from the classifier on " +
+          "output log file containing False Positives and False Negatives from the classifier on " +
           "the test set")
     }
     val clArgs: PRTCommandLine =
