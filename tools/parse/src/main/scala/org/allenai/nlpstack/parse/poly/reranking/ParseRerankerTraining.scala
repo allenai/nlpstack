@@ -301,7 +301,7 @@ object ParseRerankerTraining {
   ): Unit = {
     val sentenceResultsMap = classifierResults.groupBy(_.labeledVectorPerParseFamily.sentence)
     for ((sentence, classifierResults) <- sentenceResultsMap) {
-      pw.write(s"\ns${sentence}\n")
+      pw.write(s"\n${sentence}\n")
       for (result <- classifierResults) {
         // Write Label Family out in the following format:
         //(<NodeIx>, <NodeTokenString>) -> (<ArcLabel>, (<ChildNodeIx>, <ChildNodeTokenString>)),
