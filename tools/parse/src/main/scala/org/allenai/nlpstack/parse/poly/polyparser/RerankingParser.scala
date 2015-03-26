@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.Sentence
+import org.allenai.nlpstack.parse.poly.core.{ FactorieSentenceTagger, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 
 /** Uses the parser model to create an n-best list, then chooses the best parse from this n-best
@@ -37,9 +37,11 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     val candidate: Option[Sculpture] = mappedNbestList flatMap { nbList => reranker(nbList) }
     candidate match {
       case Some(parse: PolytreeParse) =>
-        val mappedParse = parse.copy(sentence = Sentence(parse.sentence.tokens map { tok =>
-          tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('factorieCpos))))
-        }))
+        val mappedParse = parse.copy(sentence = Sentence(
+          FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
+            tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
+          }
+        ))
         Some(mappedParse)
       case _ => None
     }

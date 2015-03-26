@@ -11,13 +11,14 @@ import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
-import java.io.File
+import java.io.{ File, PrintWriter }
 
 case class PRTCommandLine(
   nbestFilenames: String = "", otherNbestFilename: String = "", parserFilename: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
   vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = "",
-  taggersConfigPathOption: Option[String] = None
+  taggersConfigPathOption: Option[String] = None,
+  classifierOutputLogPathOption: Option[String] = None
 )
 
 /** A toy command-line that shows the way towards possibly better parse reranking.
@@ -27,6 +28,13 @@ case class PRTCommandLine(
   * "weird."
   */
 object ParseRerankerTraining {
+
+  /** Structure to represent labeled vectors together with corresponding classifier results.
+    */
+  case class LabeledFeatureVectorClassified(
+    labeledVectorPerParseFamily: LabeledFeatureVectorPerParseFamily,
+    classifierOutput: Int
+  )
 
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PRTCommandLine]("ParseRerankerTraining") {
@@ -65,6 +73,10 @@ object ParseRerankerTraining {
         { (x, c) => c.copy(taggersConfigPathOption = Some(x)) } text ("the path to a config file" +
           "containing config information required for the required taggers. Currently contains" +
           "datastore location info to access Verbnet resources for the Verbnet tagger.")
+      opt[String]('l', "classifier-output-log") valueName ("<string>") action
+        { (x, c) => c.copy(classifierOutputLogPathOption = Some(x)) } text ("path of required " +
+          "output log file containing False Positives and True Negatives from the classifier on " +
+          "the test set")
     }
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
@@ -160,8 +172,8 @@ object ParseRerankerTraining {
       new RandomForestTrainer(0, 10, 100, EntropyGainMetric(0))
     )
     val classifier: WrapperClassifier = trainer(trainingData)
-    evaluate(trainingData, classifier)
-    evaluate(testData, classifier)
+    evaluate(trainingData, classifier, None)
+    evaluate(testData, classifier, clArgs.classifierOutputLogPathOption)
 
     println("Creating reranker.")
     val rerankingFunction = WeirdParseNodeRerankingFunction(classifier, feature, 0.3)
@@ -198,20 +210,24 @@ object ParseRerankerTraining {
   }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
-    feature: ParseNodeFeature): TrainingData = {
+    feature: ParseNodeFeature): LabeledFeatureVectors = {
 
     val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
       (parse.sentence.asWhitespaceSeparatedString, parse)
     }).toMap
-    val positiveExamples: Iterable[(FeatureVector, Int)] =
+    val positiveExamples: Iterable[LabeledFeatureVectorPerParseFamily] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
-        val goldParse = goldParseMap(parse._1.sentence.asWhitespaceSeparatedString)
-        Range(0, goldParse.sentence.tokens.size) map { tokenIndex =>
-          (feature(goldParse, tokenIndex), 1)
+        val sentence = parse._1.sentence.asWhitespaceSeparatedString
+        val goldParse = goldParseMap(sentence)
+        goldParse.labeledFamilies map {
+          labeledFamily =>
+            new LabeledFeatureVectorPerParseFamily(
+              sentence, labeledFamily, feature(goldParse, labeledFamily.node.tokenIndex), 1
+            )
         }
       }).toIterable
-    val negativeExamples: Iterable[(FeatureVector, Int)] = {
+    val negativeExamples: Iterable[LabeledFeatureVectorPerParseFamily] = {
       Range(0, 4) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
           parsePools.poolIterator flatMap { parsePool =>
@@ -222,31 +238,93 @@ object ParseRerankerTraining {
           }
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
-            val badTokens: Set[Int] =
-              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet) map {
-                case (node, family) =>
-                  node
-              }
-            badTokens map { badToken =>
-              (feature(candidateParse, badToken), 0)
+            val badNodeFamilies: Set[LabeledFamily] =
+              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet)
+            badNodeFamilies map { badNodeLabeledFamily =>
+              new LabeledFeatureVectorPerParseFamily(
+                candidateParse.sentence.asWhitespaceSeparatedString,
+                badNodeLabeledFamily,
+                feature(candidateParse, badNodeLabeledFamily.node.tokenIndex), 0
+              )
             }
         }
       }
     }
     println(s"Found ${positiveExamples.size} positive examples " +
       s"and ${negativeExamples.size} negative examples")
-    TrainingData((positiveExamples ++ negativeExamples).toIterable)
+    LabeledFeatureVectors((positiveExamples ++ negativeExamples).toIterable)
   }
 
-  def evaluate(trainingData: TrainingData, classifier: WrapperClassifier) {
-    val numCorrect = trainingData.labeledVectors count {
-      case (vec, outcome) =>
-        classifier.classify(vec) == outcome
+  def evaluate(
+    trainingData: LabeledFeatureVectors,
+    classifier: WrapperClassifier,
+    logFilePathOption: Option[String]
+  ): Unit = {
+
+    // Get classifier results for all the labeled vectors.
+    val classifierResults = for {
+      labeledVector <- trainingData.labeledVectors
+    } yield {
+      new LabeledFeatureVectorClassified(
+        labeledVector, classifier.classify(labeledVector.featureVector)
+      )
     }
+
+    val correct = classifierResults.filter(
+      labeledVectorClassified =>
+        labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome ==
+          labeledVectorClassified.classifierOutput
+    )
+
+    val falsePositives = classifierResults.filter(
+      labeledVectorClassified =>
+        (labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome == 0) &&
+          (labeledVectorClassified.classifierOutput == 1)
+    )
+
+    val falseNegatives = classifierResults.filter(
+      labeledVectorClassified =>
+        (labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome == 1) &&
+          (labeledVectorClassified.classifierOutput == 0)
+    )
+
+    val numCorrect = correct.size
+
     val total = trainingData.labeledVectors.size
     println(numCorrect)
     println(total)
     println(s"Accuracy: ${numCorrect.toFloat / total}")
+
+    // If a log file path is specified, misclassified families and associated feature vectors
+    // have to be logged.
+    logFilePathOption match {
+      case Some(logFilePath) =>
+        {
+          val pw = new PrintWriter(new File(logFilePath))
+          pw.write("False Positives:\n")
+          printFamiliesAndVectors(falsePositives, pw)
+          pw.write("\n\nFalse Negatives:\n")
+          printFamiliesAndVectors(falseNegatives, pw)
+          pw.close
+        }
+      case _ =>
+    }
+  }
+
+  def printFamiliesAndVectors(
+    classifierResults: Iterable[LabeledFeatureVectorClassified], pw: PrintWriter
+  ): Unit = {
+    for (result <- classifierResults) {
+      // Write Label Family out in the following format:
+      // <NodeIx> -> (<ArcLabel>, <ChildNode>), (<ArcLabel> <ChildNode>), ...
+      val labeledFamily = result.labeledVectorPerParseFamily.family
+      pw.write(labeledFamily.node + " -> ")
+      val familyStrs = labeledFamily.childArcsForNode map (family =>
+        "(" + family._1.toString + ", " + family._2 + ")")
+      pw.write(familyStrs.mkString + "\n")
+      // Write Feature Vector out with tab in between the family output and the feature vector
+      //pw.write("\t" + result.labeledVectorPerParseFamily.featureVector.toString + "\n")
+    }
   }
 }
 
