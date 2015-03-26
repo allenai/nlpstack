@@ -464,7 +464,7 @@ object PolytreeParse {
   implicit val jsFormat = jsonFormat4(PolytreeParse.apply)
 }
 
-/** Support data structures used in PolytreeParse
+/** Support structures used in PolytreeParse
   */
 case class Node(tokenIndex: Int, token: Token)
 case class Family(nodes: Seq[Node])
