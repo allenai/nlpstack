@@ -15,19 +15,27 @@ object FeatureEncoding {
   implicit val jsFormat = jsonFormat1(FeatureEncoding.apply)
 }
 
+/** Support structure to store a feature vector per parse family with associated label for expected
+  * outcome.
+  */
+case class LabeledFeatureVector(featureVector: FeatureVector, expectedOutcome: Int) {
+}
+
 /** Abstraction for a set of labeled feature vectors.
   *
   * Provides various serialization options for different machine learning tools.
   *
-  * @param labeledVectors a sequence of feature vectors labeled with integer outcomes
+  * @param labeledVectors a sequence of families and their feature vectors labeled with
+  * integer outcomes
   */
-case class TrainingData(labeledVectors: Iterable[(FeatureVector, Int)]) {
+case class LabeledFeatureVectors(
+    labeledVectors: Iterable[LabeledFeatureVector]
+) {
 
   /** The set of feature names found in the training data. */
   lazy val featureNames: Set[FeatureName] = {
     val featureNameSets: Iterable[Set[FeatureName]] = (labeledVectors map {
-      case (fvec, _) =>
-        fvec.featureNames.toSet
+      x => x.featureVector.featureNames.toSet
     })
     featureNameSets.fold(Set[FeatureName]())((x: Set[FeatureName], y: Set[FeatureName]) =>
       x union y)
@@ -45,8 +53,8 @@ case class TrainingData(labeledVectors: Iterable[(FeatureVector, Int)]) {
     */
   def asSvmLight(signature: FeatureEncoding): String = {
     (labeledVectors map {
-      case (fvec: FeatureVector, label) =>
-        val sortedValues: Seq[(Int, Double)] = (fvec.values.toSeq map {
+      x =>
+        val sortedValues: Seq[(Int, Double)] = (x.featureVector.values.toSeq map {
           case (featureName, featureValue) =>
             (signature.featureNameToIndex(featureName), featureValue)
         }).sortBy(_._1)
@@ -54,7 +62,7 @@ case class TrainingData(labeledVectors: Iterable[(FeatureVector, Int)]) {
           case (featureIndex, featureValue) =>
             s"${featureIndex}:${featureValue}"
         }).mkString(" ")
-        s"${svmLightLabel(label)} ${featureString}"
+        s"${svmLightLabel(x.expectedOutcome)} ${featureString}"
     }).mkString("\n")
   }
 

@@ -78,7 +78,7 @@ object NeighborhoodExtractor {
 case object AllChildrenExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    Seq(Neighborhood(parse.families(token).tail))
+    Seq(Neighborhood(parse.families(token).nodes.tail.map(_.tokenIndex)))
   }
 }
 
@@ -121,7 +121,7 @@ case class SpecificChildExtractor(k: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.families(token).lift(k + 1) map { x => Neighborhood(Seq(x)) }
+      parse.families(token).nodes.lift(k + 1) map { x => Neighborhood(Seq(x.tokenIndex)) }
     ).flatten
   }
 }
@@ -133,9 +133,9 @@ case class SpecificChildExtractor(k: Int) extends NeighborhoodExtractor {
   */
 case class SpecificParentExtractor(parentIndex: Int) extends NeighborhoodExtractor {
 
-  override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
+  override def apply(parse: PolytreeParse, tokenIx: Int): Seq[Neighborhood] = {
     Seq(
-      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
+      parse.getParents().getOrElse(tokenIx, Seq[Int]()).lift(parentIndex) map { x =>
         Neighborhood(Seq(x))
       }
     ).flatten
@@ -149,9 +149,9 @@ case class SpecificParentExtractor(parentIndex: Int) extends NeighborhoodExtract
   */
 case class SelfAndSpecificChildExtractor(k: Int) extends NeighborhoodExtractor {
 
-  override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
+  override def apply(parse: PolytreeParse, tokenIx: Int): Seq[Neighborhood] = {
     Seq(
-      parse.families(token).lift(k + 1) map { x => Neighborhood(Seq(x, token)) }
+      parse.families(tokenIx).nodes.lift(k + 1) map { x => Neighborhood(Seq(x.tokenIndex, tokenIx)) }
     ).flatten
   }
 }
@@ -175,8 +175,8 @@ case class SelfAndSpecificParentExtractor(parentIndex: Int) extends Neighborhood
 /** Extracts neighborhood (token) from the parse tree. */
 case object SelfExtractor extends NeighborhoodExtractor {
 
-  override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    Seq(Neighborhood(Seq(token)))
+  override def apply(parse: PolytreeParse, tokenIx: Int): Seq[Neighborhood] = {
+    Seq(Neighborhood(Seq(tokenIx)))
   }
 }
 

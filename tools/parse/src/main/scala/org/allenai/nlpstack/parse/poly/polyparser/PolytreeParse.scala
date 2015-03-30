@@ -99,17 +99,21 @@ case class PolytreeParse(
     })
   }
 
-  @transient lazy val families: Seq[Seq[Int]] = {
+  @transient lazy val families: Seq[Family] = {
     Range(0, tokens.size) map { tokIndex =>
-      tokIndex +: children(tokIndex).toSeq.sorted
+      new Family(new Node(tokIndex, tokens(tokIndex)) +:
+        children(tokIndex).toSeq.sorted.map(childIx => new Node(childIx, tokens(childIx))))
     }
   }
 
-  @transient lazy val labeledFamilies: Seq[(Int, Seq[(Symbol, Int)])] = {
+  @transient lazy val labeledFamilies: Seq[LabeledFamily] = {
     Range(0, tokens.size) map { tokIndex =>
-      (tokIndex, children(tokIndex).toSeq.sorted map { child =>
-        (arcLabelByEndNodes(Set(tokIndex, child)), child)
-      })
+      new LabeledFamily(
+        new Node(tokIndex, tokens(tokIndex)),
+        children(tokIndex).toSeq.sorted map { childIx =>
+          (arcLabelByEndNodes(Set(tokIndex, childIx)), new Node(childIx, tokens(childIx)))
+        }
+      )
     }
   }
 
@@ -269,11 +273,13 @@ case class PolytreeParse(
 
   override def toString(): String = {
     (labeledFamilies map {
-      case (node, labeledChildren) =>
-        (s"${sentence.tokens(node).word.name}[$node]" +: (labeledChildren map {
-          case (arclabel, familyMember) =>
-            s"${arclabel.name}.${sentence.tokens(familyMember).word.name}[$familyMember]"
-        })).mkString(":")
+      labeledFamily =>
+        (s"${sentence.tokens(labeledFamily.node.tokenIndex).word.name}[$labeledFamily.nodeIx]" +:
+          (labeledFamily.childArcsForNode map {
+            case (arclabel, familyMember) =>
+              s"${arclabel.name}.${sentence.tokens(familyMember.tokenIndex).word.name}" +
+                s"[$familyMember.tokenIndex]"
+          })).mkString(":")
     }).mkString(" ")
   }
 
@@ -456,4 +462,20 @@ object PolytreeParse {
     'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD))
 
   implicit val jsFormat = jsonFormat4(PolytreeParse.apply)
+}
+
+/** Support structures used in PolytreeParse
+  */
+case class Node(tokenIndex: Int, token: Token)
+case class Family(nodes: Seq[Node])
+case class LabeledFamily(node: Node, childArcsForNode: Seq[(Symbol, Node)]) {
+  def prettyPrintNoTokenInfo: String = {
+    val nodeStr = "(" + node.tokenIndex + ", " + node.token.word.name + ") " + " -> "
+    val familyStrs = childArcsForNode map (family =>
+      "(" + family._1.name + ", " + "(" + family._2.tokenIndex + ", " +
+        family._2.token.word.name + "))")
+    val familyStr = familyStrs.mkString(", ")
+
+    nodeStr + familyStr
+  }
 }

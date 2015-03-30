@@ -85,13 +85,15 @@ object WrapperClassifier {
   */
 class WrapperClassifierTrainer(classifierTrainer: ProbabilisticClassifierTrainer) {
 
-  def apply(trainingData: TrainingData): WrapperClassifier = {
+  def apply(trainingData: LabeledFeatureVectors): WrapperClassifier = {
     val featureNames: Seq[FeatureName] = trainingData.featureNames.toSeq
     val featureNameToIndex: Map[FeatureName, Int] = featureNames.zipWithIndex.toMap
     val vectors = new InMemoryFeatureVectorSource(
       (trainingData.labeledVectors map {
-      case (vec, outcome) =>
-        WrapperClassifier.createDTFeatureVector(vec, featureNameToIndex, Some(outcome))
+      x =>
+        WrapperClassifier.createDTFeatureVector(
+          x.featureVector, featureNameToIndex, Some(x.expectedOutcome)
+        )
     }).toIndexedSeq,
       SimpleTask("basic")
     )
