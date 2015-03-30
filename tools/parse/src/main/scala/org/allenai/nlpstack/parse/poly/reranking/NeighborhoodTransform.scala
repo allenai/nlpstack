@@ -4,7 +4,7 @@ import org.allenai.common.json._
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, Verbnet }
-import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
+import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

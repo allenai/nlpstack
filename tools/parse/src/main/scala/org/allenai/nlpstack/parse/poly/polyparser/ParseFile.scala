@@ -6,7 +6,7 @@ import org.allenai.nlpstack.parse.poly.fsm.{
   RerankingFunction,
   FeatureUnion
 }
-import org.allenai.nlpstack.parse.poly.reranking.{ WeirdnessAnalyzer, ParseRerankingFunction }
+import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform

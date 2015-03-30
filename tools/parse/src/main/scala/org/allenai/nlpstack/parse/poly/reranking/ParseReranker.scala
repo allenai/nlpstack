@@ -78,9 +78,9 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
       val weirdGoldNodes = rerankingFunction.getWeirdNodes(goldParse)
       val weirdCandidateNodes = rerankingFunction.getWeirdNodes(candParse)
       val badCandidateTokens: Set[Int] =
-        (candParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet) map {
-          case (node, family) =>
-            node
+        (candParse.families.toSet -- goldParse.families.toSet) map {
+          case family =>
+            family.tokens.head
         } filter { tokIndex =>
           candParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
         }
@@ -90,11 +90,12 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
       }
       val trueNegativeMessages =
         (badCandidateTokens -- weirdCandidateNodes) map { misclassifiedNode =>
-          s"  ${goldParse.printFamily(misclassifiedNode)}"
+          s"  ${candParse.printFamily(misclassifiedNode)}\n" +
+            s"    (should be: ${goldParse.printFamily(misclassifiedNode)})"
         }
       if (falsePositiveMessages.nonEmpty || trueNegativeMessages.nonEmpty) {
         sentencesWithMistakes = sentencesWithMistakes :+
-          (goldParse.sentence, falsePositiveMessages, trueNegativeMessages)
+          Tuple3(goldParse.sentence, falsePositiveMessages, trueNegativeMessages)
       }
     }
   }

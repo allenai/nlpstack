@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence }
-import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
+import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
 
 class NeighborhoodExtractorSpec extends UnitSpec {
 

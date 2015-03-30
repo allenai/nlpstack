@@ -99,18 +99,25 @@ case class PolytreeParse(
     })
   }
 
-  @transient lazy val families: Seq[Seq[Int]] = {
+  @transient lazy val families: Seq[Neighborhood] = {
     Range(0, tokens.size) map { tokIndex =>
-      tokIndex +: children(tokIndex).toSeq.sorted
+      Neighborhood(tokIndex +: children(tokIndex).toSeq.sorted)
     }
   }
 
+  /*
   @transient lazy val labeledFamilies: Seq[(Int, Seq[(Symbol, Int)])] = {
     Range(0, tokens.size) map { tokIndex =>
       (tokIndex, children(tokIndex).toSeq.sorted map { child =>
         (arcLabelByEndNodes(Set(tokIndex, child)), child)
       })
     }
+  }
+  */
+
+  def printToken(tokenIndex: Int): String = {
+    s"${tokens(tokenIndex).word.name}" +
+      s"[${tokens(tokenIndex).getDeterministicProperty('cpos).name}]"
   }
 
   /** Returns a token's "family" as a human-interpretable string.
@@ -119,15 +126,16 @@ case class PolytreeParse(
     * @return a human-interpretable string describe the token's family
     */
   def printFamily(tokenIndex: Int): String = {
-    (labeledFamilies.lift(tokenIndex) map {
-      case (node, labeledChildren) =>
-        val childrenStr = (labeledChildren map {
-          case (label, childIndex) =>
-            s"${label.name}:${tokens(childIndex).word.name}" +
-              s"[${tokens(childIndex).getDeterministicProperty('cpos).name}]"
-        }).mkString(" ")
-        s"${tokens(node).word.name}" +
-          s"[${tokens(node).getDeterministicProperty('cpos).name}] -> $childrenStr"
+    (families.lift(tokenIndex) map { family =>
+      require(family.tokens.size >= 1, s"Empty family at position $tokenIndex")
+      val parent = family.tokens(0)
+      val children = family.tokens.tail
+      val childrenStr = (children map {
+        case child =>
+          val label = arcLabelByEndNodes(Set(parent, child))
+          s"${label.name}:${printToken(child)}"
+      }).mkString(" ")
+      s"${printToken(parent)} -> $childrenStr"
     }).getOrElse("")
   }
 
@@ -285,14 +293,8 @@ case class PolytreeParse(
     }
   }
 
-  override def toString(): String = {
-    (labeledFamilies map {
-      case (node, labeledChildren) =>
-        (s"${sentence.tokens(node).word.name}[$node]" +: (labeledChildren map {
-          case (arclabel, familyMember) =>
-            s"${arclabel.name}.${sentence.tokens(familyMember).word.name}[$familyMember]"
-        })).mkString(":")
-    }).mkString(" ")
+  override def toString: String = {
+    (Range(0, tokens.size) map { tokenIndex => printFamily(tokenIndex) }).mkString(" ")
   }
 
 }

@@ -186,9 +186,9 @@ object ParseRerankerTraining {
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
             val badTokens: Set[Int] =
-              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet) map {
-                case (node, family) =>
-                  node
+              (candidateParse.families.toSet -- goldParse.families.toSet) map { // TODO: consider labels as well?
+                case family =>
+                  family.tokens.head
               }
             badTokens filter { tokenIndex =>
               goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")

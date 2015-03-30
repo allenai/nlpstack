@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.ml.FeatureName
-import org.allenai.nlpstack.parse.poly.polyparser.{ ConllX, InMemoryPolytreeParseSource }
+import org.allenai.nlpstack.parse.poly.polyparser.{ NeighborhoodSource, ConllX, InMemoryPolytreeParseSource }
 import scopt.OptionParser
 
 /** Collects statistics over "neighborhood events."
