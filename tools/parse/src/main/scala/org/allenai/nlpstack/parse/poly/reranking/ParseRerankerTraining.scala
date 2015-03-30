@@ -167,7 +167,9 @@ object ParseRerankerTraining {
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
         val goldParse = goldParseMap(parse._1.sentence.asWhitespaceSeparatedString)
-        Range(0, goldParse.sentence.tokens.size) map { tokenIndex =>
+        Range(0, goldParse.sentence.tokens.size) filter { tokenIndex =>
+          goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
+        } map { tokenIndex =>
           (feature(goldParse, tokenIndex), 1)
         }
       }).toIterable
@@ -184,11 +186,13 @@ object ParseRerankerTraining {
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
             val badTokens: Set[Int] =
-              (candidateParse.labeledFamilies.toSet -- goldParse.labeledFamilies.toSet) map {
-                case (node, family) =>
-                  node
+              (candidateParse.families.toSet -- goldParse.families.toSet) map { // TODO: consider labels as well?
+                case family =>
+                  family.tokens.head
               }
-            badTokens map { badToken =>
+            badTokens filter { tokenIndex =>
+              goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
+            } map { badToken =>
               (feature(candidateParse, badToken), 0)
             }
         }
@@ -275,6 +279,8 @@ case class WeirdParseNodeRerankingFunction(
     } map {
       case (node, _) =>
         node
+    } filter { tokenIndex =>
+      parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
     }
   }
 }

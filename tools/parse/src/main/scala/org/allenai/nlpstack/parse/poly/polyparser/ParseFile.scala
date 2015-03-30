@@ -71,8 +71,11 @@ object ParseFile {
         parse => parser.parse(parse.sentence)
       }
     }
-    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
-      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
+    val stats: Seq[ParseStatistic] = Seq(
+      UnlabeledBreadcrumbAccuracy,
+      PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
+      PathAccuracy(true, true)
+    )
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
 

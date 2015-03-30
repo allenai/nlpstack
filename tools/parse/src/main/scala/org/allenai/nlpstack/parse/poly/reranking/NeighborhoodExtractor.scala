@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.polyparser.{ PolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.polyparser.{ NeighborhoodSource, Neighborhood, PolytreeParseSource, PolytreeParse }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -78,7 +78,7 @@ object NeighborhoodExtractor {
 case object AllChildrenExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    Seq(Neighborhood(parse.families(token).tail))
+    Seq(Neighborhood(parse.families(token).tokens.tail))
   }
 }
 
@@ -121,7 +121,7 @@ case class SpecificChildExtractor(k: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.families(token).lift(k + 1) map { x => Neighborhood(Seq(x)) }
+      parse.families(token).tokens.lift(k + 1) map { x => Neighborhood(Seq(x)) }
     ).flatten
   }
 }
@@ -151,7 +151,7 @@ case class SelfAndSpecificChildExtractor(k: Int) extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.families(token).lift(k + 1) map { x => Neighborhood(Seq(x, token)) }
+      parse.families(token).tokens.lift(k + 1) map { x => Neighborhood(Seq(x, token)) }
     ).flatten
   }
 }
