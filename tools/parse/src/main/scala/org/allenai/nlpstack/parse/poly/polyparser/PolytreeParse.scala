@@ -99,22 +99,23 @@ case class PolytreeParse(
     })
   }
 
+  /** The "families" of the parse tree. The kth element of this sequence is the family of the
+    * kth token.
+    *
+    * The family of a token is defined as the neighborhood consisting of itself, followed its
+    * directed children (in order of their appearance in the tokens field).
+    */
   @transient lazy val families: Seq[Neighborhood] = {
     Range(0, tokens.size) map { tokIndex =>
       Neighborhood(tokIndex +: children(tokIndex).toSeq.sorted)
     }
   }
 
-  /*
-  @transient lazy val labeledFamilies: Seq[(Int, Seq[(Symbol, Int)])] = {
-    Range(0, tokens.size) map { tokIndex =>
-      (tokIndex, children(tokIndex).toSeq.sorted map { child =>
-        (arcLabelByEndNodes(Set(tokIndex, child)), child)
-      })
-    }
-  }
-  */
-
+  /** Returns a token as a human-interpretable string.
+    *
+    * @param tokenIndex the token we want to look at
+    * @return a human-interpretable string that describes the token
+    */
   def printToken(tokenIndex: Int): String = {
     s"${tokens(tokenIndex).word.name}" +
       s"[${tokens(tokenIndex).getDeterministicProperty('cpos).name}]"
