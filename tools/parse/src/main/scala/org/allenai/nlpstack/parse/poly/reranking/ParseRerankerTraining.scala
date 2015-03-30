@@ -28,10 +28,24 @@ case class PRTCommandLine(
   */
 object ParseRerankerTraining {
 
-  /** Structure to represent labeled vectors together with corresponding classifier results.
+  /** Structure to represent labeled vectors with the associated input data.
+    */
+  case class LabeledFeatureVectorWithInputData(
+    labeledVector: LabeledFeatureVector,
+    input: FeatureVectorInputData
+  )
+
+  /** Structure to represent the input sentence and the parse family used to build the vector.
+    */
+  case class FeatureVectorInputData(
+    sentence: String,
+    family: LabeledFamily
+  )
+
+  /** Structure to represent labeled vectors with the associated input data and classifier output.
     */
   case class LabeledFeatureVectorClassified(
-    labeledVectorPerParseFamily: LabeledFeatureVectorPerParseFamily,
+    labeledVectorWithInputData: LabeledFeatureVectorWithInputData,
     classifierOutput: Int
   )
 
@@ -111,86 +125,99 @@ object ParseRerankerTraining {
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
+
+    println("Creating gold parse map.")
+    val goldParseMap = (goldParseSource.parseIterator map { parse =>
+      (parse.sentence.asWhitespaceSeparatedString, parse)
+    }).toMap
+
     val (rerankingFunction: RerankingFunction, classifier) =
-      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, nbestSource)
+      rerankingFunctionTrainer.trainRerankingFunction(goldParseMap, nbestSource)
 
     println("Evaluating test vectors.")
     val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.otherGoldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
+
+    val otherGoldParseMap = (otherGoldParseSource.parseIterator map { parse =>
+      (parse.sentence.asWhitespaceSeparatedString, parse)
+    }).toMap
+
     val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
     val testData =
-      createLabeledFeatureVectors(otherGoldParseSource, otherNbestSource, feature)
-    testData.labeledVectors foreach { x => println(x) }
-    evaluate(testData, classifier, clArgs.classifierOutputLogPathOption)
+      createLabeledFeatureVectors(otherGoldParseMap, otherNbestSource, feature)
+    val testVectors = testData.map { x => x.labeledVector }
+    testVectors foreach { x => println(x) }
+    evaluate(testData, classifier, otherGoldParseMap, clArgs.classifierOutputLogPathOption)
 
     println("Saving reranking function.")
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
-    TransformedNeighborhoodFeature(Seq(
-      ("children", AllChildrenExtractor)
-    ), Seq(
-      ("card", CardinalityNhTransform)
-    )),
-    TransformedNeighborhoodFeature(Seq(
-      ("self", SelfExtractor),
-      ("parent", EachParentExtractor),
-      ("child", EachChildExtractor),
-      ("parent1", SpecificParentExtractor(0)),
-      ("parent2", SpecificParentExtractor(1)),
-      ("parent3", SpecificParentExtractor(2)),
-      ("parent4", SpecificParentExtractor(3)),
-      ("child1", SpecificChildExtractor(0)),
-      ("child2", SpecificChildExtractor(1)),
-      ("child3", SpecificChildExtractor(2)),
-      ("child4", SpecificChildExtractor(3)),
-      ("child5", SpecificChildExtractor(4))
-    ), Seq(
-      ("cpos", PropertyNhTransform('cpos)),
-      ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
-      ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-    ) ++ verbnetTransformOption),
-    TransformedNeighborhoodFeature(Seq(
-      ("parent1", SelfAndSpecificParentExtractor(0)),
-      ("parent2", SelfAndSpecificParentExtractor(1)),
-      ("parent3", SelfAndSpecificParentExtractor(2)),
-      ("parent4", SelfAndSpecificParentExtractor(3)),
-      ("child1", SelfAndSpecificChildExtractor(0)),
-      ("child2", SelfAndSpecificChildExtractor(1)),
-      ("child3", SelfAndSpecificChildExtractor(2)),
-      ("child4", SelfAndSpecificChildExtractor(3)),
-      ("child5", SelfAndSpecificChildExtractor(4))
-    ), Seq(
-      ("alabel", ArclabelNhTransform),
-      ("direction", DirectionNhTransform)
+  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) =
+    new ParseNodeFeatureUnion(Seq(
+      TransformedNeighborhoodFeature(Seq(
+        ("children", AllChildrenExtractor)
+      ), Seq(
+        ("card", CardinalityNhTransform)
+      )),
+      TransformedNeighborhoodFeature(Seq(
+        ("self", SelfExtractor),
+        ("parent", EachParentExtractor),
+        ("child", EachChildExtractor),
+        ("parent1", SpecificParentExtractor(0)),
+        ("parent2", SpecificParentExtractor(1)),
+        ("parent3", SpecificParentExtractor(2)),
+        ("parent4", SpecificParentExtractor(3)),
+        ("child1", SpecificChildExtractor(0)),
+        ("child2", SpecificChildExtractor(1)),
+        ("child3", SpecificChildExtractor(2)),
+        ("child4", SpecificChildExtractor(3)),
+        ("child5", SpecificChildExtractor(4))
+      ), Seq(
+        ("cpos", PropertyNhTransform('cpos)),
+        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
+      ) ++ verbnetTransformOption),
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SelfAndSpecificParentExtractor(0)),
+        ("parent2", SelfAndSpecificParentExtractor(1)),
+        ("parent3", SelfAndSpecificParentExtractor(2)),
+        ("parent4", SelfAndSpecificParentExtractor(3)),
+        ("child1", SelfAndSpecificChildExtractor(0)),
+        ("child2", SelfAndSpecificChildExtractor(1)),
+        ("child3", SelfAndSpecificChildExtractor(2)),
+        ("child4", SelfAndSpecificChildExtractor(3)),
+        ("child5", SelfAndSpecificChildExtractor(4))
+      ), Seq(
+        ("alabel", ArclabelNhTransform),
+        ("direction", DirectionNhTransform)
+      ))
     ))
-  ))
 
-  def createLabeledFeatureVectors(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
-    feature: ParseNodeFeature): LabeledFeatureVectors = {
+  def createLabeledFeatureVectors(
+    goldParseMap: Map[String, PolytreeParse],
+    parsePools: ParsePoolSource,
+    feature: ParseNodeFeature
+  ): Iterable[LabeledFeatureVectorWithInputData] = {
 
-    println("Creating gold parse map.")
-    val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
-      (parse.sentence.asWhitespaceSeparatedString, parse)
-    }).toMap
     println("Creating positive examples.")
-    val positiveExamples: Iterable[LabeledFeatureVectorPerParseFamily] =
+    val positiveExamples: Iterable[LabeledFeatureVectorWithInputData] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
         val sentence = parse._1.sentence.asWhitespaceSeparatedString
         val goldParse = goldParseMap(sentence)
         goldParse.labeledFamilies map {
           labeledFamily =>
-            new LabeledFeatureVectorPerParseFamily(
-              sentence, labeledFamily, feature(goldParse, labeledFamily.node.tokenIndex), 1
+            new LabeledFeatureVectorWithInputData(
+              new LabeledFeatureVector(feature(goldParse, labeledFamily.node.tokenIndex), 1),
+              new FeatureVectorInputData(sentence, labeledFamily)
             )
         }
       }).toIterable
     println("Creating negative examples.")
-    val negativeExamples: Iterable[LabeledFeatureVectorPerParseFamily] = {
+    val negativeExamples: Iterable[LabeledFeatureVectorWithInputData] = {
       Range(0, 4) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
           parsePools.poolIterator flatMap { parsePool =>
@@ -204,12 +231,13 @@ object ParseRerankerTraining {
             // Utility function to take a family and filter out token details. Returns a tuple of
             // just the node index of the root node and the arc labels and child node indices for
             // the outgoing arcs.
-            def labeledFamilyNoTokenInfo(labeledFamily: LabeledFamily): (Int, Set[(Symbol, Int)]) = {
-              (
-                labeledFamily.node.tokenIndex,
-                (labeledFamily.childArcsForNode map { arc => (arc._1, arc._2.tokenIndex) }).toSet
-              )
-            }
+            def labeledFamilyNoTokenInfo(labeledFamily: LabeledFamily): (Int, Set[(Symbol, Int)]) =
+              {
+                (
+                  labeledFamily.node.tokenIndex,
+                  (labeledFamily.childArcsForNode map { arc => (arc._1, arc._2.tokenIndex) }).toSet
+                )
+              }
             // Keep only families in the candidate parse that are not in the gold parse because
             // we are extracting "bad" families. Token property information
             // may not tally since the gold parse will not contain all token properties.
@@ -226,10 +254,13 @@ object ParseRerankerTraining {
             )).toSet
 
             badNodeFamilies map { badNodeLabeledFamily =>
-              new LabeledFeatureVectorPerParseFamily(
-                candidateParse.sentence.asWhitespaceSeparatedString,
-                badNodeLabeledFamily,
-                feature(candidateParse, badNodeLabeledFamily.node.tokenIndex), 0
+              new LabeledFeatureVectorWithInputData(
+                new LabeledFeatureVector(
+                  feature(candidateParse, badNodeLabeledFamily.node.tokenIndex), 0
+                ),
+                new FeatureVectorInputData(
+                  candidateParse.sentence.asWhitespaceSeparatedString, badNodeLabeledFamily
+                )
               )
             }
         }
@@ -237,45 +268,46 @@ object ParseRerankerTraining {
     }
     println(s"Found ${positiveExamples.size} positive examples " +
       s"and ${negativeExamples.size} negative examples")
-    LabeledFeatureVectors((positiveExamples ++ negativeExamples).toIterable)
+    positiveExamples ++ negativeExamples
   }
 
   def evaluate(
-    trainingData: LabeledFeatureVectors,
+    data: Iterable[LabeledFeatureVectorWithInputData],
     classifier: WrapperClassifier,
+    goldParseMap: Map[String, PolytreeParse],
     logFilePathOption: Option[String]
   ): Unit = {
 
     // Get classifier results for all the labeled vectors.
     val classifierResults = for {
-      labeledVector <- trainingData.labeledVectors
+      labeledVectorWithInputData <- data
     } yield {
       new LabeledFeatureVectorClassified(
-        labeledVector, classifier.classify(labeledVector.featureVector)
+        labeledVectorWithInputData,
+        classifier.classify(labeledVectorWithInputData.labeledVector.featureVector)
       )
     }
 
     val correct = classifierResults.filter(
-      labeledVectorClassified =>
-        labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome ==
-          labeledVectorClassified.classifierOutput
+      result =>
+        result.labeledVectorWithInputData.labeledVector.expectedOutcome == result.classifierOutput
     )
 
     val falsePositives = classifierResults.filter(
-      labeledVectorClassified =>
-        (labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome == 0) &&
-          (labeledVectorClassified.classifierOutput == 1)
+      result =>
+        (result.labeledVectorWithInputData.labeledVector.expectedOutcome == 0) &&
+          (result.classifierOutput == 1)
     )
 
     val falseNegatives = classifierResults.filter(
-      labeledVectorClassified =>
-        (labeledVectorClassified.labeledVectorPerParseFamily.expectedOutcome == 1) &&
-          (labeledVectorClassified.classifierOutput == 0)
+      result =>
+        (result.labeledVectorWithInputData.labeledVector.expectedOutcome == 1) &&
+          (result.classifierOutput == 0)
     )
 
     val numCorrect = correct.size
 
-    val total = trainingData.labeledVectors.size
+    val total = classifierResults.size
     println(numCorrect)
     println(total)
     println(s"Accuracy: ${numCorrect.toFloat / total}")
@@ -287,9 +319,9 @@ object ParseRerankerTraining {
         {
           val pw = new PrintWriter(new File(logFilePath))
           pw.write("False Positives:\n")
-          printFamiliesAndVectors(falsePositives, pw)
+          printFamiliesAndVectors(falsePositives, goldParseMap, pw)
           pw.write("\n\nFalse Negatives:\n")
-          printFamiliesAndVectors(falseNegatives, pw)
+          printFamiliesAndVectors(falseNegatives, goldParseMap, pw)
           pw.close
         }
       case _ =>
@@ -297,24 +329,31 @@ object ParseRerankerTraining {
   }
 
   def printFamiliesAndVectors(
-    classifierResults: Iterable[LabeledFeatureVectorClassified], pw: PrintWriter
+    classifierResults: Iterable[LabeledFeatureVectorClassified],
+    goldParseMap: Map[String, PolytreeParse],
+    pw: PrintWriter
   ): Unit = {
-    val sentenceResultsMap = classifierResults.groupBy(_.labeledVectorPerParseFamily.sentence)
+    val sentenceResultsMap = classifierResults.groupBy(_.labeledVectorWithInputData.input.sentence)
     for ((sentence, classifierResults) <- sentenceResultsMap) {
       pw.write(s"\n${sentence}\n")
+      pw.write(s"\nGold Parse Families:\n")
+      for {
+        goldParse <- goldParseMap.get(sentence)
+        labeledFamily <- goldParse.labeledFamilies
+      } {
+        pw.write(labeledFamily.prettyPrintNoTokenInfo + "\n")
+      }
+      pw.write(s"\nClassifier Results:\n")
       for (result <- classifierResults) {
         // Write Label Family out in the following format:
         //(<NodeIx>, <NodeTokenString>) -> (<ArcLabel>, (<ChildNodeIx>, <ChildNodeTokenString>)),
         // (<ArcLabel> (<ChildNodeIx>, <ChildNodeTokenString>)), ...
-        val labeledFamily = result.labeledVectorPerParseFamily.family
-        pw.write("(" + labeledFamily.node.tokenIndex + ", " + labeledFamily.node.token.word.name +
-          ") " + " -> ")
-        val familyStrs = labeledFamily.childArcsForNode map (family =>
-          "(" + family._1.name + ", " + "(" + family._2.tokenIndex + ", " +
-            family._2.token.word.name + "))")
-        pw.write(familyStrs.mkString(", "))
+        val labeledFamily = result.labeledVectorWithInputData.input.family
+        pw.write(labeledFamily.prettyPrintNoTokenInfo)
         // Write Feature Vector out, separating it from the family output by a tab.
-        pw.write("\t" + result.labeledVectorPerParseFamily.featureVector.toString + "\n")
+        pw.write(
+          "\t" + result.labeledVectorWithInputData.labeledVector.featureVector.toString + "\n"
+        )
       }
     }
   }
@@ -323,25 +362,23 @@ object ParseRerankerTraining {
 case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
 
   def trainRerankingFunction(
-    goldParseSource: PolytreeParseSource,
+    goldParseMap: Map[String, PolytreeParse],
     nbestSource: ParsePoolSource
   ): (RerankingFunction, WrapperClassifier) = {
 
     println("Creating training vectors.")
-    val trainingData = ParseRerankerTraining.createLabeledFeatureVectors(goldParseSource, nbestSource, parseNodeFeature)
-    //trainingData.labeledVectors foreach { case (vec, label) =>
-    //  println(vec)
-    //}
+    val trainingVectorsWithData =
+      ParseRerankerTraining.createLabeledFeatureVectors(goldParseMap, nbestSource, parseNodeFeature)
+    val trainingData = new LabeledFeatureVectors(trainingVectorsWithData.map(x => x.labeledVector))
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
       new RandomForestTrainer(0, 10, 200, EntropyGainMetric(0))
     )
     val classifier: WrapperClassifier = trainer(trainingData)
     println("Evaluating classifier.")
-    ParseRerankerTraining.evaluate(trainingData, classifier, None)
+    ParseRerankerTraining.evaluate(trainingVectorsWithData, classifier, goldParseMap, None)
     (WeirdParseNodeRerankingFunction(classifier, parseNodeFeature, 0.3), classifier)
   }
-
 }
 
 /** This reranking function attempts to rerank parses based on how many "weird" nodes they have,

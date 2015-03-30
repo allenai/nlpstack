@@ -468,4 +468,14 @@ object PolytreeParse {
   */
 case class Node(tokenIndex: Int, token: Token)
 case class Family(nodes: Seq[Node])
-case class LabeledFamily(node: Node, childArcsForNode: Seq[(Symbol, Node)])
+case class LabeledFamily(node: Node, childArcsForNode: Seq[(Symbol, Node)]) {
+  def prettyPrintNoTokenInfo: String = {
+    val nodeStr = "(" + node.tokenIndex + ", " + node.token.word.name + ") " + " -> "
+    val familyStrs = childArcsForNode map (family =>
+      "(" + family._1.name + ", " + "(" + family._2.tokenIndex + ", " +
+        family._2.token.word.name + "))")
+    val familyStr = familyStrs.mkString(", ")
+
+    nodeStr + familyStr
+  }
+}

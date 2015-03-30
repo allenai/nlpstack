@@ -1,6 +1,5 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import org.allenai.nlpstack.parse.poly.polyparser.{ LabeledFamily, PolytreeParse }
 import spray.json.DefaultJsonProtocol._
 
 /** Maps feature names to integers. Useful for serializing TrainingData instances for
@@ -19,9 +18,7 @@ object FeatureEncoding {
 /** Support structure to store a feature vector per parse family with associated label for expected
   * outcome.
   */
-case class LabeledFeatureVectorPerParseFamily(
-    sentence: String, family: LabeledFamily, featureVector: FeatureVector, expectedOutcome: Int
-) {
+case class LabeledFeatureVector(featureVector: FeatureVector, expectedOutcome: Int) {
 }
 
 /** Abstraction for a set of labeled feature vectors.
@@ -32,7 +29,7 @@ case class LabeledFeatureVectorPerParseFamily(
   * integer outcomes
   */
 case class LabeledFeatureVectors(
-    labeledVectors: Iterable[LabeledFeatureVectorPerParseFamily]
+    labeledVectors: Iterable[LabeledFeatureVector]
 ) {
 
   /** The set of feature names found in the training data. */
