@@ -113,6 +113,24 @@ case class PolytreeParse(
     }
   }
 
+  /** Returns a token's "family" as a human-interpretable string.
+    *
+    * @param tokenIndex the token whose family we want to look at
+    * @return a human-interpretable string describe the token's family
+    */
+  def printFamily(tokenIndex: Int): String = {
+    (labeledFamilies.lift(tokenIndex) map {
+      case (node, labeledChildren) =>
+        val childrenStr = (labeledChildren map {
+          case (label, childIndex) =>
+            s"${label.name}:${tokens(childIndex).word.name}" +
+              s"[${tokens(childIndex).getDeterministicProperty('cpos).name}]"
+        }).mkString(" ")
+        s"${tokens(node).word.name}" +
+          s"[${tokens(node).getDeterministicProperty('cpos).name}] -> $childrenStr"
+    }).getOrElse("")
+  }
+
   @transient
   lazy val siblings: Vector[Set[Int]] = {
     breadcrumb.zipWithIndex map {
