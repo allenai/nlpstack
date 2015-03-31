@@ -15,7 +15,7 @@ import java.io.File
 case class PRTCommandLine(
   nbestFilenames: String = "", otherNbestFilename: String = "", parserFilename: String = "",
   goldParseFilename: String = "", dataSource: String = "", clustersPath: String = "",
-  vectorFilenames: String = "", rerankerFilename: String = "", otherGoldParseFilename: String = "",
+  rerankerFilename: String = "", otherGoldParseFilename: String = "",
   taggersConfigPathOption: Option[String] = None
 )
 
@@ -29,41 +29,41 @@ object ParseRerankerTraining {
 
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PRTCommandLine]("ParseRerankerTraining") {
-      opt[String]('n', "nbestfiles") required () valueName ("<file>") action
-        { (x, c) => c.copy(nbestFilenames = x) } text ("the file containing the nbest lists")
-      opt[String]('m', "othernbestfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(otherNbestFilename = x) } text ("the file containing the test nbest lists")
-      opt[String]('g', "goldfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(goldParseFilename = x) } text ("the file containing the gold parses")
-      opt[String]('h', "othergoldfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(otherGoldParseFilename = x) } text (
-          "the file containing the other gold parses"
-        )
-      opt[String]('p', "parser") required () valueName ("<file>") action
-        { (x, c) => c.copy(parserFilename = x) } text ("the file containing the JSON " +
-          " configuration for the parser")
-      opt[String]('c', "clusters") valueName ("<file>") action
-        { (x, c) => c.copy(clustersPath = x) } text ("the path to the Brown cluster files " +
-          "(in Liang format, comma-separated filenames)")
-      opt[String]('o', "outputfile") required () valueName ("<file>") action
-        { (x, c) => c.copy(rerankerFilename = x) } text ("where to write the incomplete" +
-          " reranking function")
-      opt[String]('v', "vectorfiles") required () valueName ("<file>") action
-        { (x, c) => c.copy(vectorFilenames = x) } text ("where to write the training" +
-          " vectors")
-      opt[String]('d', "datasource") required () valueName ("<file>") action
-        { (x, c) => c.copy(dataSource = x) } text ("the location of the data " +
-          "('datastore','local')") validate { x =>
-            if (Set("datastore", "local").contains(x)) {
-              success
-            } else {
-              failure(s"unsupported data source: ${x}")
-            }
-          }
-      opt[String]('t', "feature-taggers-config") valueName ("<file>") action
-        { (x, c) => c.copy(taggersConfigPathOption = Some(x)) } text ("the path to a config file" +
-          "containing config information required for the required taggers. Currently contains" +
-          "datastore location info to access Verbnet resources for the Verbnet tagger.")
+      opt[String]('n', "nbestfiles") required () valueName "<file>" action { (x, c) =>
+        c.copy(nbestFilenames = x)
+      } text "the file containing the nbest lists"
+      opt[String]('m', "othernbestfile") required () valueName "<file>" action { (x, c) =>
+        c.copy(otherNbestFilename = x)
+      } text "the file containing the test nbest lists"
+      opt[String]('g', "goldfile") required () valueName "<file>" action { (x, c) =>
+        c.copy(goldParseFilename = x)
+      } text "the file containing the gold parses"
+      opt[String]('h', "othergoldfile") required () valueName "<file>" action { (x, c) =>
+        c.copy(otherGoldParseFilename = x)
+      } text "the file containing the other gold parses"
+      opt[String]('p', "parser") required () valueName "<file>" action { (x, c) =>
+        c.copy(parserFilename = x)
+      } text "the file containing the JSON configuration for the parser"
+      opt[String]('c', "clusters") valueName "<file>" action { (x, c) =>
+        c.copy(clustersPath = x)
+      } text "the path to the Brown cluster files (in Liang format, comma-separated filenames)"
+      opt[String]('o', "outputfile") required () valueName "<file>" action { (x, c) =>
+        c.copy(rerankerFilename = x)
+      } text "where to write the reranking function"
+      opt[String]('d', "datasource") required () valueName "<file>" action { (x, c) =>
+        c.copy(dataSource = x)
+      } text "the location of the data ('datastore','local')" validate { x =>
+        if (Set("datastore", "local").contains(x)) {
+          success
+        } else {
+          failure(s"unsupported data source: $x")
+        }
+      }
+      opt[String]('t', "feature-taggers-config") valueName "<file>" action { (x, c) =>
+        c.copy(taggersConfigPathOption = Some(x))
+      } text "the path to a config file" +
+        "containing config information required for the required taggers. Currently contains" +
+        "datastore location info to access Verbnet resources for the Verbnet tagger."
     }
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get

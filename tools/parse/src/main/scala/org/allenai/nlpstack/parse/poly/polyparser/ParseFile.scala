@@ -140,8 +140,10 @@ object ParseFile {
       println(s"Checking parser accuracy on test set ${sourcePath}.")
       ParseFile.parseTestSet(parser, testSource)
 
-      println(s"Checking oracle accuracy on test set ${sourcePath}.")
-      oracleParseTestSet(parser, testSource, oracleNbestSize)
+      if (oracleNbestSize > 0) {
+        println(s"Checking oracle accuracy on test set ${sourcePath}.")
+        oracleParseTestSet(parser, testSource, oracleNbestSize)
+      }
     }
   }
 }
