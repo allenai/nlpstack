@@ -56,7 +56,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     * @return probability distribution of outcomes according to training data
     */
   override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
-    distribution(findDecisionPoint(featureVector))
+    val node = findDecisionPoint(featureVector)
+    val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
+    ProbabilisticClassifier.normalizeDistribution(
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toDouble }).toSeq
+    ).toMap
   }
 
   def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
@@ -66,24 +70,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   /** All features used in the decision tree. */
   override def allFeatures: Set[Int] = splittingFeature.flatten.toSet
 
-  /** The most probable outcome at each node of the decision tree. */
-  @transient private lazy val mostProbableOutcome: IndexedSeq[Int] = outcomeHistograms map { cc =>
-    (cc maxBy { _._2 })._1
-  }
-
-  /** The probability distribution over outcomes for each node of the decision tree.
-    *
-    * If this tree was trained with [[DecisionTreeTrainer]], then
-    * the distribution is Laplacian-smoothed assuming one count for each label
-    * in the training data.
-    */
-  @transient lazy val distribution: IndexedSeq[Map[Int, Double]] = {
-    val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
-    outcomeHistograms map { cc =>
-      ProbabilisticClassifier.normalizeDistribution(
-        (ProbabilisticClassifier.addMaps(cc, priorCounts) mapValues { _.toDouble }).toSeq
-      ).toMap
-    }
+  /** The most probable outcome at a specified node of the decision tree. */
+  private def mostProbableOutcome(nodeIndex: Int) = {
+    (outcomeHistograms(nodeIndex) maxBy {
+      _._2
+    })._1
   }
 
   /** From a particular node, chooses the correct child according to the feature vector
