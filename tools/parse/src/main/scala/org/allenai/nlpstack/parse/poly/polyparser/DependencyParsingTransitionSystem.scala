@@ -162,7 +162,8 @@ case class LabelLeftArc(val label: Symbol) extends TransitionParserStateTransiti
   override def advanceState(state: TransitionParserState): State = {
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
     val (crumb, gretel) = state.previousLink.get
-    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+    val labelPart = Symbol(label.name.split("::")(0))
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(labelPart)) {
       val gretelChildren: Set[Int] =
         state.children.getOrElse(gretel, Set.empty[Int])
       state.copy(
@@ -195,7 +196,8 @@ case class LabelRightArc(val label: Symbol) extends TransitionParserStateTransit
   override def advanceState(state: TransitionParserState): State = {
     require(state.previousLink != None, s"Cannot proceed without an arc to label: $state")
     val (crumb, gretel) = state.previousLink.get
-    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(label)) {
+    val labelPart = Symbol(label.name.split("::")(0))
+    if (PolytreeParse.arcInverterStanford.inverseArcLabels.contains(labelPart)) {
       val gretelChildren: Set[Int] =
         state.children.getOrElse(gretel, Set.empty[Int])
       state.copy(
