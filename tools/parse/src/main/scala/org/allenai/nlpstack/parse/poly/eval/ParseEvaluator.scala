@@ -124,6 +124,11 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
   }
 }
 
+/** CposAccuracy stores the statistics necessary to compute coarse-part-of-speech tagging
+  * accuracy, which is the percentage of tokens assigned the correct CPOS by the parser.
+  *
+  * @param verbose if true, reporting gives more detailed error analysis of the tagging mistakes
+  */
 case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
   var numCorrect = 0
   var numTotal = 0

@@ -86,6 +86,11 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   maximumDepthPerTree: Int = Integer.MAX_VALUE)
     extends ProbabilisticClassifierTrainer {
 
+  require(
+    featuresExaminedPerNode >= 0 && featuresExaminedPerNode <= 1,
+    s"featuresExaminedPerNode = $featuresExaminedPerNode, which is not between 0 and 1"
+  )
+
   private val dtTrainer = new DecisionTreeTrainer(validationPercentage, gainMetric,
     featuresExaminedPerNode, maximumDepth = maximumDepthPerTree)
 

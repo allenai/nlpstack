@@ -178,8 +178,8 @@ case class MultinomialGainMetric(minimumGain: Double) extends InformationGainMet
   *
   * @param validationPercentage the percentage of data to "hold out" for pruning
   * @param informationGainMetric the information gain metric to use ("entropy" or "multinomial")
-  * @param featuresExaminedPerNode for each node, the number of randomly selected features
-  * to consider as potential splitting features
+  * @param featuresExaminedPerNode for each node, the fraction of features
+  * to randomly consider as potential splitting features
   * @param maximumDepth the maximum desired depth of the trained decision tree
   */
 class DecisionTreeTrainer(
@@ -188,6 +188,11 @@ class DecisionTreeTrainer(
     featuresExaminedPerNode: Double = 1.0,
     maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
+
+  require(
+    featuresExaminedPerNode >= 0 && featuresExaminedPerNode <= 1,
+    s"featuresExaminedPerNode = $featuresExaminedPerNode, which is not between 0 and 1"
+  )
 
   /** Factory constructor of DecisionTree.
     *
@@ -228,9 +233,8 @@ class DecisionTreeTrainer(
 
     val root = new Node(Some(data), featureVectorSubset,
       data.getFeatures.toSeq, depth = 0)
-    println(s"Num training vectors: ${data.numVectors}")
-    println(s"Number of training features: ${root.featureSubset.size}")
-    println(s"Examining $featuresExaminedPerNode features.")
+    println(s"Training decision tree using ${data.numVectors} training " +
+      s"vectors with ${root.featureSubset.size} features.")
     val stack = mutable.Stack[Node]()
     stack.push(root)
     while (stack.nonEmpty) {

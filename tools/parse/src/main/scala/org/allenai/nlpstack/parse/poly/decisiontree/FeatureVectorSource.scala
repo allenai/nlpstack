@@ -20,6 +20,10 @@ trait FeatureVectorSource {
     */
   def numFeatures: Int
 
+  /** Gets the set of features in this collection of feature vectors.
+    *
+    * @return the set of features that appear in at least one vector of this collection
+    */
   def getFeatures: Set[Int]
 
   /** Gets a uniqued sequence of all outcomes associated with feature vectors in this set. */
@@ -59,10 +63,13 @@ case class InMemoryFeatureVectorSource(
     * @return the number of features in this collection
     */
   def numFeatures: Int = {
-    //featureVecs.headOption map { _.numFeatures } getOrElse { 0 }
     getFeatures.size
   }
 
+  /** Gets the set of features in this collection of feature vectors.
+    *
+    * @return the set of features that appear in at least one vector of this collection
+    */
   def getFeatures: Set[Int] = {
     featureVecs.foldLeft(Set[Int]()) { (y, fvec) => y ++ fvec.nonzeroFeatures }
   }
@@ -105,6 +112,10 @@ case class RemappedFeatureVectorSource(
     */
   override def numVectors: Int = fvSource.numVectors
 
+  /** Gets the set of features in this collection of feature vectors.
+    *
+    * @return the set of features that appear in at least one vector of this collection
+    */
   override def numFeatures: Int = fvSource.numFeatures
 
   override def getFeatures: Set[Int] = fvSource.getFeatures

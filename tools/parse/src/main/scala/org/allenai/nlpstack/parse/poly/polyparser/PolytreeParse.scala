@@ -47,6 +47,7 @@ case class PolytreeParse(
     val children: Vector[Set[Int]],
     val arclabels: Vector[Set[(Int, Symbol)]]
 ) extends MarbleBlock with Sculpture {
+
   require(breadcrumb(0) == -1)
   require(sentence.size == breadcrumb.size)
   require(sentence.size == children.size)
@@ -406,6 +407,7 @@ object PolytreeParse {
     // For the following, note that each row has 10 elements. The relevant elements are:
     // - row(0) is the word position (in the sentence)
     // - row(1) is the word
+    // - row(3) is the coarse POS tag
     // - row(4) is the fine POS tag
     // - row(6) is the breadcrumb
     // - row(7) is the arc label (for the unique arc between the word and its breadcrumb)
@@ -419,9 +421,11 @@ object PolytreeParse {
           Token.createProperties(
             row(1),
             goldCpos =
+              // if there's a gold fine POS tag, use that to create the coarse POS tag
+              // otherwise, use the coarse POS tag, if available
               if (useGoldPosTags && row(iFinePos) != "_") {
                 WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
-              } else if (useGoldPosTags) {
+              } else if (useGoldPosTags && row(iCoarsePos) != "_") {
                 Some(row(iCoarsePos))
               } else {
                 None

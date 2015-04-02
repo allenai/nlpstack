@@ -187,44 +187,6 @@ case object BreadcrumbAssigned extends TokenTransform {
   override val name: Symbol = 'crumbAssigned
 }
 
-case object GuessedCpos extends TokenTransform {
-
-  override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
-    state.breadcrumb.get(tokenIndex) match {
-      case Some(crumb) =>
-        val arcLabel = state.arcLabels.getOrElse(Set(crumb, tokenIndex), Symbol("NEXUS::NEXUS"))
-        if (arcLabel != 'NONE) {
-          Set(Symbol(arcLabel.name.split("::")(1)))
-        } else {
-          Set()
-        }
-      case None => Set()
-    }
-  }
-
-  @transient
-  override val name: Symbol = 'cposGuess
-}
-
-case object GuessedArcLabel extends TokenTransform {
-
-  override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
-    state.breadcrumb.get(tokenIndex) match {
-      case Some(crumb) =>
-        val arcLabel = state.arcLabels.getOrElse(Set(crumb, tokenIndex), Symbol("NEXUS::NEXUS"))
-        if (arcLabel != 'NONE) {
-          Set(Symbol(arcLabel.name.split("::")(0)))
-        } else {
-          Set()
-        }
-      case None => Set()
-    }
-  }
-
-  @transient
-  override val name: Symbol = 'arcGuess
-}
-
 /** The BreadcrumbArc transform maps a token to the label of the arc from its breadcrumb to itself.
   *
   * See the definition of TokenTransform (above) for more details about the interface.
