@@ -124,6 +124,67 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
   }
 }
 
+case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
+  var numCorrect = 0
+  var numTotal = 0
+  var numParses = 0
+  var errorHistogram = Map[(Symbol, Symbol), Int]()
+
+  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+    numParses += 1
+    numTotal += goldParse.breadcrumb.tail.size
+    candidateParse match {
+      case Some(candParse) =>
+        if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
+          numCorrect +=
+            candParse.tokens.tail.zip(goldParse.tokens.tail) count {
+              case (candToken, goldToken) =>
+                candToken.getDeterministicProperty('cpos) == goldToken.getDeterministicProperty('cpos)
+            }
+          candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
+            case (candToken, goldToken) =>
+              candToken.getDeterministicProperty('cpos) != goldToken.getDeterministicProperty('cpos)
+          } foreach {
+            case (candToken, goldToken) =>
+              val candCpos = candToken.getDeterministicProperty('cpos)
+              val goldCpos = goldToken.getDeterministicProperty('cpos)
+              errorHistogram = errorHistogram.updated(
+                (candCpos, goldCpos),
+                1 + errorHistogram.getOrElse((candCpos, goldCpos), 0)
+              )
+          }
+        } else { // skip the parse if the tokenization is different
+          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
+            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
+          numParses -= 1
+          numTotal -= goldParse.breadcrumb.tail.size
+        }
+      case None =>
+        println(s"WARNING -- Failed parse")
+    }
+  }
+
+  override def report(): Unit = {
+    println("Cpos Tagging: %d / %d = %2.2f%%".format(numCorrect, numTotal,
+      (100.0 * numCorrect) / numTotal))
+    if (verbose) {
+      errorHistogram.toSeq sortBy {
+        case (_, count) =>
+          count
+      } foreach {
+        case ((candCpos, goldCpos), count) =>
+          println(s"  $count: ${goldCpos.name} ~~> ${candCpos.name}")
+      }
+    }
+  }
+
+  override def reset(): Unit = {
+    numCorrect = 0
+    numTotal = 0
+    numParses = 0
+  }
+}
+
 /** A ParseScore maps a candidate parse to a score. */
 trait ParseScore extends (PolytreeParse => Double) {
   def getRatio(candidateParse: PolytreeParse): (Int, Int)

@@ -20,6 +20,8 @@ trait FeatureVectorSource {
     */
   def numFeatures: Int
 
+  def getFeatures: Set[Int]
+
   /** Gets a uniqued sequence of all outcomes associated with feature vectors in this set. */
   val allOutcomes: Seq[Int]
 
@@ -57,7 +59,12 @@ case class InMemoryFeatureVectorSource(
     * @return the number of features in this collection
     */
   def numFeatures: Int = {
-    featureVecs.headOption map { _.numFeatures } getOrElse { 0 }
+    //featureVecs.headOption map { _.numFeatures } getOrElse { 0 }
+    getFeatures.size
+  }
+
+  def getFeatures: Set[Int] = {
+    featureVecs.foldLeft(Set[Int]()) { (y, fvec) => y ++ fvec.nonzeroFeatures }
   }
 
   /** Gets a uniqued sequence of all outcomes associated with feature vectors in this set. */
@@ -99,6 +106,8 @@ case class RemappedFeatureVectorSource(
   override def numVectors: Int = fvSource.numVectors
 
   override def numFeatures: Int = fvSource.numFeatures
+
+  override def getFeatures: Set[Int] = fvSource.getFeatures
 
   override val allOutcomes: Seq[Int] = (fvSource.allOutcomes map { outcome =>
     outcomeRemapping(outcome)

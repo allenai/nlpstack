@@ -63,8 +63,6 @@ abstract class DependencyParsingTransitionSystem(
       TokenPositionFeature,
       TokenPropertyFeature('autoCpos),
       TokenPropertyFeature('autoPos),
-      TokenPropertyFeature('disputedCpos),
-      TokenPropertyFeature('disputedPos),
       TokenPropertyFeature('brown0),
       TokenPropertyFeature('verbnetPrimaryFrames),
       TokenPropertyFeature('verbnetSecondaryFrames),
@@ -98,6 +96,11 @@ abstract class DependencyParsingTransitionSystem(
       new OfflineTokenFeature(annotatedSentence, StackLeftGretelsRef(0)),
       new OfflineTokenFeature(annotatedSentence, StackRightGretelsRef(0)),
       new OfflineTokenFeature(annotatedSentence, FirstRef),
+      new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)),
+      new TokenTransformFeature(BufferRef(0), Set(GuessedArcLabel, GuessedCpos)),
+      //new TokenTransformFeature(StackRef(1), Set(GuessedArcLabel, GuessedCpos)),
+      new TokenTransformFeature(TransitiveRef(StackRef(0), Seq(TokenGretels)), Set(GuessedArcLabel)),
+      new TokenTransformFeature(TransitiveRef(BufferRef(0), Seq(TokenGretels)), Set(GuessedArcLabel)),
       new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
     ))
 
@@ -117,6 +120,11 @@ abstract class DependencyParsingTransitionSystem(
     new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),
     new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenCrumb))),
     new OfflineTokenFeature(annotatedSentence, FirstRef),
+    new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)),
+    new TokenTransformFeature(BufferRef(0), Set(GuessedArcLabel, GuessedCpos)),
+    //new TokenTransformFeature(StackRef(1), Set(GuessedArcLabel, GuessedCpos)),
+    new TokenTransformFeature(TransitiveRef(StackRef(0), Seq(TokenGretels)), Set(GuessedArcLabel)),
+    new TokenTransformFeature(TransitiveRef(BufferRef(0), Seq(TokenGretels)), Set(GuessedArcLabel)),
     new TokenTransformFeature(LastRef, Set(KeywordTransform(WordClusters.puncWords)))
   ))
 

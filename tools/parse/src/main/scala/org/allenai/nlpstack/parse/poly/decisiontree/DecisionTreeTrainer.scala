@@ -185,7 +185,7 @@ case class MultinomialGainMetric(minimumGain: Double) extends InformationGainMet
 class DecisionTreeTrainer(
     validationPercentage: Double,
     informationGainMetric: InformationGainMetric,
-    featuresExaminedPerNode: Int = Integer.MAX_VALUE,
+    featuresExaminedPerNode: Double = 1.0,
     maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
 
@@ -207,7 +207,7 @@ class DecisionTreeTrainer(
       val shuffledFeatures = Random.shuffle((0 to n - 1).toIndexedSeq)
       (shuffledFeatures.drop(nTrain), shuffledFeatures.take(nTrain))
     }
-    val root = growTree(data, trainingSubset, featuresExaminedPerNode)
+    val root = growTree(data, trainingSubset, (featuresExaminedPerNode * data.numFeatures).toInt)
     if (validationSubset.nonEmpty) {
       pruneTree(data, validationSubset, root)
     }
@@ -227,8 +227,10 @@ class DecisionTreeTrainer(
     featuresExaminedPerNode: Int): Node = {
 
     val root = new Node(Some(data), featureVectorSubset,
-      (0 to data.numFeatures - 1).toIndexedSeq, depth = 0)
+      data.getFeatures.toSeq, depth = 0)
+    println(s"Num training vectors: ${data.numVectors}")
     println(s"Number of training features: ${root.featureSubset.size}")
+    println(s"Examining $featuresExaminedPerNode features.")
     val stack = mutable.Stack[Node]()
     stack.push(root)
     while (stack.nonEmpty) {

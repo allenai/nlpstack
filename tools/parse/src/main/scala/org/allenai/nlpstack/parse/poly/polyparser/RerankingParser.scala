@@ -78,7 +78,7 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
             tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
           }
         ))
-        Some(mappedParse)
+        Some(parse)
       case _ => None
     }
   }

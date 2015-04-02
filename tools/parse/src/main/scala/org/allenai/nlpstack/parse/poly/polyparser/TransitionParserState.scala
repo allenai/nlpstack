@@ -103,6 +103,23 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
+
+      val revisedArcLabels = arcLabels map {
+        case (tokenPair, label) =>
+          (tokenPair, Symbol(label.name.split("::")(0)))
+      }
+      val revisedSentence = sentence.copy(
+        tokens = sentence.tokens.zipWithIndex map {
+        case (tok, tokenIndex) =>
+          tok.copy(
+            properties = tok.properties.updated(
+              'cpos,
+              Set(Symbol(arcLabels.getOrElse(Set(tokenIndex, breadcrumb(tokenIndex)), Symbol("nexus::nexus")).name.split("::")(1)))
+            )
+          )
+      }
+      )
+
       val parseBreadcrumb = ((0 to sentence.size - 1) map { x =>
         breadcrumb(x)
       }).toVector
@@ -115,9 +132,9 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
       } yield for {
         neighbor <- neighborSet
         if neighbor >= 0
-      } yield (neighbor, arcLabels(Set(i, neighbor)))
+      } yield (neighbor, revisedArcLabels(Set(i, neighbor)))
       Some(PolytreeParse(
-        sentence,
+        revisedSentence,
         parseBreadcrumb,
         ((0 to sentence.size - 1) map { x =>
         children.getOrElse(x, Set())

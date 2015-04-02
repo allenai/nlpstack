@@ -230,25 +230,45 @@ class ArcEagerGuidedCostFunction(
     override val transitionSystem: TransitionSystem
 ) extends StateCostFunction {
 
+  private val alteredParse: PolytreeParse = parse.copy(
+    arclabels = parse.arclabels.zipWithIndex map {
+    case (arcSet, token) =>
+      arcSet map {
+        case (otherToken, label) =>
+          val cposToken = if (parse.breadcrumb(otherToken) == token) {
+            otherToken
+          } else {
+            token
+          }
+          val cpos = parse.tokens(cposToken).getDeterministicProperty('cpos)
+          (otherToken, mergeCposWithLabel(cpos, label))
+      }
+  }
+  )
+
+  private def mergeCposWithLabel(cpos: Symbol, label: Symbol): Symbol = {
+    Symbol(s"${label.name}::${cpos.name}")
+  }
+
   override def apply(state: State): Map[StateTransition, Double] = {
     state match {
       case tpState: TransitionParserState =>
         require(tpState.stack.nonEmpty)
         if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = alteredParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelLeftArc(arclabel) -> 0)
         } else if (tpState.parserMode == DependencyParserModes.RIGHTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = alteredParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelRightArc(arclabel) -> 0)
         } else if (tpState.bufferIsEmpty) {
           Map(ArcEagerReduce -> 0)
-        } else if (parse.breadcrumb(tpState.bufferPosition) == tpState.stack.head) {
+        } else if (alteredParse.breadcrumb(tpState.bufferPosition) == tpState.stack.head) {
           Map(ArcEagerRightArc() -> 0)
-        } else if (parse.breadcrumb(tpState.stack.head) == tpState.bufferPosition) {
+        } else if (alteredParse.breadcrumb(tpState.stack.head) == tpState.bufferPosition) {
           Map(ArcEagerLeftArc() -> 0)
-        } else if (tpState.stack.tail forall (!parse.areNeighbors(_, tpState.bufferPosition))) {
+        } else if (tpState.stack.tail forall (!alteredParse.areNeighbors(_, tpState.bufferPosition))) {
           // once we shift the next buffer item, we will no longer be able to attach it to anything
           // currently on the stack; therefore only shift if it has no remaining neighbors on the
           // stack (note: the previous checks have already established that it is not neighbors

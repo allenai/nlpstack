@@ -116,10 +116,12 @@ class DTCostFunctionTrainer(
     trainingVectorIter: Iterator[FSMTrainingVector]): EmbeddedClassifier = {
 
     println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
+    val trainingVectors = trainingVectorIter.toIterable
+    println(s"Num training vectors: ${trainingVectors.size}")
     val vectors: DTFeatureVectorSource =
       createDTFeatureVectorSource(
         task,
-        trainingVectorIter
+        trainingVectors.iterator
       )
     println("Now training.")
     val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)
