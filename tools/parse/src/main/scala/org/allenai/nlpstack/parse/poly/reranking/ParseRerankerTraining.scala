@@ -29,12 +29,6 @@ object ParseRerankerTraining {
 
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PRTCommandLine]("ParseRerankerTraining") {
-      opt[String]('n', "nbestfiles") required () valueName "<file>" action { (x, c) =>
-        c.copy(nbestFilenames = x)
-      } text "the file containing the nbest lists"
-      opt[String]('m', "othernbestfile") required () valueName "<file>" action { (x, c) =>
-        c.copy(otherNbestFilename = x)
-      } text "the file containing the test nbest lists"
       opt[String]('g', "goldfile") required () valueName "<file>" action { (x, c) =>
         c.copy(goldParseFilename = x)
       } text "the file containing the gold parses"
@@ -92,23 +86,34 @@ object ParseRerankerTraining {
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
-    val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
+    //val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val (rerankingFunction: RerankingFunction, classifier) =
-      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, nbestSource)
 
-    println("Evaluating test vectors.")
+    val nbestSize = 20
+    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
+    println("Creating training data.")
+    val trainingPools: ParsePoolSource =
+      InMemoryParsePoolSource(ParseFile.nbestParseTestSet(parser, goldParseSource, nbestSize))
+    println("Training reranker.")
+
+    val (rerankingFunction: RerankingFunction, classifier) =
+      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, trainingPools)
+
+    println("Creating test data.")
     val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.otherGoldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
+    //val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
+    val testPools: ParsePoolSource =
+      InMemoryParsePoolSource(ParseFile.nbestParseTestSet(parser, otherGoldParseSource, nbestSize))
     val testData =
-      createTrainingData(otherGoldParseSource, otherNbestSource, feature)
-    testData.labeledVectors foreach { x => println(x) }
+      createTrainingData(otherGoldParseSource, testPools, feature)
+
+    println("Evaluating test vectors.")
     evaluate(testData, classifier)
 
     println("Saving reranking function.")
@@ -229,7 +234,7 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
     //}
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 10, 200, EntropyGainMetric(0))
+      new RandomForestTrainer(0, 12, 0.1, EntropyGainMetric(0), numThreads = 6)
     )
     val classifier: WrapperClassifier = trainer(trainingData)
     println("Evaluating classifier.")

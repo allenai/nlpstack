@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.core.SentenceSource
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
@@ -88,6 +89,28 @@ object ParseFile {
       UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
       (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
     ))
+  }
+
+  def nbestParseTestSet(
+    parser: TransitionParser,
+    sentenceSource: SentenceSource,
+    nbestSize: Int
+  ): Iterator[ParsePool] = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    parser match {
+      case rerankingParser: RerankingTransitionParser =>
+        val parserConfig = rerankingParser.config.copy(parsingNbestSize = nbestSize)
+        val baseParser: NbestParser = new NbestParser(parserConfig)
+        val parseTasks: Iterator[Future[ParsePool]] =
+          for {
+            sentence <- sentenceSource.sentenceIterator
+          } yield Future {
+            ParsePool(baseParser.parse(sentence, Set()))
+          }
+        val futureParses: Future[Iterator[ParsePool]] = Future.sequence(parseTasks)
+        Await.result(futureParses, 2 days)
+    }
   }
 
   /** Determines the oracle score for n-best parsing a sequence of parses.
