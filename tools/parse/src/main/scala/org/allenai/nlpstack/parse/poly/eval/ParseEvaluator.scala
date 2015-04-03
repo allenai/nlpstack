@@ -136,11 +136,12 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
   var errorHistogram = Map[(Symbol, Symbol), Int]()
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    numParses += 1
-    numTotal += goldParse.breadcrumb.tail.size
     candidateParse match {
       case Some(candParse) =>
         if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
+          numParses += 1
+          numTotal += goldParse.breadcrumb.tail.size
+          // skip the first element because it is the nexus (hence it has no part-of-speech)
           numCorrect +=
             candParse.tokens.tail.zip(goldParse.tokens.tail) count {
               case (candToken, goldToken) =>
@@ -161,10 +162,10 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
         } else { // skip the parse if the tokenization is different
           println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
             s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
-          numParses -= 1
-          numTotal -= goldParse.breadcrumb.tail.size
         }
       case None =>
+        numParses += 1
+        numTotal += goldParse.breadcrumb.tail.size
         println(s"WARNING -- Failed parse")
     }
   }
