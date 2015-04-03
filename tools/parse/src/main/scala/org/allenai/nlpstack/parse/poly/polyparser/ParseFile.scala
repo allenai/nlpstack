@@ -1,13 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.File
-
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{
-  ClassifierBasedCostFunction,
-  RerankingFunction,
-  FeatureUnion
-}
+import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
@@ -80,10 +74,8 @@ object ParseFile {
       } yield Future {
         parser.parse(parse.sentence)
       }
-
     val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
     val candidateParses = Await.result(futureParses, 2 days)
-
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),

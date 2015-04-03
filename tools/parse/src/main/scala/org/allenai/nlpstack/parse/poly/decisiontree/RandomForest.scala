@@ -84,7 +84,7 @@ object RandomForest {
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   featuresExaminedPerNode: Double, gainMetric: InformationGainMetric, useBagging: Boolean = false,
-  maximumDepthPerTree: Int = Integer.MAX_VALUE)
+  maximumDepthPerTree: Int = Integer.MAX_VALUE, numThreads: Int = 1)
     extends ProbabilisticClassifierTrainer {
 
   require(
@@ -103,11 +103,10 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
     import scala.concurrent.duration._
     import scala.concurrent._
-    //import scala.concurrent.ExecutionContext.Implicits.global
     import scala.language.postfixOps
-    val threadCount = 8
-    implicit val executionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threadCount))
-
+    implicit val executionContext = ExecutionContext.fromExecutor(
+      Executors.newFixedThreadPool(numThreads)
+    )
     val tasks: Seq[Future[File]] = for (i <- Range(0, numDecisionTrees)) yield Future {
       dtTrainer(data) match {
         case dt: DecisionTree =>
