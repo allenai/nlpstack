@@ -1,13 +1,15 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import java.io.{ PrintWriter, File }
-import java.util.concurrent.Executors
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -101,12 +103,8 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-    import scala.concurrent.duration._
-    import scala.concurrent._
-    import scala.language.postfixOps
-    implicit val executionContext = ExecutionContext.fromExecutor(
-      Executors.newFixedThreadPool(numThreads)
-    )
+    import scala.concurrent.ExecutionContext.Implicits.global
+    System.setProperty("scala.concurrent.context.numThreads", numThreads.toString)
     val tasks: Seq[Future[File]] = for (i <- Range(0, numDecisionTrees)) yield Future {
       dtTrainer(data) match {
         case dt: DecisionTree =>
@@ -131,6 +129,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
           }
         }
     }
+    System.clearProperty("scala.concurrent.context.numThreads")
     RandomForest(data.allOutcomes, subtrees)
   }
 }

@@ -6,6 +6,9 @@ import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 private case class ParseFileConfig(configFilename: String = "", testFilename: String = "",
   dataSource: String = "", oracleNbest: Int = ParseFile.defaultOracleNbest)
@@ -61,13 +64,8 @@ object ParseFile {
     */
   def parseTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
-    val startTime: Long = Platform.currentTime
-
-    import scala.concurrent.duration._
-    import scala.concurrent._
     import scala.concurrent.ExecutionContext.Implicits.global
-    import scala.language.postfixOps
-
+    val startTime: Long = Platform.currentTime
     val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
       for {
         parse <- parseSource.parseIterator
