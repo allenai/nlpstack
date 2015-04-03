@@ -47,7 +47,7 @@ case class WrapperClassifier(
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
     */
-  def getDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  def getDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     classifier.outcomeDistribution(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )

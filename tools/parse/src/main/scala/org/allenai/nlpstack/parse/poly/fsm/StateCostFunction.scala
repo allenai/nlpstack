@@ -14,7 +14,7 @@ import org.allenai.common.json._
   * GuidedCostFunction in [[org.allenai.nlpstack.parse.poly.polyparser.ArcEagerGuidedCostFunction]]
   * for a cost function that uses a gold parse tree as the basis for its cost function.
   */
-abstract class StateCostFunction extends (State => Map[StateTransition, Double]) {
+abstract class StateCostFunction extends (State => Map[StateTransition, Float]) {
 
   def transitionSystem: TransitionSystem
 
@@ -56,8 +56,8 @@ case class ClassifierBasedCostFunction(
   @transient
   lazy val taskClassifiers = taskClassifierList.toMap
 
-  override def apply(state: State): Map[StateTransition, Double] = {
-    transitionCosts(state, 0.0)
+  override def apply(state: State): Map[StateTransition, Float] = {
+    transitionCosts(state, 0.0f)
   }
 
   /** Returns a distribution over all possible transitions, according to the classifier associated
@@ -76,16 +76,16 @@ case class ClassifierBasedCostFunction(
     */
   private def transitionDistribution(
     state: State,
-    minProb: Double
-  ): Map[StateTransition, Double] = {
+    minProb: Float
+  ): Map[StateTransition, Float] = {
 
     transitionSystem.taskIdentifier(state) match {
       case Some(task) =>
         val featureVector: FeatureVector = transitionSystem.computeFeature(state)
-        val topLevelDistribution: Map[StateTransition, Double] = {
+        val topLevelDistribution: Map[StateTransition, Float] = {
           if (!taskClassifiers.contains(task)) {
             transitions.zip(transitions.map { _ =>
-              1.0 / transitions.size
+              1.0f / transitions.size
             }).toMap
           } else {
             taskClassifiers(task).getDistribution(featureVector) filter {
@@ -95,14 +95,15 @@ case class ClassifierBasedCostFunction(
         }
         val result = if (topLevelDistribution.contains(Fallback)) {
           require(baseCostFunction != None)
-          val baseCosts: Map[StateTransition, Double] = (baseCostFunction.get)(state)
-          val baseDistribution = baseCosts mapValues (x => Math.exp(-x))
-          val fallbackProb: Double = topLevelDistribution(Fallback)
-          val topLevelDistributionWithoutFallback = topLevelDistribution - Fallback
+          val baseCosts: Map[StateTransition, Float] = (baseCostFunction.get)(state)
+          val baseDistribution: Map[StateTransition, Float] = baseCosts mapValues (x => Math.exp(-x).toFloat)
+          val fallbackProb: Float = topLevelDistribution(Fallback)
+          val topLevelDistributionWithoutFallback: Map[StateTransition, Float] = topLevelDistribution - Fallback
           (for {
             key <- baseDistribution.keys ++ topLevelDistributionWithoutFallback.keys
-          } yield (key, topLevelDistributionWithoutFallback.getOrElse(key, 0.0) +
-            fallbackProb * baseDistribution.getOrElse(key, 0.0))).toMap
+          } yield (key,
+            topLevelDistributionWithoutFallback.getOrElse(key, 0.0f) +
+            fallbackProb * baseDistribution.getOrElse(key, 0.0f))).toMap
         } else {
           topLevelDistribution
         }
@@ -129,10 +130,10 @@ case class ClassifierBasedCostFunction(
     */
   private def transitionCosts(
     state: State,
-    minProb: Double
-  ): Map[StateTransition, Double] = {
+    minProb: Float
+  ): Map[StateTransition, Float] = {
 
-    transitionDistribution(state, minProb) mapValues (-Math.log(_))
+    transitionDistribution(state, minProb) mapValues (-Math.log(_).toFloat)
   }
 
 }

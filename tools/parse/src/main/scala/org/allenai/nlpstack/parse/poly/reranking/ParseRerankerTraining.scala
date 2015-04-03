@@ -180,7 +180,7 @@ object ParseRerankerTraining {
       }).toIterable
     println("Creating negative examples.")
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
-      Range(0, 4) flatMap { _ =>
+      Range(0, 3) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
           parsePools.poolIterator flatMap { parsePool =>
             Range(0, 1) map { i =>
@@ -234,7 +234,7 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
     //}
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 12, 0.1, EntropyGainMetric(0), numThreads = 6)
+      new RandomForestTrainer(0, 12, 0.1f, EntropyGainMetric(0), numThreads = 6)
     )
     val classifier: WrapperClassifier = trainer(trainingData)
     println("Evaluating classifier.")
@@ -274,9 +274,9 @@ case class WeirdParseNodeRerankingFunction(
     * @return the indices of all weird tokens
     */
   def getWeirdNodes(parse: PolytreeParse): Set[Int] = {
-    val nodeWeirdness: Set[(Int, Double)] =
+    val nodeWeirdness: Set[(Int, Float)] =
       Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
-        (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0))
+        (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0f))
       }
     nodeWeirdness filter {
       case (_, weirdness) =>

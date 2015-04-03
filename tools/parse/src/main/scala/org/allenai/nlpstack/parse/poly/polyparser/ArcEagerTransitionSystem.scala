@@ -232,7 +232,7 @@ class ArcEagerGuidedCostFunction(
 
   private val augmentedParse = DependencyParsingTransitionSystem.transformArcLabels(parse)
 
-  override def apply(state: State): Map[StateTransition, Double] = {
+  override def apply(state: State): Map[StateTransition, Float] = {
     state match {
       case tpState: TransitionParserState =>
         require(tpState.stack.nonEmpty)

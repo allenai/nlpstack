@@ -55,11 +55,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     * @param featureVector feature vector to compute the distribution for
     * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toDouble }).toSeq
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toFloat }).toSeq
     ).toMap
   }
 

@@ -28,7 +28,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val outcomeHistogram = decisionTrees map { decisionTree =>
       decisionTree.classify(featureVector)
     } groupBy { x => x } mapValues { v => v.size }
@@ -40,7 +40,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
     */
-  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Double] = {
+  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
     val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
       decisionTree.outcomeHistogram(featureVector).toSeq
     } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
@@ -53,7 +53,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
   }
 
   /*
-  @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Double)] = {
+  @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Float)] = {
     (decisionTrees flatMap { decisionTree =>
       decisionTree.decisionPaths zip (decisionTree.distribution map { x => x(1) })
     }).toSet.toSeq
@@ -69,8 +69,8 @@ object RandomForest {
     * @param histogram maps each (integral valued) outcome to its count
     * @return the normalized histogram
     */
-  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Double] = {
-    val normalizer: Double = histogram.values.sum
+  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Float] = {
+    val normalizer: Float = histogram.values.sum
     require(normalizer > 0d)
     histogram mapValues { _ / normalizer }
   }
@@ -84,8 +84,8 @@ object RandomForest {
   * @param featuresExaminedPerNode during decision tree induction, desired percentage of randomly
   * selected features to consider at each node
   */
-class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-  featuresExaminedPerNode: Double, gainMetric: InformationGainMetric, useBagging: Boolean = false,
+class RandomForestTrainer(validationPercentage: Float, numDecisionTrees: Int,
+  featuresExaminedPerNode: Float, gainMetric: InformationGainMetric, useBagging: Boolean = false,
   maximumDepthPerTree: Int = Integer.MAX_VALUE, numThreads: Int = 1)
     extends ProbabilisticClassifierTrainer {
 

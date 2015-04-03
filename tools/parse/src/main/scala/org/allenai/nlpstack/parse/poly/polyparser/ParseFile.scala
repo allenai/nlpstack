@@ -57,24 +57,37 @@ object ParseFile {
       config.oracleNbest)
   }
 
+  /** Parses a sequence of sentences.
+    *
+    * @param parser the parser we want to use to parse the sentences
+    * @param sentenceSource the sentences to parse
+    */
+  def parseTestSet(
+    parser: TransitionParser,
+    sentenceSource: SentenceSource
+  ): Iterator[Option[PolytreeParse]] = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
+      for {
+        sentence <- sentenceSource.sentenceIterator
+      } yield Future {
+        parser.parse(sentence)
+      }
+    val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
+    Await.result(futureParses, 2 days)
+  }
+
   /** Re-parses a sequence of parses, and compares the results
     * to the gold standard.
     *
     * @param parser the parser we want to use to parse the sentences
-    * @param parseSource the gold parses
+    * @param parseSource the parses we want to evaluate against
     */
-  def parseTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
+  def evaluateParserOnTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
-    import scala.concurrent.ExecutionContext.Implicits.global
     val startTime: Long = Platform.currentTime
-    val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
-      for {
-        parse <- parseSource.parseIterator
-      } yield Future {
-        parser.parse(parse.sentence)
-      }
-    val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
-    val candidateParses = Await.result(futureParses, 2 days)
+    val candidateParses = parseTestSet(parser, parseSource)
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
@@ -83,7 +96,6 @@ object ParseFile {
     )
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
-
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
       UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
@@ -165,7 +177,7 @@ object ParseFile {
       }).toMap
     for ((sourcePath, testSource) <- testSources) {
       println(s"Checking parser accuracy on test set ${sourcePath}.")
-      ParseFile.parseTestSet(parser, testSource)
+      ParseFile.evaluateParserOnTestSet(parser, testSource)
 
       if (oracleNbestSize > 0) {
         println(s"Checking oracle accuracy on test set ${sourcePath}.")

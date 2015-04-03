@@ -221,8 +221,8 @@ class ArcHybridGuidedCostFunction(
 
   private val augmentedParse = DependencyParsingTransitionSystem.transformArcLabels(parse)
 
-  override def apply(state: State): Map[StateTransition, Double] = {
-    val result: Map[StateTransition, Double] = state match {
+  override def apply(state: State): Map[StateTransition, Float] = {
+    val result: Map[StateTransition, Float] = state match {
       case tpState: TransitionParserState =>
         require(!tpState.isFinal)
         if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
