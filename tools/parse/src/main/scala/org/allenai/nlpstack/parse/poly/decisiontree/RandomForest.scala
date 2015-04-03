@@ -7,6 +7,9 @@ import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -83,7 +86,7 @@ object RandomForest {
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
   featuresExaminedPerNode: Double, gainMetric: InformationGainMetric, useBagging: Boolean = false,
-  maximumDepthPerTree: Int = Integer.MAX_VALUE)
+  maximumDepthPerTree: Int = Integer.MAX_VALUE, numThreads: Int = 1)
     extends ProbabilisticClassifierTrainer {
 
   require(
@@ -100,7 +103,9 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-    val subtreeFiles = Seq.fill(numDecisionTrees) {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    System.setProperty("scala.concurrent.context.numThreads", numThreads.toString)
+    val tasks: Seq[Future[File]] = for (i <- Range(0, numDecisionTrees)) yield Future {
       dtTrainer(data) match {
         case dt: DecisionTree =>
           val tempFile: File = File.createTempFile("temp.", ".dt")
@@ -111,6 +116,8 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
           tempFile
       }
     }
+    val futureSubtreeFiles: Future[Seq[File]] = Future.sequence(tasks)
+    val subtreeFiles = Await.result(futureSubtreeFiles, 30 days)
     val subtrees: Seq[DecisionTree] = subtreeFiles map {
       case subtreeFile =>
         Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>
@@ -122,6 +129,7 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
           }
         }
     }
+    System.clearProperty("scala.concurrent.context.numThreads")
     RandomForest(data.allOutcomes, subtrees)
   }
 }

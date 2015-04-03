@@ -1,15 +1,14 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{
-  ClassifierBasedCostFunction,
-  RerankingFunction,
-  FeatureUnion
-}
+import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 private case class ParseFileConfig(configFilename: String = "", testFilename: String = "",
   dataSource: String = "", oracleNbest: Int = ParseFile.defaultOracleNbest)
@@ -65,12 +64,16 @@ object ParseFile {
     */
   def parseTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
+    import scala.concurrent.ExecutionContext.Implicits.global
     val startTime: Long = Platform.currentTime
-    val candidateParses: Iterator[Option[PolytreeParse]] = {
-      parseSource.parseIterator map {
-        parse => parser.parse(parse.sentence)
+    val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
+      for {
+        parse <- parseSource.parseIterator
+      } yield Future {
+        parser.parse(parse.sentence)
       }
-    }
+    val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
+    val candidateParses = Await.result(futureParses, 2 days)
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
