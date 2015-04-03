@@ -42,9 +42,9 @@ class PolytreeParser(
       parse <- parseOption.toList;
       ((arclabels, childIndices), parentIndex) <- (parse.arclabels zip parse.children).zipWithIndex;
       if parentIndex > 0;
-      (childIndex, Symbol(label)) <- arclabels.filter(t => childIndices.contains(t._1))
+      (childIndex, label) <- arclabels.filter(t => childIndices.contains(t._1))
     ) yield {
-      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toLowerCase)
+      new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toString.toLowerCase)
     }
 
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
