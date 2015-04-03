@@ -74,7 +74,8 @@ object ParseFile {
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
-      PathAccuracy(true, true)
+      PathAccuracy(true, true),
+      CposAccuracy(false)
     )
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)

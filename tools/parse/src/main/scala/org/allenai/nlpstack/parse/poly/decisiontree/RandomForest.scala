@@ -78,13 +78,18 @@ object RandomForest {
   * @param validationPercentage percentage of feature vectors to hold out for decision tree
   * validation
   * @param numDecisionTrees desired number of decision trees in the forest
-  * @param featuresExaminedPerNode during decision tree induction, desired number of randomly
+  * @param featuresExaminedPerNode during decision tree induction, desired percentage of randomly
   * selected features to consider at each node
   */
 class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-  featuresExaminedPerNode: Int, gainMetric: InformationGainMetric, useBagging: Boolean = false,
+  featuresExaminedPerNode: Double, gainMetric: InformationGainMetric, useBagging: Boolean = false,
   maximumDepthPerTree: Int = Integer.MAX_VALUE)
     extends ProbabilisticClassifierTrainer {
+
+  require(
+    featuresExaminedPerNode >= 0 && featuresExaminedPerNode <= 1,
+    s"featuresExaminedPerNode = $featuresExaminedPerNode, which is not between 0 and 1"
+  )
 
   private val dtTrainer = new DecisionTreeTrainer(validationPercentage, gainMetric,
     featuresExaminedPerNode, maximumDepth = maximumDepthPerTree)
