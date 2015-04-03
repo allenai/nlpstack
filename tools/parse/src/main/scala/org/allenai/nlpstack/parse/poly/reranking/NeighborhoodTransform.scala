@@ -124,7 +124,7 @@ case class KeywordNhTransform(keywords: Seq[String])
 /** Creates a feature per frame for all verbnet frames corresponding to the tokens
   * in the input neighborhood.
   *
-  * @param keywords the set of words to consider
+  * @param verbnet the verbnet resource
   */
 case class VerbnetTransform(verbnet: Verbnet)
     extends NeighborhoodTransform {
@@ -161,7 +161,7 @@ case object ArclabelNhTransform extends NeighborhoodTransform {
     )
     Seq(
       FeatureName(Seq(
-        parse.arcLabelByEndNodes(Set(event.tokens(0), event.tokens(1)))
+        parse.arcLabelByEndNodes(Set(event.tokens(0), event.tokens(1))).toSymbol
       ))
     )
   }

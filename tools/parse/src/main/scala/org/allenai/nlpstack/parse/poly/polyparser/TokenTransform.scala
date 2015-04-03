@@ -39,12 +39,6 @@ object TokenTransform {
     implicit val tokenPropertyTransformFormat =
       jsonFormat1(TokenPropertyTransform.apply).pack("type" -> "TokenPropertyTransform")
 
-    //implicit val lookAheadTransformFormat =
-    //  jsonFormat1(LookAheadTransform.apply).pack("type" -> "LookAheadTransform")
-
-    //implicit val lookBehindTransformFormat =
-    //  jsonFormat1(LookBehindTransform.apply).pack("type" -> "LookBehindTransform")
-
     implicit val numChildrenToTheLeftFormat =
       jsonFormat1(NumChildrenToTheLeft.apply).pack("type" -> "NumChildrenToTheLeft")
 
@@ -64,9 +58,9 @@ object TokenTransform {
       case WordTransform => JsString("WordTransform")
       case BreadcrumbAssigned => JsString("BreadcrumbAssigned")
       case BreadcrumbArc => JsString("BreadcrumbArc")
+      case GuessedArcLabel => JsString("GuessedArcLabel")
+      case GuessedCpos => JsString("GuessedCpos")
       case tp: TokenPropertyTransform => tp.toJson
-      //case fp: LookAheadTransform => fp.toJson
-      //case bp: LookBehindTransform => bp.toJson
       case lt: NumChildrenToTheLeft => lt.toJson
       case rt: NumChildrenToTheRight => rt.toJson
       case kt: KeywordTransform => kt.toJson
@@ -80,13 +74,13 @@ object TokenTransform {
         case "WordTransform" => WordTransform
         case "BreadcrumbAssigned" => BreadcrumbAssigned
         case "BreadcrumbArc" => BreadcrumbArc
+        case "GuessedArcLabel" => GuessedArcLabel
+        case "GuessedCpos" => GuessedCpos
         case "IsBracketedTransform" => IsBracketedTransform
         case x => deserializationError(s"Invalid identifier for TokenTransform: $x")
       }
       case jsObj: JsObject => jsObj.unpackWith(
         tokenPropertyTransformFormat,
-        //lookAheadTransformFormat,
-        //lookBehindTransformFormat,
         numChildrenToTheLeftFormat, numChildrenToTheRightFormat, keywordTransformFormat,
         suffixTransformFormat, prefixTransformFormat
       )
@@ -126,48 +120,6 @@ case class TokenPropertyTransform(property: Symbol)
   override val name: Symbol = Symbol(property.name + "At")
 }
 
-/** The LookAheadTransform maps a token to one of its lookAhead properties. */
-/*
-case class LookAheadTransform(property: Symbol)
-    extends TokenTransform {
-
-  override def apply(state: TransitionParserState, ref: StateRef): Set[Symbol] = {
-    ref(state) match {
-      case Some(tokenIndex) => state.sentence.lookAhead(tokenIndex).get(property) match {
-        case Some(propertyValues) =>
-          propertyValues map { x => Symbol(x) }
-        case None => Set()
-      }
-      case None => Set(TokenTransform.noTokenHere)
-    }
-  }
-
-  @transient
-  override val name: Symbol = Symbol(property.name + "AheadAt")
-}
-*/
-
-/** The LookBehindTransform maps a token to one of its lookBehind properties. */
-/*
-case class LookBehindTransform(property: Symbol)
-    extends TokenTransform {
-
-  override def apply(state: TransitionParserState, ref: StateRef): Set[Symbol] = {
-    ref(state) match {
-      case Some(tokenIndex) => state.sentence.lookBehind(tokenIndex).get(property) match {
-        case Some(propertyValues) =>
-          propertyValues map { x => Symbol(x) }
-        case None => Set()
-      }
-      case None => Set(TokenTransform.noTokenHere)
-    }
-  }
-
-  @transient
-  override val name: Symbol = Symbol(property.name + "BehindAt")
-}
-*/
-
 /** The BreadcrumbAssigned transform maps a token to whether its breadcrumb has been assigned.
   *
   * See the definition of TokenTransform (above) for more details about the interface.
@@ -187,6 +139,38 @@ case object BreadcrumbAssigned extends TokenTransform {
   override val name: Symbol = 'crumbAssigned
 }
 
+case object GuessedCpos extends TokenTransform {
+
+  override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
+    Set(
+      state.breadcrumb.get(tokenIndex) flatMap { crumb =>
+        state.arcLabels.get(Set(crumb, tokenIndex)) flatMap {
+          case dpLabel: DependencyParsingArcLabel => Some(dpLabel.cpos)
+          case _ => None
+        }
+      }
+    ).flatten
+  }
+
+  @transient override val name: Symbol = 'cposGuess
+}
+
+case object GuessedArcLabel extends TokenTransform {
+
+  override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
+    Set(
+      state.breadcrumb.get(tokenIndex) flatMap { crumb =>
+        state.arcLabels.get(Set(crumb, tokenIndex)) map {
+          case dpLabel: DependencyParsingArcLabel => dpLabel.stanLabel
+          case label => label.toSymbol
+        }
+      }
+    ).flatten
+  }
+
+  @transient override val name: Symbol = 'arcGuess
+}
+
 /** The BreadcrumbArc transform maps a token to the label of the arc from its breadcrumb to itself.
   *
   * See the definition of TokenTransform (above) for more details about the interface.
@@ -197,7 +181,7 @@ case object BreadcrumbArc extends TokenTransform {
   override def apply(state: TransitionParserState, tokenIndex: Int): Set[Symbol] = {
     state.breadcrumb.get(tokenIndex) match {
       case Some(crumb) =>
-        Set(state.arcLabels.getOrElse(Set(crumb, tokenIndex), 'ROOT))
+        Set(state.arcLabels.getOrElse(Set(crumb, tokenIndex), NoArcLabel).toSymbol)
       case None => Set()
     }
   }

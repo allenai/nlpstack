@@ -1,10 +1,6 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser.{
-  InMemoryPolytreeParseSource,
-  PolytreeParseSource,
-  PolytreeParse
-}
+import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
 
 object ParseEvaluator {
 
@@ -298,7 +294,7 @@ case class PathAccuracyScore(
   }).toMap
 
   /** Converts a path in the parse tree to its arc labels. */
-  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[Symbol] = {
+  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[ArcLabel] = {
     path map { pathToken =>
       parse.breadcrumbArcLabel(pathToken)
     }

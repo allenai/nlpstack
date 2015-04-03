@@ -11,7 +11,7 @@ package org.allenai.nlpstack.parse.poly.polyparser
   *
   * @param inverseArcLabels the set of arc labels to invert
   */
-class ArcInverter(val inverseArcLabels: Set[Symbol]) extends (PolytreeParse => PolytreeParse) {
+class ArcInverter(val inverseArcLabels: Set[ArcLabel]) extends (PolytreeParse => PolytreeParse) {
 
   /** Inverts the arcs whose labels are in `inverseArcLabels`
     *
@@ -24,8 +24,7 @@ class ArcInverter(val inverseArcLabels: Set[Symbol]) extends (PolytreeParse => P
     val invertibleNeighbors: Vector[Set[Int]] = for {
       labeledNeighbors <- parse.arclabels
     } yield for {
-      (neighbor, label) <- labeledNeighbors
-      if inverseArcLabels.contains(label)
+      (neighbor, label) <- labeledNeighbors if isInvertible(label)
     } yield neighbor
 
     // compute the new children using an XOR operation
@@ -34,7 +33,16 @@ class ArcInverter(val inverseArcLabels: Set[Symbol]) extends (PolytreeParse => P
     } yield ((neighbors diff children) union (children diff neighbors))
 
     PolytreeParse(parse.sentence, parse.breadcrumb, newChildren, parse.arclabels)
+  }
 
+  def isInvertible(arcLabel: ArcLabel): Boolean = {
+    val stanLabel = arcLabel match {
+      case dpLabel: DependencyParsingArcLabel =>
+        dpLabel.stanLabel
+      case _ =>
+        arcLabel.toSymbol
+    }
+    inverseArcLabels.contains(SingleSymbolArcLabel(stanLabel))
   }
 
 }

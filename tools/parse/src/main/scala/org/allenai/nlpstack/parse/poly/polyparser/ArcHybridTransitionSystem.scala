@@ -33,8 +33,8 @@ object ArcHybridTaskIdentifier extends TaskIdentifier {
             Some(ApplicabilitySignature(
               StateTransition.applicable(ArcHybridShift, Some(state)),
               false,
-              StateTransition.applicable(ArcHybridLeftArc('NONE), Some(state)),
-              StateTransition.applicable(ArcHybridRightArc('NONE), Some(state))
+              StateTransition.applicable(ArcHybridLeftArc(NoArcLabel), Some(state)),
+              StateTransition.applicable(ArcHybridRightArc(NoArcLabel), Some(state))
             ))
           case DependencyParserModes.LEFTLABEL =>
             Some(SimpleTask("dt-leftlabel"))
@@ -137,7 +137,7 @@ case object ArcHybridShift extends TransitionParserStateTransition {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcHybridLeftArc(label: ArcLabel = NoArcLabel) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     (state.parserMode == DependencyParserModes.TRANSITION) && ArcHybridLeftArc.applicable(state)
@@ -155,7 +155,7 @@ case class ArcHybridLeftArc(val label: Symbol = 'NONE) extends TransitionParserS
   }
 
   @transient
-  override val name: String = s"Lt[${label.name}]"
+  override val name: String = s"Lt[$label]"
 }
 
 object ArcHybridLeftArc {
@@ -173,7 +173,7 @@ object ArcHybridLeftArc {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcHybridRightArc(label: ArcLabel = NoArcLabel) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     (state.parserMode == DependencyParserModes.TRANSITION) && ArcHybridRightArc.applicable(state)
@@ -194,7 +194,7 @@ case class ArcHybridRightArc(val label: Symbol = 'NONE) extends TransitionParser
   }
 
   @transient
-  override val name: String = s"Rt[${label.name}]"
+  override val name: String = s"Rt[$label]"
 }
 
 object ArcHybridRightArc {
@@ -219,17 +219,19 @@ class ArcHybridGuidedCostFunction(
     override val transitionSystem: TransitionSystem
 ) extends StateCostFunction {
 
+  private val augmentedParse = DependencyParsingTransitionSystem.transformArcLabels(parse)
+
   override def apply(state: State): Map[StateTransition, Double] = {
     val result: Map[StateTransition, Double] = state match {
       case tpState: TransitionParserState =>
         require(!tpState.isFinal)
         if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = augmentedParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelLeftArc(arclabel) -> 0)
         } else if (tpState.parserMode == DependencyParserModes.RIGHTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = augmentedParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelRightArc(arclabel) -> 0)
         } else if (tpState.stack.isEmpty) {
           Map(ArcHybridShift -> 0)

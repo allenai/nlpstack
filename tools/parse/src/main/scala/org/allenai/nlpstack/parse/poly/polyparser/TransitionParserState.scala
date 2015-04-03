@@ -35,10 +35,16 @@ import org.allenai.nlpstack.parse.poly.fsm.{
   * @param arcLabels the arc labels of the partially constructed PolytreeParse
   * @param sentence the sentence we want to parse
   */
-case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int,
-    val breadcrumb: Map[Int, Int], val children: Map[Int, Set[Int]],
-    val arcLabels: Map[Set[Int], Symbol], val sentence: Sentence,
-    val previousLink: Option[(Int, Int)] = None, val parserMode: Int = 0) extends State {
+case class TransitionParserState(
+    stack: Vector[Int],
+    bufferPosition: Int,
+    breadcrumb: Map[Int, Int],
+    children: Map[Int, Set[Int]],
+    arcLabels: Map[Set[Int], ArcLabel],
+    sentence: Sentence,
+    previousLink: Option[(Int, Int)] = None,
+    parserMode: Int = 0
+) extends State {
 
   /** Gets the set of gretels of the specified token in the partial parse tree
     * represented by this state.
@@ -103,6 +109,23 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
+      val revisedArcLabels = arcLabels mapValues {
+        case dpLabel: DependencyParsingArcLabel =>
+          SingleSymbolArcLabel(dpLabel.stanLabel)
+        case x => x
+      }
+      val revisedSentence = sentence.copy(
+        tokens = sentence.tokens.zipWithIndex map {
+        case (tok, tokenIndex) =>
+          val revisedCpos = arcLabels.get(Set(tokenIndex, breadcrumb(tokenIndex))) match {
+            case Some(dpLabel: DependencyParsingArcLabel) =>
+              dpLabel.cpos
+            case _ =>
+              'unk
+          }
+          tok.copy(properties = tok.properties.updated('cpos, Set(revisedCpos)))
+      }
+      )
       val parseBreadcrumb = ((0 to sentence.size - 1) map { x =>
         breadcrumb(x)
       }).toVector
@@ -110,14 +133,14 @@ case class TransitionParserState(val stack: Vector[Int], val bufferPosition: Int
         { case (key, value) => (key, (value map { _._2 }).toSet) }
       val neighbors: Vector[Set[Int]] = ((0 to (sentence.size - 1)) map
         { i => childMap.getOrElse(i, Set()) + breadcrumb(i) }).toVector
-      val parseArcLabels: Vector[Set[(Int, Symbol)]] = for {
+      val parseArcLabels: Vector[Set[(Int, ArcLabel)]] = for {
         (neighborSet, i) <- neighbors.zipWithIndex
       } yield for {
         neighbor <- neighborSet
         if neighbor >= 0
-      } yield (neighbor, arcLabels(Set(i, neighbor)))
+      } yield (neighbor, revisedArcLabels(Set(i, neighbor)))
       Some(PolytreeParse(
-        sentence,
+        revisedSentence,
         parseBreadcrumb,
         ((0 to sentence.size - 1) map { x =>
         children.getOrElse(x, Set())

@@ -68,7 +68,7 @@ case class TokenLinkFeature(stateRef1: StateRef, stateRef2: StateRef)
             arcLabel <- tpState.arcLabels.get(Set(tokenIndex1, tokenIndex2))
           } yield {
             FeatureName(Seq(stateRef1.name, Symbol("to"),
-              stateRef2.name, Symbol("label"), arcLabel)) -> 1.0
+              stateRef2.name, Symbol("label"), arcLabel.toSymbol)) -> 1.0
           }
         )
     }
