@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import java.io.{ PrintWriter, File }
+import java.util.concurrent.Executors
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
@@ -100,7 +101,14 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-    val subtreeFiles = Seq.fill(numDecisionTrees) {
+    import scala.concurrent.duration._
+    import scala.concurrent._
+    //import scala.concurrent.ExecutionContext.Implicits.global
+    import scala.language.postfixOps
+    val threadCount = 8
+    implicit val executionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threadCount))
+
+    val tasks: Seq[Future[File]] = for (i <- Range(0, numDecisionTrees)) yield Future {
       dtTrainer(data) match {
         case dt: DecisionTree =>
           val tempFile: File = File.createTempFile("temp.", ".dt")
@@ -111,6 +119,8 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
           tempFile
       }
     }
+    val futureSubtreeFiles: Future[Seq[File]] = Future.sequence(tasks)
+    val subtreeFiles = Await.result(futureSubtreeFiles, 30 days)
     val subtrees: Seq[DecisionTree] = subtreeFiles map {
       case subtreeFile =>
         Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>

@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import java.io.File
+
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.{
   ClassifierBasedCostFunction,
@@ -66,11 +68,22 @@ object ParseFile {
   def parseTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
     val startTime: Long = Platform.currentTime
-    val candidateParses: Iterator[Option[PolytreeParse]] = {
-      parseSource.parseIterator map {
-        parse => parser.parse(parse.sentence)
+
+    import scala.concurrent.duration._
+    import scala.concurrent._
+    import scala.concurrent.ExecutionContext.Implicits.global
+    import scala.language.postfixOps
+
+    val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
+      for {
+        parse <- parseSource.parseIterator
+      } yield Future {
+        parser.parse(parse.sentence)
       }
-    }
+
+    val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
+    val candidateParses = Await.result(futureParses, 2 days)
+
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
