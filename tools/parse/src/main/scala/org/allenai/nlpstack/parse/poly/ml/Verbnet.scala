@@ -20,12 +20,12 @@ case class Verbnet(groupName: String, artifactName: String, version: Int) {
 
   // Construct the index and open it
   @transient val index = {
-    val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
+    val verbnetPath = Datastore.directoryPath(
       groupName,
       artifactName,
       version
     )
-    val url = new URL("file", null, verbnetPath.toString)
+    val url = verbnetPath.toUri.toURL
     val ix = new VerbIndex(url)
     ix.open
     ix
