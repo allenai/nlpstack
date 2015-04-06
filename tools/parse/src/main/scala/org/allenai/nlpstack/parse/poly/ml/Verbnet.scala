@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.ml
 
+import org.allenai.datastore._
+
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
 
@@ -14,11 +16,16 @@ import DefaultJsonProtocol._
   * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various vernbet
   * features for a verb.
   */
-case class Verbnet(verbnetPath: String) {
+case class Verbnet(groupName: String, artifactName: String, version: Int) {
 
   // Construct the index and open it
   @transient val index = {
-    val url = new URL("file", null, verbnetPath)
+    val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
+      groupName,
+      artifactName,
+      version
+    )
+    val url = new URL("file", null, verbnetPath.toString)
     val ix = new VerbIndex(url)
     ix.open
     ix
@@ -109,7 +116,7 @@ case class Verbnet(verbnetPath: String) {
 
 object Verbnet {
 
-  implicit val jsonFormat = jsonFormat1(Verbnet.apply)
+  implicit val jsonFormat = jsonFormat3(Verbnet.apply)
 
   val commonPrimaryFrames: Set[Symbol] = (Seq(
     "NP V NP ADJP",

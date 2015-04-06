@@ -82,12 +82,7 @@ object ParseRerankerTraining {
       artifactName <- verbnetConfig.get[String]("name")
       version <- verbnetConfig.get[Int]("version")
     } yield {
-      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
-        groupName,
-        artifactName,
-        version
-      )
-      ("verbnet", VerbnetTransform(new Verbnet(verbnetPath.toString)))
+      ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
