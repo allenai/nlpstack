@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.ml
 
 import org.allenai.nlpstack.parse.poly.core.Util
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.DefaultJsonProtocol._
 
 /** A weighted linear combination of features.
   *
@@ -39,13 +39,5 @@ case class LinearModel(val coefficients: Seq[(FeatureName, Double)]) {
 object LinearModel {
   implicit val jsFormat = jsonFormat1(LinearModel.apply)
 
-  def loadLinearModel(filename: String): LinearModel = {
-    val jsValue = Util.getJsValueFromFile(filename)
-    jsValue match {
-      case JsObject(values) =>
-      case _ => deserializationError("Unexpected JsValue type. Must be " +
-        "JsObject.")
-    }
-    jsValue.convertTo[LinearModel]
-  }
+  def loadLinearModel(filename: String): LinearModel = Util.readFromFile[LinearModel](filename)
 }

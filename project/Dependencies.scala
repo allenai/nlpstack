@@ -29,5 +29,7 @@ object Dependencies extends CoreDependencies {
 
   val jVerbnet = "edu.mit" % "jverbnet" % "1.2.0.1"
 
+  val reming = "com.github.jkinkead" %% "reming-json" % "0.0.9"
+
   val Overrides = Set("org.slf4j" % "log4j-over-slf4j" % "1.7.10")
 }

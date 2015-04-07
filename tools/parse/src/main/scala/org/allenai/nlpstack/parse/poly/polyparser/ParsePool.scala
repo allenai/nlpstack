@@ -7,8 +7,9 @@ import org.allenai.nlpstack.parse.poly.fsm.NbestList
 
 import scala.io.Source
 import scala.util.Random
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+
+import reming.{ CompactPrinter, JsonParser }
+import reming.DefaultJsonProtocol._
 
 /** A ParsePool is a collection of parse candidates for the same input sentence.
   *
@@ -49,7 +50,7 @@ case class FileBasedParsePoolSource(filename: String) extends ParsePoolSource {
   override def poolIterator: Iterator[ParsePool] = {
     val lines: Iterator[String] = Source.fromFile(filename).getLines
     lines map { line =>
-      line.parseJson.convertTo[ParsePool]
+      JsonParser.read[ParsePool](line)
     }
   }
 }
@@ -59,7 +60,7 @@ object FileBasedParsePoolSource {
   def writePools(pools: Iterator[ParsePool], filename: String) {
     Resource.using(new PrintWriter(new File(filename))) { writer =>
       for (pool <- pools) {
-        writer.println(pool.toJson.compactPrint)
+        CompactPrinter.printTo(writer, pool)
       }
     }
   }

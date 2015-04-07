@@ -4,13 +4,11 @@ import org.allenai.datastore._
 
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
-
-import scala.collection.JavaConverters._
+import reming.DefaultJsonProtocol._
 
 import java.net._
 
-import spray.json._
-import DefaultJsonProtocol._
+import scala.collection.JavaConverters._
 
 /** A class that uses JVerbnet, a 3rd party Wrapper library for Verbnet data
   * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various vernbet

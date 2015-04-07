@@ -1,25 +1,24 @@
 package org.allenai.nlpstack.parse.poly.core
 
+import org.allenai.common.Resource
+import reming.{ JsonFormat, JsonParser }
+
 import java.io.{ File, InputStream, PushbackInputStream }
 import java.net.URL
 import java.util.zip.GZIPInputStream
 
-import org.allenai.common.Resource._
-import spray.json._
-
-import scala.io.Source
+import scala.io.BufferedSource
 
 object Util {
-
-  def getJsValueFromFile(filename: String): JsValue = {
-    getJsValueFromUrl(new File(filename).toURI.toURL)
+  def readFromFile[T: JsonFormat](filename: String): T = {
+    readFromUrl(new File(filename).toURI.toURL)
   }
 
-  def getJsValueFromUrl(url: URL): JsValue = {
-    using(url.openStream()) { getJsValueFromStream }
+  def readFromUrl[T: JsonFormat](url: URL): T = {
+    Resource.using(url.openStream()) { readFromStream[T] }
   }
 
-  def getJsValueFromStream(stream: InputStream): JsValue = {
+  def readFromStream[T: JsonFormat](stream: InputStream): T = {
     val headerLength = 2
     val pbStream = new PushbackInputStream(stream, headerLength)
     val header = new Array[Byte](headerLength)
@@ -38,6 +37,6 @@ object Util {
         pbStream
       }
 
-    Source.fromInputStream(uncompressedStream).mkString.parseJson
+    JsonParser.read[T](new BufferedSource(uncompressedStream))
   }
 }

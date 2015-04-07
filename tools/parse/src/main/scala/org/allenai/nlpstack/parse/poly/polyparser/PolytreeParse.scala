@@ -1,17 +1,19 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{ File, PrintWriter }
+import org.allenai.nlpstack.core.PostaggedToken
+import org.allenai.nlpstack.core.{ Token => NLPStackToken }
+import org.allenai.nlpstack.core.Tokenizer
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
+import org.allenai.nlpstack.postag.defaultPostagger
+
+import reming.DefaultJsonProtocol._
+
+import java.io.{ File, PrintWriter }
 
 import scala.annotation.tailrec
 import scala.compat.Platform
 import scala.io.Source
-import spray.json.DefaultJsonProtocol._
-import org.allenai.nlpstack.core.PostaggedToken
-import org.allenai.nlpstack.core.{ Token => NLPStackToken }
-import org.allenai.nlpstack.core.Tokenizer
-import org.allenai.nlpstack.postag.defaultPostagger
 
 /** A PolytreeParse is a polytree-structured dependency parse. A polytree is a directed graph
   * whose undirected structure is a tree. The nodes of this graph will correspond to an indexed
