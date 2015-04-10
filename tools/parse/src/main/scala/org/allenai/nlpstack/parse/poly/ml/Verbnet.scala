@@ -1,9 +1,11 @@
 package org.allenai.nlpstack.parse.poly.ml
 
+import org.allenai.datastore._
+
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import java.net._
 
@@ -14,11 +16,16 @@ import DefaultJsonProtocol._
   * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various vernbet
   * features for a verb.
   */
-case class Verbnet(verbnetPath: String) {
+case class Verbnet(groupName: String, artifactName: String, version: Int) {
 
   // Construct the index and open it
   @transient val index = {
-    val url = new URL("file", null, verbnetPath)
+    val verbnetPath = Datastore.directoryPath(
+      groupName,
+      artifactName,
+      version
+    )
+    val url = verbnetPath.toUri.toURL
     val ix = new VerbIndex(url)
     ix.open
     ix
@@ -29,15 +36,11 @@ case class Verbnet(verbnetPath: String) {
     val table = scala.collection.mutable.HashMap.empty[Symbol, Set[IVerbClass]]
     // Iterate through verb classes, and for each, extract the verb and
     // its synonyms. Populate synonym map.
-    val vList = index.iterator.toList
+    val vList = index.iterator.asScala
     for (vClass <- vList) {
-      for (classMember <- vClass.getMembers) {
+      for (classMember <- vClass.getMembers.asScala) {
         val member = Symbol(classMember.getName.trim)
-        if (!table.containsKey(member)) {
-          table.put(member, Set.empty[IVerbClass] + vClass)
-        } else {
-          table.update(member, table(member) + vClass)
-        }
+        table(member) = table.getOrElse(member, Set.empty) + vClass
       }
     }
     table.toMap
@@ -62,7 +65,7 @@ case class Verbnet(verbnetPath: String) {
   def getVerbnetFrames(verb: String): Set[IFrame] = {
     // Get all classes
     val verbClasses = getVerbnetClasses(verb)
-    verbClasses flatMap { verbClass => verbClass.getFrames }
+    verbClasses flatMap { verbClass => verbClass.getFrames.asScala }
   }
 
   /* Returns the set of primary names for all frames within all classes
@@ -109,7 +112,7 @@ case class Verbnet(verbnetPath: String) {
 
 object Verbnet {
 
-  implicit val jsonFormat = jsonFormat1(Verbnet.apply)
+  implicit val jsonFormat = jsonFormat3(Verbnet.apply)
 
   val commonPrimaryFrames: Set[Symbol] = (Seq(
     "NP V NP ADJP",
