@@ -27,6 +27,37 @@ trait ProbabilisticClassifier {
   def allFeatures: Set[Int]
 }
 
+/** Trait to be implemented based on the required structure for the justification for a particular
+  * classifier.
+  */
+trait Justification
+
+/** Justifying classifier extends ProbabilisticClassifier
+  */
+trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
+
+  /** Gets the probability distribution over outcomes.
+    *
+    * @param featureVector feature vector to find outcome distribution for
+    * @return probability distribution of outcomes according to training data with associated
+    * explanations for each outcome.
+    */
+  def outcomeDistributionWithJustification(featureVector: FeatureVector): Map[Int, (Double, Justification)]
+
+  /** Classifies a feature vector and produces a justification for the result produced.
+    *
+    * @param featureVector feature vector to classify
+    * @return predicted outcome with justification
+    */
+  def classifyAndJustify(featureVector: FeatureVector): (Int, Justification) = {
+    val (bestClass, (bestProb, bestClassJustification)) =
+      outcomeDistributionWithJustification(featureVector) maxBy {
+        case (_, (prob, justification)) => prob
+      }
+    (bestClass, bestClassJustification)
+  }
+}
+
 object ProbabilisticClassifier {
 
   /** Boilerplate code to serialize a ProbabilisticClassifier to JSON using Spray.
@@ -54,9 +85,9 @@ object ProbabilisticClassifier {
       case x => deserializationError(s"Cannot serialize this classifier type: $x")
     }
 
-    def read(value: JsValue): ProbabilisticClassifier = value.asJsObject.unpackWith(
-      decisionTreeFormat, randomForestFormat, oneVersusAllFormat
-    )
+    def read(value: JsValue): ProbabilisticClassifier = {
+      value.asJsObject.unpackWith(decisionTreeFormat, randomForestFormat, oneVersusAllFormat)
+    }
   }
 
   /** Normalizes an unnormalized distribution over integers.
@@ -90,4 +121,26 @@ object ProbabilisticClassifier {
   }
 }
 
+object JustifyingProbabilisticClassifier {
+  import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat
+  import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat._
+
+  implicit object JustifyingProbabilisticClassifierJsonFormat
+      extends RootJsonFormat[JustifyingProbabilisticClassifier] {
+
+    def write(classifier: JustifyingProbabilisticClassifier): JsValue = {
+      ProbabilisticClassifierJsonFormat.write(classifier)
+    }
+
+    def read(value: JsValue): JustifyingProbabilisticClassifier = {
+      ProbabilisticClassifierJsonFormat.read(value) match {
+        case classifier: JustifyingProbabilisticClassifier => classifier
+        case x => deserializationError(s"Cannot serialize this classifier type: $x")
+      }
+    }
+  }
+}
+
 trait ProbabilisticClassifierTrainer extends (FeatureVectorSource => ProbabilisticClassifier)
+
+trait JustifyingProbabilisticClassifierTrainer extends (FeatureVectorSource => JustifyingProbabilisticClassifier)

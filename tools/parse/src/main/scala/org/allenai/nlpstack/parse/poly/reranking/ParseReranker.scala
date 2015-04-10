@@ -4,13 +4,17 @@ import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.polyparser._
+
+import java.io._
+
 import scopt.OptionParser
 
 case class ParseRerankerCommandLine(
   parserFilename: String = "",
   goldParseFilename: String = "",
   dataSource: String = "",
-  rerankerFilename: String = ""
+  rerankerFilename: String = "",
+  diagnosticFilename: String = ""
 )
 
 /** This command-line takes a serialized reranking function and uses it to rerank an n-best
@@ -29,6 +33,9 @@ object ParseReranker {
       opt[String]('r', "reranker") required () valueName "<file>" action { (x, c) =>
         c.copy(rerankerFilename = x)
       } text "the file containing the serialized reranking function"
+      opt[String]('l', "diagnosticfile") required () valueName "<string>" action { (x, c) =>
+        c.copy(diagnosticFilename = x)
+      } text "where to write the reranking function"
       opt[String]('d', "datasource") required () valueName "<file>" action { (x, c) =>
         c.copy(dataSource = x)
       } text "the location of the data ('datastore','local')" validate { x =>
@@ -48,6 +55,8 @@ object ParseReranker {
     val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
     val reranker = RerankingFunction.load(clArgs.rerankerFilename)
 
+    val diagnosticWriter = new PrintWriter(new File(clArgs.diagnosticFilename))
+
     println("Parsing test set.")
     val candidateParses: Iterator[Option[PolytreeParse]] = {
       goldParseSource.parseIterator map {
@@ -58,8 +67,11 @@ object ParseReranker {
       case weirdReranker: WeirdParseNodeRerankingFunction =>
         val stats: Seq[ParseStatistic] = Seq(WeirdnessAnalyzer(weirdReranker))
         stats foreach { stat => stat.reset() }
-        ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator, stats)
+        ParseEvaluator.evaluate(
+          candidateParses, goldParseSource.parseIterator, stats, Some(diagnosticWriter)
+        )
     }
+    diagnosticWriter.close
   }
 }
 
@@ -74,9 +86,8 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     candidateParse map { candParse =>
-
       val weirdGoldNodes = rerankingFunction.getWeirdNodes(goldParse)
-      val weirdCandidateNodes = rerankingFunction.getWeirdNodes(candParse)
+      val notWeirdCandidateNodes = rerankingFunction.getNotWeirdNodes(candParse)
       val badCandidateTokens: Set[Int] =
         (candParse.families.toSet -- goldParse.families.toSet) map {
           case family =>
@@ -85,14 +96,21 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
           candParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
         }
 
-      val falsePositiveMessages = weirdGoldNodes map { goldNode =>
-        s"  ${goldParse.printFamily(goldNode)}"
+      val falsePositiveMessages = weirdGoldNodes map {
+        case (goldNodeIx, justification) =>
+          s"  ${goldParse.printFamily(goldNodeIx)}" +
+            s"\nClassifier Justification: ${justification.getOrElse("")}\n"
       }
-      val trueNegativeMessages =
-        (badCandidateTokens -- weirdCandidateNodes) map { misclassifiedNode =>
-          s"  ${candParse.printFamily(misclassifiedNode)}\n" +
-            s"    (should be: ${goldParse.printFamily(misclassifiedNode)})"
-        }
+      val trueNegativeNodesAndJustifications = notWeirdCandidateNodes filter {
+        node => badCandidateTokens.contains(node._1)
+      }
+      val trueNegativeMessages = trueNegativeNodesAndJustifications map {
+        case (misclassifiedNodeIx, justification) =>
+          s"  ${candParse.printFamily(misclassifiedNodeIx)}\n" +
+            s"    (should be: ${goldParse.printFamily(misclassifiedNodeIx)})" +
+            s" \nClassifier Justification: ${justification.getOrElse("")}\n"
+      }
+
       if (falsePositiveMessages.nonEmpty || trueNegativeMessages.nonEmpty) {
         sentencesWithMistakes = sentencesWithMistakes :+
           Tuple3(goldParse.sentence, falsePositiveMessages, trueNegativeMessages)
@@ -100,21 +118,21 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     }
   }
 
-  override def report(): Unit = {
+  override def report(diagnosticWriter: Option[PrintWriter]): Unit = {
     sentencesWithMistakes foreach {
       case (sentence, falsePositiveMessages, trueNegativeMessages) =>
-        println("")
-        println(sentence.asWhitespaceSeparatedString)
+        logMessage(diagnosticWriter, "")
+        logMessage(diagnosticWriter, sentence.asWhitespaceSeparatedString)
         if (falsePositiveMessages.nonEmpty) {
-          println("Good families, classified as weird:")
+          logMessage(diagnosticWriter, "Good families, classified as weird:")
           falsePositiveMessages foreach { message =>
-            println(message)
+            logMessage(diagnosticWriter, message)
           }
         }
         if (trueNegativeMessages.nonEmpty) {
-          println("Bad families, classified as good:")
+          logMessage(diagnosticWriter, "Bad families, classified as good:")
           trueNegativeMessages foreach { message =>
-            println(message)
+            logMessage(diagnosticWriter, message)
           }
         }
     }

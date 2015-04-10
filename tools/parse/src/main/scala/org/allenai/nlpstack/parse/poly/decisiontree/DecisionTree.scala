@@ -3,6 +3,8 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 import spray.json._
 import scala.annotation.tailrec
 
+case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)]) extends Justification
+
 /** Immutable decision tree for integer-valued features and outcomes.
   *
   * Each data structure is an indexed sequence of properties. The ith element of each sequence
@@ -18,7 +20,7 @@ import scala.annotation.tailrec
   */
 case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]],
   splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Map[Int, Int]])
-    extends ProbabilisticClassifier {
+    extends JustifyingProbabilisticClassifier {
 
   /*
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
@@ -59,8 +61,22 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toDouble }).toSeq
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts)
+      mapValues { _.toDouble }).toSeq
     ).toMap
+  }
+
+  override def outcomeDistributionWithJustification(featureVector: FeatureVector): Map[Int, (Double, DecisionTreeJustification)] = {
+    val (node, breadCrumb) =
+      findDecisionPointWithBreabcrumb(featureVector, 0, Seq.empty[(Int, Int)])
+    val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
+    (ProbabilisticClassifier.normalizeDistribution(
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts)
+      mapValues { _.toDouble }).toSeq
+    ) map {
+      case (outcome: Int, conf: Double) =>
+        (outcome, (conf, new DecisionTreeJustification(breadCrumb)))
+    }).toMap
   }
 
   def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
@@ -90,6 +106,15 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     }
   }
 
+  protected def selectChildWithPath(nodeId: Int, featureVector: FeatureVector): Option[(Int, (Int, Int))] = {
+    for {
+      feature <- splittingFeature(nodeId)
+      child <- child(nodeId).get(featureVector.getFeature(feature))
+    } yield {
+      (child, (feature, featureVector.getFeature(feature)))
+    }
+  }
+
   /** Finds the "decision point" of the specified feature vector. This is the node for which no
     * child covers the feature vector.
     *
@@ -102,6 +127,16 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     selectChild(nodeId, featureVector) match {
       case None => nodeId
       case Some(child) => findDecisionPoint(featureVector, child)
+    }
+  }
+
+  @tailrec protected final def findDecisionPointWithBreabcrumb(
+    featureVector: FeatureVector, nodeId: Int = 0, breadCrumb: Seq[(Int, Int)]
+  ): (Int, Seq[(Int, Int)]) = {
+    selectChildWithPath(nodeId, featureVector) match {
+      case None => (nodeId, breadCrumb)
+      case Some((child, path)) =>
+        findDecisionPointWithBreabcrumb(featureVector, child, breadCrumb :+ path)
     }
   }
 

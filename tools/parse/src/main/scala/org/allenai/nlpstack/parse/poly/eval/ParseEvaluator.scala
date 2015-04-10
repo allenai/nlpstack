@@ -6,6 +6,8 @@ import org.allenai.nlpstack.parse.poly.polyparser.{
   PolytreeParse
 }
 
+import java.io._
+
 object ParseEvaluator {
 
   /** Collects statistics over a sequence of (candidate parse, gold parse) pairs.
@@ -21,7 +23,9 @@ object ParseEvaluator {
     */
   def evaluate(
     candidateParses: Iterator[Option[PolytreeParse]],
-    goldParses: Iterator[PolytreeParse], statistics: Seq[ParseStatistic]
+    goldParses: Iterator[PolytreeParse],
+    statistics: Seq[ParseStatistic],
+    diagnosticWriter: Option[PrintWriter] = None
   ) {
 
     for {
@@ -30,7 +34,7 @@ object ParseEvaluator {
     } stat.notify(candidateParse, goldParse)
     for {
       stat <- statistics
-    } stat.report()
+    } stat.report(diagnosticWriter)
   }
 }
 
@@ -43,7 +47,14 @@ abstract class ParseStatistic {
   def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit
 
   /** Display a report about the accumulated statistics to stdout. */
-  def report(): Unit
+  def report(statWriter: Option[PrintWriter]): Unit
+
+  def logMessage(statWriter: Option[PrintWriter], message: String): Unit = {
+    statWriter match {
+      case Some(w) => w.println(message)
+      case None => println(message)
+    }
+  }
 }
 
 /** UnlabeledBreadcrumbAccuracy stores the statistics necessary to compute Unlabeled
@@ -59,7 +70,9 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
   var numTotalNoPunc = 0
   var numParses = 0
 
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+  override def notify(
+    candidateParse: Option[PolytreeParse], goldParse: PolytreeParse
+  ): Unit = {
     numParses += 1
     numTotal += goldParse.breadcrumb.tail.size
     candidateParse match {
@@ -92,8 +105,10 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
               goldParse.arcLabelByEndNodes(Set(y, i))
           }
         } else { // skip the parse if the tokenization is different
-          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
-            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
+          println(s"WARNING -- Skipping parse: " +
+            s"${candParse.sentence.asWhitespaceSeparatedString}" +
+            s" tokenized differently than gold: " +
+            s"${goldParse.sentence.asWhitespaceSeparatedString}")
           numParses -= 1
           numTotal -= goldParse.breadcrumb.tail.size
         }
@@ -102,15 +117,26 @@ case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
     }
   }
 
-  override def report(): Unit = {
-    println("UAS: %d / %d = %2.2f%%".format(numCorrect, numTotal,
-      (100.0 * numCorrect) / numTotal))
-    println("UAS (no punc): %d / %d = %2.2f%%".format(numCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numCorrectNoPunc) / numTotalNoPunc))
-    println("LAS: %d / %d = %2.2f%%".format(numLabeledCorrect, numTotal,
-      (100.0 * numLabeledCorrect) / numTotal))
-    println("LAS (no punc): %d / %d = %2.2f%%".format(numLabeledCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numLabeledCorrectNoPunc) / numTotalNoPunc))
+  override def report(statWriter: Option[PrintWriter] = None): Unit = {
+    logMessage(
+      statWriter,
+      "UAS: %d / %d = %2.2f%%".format(numCorrect, numTotal, (100.0 * numCorrect) / numTotal)
+    )
+    logMessage(
+      statWriter,
+      "UAS (no punc): %d / %d = %2.2f%%".format(numCorrectNoPunc, numTotalNoPunc,
+        (100.0 * numCorrectNoPunc) / numTotalNoPunc)
+    )
+    logMessage(
+      statWriter,
+      "LAS: %d / %d = %2.2f%%".format(numLabeledCorrect, numTotal,
+        (100.0 * numLabeledCorrect) / numTotal)
+    )
+    logMessage(
+      statWriter,
+      "LAS (no punc): %d / %d = %2.2f%%".format(numLabeledCorrectNoPunc, numTotalNoPunc,
+        (100.0 * numLabeledCorrectNoPunc) / numTotalNoPunc)
+    )
   }
 
   override def reset(): Unit = {
@@ -151,12 +177,15 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
     }
   }
 
-  override def report(): Unit = {
+  override def report(statWriter: Option[PrintWriter]): Unit = {
     val puncNote = Map(true -> "ignorePunc", false -> "full")
     val labelNote = Map(true -> "unlabeled", false -> "labeled")
-    println(s"Path Accuracy (${labelNote(ignorePathLabels)}, ${puncNote(ignorePunctuation)}): " +
-      s"%d / %d = %2.2f%%".format(numCorrect, numTotal,
-        (100.0 * numCorrect) / numTotal))
+    logMessage(
+      statWriter,
+      s"Path Accuracy (${labelNote(ignorePathLabels)}, ${puncNote(ignorePunctuation)}): " +
+        s"%d / %d = %2.2f%%".format(numCorrect, numTotal,
+          (100.0 * numCorrect) / numTotal)
+    )
   }
 
   override def reset(): Unit = {

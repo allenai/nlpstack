@@ -62,7 +62,7 @@ object ParseRerankerTraining {
       opt[String]('t', "feature-taggers-config") valueName "<file>" action { (x, c) =>
         c.copy(taggersConfigPathOption = Some(x))
       } text "the path to a config file" +
-        "containing config information required for the required taggers. Currently contains" +
+        "containing config information required for the required taggers. Currently contains " +
         "datastore location info to access Verbnet resources for the Verbnet tagger."
     }
     val clArgs: PRTCommandLine =
@@ -92,7 +92,8 @@ object ParseRerankerTraining {
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
-    val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
+    val nbestSource: ParsePoolSource =
+      InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
@@ -115,45 +116,46 @@ object ParseRerankerTraining {
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
-    TransformedNeighborhoodFeature(Seq(
-      ("children", AllChildrenExtractor)
-    ), Seq(
-      ("card", CardinalityNhTransform)
-    )),
-    TransformedNeighborhoodFeature(Seq(
-      ("self", SelfExtractor),
-      ("parent", EachParentExtractor),
-      ("child", EachChildExtractor),
-      ("parent1", SpecificParentExtractor(0)),
-      ("parent2", SpecificParentExtractor(1)),
-      ("parent3", SpecificParentExtractor(2)),
-      ("parent4", SpecificParentExtractor(3)),
-      ("child1", SpecificChildExtractor(0)),
-      ("child2", SpecificChildExtractor(1)),
-      ("child3", SpecificChildExtractor(2)),
-      ("child4", SpecificChildExtractor(3)),
-      ("child5", SpecificChildExtractor(4))
-    ), Seq(
-      ("cpos", PropertyNhTransform('cpos)),
-      ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
-      ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-    ) ++ verbnetTransformOption),
-    TransformedNeighborhoodFeature(Seq(
-      ("parent1", SelfAndSpecificParentExtractor(0)),
-      ("parent2", SelfAndSpecificParentExtractor(1)),
-      ("parent3", SelfAndSpecificParentExtractor(2)),
-      ("parent4", SelfAndSpecificParentExtractor(3)),
-      ("child1", SelfAndSpecificChildExtractor(0)),
-      ("child2", SelfAndSpecificChildExtractor(1)),
-      ("child3", SelfAndSpecificChildExtractor(2)),
-      ("child4", SelfAndSpecificChildExtractor(3)),
-      ("child5", SelfAndSpecificChildExtractor(4))
-    ), Seq(
-      ("alabel", ArclabelNhTransform),
-      ("direction", DirectionNhTransform)
+  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) =
+    new ParseNodeFeatureUnion(Seq(
+      TransformedNeighborhoodFeature(Seq(
+        ("children", AllChildrenExtractor)
+      ), Seq(
+        ("card", CardinalityNhTransform)
+      )),
+      TransformedNeighborhoodFeature(Seq(
+        ("self", SelfExtractor),
+        ("parent", EachParentExtractor),
+        ("child", EachChildExtractor),
+        ("parent1", SpecificParentExtractor(0)),
+        ("parent2", SpecificParentExtractor(1)),
+        ("parent3", SpecificParentExtractor(2)),
+        ("parent4", SpecificParentExtractor(3)),
+        ("child1", SpecificChildExtractor(0)),
+        ("child2", SpecificChildExtractor(1)),
+        ("child3", SpecificChildExtractor(2)),
+        ("child4", SpecificChildExtractor(3)),
+        ("child5", SpecificChildExtractor(4))
+      ), Seq(
+        ("cpos", PropertyNhTransform('cpos)),
+        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
+      ) ++ verbnetTransformOption),
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SelfAndSpecificParentExtractor(0)),
+        ("parent2", SelfAndSpecificParentExtractor(1)),
+        ("parent3", SelfAndSpecificParentExtractor(2)),
+        ("parent4", SelfAndSpecificParentExtractor(3)),
+        ("child1", SelfAndSpecificChildExtractor(0)),
+        ("child2", SelfAndSpecificChildExtractor(1)),
+        ("child3", SelfAndSpecificChildExtractor(2)),
+        ("child4", SelfAndSpecificChildExtractor(3)),
+        ("child5", SelfAndSpecificChildExtractor(4))
+      ), Seq(
+        ("alabel", ArclabelNhTransform),
+        ("direction", DirectionNhTransform)
+      ))
     ))
-  ))
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {
@@ -223,10 +225,8 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
   ): (RerankingFunction, WrapperClassifier) = {
 
     println("Creating training vectors.")
-    val trainingData = ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
-    //trainingData.labeledVectors foreach { case (vec, label) =>
-    //  println(vec)
-    //}
+    val trainingData =
+      ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
       new RandomForestTrainer(0, 10, 200, EntropyGainMetric(0))
@@ -263,24 +263,66 @@ case class WeirdParseNodeRerankingFunction(
     result
   }
 
+  /** Gets the set of tokens in a parse.
+    *
+    * @param parse the parse tree to analyze
+    * @return the indices , weirdness score and justification for all tokens
+    */
+  def getNodes(parse: PolytreeParse): Set[(Int, Double, Option[String])] = {
+    Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
+      classifier match {
+        case c: JustifyingWrapperClassifier =>
+          val confAndJustification =
+            (c.asInstanceOf[JustifyingWrapperClassifier].getDistributionWithJustification(
+              feature(parse, tokenIndex)
+            ) mapValues (v => (v._1, Some(v._2)))).
+              getOrElse(0, (0.0, None))
+          (tokenIndex, confAndJustification._1, confAndJustification._2)
+        case _ =>
+          (
+            tokenIndex,
+            classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0), None
+          )
+      }
+
+    }
+  }
+
   /** Gets the set of "weird" tokens in a parse.
     *
     * @param parse the parse tree to analyze
-    * @return the indices of all weird tokens
+    * @return the indices and explanation for all tokens classified as weird
     */
-  def getWeirdNodes(parse: PolytreeParse): Set[Int] = {
-    val nodeWeirdness: Set[(Int, Double)] =
-      Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
-        (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0))
-      }
+  def getWeirdNodes(parse: PolytreeParse): Set[(Int, Option[String])] = {
+    val nodeWeirdness: Set[(Int, Double, Option[String])] = getNodes(parse)
     nodeWeirdness filter {
-      case (_, weirdness) =>
+      case (_, weirdness, _) =>
         weirdness >= weirdnessThreshold
     } map {
-      case (node, _) =>
-        node
-    } filter { tokenIndex =>
-      parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
+      case (node, _, justification) =>
+        (node, justification)
+    } filter {
+      case (tokenIndex, justification) =>
+        parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
+    }
+  }
+
+  /** Gets the set of "NOT weird" tokens in a parse.
+    *
+    * @param parse the parse tree to analyze
+    * @return the indices and explanation for all tokens classified as weird
+    */
+  def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[String])] = {
+    val nodeWeirdness: Set[(Int, Double, Option[String])] = getNodes(parse)
+    nodeWeirdness filter {
+      case (_, weirdness, _) =>
+        weirdness < weirdnessThreshold
+    } map {
+      case (node, _, justification) =>
+        (node, justification)
+    } filter {
+      case (tokenIndex, justification) =>
+        parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
     }
   }
 }
