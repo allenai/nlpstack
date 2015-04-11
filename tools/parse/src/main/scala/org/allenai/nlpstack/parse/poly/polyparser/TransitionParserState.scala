@@ -115,16 +115,18 @@ case class TransitionParserState(
         case x => x
       }
       val revisedSentence = sentence.copy(
-        tokens = sentence.tokens.zipWithIndex map {
-        case (tok, tokenIndex) =>
-          val revisedCpos = arcLabels.get(Set(tokenIndex, breadcrumb(tokenIndex))) match {
-            case Some(dpLabel: DependencyParsingArcLabel) =>
-              dpLabel.cpos
-            case _ =>
-              'unk
-          }
-          tok.copy(properties = tok.properties.updated('cpos, Set(revisedCpos)))
-      }
+        tokens =
+        NexusToken +:
+          (sentence.tokens.zipWithIndex.tail map {
+            case (tok, tokenIndex) =>
+              val revisedCpos = arcLabels.get(Set(tokenIndex, breadcrumb(tokenIndex))) match {
+                case Some(dpLabel: DependencyParsingArcLabel) =>
+                  dpLabel.cpos
+                case _ =>
+                  'unk
+              }
+              tok.copy(properties = tok.properties.updated('cpos, Set(revisedCpos)))
+          })
       )
       val parseBreadcrumb = ((0 to sentence.size - 1) map { x =>
         breadcrumb(x)

@@ -98,7 +98,7 @@ object Training {
         BrownClustersTagger(clusters)) ++ verbnetTaggerOption
 
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcHybridTransitionSystemFactory(taggers)
+      ArcEagerTransitionSystemFactory(taggers)
 
     println("Training parser.")
     val classifierTrainer: ProbabilisticClassifierTrainer =

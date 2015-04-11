@@ -24,7 +24,8 @@ class ParserClassificationTaskSpec extends UnitSpec {
     bufferPosition = 6,
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0),
     children = Map(0 -> Set(2), 2 -> Set(1)),
-    arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj),
+    arcLabels = Map(Set(0, 2) -> SingleSymbolArcLabel('root),
+      Set(2, 1) -> SingleSymbolArcLabel('nsubj)),
     sentence =
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
         Token('white), Token('cat, Map('cpos -> Set('noun))),

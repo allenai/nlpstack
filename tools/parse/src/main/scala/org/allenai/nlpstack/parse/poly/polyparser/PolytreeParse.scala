@@ -317,6 +317,7 @@ case class PolytreeParse(
     digraph.toPositionTree(rootNode)
   }
 
+  /*
   @transient
   lazy val relativeCposMap: Map[Int, ((Boolean, Symbol), Int)] = {
     relativeCposMapHelper(depthFirstPreorder, Map())
@@ -345,6 +346,7 @@ case class PolytreeParse(
         )
     }
   }
+  */
 
   override def toString: String = {
     (Range(0, tokens.size) map { tokenIndex => printFamily(tokenIndex) }).mkString(" ")

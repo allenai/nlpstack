@@ -11,16 +11,16 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     * format: OFF
     *
     * NEXUS_0
-    * |
-    * |       the_1--
-    * |              \
-    * |               -->cat_2
-    * \              /
-    * -----> sat_3--
-    * /
+    *     |
+    *     |       the_1--
+    *     |              \
+    *     |               -->cat_2
+    *     \              /
+    *      -----> sat_3--
+    *        /
     * by_4 --
-    * \
-    * --> me_5
+    *        \
+    *         --> me_5
     *
     * format: ON
     */
@@ -34,24 +34,32 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       Token('me, Map('cpos -> Set('PRP)))
     )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
-    children = Vector(Set(3), Set(2), Set(), Set(2), Set(3,5), Set()),
-    arclabels = Vector(Set((3, 'ROOT)), Set((2, 'DET)), Set((1, 'DET), (3, 'NSUBJ)),
-      Set((0, 'ROOT), (2, 'NSUBJ), (4, 'PREP)), Set((3, 'PREP), (5, 'POBJ)), Set((4, 'POBJ)))
+    children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
+    arclabels =
+      Vector(
+        Set((3, SingleSymbolArcLabel('ROOT))),
+        Set((2, SingleSymbolArcLabel('DET))),
+        Set((1, SingleSymbolArcLabel('DET)), (3, SingleSymbolArcLabel('NSUBJ))),
+        Set((0, SingleSymbolArcLabel('ROOT)), (2, SingleSymbolArcLabel('NSUBJ)),
+          (4, SingleSymbolArcLabel('PREP))),
+        Set((3, SingleSymbolArcLabel('PREP)), (5, SingleSymbolArcLabel('POBJ))),
+        Set((4, SingleSymbolArcLabel('POBJ)))
+      )
   )
 
   /** This represents the following parse:
     * format: OFF
     *
     * NEXUS_0
-    * |
-    * V
-    * a_1
-    * / \
-    * /   \
-    * V    V
+    *     |
+    *     V
+    *    a_1
+    *    / \
+    *   /   \
+    *  V    V
     * b_2   d_4
-    * |
-    * V
+    *  |
+    *  V
     * c_3
     *
     * format: ON
@@ -67,11 +75,12 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     breadcrumb = Vector(-1, 0, 1, 2, 1),
     children = Vector(Set(1), Set(2, 4), Set(3), Set(), Set()),
     arclabels = Vector(
-      Set((1, 'n2a)),
-      Set((0, 'n2a), (2, 'a2b), (4, 'a2d)),
-      Set((1, 'a2b), (3, 'b2c)),
-      Set((2, 'b2c)),
-      Set((1, 'a2d))
+      Set((1, SingleSymbolArcLabel('n2a))),
+      Set((0, SingleSymbolArcLabel('n2a)), (2, SingleSymbolArcLabel('a2b)),
+        (4, SingleSymbolArcLabel('a2d))),
+      Set((1, SingleSymbolArcLabel('a2b)), (3, SingleSymbolArcLabel('b2c))),
+      Set((2, SingleSymbolArcLabel('b2c))),
+      Set((1, SingleSymbolArcLabel('a2d)))
     )
   )
 
@@ -83,19 +92,19 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
       ArcHybridShift,
       ArcHybridLeftArc(),
-      LabelLeftArc('DET),
+      LabelLeftArc(DependencyParsingArcLabel('DET, 'DT)),
       ArcHybridShift,
       ArcHybridLeftArc(),
-      LabelLeftArc('NSUBJ),
+      LabelLeftArc(DependencyParsingArcLabel('NSUBJ, 'NN)),
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridRightArc(),
-      LabelRightArc('POBJ),
+      LabelRightArc(DependencyParsingArcLabel('POBJ, 'PRP)),
       ArcHybridRightArc(),
-      LabelRightArc('PREP),
+      LabelRightArc(DependencyParsingArcLabel('PREP, 'IN)),
       ArcHybridLeftArc(),
-      LabelLeftArc('ROOT),
+      LabelLeftArc(DependencyParsingArcLabel('ROOT, 'VB)),
       ArcHybridShift
     ))
   }
@@ -110,14 +119,14 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       ArcHybridShift,
       ArcHybridShift,
       ArcHybridRightArc(),
-      LabelRightArc('b2c),
+      LabelRightArc(DependencyParsingArcLabel('b2c, 'CC)),
       ArcHybridRightArc(),
-      LabelRightArc('a2b),
+      LabelRightArc(DependencyParsingArcLabel('a2b, 'BB)),
       ArcHybridShift,
       ArcHybridRightArc(),
-      LabelRightArc('a2d),
+      LabelRightArc(DependencyParsingArcLabel('a2d, 'DD)),
       ArcHybridLeftArc(),
-      LabelLeftArc('n2a),
+      LabelLeftArc(DependencyParsingArcLabel('n2a, 'AA)),
       ArcHybridShift
     ))
   }
@@ -162,7 +171,7 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc('DET),
+        LabelLeftArc(SingleSymbolArcLabel('DET)),
         ArcHybridShift
       )
     )
@@ -178,10 +187,10 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc('DET),
+        LabelLeftArc(SingleSymbolArcLabel('DET)),
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc('NSUBJ),
+        LabelLeftArc(SingleSymbolArcLabel('NSUBJ)),
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridShift
@@ -193,10 +202,14 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
 
   "The ForbiddenArcLabel's interpretation" should "return true for a mislabeled left arc" in {
     val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
-    val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'DET))
-    val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, 'DET))
-    val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, 'DET))
-    val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'POBJ))
+    val interpretation1 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, SingleSymbolArcLabel('DET)))
+    val interpretation2 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, SingleSymbolArcLabel('DET)))
+    val interpretation3 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, SingleSymbolArcLabel('DET)))
+    val interpretation4 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, SingleSymbolArcLabel('POBJ)))
     val state = StateTransition.applyTransitionSequence(
       transitionSystem.initialState(Seq()).get,
       List(
@@ -204,37 +217,41 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
         ArcHybridLeftArc()
       )
     )
-    interpretation1(state.get, LabelLeftArc('DET)) shouldBe true
-    interpretation2(state.get, LabelLeftArc('DET)) shouldBe false
-    interpretation3(state.get, LabelLeftArc('DET)) shouldBe false
-    interpretation4(state.get, LabelLeftArc('DET)) shouldBe false
+    interpretation1(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe true
+    interpretation2(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
+    interpretation3(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
+    interpretation4(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
   }
 
   it should "return true for a mislabeled right arc" in {
     val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
-    val interpretation1 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'POBJ))
-    val interpretation2 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, 'POBJ))
-    val interpretation3 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, 'POBJ))
-    val interpretation4 = ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'DET))
+    val interpretation1 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, SingleSymbolArcLabel('POBJ)))
+    val interpretation2 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, SingleSymbolArcLabel('POBJ)))
+    val interpretation3 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, SingleSymbolArcLabel('POBJ)))
+    val interpretation4 =
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, SingleSymbolArcLabel('DET)))
     val state = StateTransition.applyTransitionSequence(
       transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc('DET),
+        LabelLeftArc(SingleSymbolArcLabel('DET)),
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc('NSUBJ),
+        LabelLeftArc(SingleSymbolArcLabel('NSUBJ)),
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridRightArc()
       )
     )
-    interpretation1(state.get, LabelRightArc('POBJ)) shouldBe true
-    interpretation2(state.get, LabelRightArc('POBJ)) shouldBe false
-    interpretation3(state.get, LabelRightArc('POBJ)) shouldBe false
-    interpretation4(state.get, LabelRightArc('POBJ)) shouldBe false
+    interpretation1(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe true
+    interpretation2(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
+    interpretation3(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
+    interpretation4(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
   }
 }
 
