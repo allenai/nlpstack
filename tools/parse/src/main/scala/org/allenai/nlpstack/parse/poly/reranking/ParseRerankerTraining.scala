@@ -68,6 +68,9 @@ object ParseRerankerTraining {
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
 
+    val googNgram = new GoogleNGram()
+    println("Created Google Ngram Util Class")
+
     println("Creating reranker.")
 
     // Read in taggers config file if specified. This will contain config info necessary to
