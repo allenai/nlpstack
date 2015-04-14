@@ -66,7 +66,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     ).toMap
   }
 
-  override def outcomeDistributionWithJustification(featureVector: FeatureVector): Map[Int, (Double, DecisionTreeJustification)] = {
+  override def outcomeDistributionWithJustification(
+    featureVector: FeatureVector
+  ): Map[Int, (Double, DecisionTreeJustification)] = {
     val (node, breadCrumb) =
       findDecisionPointWithBreabcrumb(featureVector, 0, Seq.empty[(Int, Int)])
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
@@ -106,7 +108,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     }
   }
 
-  protected def selectChildWithPath(nodeId: Int, featureVector: FeatureVector): Option[(Int, (Int, Int))] = {
+  protected def selectChildWithPath(
+    nodeId: Int, featureVector: FeatureVector
+  ): Option[(Int, (Int, Int))] = {
     for {
       feature <- splittingFeature(nodeId)
       child <- child(nodeId).get(featureVector.getFeature(feature))

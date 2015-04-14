@@ -3,7 +3,11 @@ package org.allenai.nlpstack.parse.poly.reranking
 import org.allenai.common.Config.EnhancedConfig
 import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core.WordClusters
-import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
+import org.allenai.nlpstack.parse.poly.decisiontree.{
+  EntropyGainMetric,
+  Justification,
+  RandomForestTrainer
+}
 import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
@@ -188,7 +192,8 @@ object ParseRerankerTraining {
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
             val badTokens: Set[Int] =
-              (candidateParse.families.toSet -- goldParse.families.toSet) map { // TODO: consider labels as well?
+              (candidateParse.families.toSet -- goldParse.families.toSet) map {
+                // TODO: consider labels as well?
                 case family =>
                   family.tokens.head
               }
@@ -268,7 +273,7 @@ case class WeirdParseNodeRerankingFunction(
     * @param parse the parse tree to analyze
     * @return the indices , weirdness score and justification for all tokens
     */
-  def getNodes(parse: PolytreeParse): Set[(Int, Double, Option[String])] = {
+  def getNodes(parse: PolytreeParse): Set[(Int, Double, Option[Justification])] = {
     Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
       classifier match {
         case c: JustifyingWrapperClassifier =>
@@ -293,8 +298,8 @@ case class WeirdParseNodeRerankingFunction(
     * @param parse the parse tree to analyze
     * @return the indices and explanation for all tokens classified as weird
     */
-  def getWeirdNodes(parse: PolytreeParse): Set[(Int, Option[String])] = {
-    val nodeWeirdness: Set[(Int, Double, Option[String])] = getNodes(parse)
+  def getWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
+    val nodeWeirdness = getNodes(parse)
     nodeWeirdness filter {
       case (_, weirdness, _) =>
         weirdness >= weirdnessThreshold
@@ -312,8 +317,8 @@ case class WeirdParseNodeRerankingFunction(
     * @param parse the parse tree to analyze
     * @return the indices and explanation for all tokens classified as weird
     */
-  def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[String])] = {
-    val nodeWeirdness: Set[(Int, Double, Option[String])] = getNodes(parse)
+  def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
+    val nodeWeirdness = getNodes(parse)
     nodeWeirdness filter {
       case (_, weirdness, _) =>
         weirdness < weirdnessThreshold

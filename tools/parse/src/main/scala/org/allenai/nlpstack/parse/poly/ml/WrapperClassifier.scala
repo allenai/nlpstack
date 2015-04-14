@@ -102,32 +102,14 @@ case class JustifyingWrapperClassifier(
       }
   }
 
-  private def prettyPrintDecisionTreeJustification(justification: DecisionTreeJustification): String = {
+  def prettyPrintDecisionTreeJustification(
+    justification: DecisionTreeJustification
+  ): String = {
     // Map the feature indexes to their feature names
     val featureTuples: Seq[(FeatureName, Int)] = justification.breadCrumb.map {
       case (featureNameIx: Int, featureVal: Int) =>
         (featureNameForIndex(featureNameIx), featureVal)
     }
-
-    // Group the tuples by the first symbol, which generally indicates the node in the
-    // polytree, for e.g., "self", "parent1", "child1", "child2", etc.
-    /*val featureTuplesGrouped: Map[Symbol, Seq[(String, Int)]] =
-        featureTuples.groupBy(_._1.symbols.head) mapValues {
-          case tuples: Seq[(FeatureName,Int)] =>
-            tuples map { t => (new FeatureName(t._1.symbols.tail).toString, t._2) }
-        }
-
-      // Build the Justification string by composing justification for each type of node.
-      val featureTuplesStr = (for {
-        (k, v) <- featureTuplesGrouped
-      } yield {
-        "[ " + k.name + ": " +
-         "[ " + (v map {
-           case (featureNameStr: String, featureVal: Int) => featureNameStr + " = " + featureVal
-         }).mkString(", ") + " ] ]"
-       }).mkString(",\n")
-       "[\n" + featureTuplesStr + "\n]\n"*/
-
     "[ " + (for {
       featureTuple <- featureTuples
     } yield {
@@ -135,11 +117,22 @@ case class JustifyingWrapperClassifier(
     }).mkString(", ") + " ]"
   }
 
-  private def prettyPrintRandomForestJustification(justification: RandomForestJustification): String =
-    {
-      "[\n" + justification.dtJustifications.map(j =>
-        prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
+  def prettyPrintRandomForestJustification(
+    justification: RandomForestJustification
+  ): String = {
+    "[\n" + justification.dtJustifications.map(j =>
+      prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
+  }
+
+  def prettyPrintJustification(justification: Justification): String = {
+    justification match {
+      case dtJustification: DecisionTreeJustification =>
+        prettyPrintDecisionTreeJustification(dtJustification)
+      case rfJustification: RandomForestJustification =>
+        prettyPrintRandomForestJustification(rfJustification)
+      case _ => ""
     }
+  }
 
   /** Returns a distribution over all (integer) outcomes, given the input feature vector.
     *
@@ -147,15 +140,39 @@ case class JustifyingWrapperClassifier(
     * @return a tuple with the most probable (integer) outcome and the classifier justification for
     *   the outcome
     */
-  def getDistributionWithJustification(featureVector: FeatureVector): Map[Int, (Double, String)] = {
+  def getDistributionWithJustification(
+    featureVector: FeatureVector
+  ): Map[Int, (Double, Justification)] = {
     classifier.outcomeDistributionWithJustification(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
-    ) map {
-        case (outcome: Int, (confidence: Double, justification: DecisionTreeJustification)) =>
-          (outcome, (confidence, prettyPrintDecisionTreeJustification(justification)))
-        case (outcome: Int, (confidence: Double, justification: RandomForestJustification)) =>
-          (outcome, (confidence, prettyPrintRandomForestJustification(justification)))
-      }
+    )
+  }
+
+  /** Takes a Decision Tree Justification and turns into a map of feature-value pairs by
+    * mapping feature indexes to respective (String) names based on the featureNameMap
+    * field.
+    */
+  def getExplainableDecisionTreeJustification(
+    justification: DecisionTreeJustification
+  ): Map[FeatureName, Int] = {
+    // Map the feature indexes to their feature names
+    (justification.breadCrumb.map {
+      case (featureNameIx: Int, featureVal: Int) =>
+        (featureNameForIndex(featureNameIx), featureVal)
+    }).toMap
+  }
+
+  /** Takes a Random Forest Justification and turns into a seq of explainable decision tree
+    * justifications, as defined in getExplainableDecisionTreeJustification-- there is an
+    * explainable decision tree justification for each decision tree in the random forest that
+    * voted for the chosen outcome.
+    */
+  def getExplainableRandomForestJustification(
+    justification: RandomForestJustification
+  ): Seq[Map[FeatureName, Int]] = {
+    justification.dtJustifications map { dtJustification =>
+      getExplainableDecisionTreeJustification(dtJustification)
+    }
   }
 }
 
@@ -202,6 +219,7 @@ object WrapperClassifier {
         .map(featureNameToIndex).toSeq: _*)
     new SparseVector(outcome, featureNameToIndex.values.max + 1, trueAttributes)
   }
+
 }
 
 /** Trains a WrapperClassifier from training data.

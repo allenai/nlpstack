@@ -42,7 +42,9 @@ trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
     * @return probability distribution of outcomes according to training data with associated
     * explanations for each outcome.
     */
-  def outcomeDistributionWithJustification(featureVector: FeatureVector): Map[Int, (Double, Justification)]
+  def outcomeDistributionWithJustification(
+    featureVector: FeatureVector
+  ): Map[Int, (Double, Justification)]
 
   /** Classifies a feature vector and produces a justification for the result produced.
     *
