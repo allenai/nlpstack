@@ -1,15 +1,16 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import java.io.{ InputStream, File, PrintWriter }
-import org.allenai.common.json._
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.reranking.{
   WeirdParseNodeRerankingFunction,
   LinearParseRerankingFunction
 }
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+
+import reming.CompactPrinter
+import reming.DefaultJsonProtocol._
+
+import java.io.{ BufferedWriter, FileWriter, PrintWriter }
 
 /** Chooses the lowest cost parse from an n-best list (according to the reranking function).
   *
@@ -56,57 +57,24 @@ abstract class RerankingFunction extends ((Sculpture, Double) => Double) {
 }
 
 object RerankingFunction {
+  private implicit val linearParseRerankingFunctionFormat =
+    jsonFormat2(LinearParseRerankingFunction.apply)
+  private implicit val weirdParseNodeRerankingFunctionFormat =
+    jsonFormat3(WeirdParseNodeRerankingFunction.apply)
+  private implicit val baseCostRerankingFunctionFormat =
+    jsonFormat0(() => BaseCostRerankingFunction)
 
-  /** Boilerplate code to serialize a RerankingFunction to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM RerankingFunction, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object RerankingFunctionJsonFormat extends RootJsonFormat[RerankingFunction] {
+  implicit val rerankingFunctionJsonFormat = parentFormat[RerankingFunction](
+    childFormat[LinearParseRerankingFunction, RerankingFunction],
+    childFormat[WeirdParseNodeRerankingFunction, RerankingFunction],
+    childFormat[BaseCostRerankingFunction.type, RerankingFunction]
+  )
 
-    implicit val linearParseRerankingFunctionFormat =
-      jsonFormat2(LinearParseRerankingFunction.apply).pack("type" -> "LinearParseRerankingFunction")
-    implicit val weirdParseNodeRerankingFunctionFormat =
-      jsonFormat3(WeirdParseNodeRerankingFunction.apply).pack(
-        "type" -> "WeirdParseNodeRerankingFunction"
-      )
-    def write(rerankingFunction: RerankingFunction): JsValue = rerankingFunction match {
-      case BaseCostRerankingFunction => JsString("BaseCostRerankingFunction")
-      case linearParseRerankingFunction: LinearParseRerankingFunction =>
-        linearParseRerankingFunction.toJson
-      case weirdParseNodeRerankingFunction: WeirdParseNodeRerankingFunction =>
-        weirdParseNodeRerankingFunction.toJson
-    }
-    def read(value: JsValue): RerankingFunction = value match {
-      case JsString(typeid) => typeid match {
-        case "BaseCostRerankingFunction" => BaseCostRerankingFunction
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        linearParseRerankingFunctionFormat,
-        weirdParseNodeRerankingFunctionFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
-  }
-
-  def load(filename: String): RerankingFunction = {
-    Resource.using(new File(filename).toURI.toURL.openStream()) { stream =>
-      val jsVal = Util.getJsValueFromStream(stream)
-      jsVal match {
-        case JsObject(values) =>
-        case _ => deserializationError("Unexpected JsValue type. Must be " +
-          "JsObject.")
-      }
-      jsVal.convertTo[RerankingFunction]
-    }
-  }
+  def load(filename: String): RerankingFunction = Util.readFromFile[RerankingFunction](filename)
 
   def save(rerankingFunction: RerankingFunction, filename: String): Unit = {
-    Resource.using(new PrintWriter(new File(filename))) { writer =>
-      writer.println(rerankingFunction.toJson.compactPrint)
+    Resource.using(new PrintWriter(new BufferedWriter(new FileWriter(filename)))) { writer =>
+      CompactPrinter.printTo(writer, rerankingFunction)
     }
   }
 }

@@ -2,7 +2,8 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
-import spray.json._
+
+import reming.{ CompactPrinter, JsonParser }
 
 class StateRefSpec extends UnitSpec {
   // scalastyle:off
@@ -83,7 +84,7 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a StackRef" should "preserve a StackRef with index 3" in {
     val stateRef: StateRef = StackRef(3)
-    stateRef.toJson.convertTo[StateRef] shouldBe StackRef(3)
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe StackRef(3)
   }
 
   "Constructing a BufferRef" should "throw IllegalArgumentException for a negative index" in {
@@ -106,7 +107,7 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a BufferRef" should "preserve a BufferRef with index 2" in {
     val stateRef: StateRef = BufferRef(2)
-    stateRef.toJson.convertTo[StateRef] shouldBe BufferRef(2)
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe BufferRef(2)
   }
 
   "Calling LastRef's apply" should "give back the last sentence token" in {
@@ -115,7 +116,7 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a LastRef" should "preserve a LastRef" in {
     val stateRef: StateRef = LastRef
-    stateRef.toJson.convertTo[StateRef] shouldBe LastRef
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe LastRef
   }
 
   "Calling FirstRef's apply" should "give back the first (non-nexus) sentence token" in {
@@ -124,7 +125,7 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a FirstRef" should "preserve a FirstRef" in {
     val stateRef: StateRef = FirstRef
-    stateRef.toJson.convertTo[StateRef] shouldBe FirstRef
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe FirstRef
   }
 
   "Constructing a BreadcrumbRef" should "throw IllegalArgumentException for a negative index" in {
@@ -151,7 +152,7 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a BreadcrumbRef" should "preserve a BreadcrumbRef with index 4" in {
     val stateRef: StateRef = BreadcrumbRef(4)
-    stateRef.toJson.convertTo[StateRef] shouldBe BreadcrumbRef(4)
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe BreadcrumbRef(4)
   }
 
   "Calling StackGretelsRef's apply" should "give back the empty set when a valid stack item " +
@@ -169,7 +170,6 @@ class StateRefSpec extends UnitSpec {
 
   "Serializing a StackGretelsRef" should "preserve a StackGretelsRef with index 4" in {
     val stateRef: StateRef = StackGretelsRef(4)
-    stateRef.toJson.convertTo[StateRef] shouldBe StackGretelsRef(4)
+    JsonParser.read[StateRef](CompactPrinter.printToString(stateRef)) shouldBe StackGretelsRef(4)
   }
-
 }

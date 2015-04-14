@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import spray.json._
 import scala.annotation.tailrec
+
+import reming.DefaultJsonProtocol._
 
 /** Immutable decision tree for integer-valued features and outcomes.
   *
@@ -129,17 +130,5 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
 }
 
 object DecisionTree {
-  // Override the Spray/JSON serialization for maps with integer keys, because these
-  // don't work out-of-the-box.
-  import spray.json.DefaultJsonProtocol.{ mapFormat => _, _ }
-  implicit val intMapFormat = new JsonFormat[Map[Int, Int]] {
-    override def write(map: Map[Int, Int]): JsValue = {
-      map.toSeq.toJson
-    }
-    override def read(json: JsValue): Map[Int, Int] = json match {
-      case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
-      case _ => throw new DeserializationException("Expected JSArray for int map")
-    }
-  }
-  implicit val dtFormat = jsonFormat4(DecisionTree.apply)
+  implicit val decisionTreeFormat = jsonFormat4(DecisionTree.apply)
 }

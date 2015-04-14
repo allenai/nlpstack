@@ -3,7 +3,8 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm._
-import spray.json._
+
+import reming.{ CompactPrinter, JsonParser }
 
 class ParserClassificationTaskSpec extends UnitSpec {
   // scalastyle:off
@@ -34,12 +35,16 @@ class ParserClassificationTaskSpec extends UnitSpec {
 
   "Serializing a ApplicabilitySignature" should "preserve it" in {
     val applicabilitySig: ClassificationTask = ApplicabilitySignature(true, false, false, true)
-    applicabilitySig.toJson.convertTo[ClassificationTask] shouldBe applicabilitySig
+    JsonParser.read[ClassificationTask](CompactPrinter.printToString(applicabilitySig)) shouldBe(
+      applicabilitySig
+    )
   }
 
   "Serializing a StateRefCpos" should "preserve it" in {
     val bufferCpos: ClassificationTask = StateRefProperty(BufferRef(0), 'cpos, "det")
-    bufferCpos.toJson.convertTo[ClassificationTask] shouldBe bufferCpos
+    JsonParser.read[ClassificationTask](CompactPrinter.printToString(bufferCpos)) shouldBe(
+      bufferCpos
+    )
   }
 
   "Calling BufferCposIdentifier's apply" should "return state1's buffer top" in {
@@ -49,7 +54,9 @@ class ParserClassificationTaskSpec extends UnitSpec {
 
   "Serializing a BufferCposIdentifier" should "preserve it" in {
     val taskIdentifier: TaskIdentifier = StateRefPropertyIdentifier(BufferRef(0), 'cpos)
-    taskIdentifier.toJson.convertTo[TaskIdentifier] shouldBe taskIdentifier
+    JsonParser.read[TaskIdentifier](CompactPrinter.printToString(taskIdentifier)) shouldBe(
+      taskIdentifier
+    )
   }
 
   "Calling TaskConjunctionIdentifier's apply" should "return the proper conjunction" in {
@@ -68,7 +75,9 @@ class ParserClassificationTaskSpec extends UnitSpec {
       StateRefPropertyIdentifier(StackRef(0), 'cpos),
       StateRefPropertyIdentifier(BufferRef(0), 'cpos)
     ), None)
-    taskIdentifier.toJson.convertTo[TaskIdentifier] shouldBe taskIdentifier
+    JsonParser.read[TaskIdentifier](CompactPrinter.printToString(taskIdentifier)) shouldBe(
+      taskIdentifier
+    )
   }
 
 }

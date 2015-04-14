@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
-import org.allenai.common.json._
+
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 /** A StateCostFunction assigns a (real-valued) cost to the Transitions that can potentially
   * be applied to a State. Generally speaking: the lower the cost, the better
@@ -26,24 +26,6 @@ abstract class StateCostFunction extends (State => Map[StateTransition, Double])
       Some((transitionCosts minBy (_._2))._1)
     }
   }
-}
-
-object StateCostFunction {
-  /*
-  implicit object StateJsonFormat extends RootJsonFormat[StateCostFunction] {
-    implicit val classifierBasedCostFunctionFormat =
-      jsonFormat5(ClassifierBasedCostFunction.apply).pack("type" -> "ClassifierBasedCostFunction")
-
-    def write(costFunction: StateCostFunction): JsValue = costFunction match {
-      case cbCostFunction: ClassifierBasedCostFunction => cbCostFunction.toJson
-      case x => deserializationError(s"Cannot serialize this cost function type: $x")
-    }
-
-    def read(value: JsValue): StateCostFunction = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFormat
-    )
-  }
-  */
 }
 
 case class ClassifierBasedCostFunction(
@@ -145,27 +127,19 @@ trait StateCostFunctionFactory {
 }
 
 object StateCostFunctionFactory {
-  implicit object StateCostFunctionFactoryJsonFormat
-      extends RootJsonFormat[StateCostFunctionFactory] {
+  implicit object StateCostFunctionFactoryFormat extends LazyFormat[StateCostFunctionFactory] {
+    private implicit val classifierBasedCostFunctionFactoryFormat =
+      jsonFormat4(ClassifierBasedCostFunctionFactory.apply)
 
-    implicit val classifierBasedCostFunctionFactoryFormat =
-      jsonFormat4(ClassifierBasedCostFunctionFactory.apply).pack(
-        "type" -> "ClassifierBasedCostFunctionFactory"
-      )
-
-    def write(costFunctionFactory: StateCostFunctionFactory): JsValue = costFunctionFactory match {
-      case cbFactory: ClassifierBasedCostFunctionFactory => cbFactory.toJson
-      case x => deserializationError(s"Cannot serialize this cost function factory type: $x")
-    }
-
-    def read(value: JsValue): StateCostFunctionFactory = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFactoryFormat
+    override val delegate = parentFormat[StateCostFunctionFactory](
+      childFormat[ClassifierBasedCostFunctionFactory, StateCostFunctionFactory]
     )
   }
 }
 
 case class ClassifierBasedCostFunctionFactory(
-    transitionSystemFactory: TransitionSystemFactory, transitions: Seq[StateTransition],
+    transitionSystemFactory: TransitionSystemFactory,
+    transitions: Seq[StateTransition],
     taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
     baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
 ) extends StateCostFunctionFactory {

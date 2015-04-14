@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** A WalkStep is a single step in an FSM walk.
   *

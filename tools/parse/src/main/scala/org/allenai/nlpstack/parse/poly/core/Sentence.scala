@@ -3,7 +3,8 @@ package org.allenai.nlpstack.parse.poly.core
 import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import spray.json.DefaultJsonProtocol._
+
+import reming.DefaultJsonProtocol._
 
 import scala.collection.mutable.Stack
 
