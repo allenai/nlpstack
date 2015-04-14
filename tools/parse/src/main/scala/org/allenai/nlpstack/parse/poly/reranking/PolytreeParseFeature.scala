@@ -1,6 +1,9 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureName => MLFeatureName, FeatureVector => MLFeatureVector }
+import org.allenai.nlpstack.parse.poly.ml.{
+  FeatureName => MLFeatureName,
+  FeatureVector => MLFeatureVector
+}
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
 
 import reming.LazyFormat

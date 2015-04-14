@@ -60,7 +60,9 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toDouble }).toSeq
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues {
+      _.toDouble
+    }).toSeq
     ).toMap
   }
 

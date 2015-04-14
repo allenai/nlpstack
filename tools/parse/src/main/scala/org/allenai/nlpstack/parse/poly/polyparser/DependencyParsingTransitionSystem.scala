@@ -1,6 +1,11 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ SentenceTransform, AnnotatedSentence, WordClusters, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{
+  AnnotatedSentence,
+  Sentence,
+  SentenceTransform,
+  WordClusters
+}
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
@@ -90,8 +95,14 @@ abstract class DependencyParsingTransitionSystem(
       new OfflineTokenFeature(annotatedSentence, BufferRef(1)),
       new OfflineTokenFeature(annotatedSentence, PreviousLinkCrumbRef),
       new OfflineTokenFeature(annotatedSentence, PreviousLinkGretelRef),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))),
-      new OfflineTokenFeature(annotatedSentence, TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))),
+      new OfflineTokenFeature(
+        annotatedSentence,
+        TransitiveRef(PreviousLinkCrumbRef, Seq(TokenGretels))
+      ),
+      new OfflineTokenFeature(
+        annotatedSentence,
+        TransitiveRef(PreviousLinkGretelRef, Seq(TokenGretels))
+      ),
       new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(0), Seq(TokenGretels))),
       new OfflineTokenFeature(annotatedSentence, TransitiveRef(StackRef(1), Seq(TokenGretels))),
       new OfflineTokenFeature(annotatedSentence, TransitiveRef(BufferRef(0), Seq(TokenGretels))),

@@ -145,7 +145,8 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
           numCorrect +=
             candParse.tokens.tail.zip(goldParse.tokens.tail) count {
               case (candToken, goldToken) =>
-                candToken.getDeterministicProperty('cpos) == goldToken.getDeterministicProperty('cpos)
+                candToken.getDeterministicProperty('cpos) ==
+                  goldToken.getDeterministicProperty('cpos)
             }
           candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
             case (candToken, goldToken) =>

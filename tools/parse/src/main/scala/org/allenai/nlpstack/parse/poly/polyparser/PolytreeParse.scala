@@ -382,10 +382,14 @@ object PolytreeParse {
         var prev: Iterator[T] = Iterator.empty
         override def hasNext = base.hasNext
         override def next() = {
-          while (prev.hasNext) prev.next() // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          while (prev.hasNext) prev.next()
           prev = Iterator(base.next()) ++ new Iterator[T] {
             var hasMore = true
-            override def hasNext = { hasMore = hasMore && base.hasNext && !startsGroup(base.head); hasMore }
+            override def hasNext = {
+              hasMore = hasMore && base.hasNext && !startsGroup(base.head)
+              hasMore
+            }
             override def next() = if (hasNext) base.next() else Iterator.empty.next()
           }
           prev
