@@ -10,10 +10,12 @@ import scala.annotation.tailrec
 import scala.io.Source
 import spray.json.DefaultJsonProtocol._
 
+/** Generic interface for the label assigned to a parse arc. */
 trait ArcLabel {
   def toSymbol: Symbol
 }
 
+/** Indicates that a given arc has no assigned label. */
 case object NoArcLabel extends ArcLabel {
   private val noLabel = 'NONE
 
@@ -22,6 +24,12 @@ case object NoArcLabel extends ArcLabel {
   override def toString: String = noLabel.name
 }
 
+/** A simple symbolic label for an arc in a parse tree.
+  *
+  * Used when an arc label can be expressed by an atomic string with no nested structure.
+  *
+  * @param sym the symbol representation of the arc label
+  */
 case class SingleSymbolArcLabel(sym: Symbol) extends ArcLabel {
   override def toSymbol: Symbol = sym
 

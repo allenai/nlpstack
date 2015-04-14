@@ -14,6 +14,16 @@ object DependencyParserModes {
   val RIGHTLABEL: Int = 2
 }
 
+/** A compound label for a dependency tree, used by transition systems that inherit from
+  * DependencyParsingTransitionSystem.
+  *
+  * When an arc is labeled with a DependencyParsingArcLabel(stanLabel, cpos), it signifies that
+  * the coarse POS of the gretel is `cpos`, while the Stanford dependency label of the arc is
+  * stanLabel.
+  *
+  * @param stanLabel the Stanford dependency label (e.g. 'nsubj, 'dobj) of the arc
+  * @param cpos the coarse POS tag of the arc's gretel
+  */
 case class DependencyParsingArcLabel(stanLabel: Symbol, cpos: Symbol) extends ArcLabel {
   @transient private lazy val symbolicRepresentation = Symbol(stanLabel.name + "::" + cpos.name)
 
