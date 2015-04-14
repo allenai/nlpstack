@@ -4,7 +4,11 @@ import java.io.{ PrintWriter, File, InputStream }
 import java.net.URL
 
 import org.allenai.common.Resource._
-import org.allenai.nlpstack.parse.poly.fsm.{ StateCostFunctionFactory, RerankingFunction, StateCostFunction }
+import org.allenai.nlpstack.parse.poly.fsm.{
+  RerankingFunction,
+  StateCostFunction,
+  StateCostFunctionFactory
+}
 import reming.DefaultJsonProtocol._
 
 /** Contains the key components of a parser (for serialization purposes).

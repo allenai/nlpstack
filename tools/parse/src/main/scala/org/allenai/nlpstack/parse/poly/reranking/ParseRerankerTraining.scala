@@ -87,7 +87,8 @@ object ParseRerankerTraining {
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
-    val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
+    val nbestSource: ParsePoolSource =
+      InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
@@ -110,45 +111,47 @@ object ParseRerankerTraining {
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
-    TransformedNeighborhoodFeature(Seq(
-      ("children", AllChildrenExtractor)
-    ), Seq(
-      ("card", CardinalityNhTransform)
-    )),
-    TransformedNeighborhoodFeature(Seq(
-      ("self", SelfExtractor),
-      ("parent", EachParentExtractor),
-      ("child", EachChildExtractor),
-      ("parent1", SpecificParentExtractor(0)),
-      ("parent2", SpecificParentExtractor(1)),
-      ("parent3", SpecificParentExtractor(2)),
-      ("parent4", SpecificParentExtractor(3)),
-      ("child1", SpecificChildExtractor(0)),
-      ("child2", SpecificChildExtractor(1)),
-      ("child3", SpecificChildExtractor(2)),
-      ("child4", SpecificChildExtractor(3)),
-      ("child5", SpecificChildExtractor(4))
-    ), Seq(
-      ("cpos", PropertyNhTransform('cpos)),
-      ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
-      ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-    ) ++ verbnetTransformOption),
-    TransformedNeighborhoodFeature(Seq(
-      ("parent1", SelfAndSpecificParentExtractor(0)),
-      ("parent2", SelfAndSpecificParentExtractor(1)),
-      ("parent3", SelfAndSpecificParentExtractor(2)),
-      ("parent4", SelfAndSpecificParentExtractor(3)),
-      ("child1", SelfAndSpecificChildExtractor(0)),
-      ("child2", SelfAndSpecificChildExtractor(1)),
-      ("child3", SelfAndSpecificChildExtractor(2)),
-      ("child4", SelfAndSpecificChildExtractor(3)),
-      ("child5", SelfAndSpecificChildExtractor(4))
-    ), Seq(
-      ("alabel", ArclabelNhTransform),
-      ("direction", DirectionNhTransform)
+  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = {
+    new ParseNodeFeatureUnion(Seq(
+      TransformedNeighborhoodFeature(Seq(
+        ("children", AllChildrenExtractor)
+      ), Seq(
+        ("card", CardinalityNhTransform)
+      )),
+      TransformedNeighborhoodFeature(Seq(
+        ("self", SelfExtractor),
+        ("parent", EachParentExtractor),
+        ("child", EachChildExtractor),
+        ("parent1", SpecificParentExtractor(0)),
+        ("parent2", SpecificParentExtractor(1)),
+        ("parent3", SpecificParentExtractor(2)),
+        ("parent4", SpecificParentExtractor(3)),
+        ("child1", SpecificChildExtractor(0)),
+        ("child2", SpecificChildExtractor(1)),
+        ("child3", SpecificChildExtractor(2)),
+        ("child4", SpecificChildExtractor(3)),
+        ("child5", SpecificChildExtractor(4))
+      ), Seq(
+        ("cpos", PropertyNhTransform('cpos)),
+        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
+      ) ++ verbnetTransformOption),
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SelfAndSpecificParentExtractor(0)),
+        ("parent2", SelfAndSpecificParentExtractor(1)),
+        ("parent3", SelfAndSpecificParentExtractor(2)),
+        ("parent4", SelfAndSpecificParentExtractor(3)),
+        ("child1", SelfAndSpecificChildExtractor(0)),
+        ("child2", SelfAndSpecificChildExtractor(1)),
+        ("child3", SelfAndSpecificChildExtractor(2)),
+        ("child4", SelfAndSpecificChildExtractor(3)),
+        ("child5", SelfAndSpecificChildExtractor(4))
+      ), Seq(
+        ("alabel", ArclabelNhTransform),
+        ("direction", DirectionNhTransform)
+      ))
     ))
-  ))
+  }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {
@@ -181,7 +184,8 @@ object ParseRerankerTraining {
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
             val badTokens: Set[Int] =
-              (candidateParse.families.toSet -- goldParse.families.toSet) map { // TODO: consider labels as well?
+              // TODO: consider labels as well?
+              (candidateParse.families.toSet -- goldParse.families.toSet) map {
                 case family =>
                   family.tokens.head
               }
@@ -218,7 +222,11 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
   ): (RerankingFunction, WrapperClassifier) = {
 
     println("Creating training vectors.")
-    val trainingData = ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
+    val trainingData = ParseRerankerTraining.createTrainingData(
+      goldParseSource,
+      nbestSource,
+      parseNodeFeature
+    )
     //trainingData.labeledVectors foreach { case (vec, label) =>
     //  println(vec)
     //}

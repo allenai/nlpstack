@@ -1,6 +1,11 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.polyparser.{ NeighborhoodSource, Neighborhood, PolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  NeighborhoodSource,
+  Neighborhood,
+  PolytreeParseSource,
+  PolytreeParse
+}
 
 import reming.DefaultJsonProtocol._
 

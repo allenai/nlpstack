@@ -255,7 +255,9 @@ case class BufferChildrenRef(val bufferIndex: Int) extends StateRef {
   require(bufferIndex >= 0, "the index of a BufferChildrenRef must be a nonnegative integer")
 
   override def apply(state: TransitionParserState): Seq[Int] = {
-    BufferRef(bufferIndex)(state) flatMap { nodeIndex => state.children.getOrElse(nodeIndex, Seq()) }
+    BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
+      state.children.getOrElse(nodeIndex, Seq())
+    }
   }
 
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}c")

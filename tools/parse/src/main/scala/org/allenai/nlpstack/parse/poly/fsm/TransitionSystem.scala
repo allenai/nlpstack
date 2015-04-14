@@ -1,7 +1,12 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import org.allenai.nlpstack.parse.poly.polyparser.{ ArcHybridTransitionSystemFactory, ArcEagerTransitionSystemFactory, ArcHybridTransitionSystem, ArcEagerTransitionSystem }
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  ArcEagerTransitionSystem,
+  ArcEagerTransitionSystemFactory,
+  ArcHybridTransitionSystem,
+  ArcHybridTransitionSystemFactory
+}
 
 import reming.DefaultJsonProtocol._
 
