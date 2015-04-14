@@ -12,7 +12,7 @@ trait SentenceTransform {
 }
 
 object SentenceTransform {
-  private implicit val factorySentenceTaggerFormat = jsonFormat0(() => FactorieSentenceTagger)
+  private implicit val factorieSentenceTaggerFormat = jsonFormat0(() => FactorieSentenceTagger)
   private implicit val stanfordSentenceTaggerFormat = jsonFormat0(() => StanfordSentenceTagger)
   private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTagger)
   private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTagger.apply)
