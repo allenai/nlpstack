@@ -1,7 +1,11 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{ BaseCostRerankingFunction, Sculpture, RerankingFunction }
+import org.allenai.nlpstack.parse.poly.fsm.{
+  BaseCostRerankingFunction,
+  RerankingFunction,
+  Sculpture
+}
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
@@ -77,13 +81,19 @@ object QualityEstimation {
         case (candidateParse, modelCost) =>
           (candidateParse, rerankingFunction(candidateParse, modelCost))
       }
-      val sortedCandidates = scoredCandidates.toSeq sortBy { case (_, score) => score } map { case (cand, _) => cand }
+      val sortedCandidates = scoredCandidates.toSeq sortBy {
+        case (_, score) => score
+      } map { case (cand, _) => cand }
 
       val percentagesToPlot = Seq(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
       val pathAccuracies = percentagesToPlot map { percentage =>
         val candidateSubset = sortedCandidates.take((percentage * sortedCandidates.size).toInt)
-        val numerator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._1 }).sum
-        val denominator = (candidateSubset map { candidate => scoringFunction.getRatio(candidate)._2 }).sum
+        val numerator = (candidateSubset map { candidate =>
+          scoringFunction.getRatio(candidate)._1
+        }).sum
+        val denominator = (candidateSubset map { candidate =>
+          scoringFunction.getRatio(candidate)._2
+        }).sum
         numerator.toFloat / denominator
       }
 
@@ -106,7 +116,8 @@ private case object SentenceLengthRerankingFunction extends RerankingFunction {
   }
 }
 
-private case class ParseScoreRerankingFunction(scoringFunction: ParseScore) extends RerankingFunction {
+private case class ParseScoreRerankingFunction(scoringFunction: ParseScore)
+    extends RerankingFunction {
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     sculpture match {
       case parse: PolytreeParse =>

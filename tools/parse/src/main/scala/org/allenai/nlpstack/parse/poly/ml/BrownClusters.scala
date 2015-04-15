@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
+
 import scala.io.Source
 
 case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {

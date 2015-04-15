@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** A StateRef allows you to figure out the token that corresponds to a particular aspect of a
   * TransitionParserState.
@@ -24,156 +23,56 @@ sealed abstract class StateRef
 }
 
 object StateRef {
+  private implicit val lastRefFormat = jsonFormat0(() => LastRef)
+  private implicit val firstRefFormat = jsonFormat0(() => FirstRef)
+  private implicit val previousLinkCrumbRefFormat = jsonFormat0(() => PreviousLinkCrumbRef)
+  private implicit val previousLinkCrumbGretelRefFormat =
+    jsonFormat0(() => PreviousLinkCrumbGretelRef)
+  private implicit val previousLinkGretelRefFormat = jsonFormat0(() => PreviousLinkGretelRef)
+  private implicit val previousLinkGrandgretelRefFormat =
+    jsonFormat0(() => PreviousLinkGrandgretelRef)
+  private implicit val stackRefFormat = jsonFormat1(StackRef.apply)
+  private implicit val bufferRefFormat = jsonFormat1(BufferRef.apply)
+  private implicit val breadcrumbRefFormat = jsonFormat1(BreadcrumbRef.apply)
+  private implicit val stackChildrenRefFormat = jsonFormat1(StackChildrenRef.apply)
+  private implicit val stackChildRefFormat = jsonFormat2(StackChildRef.apply)
+  private implicit val bufferChildrenRefFormat = jsonFormat1(BufferChildrenRef.apply)
+  private implicit val bufferChildRefFormat = jsonFormat2(BufferChildRef.apply)
+  private implicit val stackParentsRefFormat = jsonFormat1(StackParentsRef.apply)
+  private implicit val stackParentRefFormat = jsonFormat2(StackParentRef.apply)
+  private implicit val bufferParentsRefFormat = jsonFormat1(BufferParentsRef.apply)
+  private implicit val bufferParentRefFormat = jsonFormat2(BufferParentRef.apply)
+  private implicit val stackGretelsRefFormat = jsonFormat1(StackGretelsRef.apply)
+  private implicit val stackLeftGretelsRefFormat = jsonFormat1(StackLeftGretelsRef.apply)
+  private implicit val stackRightGretelsRefFormat = jsonFormat1(StackRightGretelsRef.apply)
+  private implicit val bufferGretelsRefFormat = jsonFormat1(BufferGretelsRef.apply)
+  private implicit val bufferLeftGretelsRefFormat = jsonFormat1(BufferLeftGretelsRef.apply)
+  private implicit val bufferRightGretelsRefFormat = jsonFormat1(BufferRightGretelsRef.apply)
 
-  /** Boilerplate code to serialize a StateRef to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM StateRef, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object StateRefJsonFormat extends RootJsonFormat[StateRef] {
-    def write(stateRef: StateRef): JsValue = stateRef match {
-      case LastRef => JsString("LastRef")
-      case FirstRef => JsString("FirstRef")
-      case PreviousLinkCrumbRef => JsString("PreviousLinkCrumbRef")
-      case PreviousLinkGretelRef => JsString("PreviousLinkGretelRef")
-      case PreviousLinkCrumbGretelRef => JsString("PreviousLinkCrumbGretelRef")
-      case PreviousLinkGrandgretelRef => JsString("PreviousLinkGrandgretelRef")
-      case stackRef: StackRef => {
-        JsObject(stackRefFormat.write(stackRef).asJsObject.fields +
-          ("type" -> JsString("StackRef")))
-      }
-      case bufferRef: BufferRef => {
-        JsObject(bufferRefFormat.write(bufferRef).asJsObject.fields +
-          ("type" -> JsString("BufferRef")))
-      }
-      case breadcrumbRef: BreadcrumbRef => {
-        JsObject(breadcrumbRefFormat.write(breadcrumbRef).asJsObject.fields +
-          ("type" -> JsString("BreadcrumbRef")))
-      }
-      case stackChildrenRef: StackChildrenRef => {
-        JsObject(stackChildrenRefFormat.write(stackChildrenRef).asJsObject.fields +
-          ("type" -> JsString("StackChildrenRef")))
-      }
-      case stackChildRef: StackChildRef => {
-        JsObject(stackChildRefFormat.write(stackChildRef).asJsObject.fields +
-          ("type" -> JsString("StackChildRef")))
-      }
-      case bufferChildrenRef: BufferChildrenRef => {
-        JsObject(bufferChildrenRefFormat.write(bufferChildrenRef).asJsObject.fields +
-          ("type" -> JsString("BufferChildrenRef")))
-      }
-      case bufferChildRef: BufferChildRef => {
-        JsObject(bufferChildRefFormat.write(bufferChildRef).asJsObject.fields +
-          ("type" -> JsString("BufferChildRef")))
-      }
-      case stackParentsRef: StackParentsRef => {
-        JsObject(stackParentsRefFormat.write(stackParentsRef).asJsObject.fields +
-          ("type" -> JsString("StackParentsRef")))
-      }
-      case stackParentRef: StackParentRef => {
-        JsObject(stackParentRefFormat.write(stackParentRef).asJsObject.fields +
-          ("type" -> JsString("StackParentRef")))
-      }
-      case bufferParentsRef: BufferParentsRef => {
-        JsObject(bufferParentsRefFormat.write(bufferParentsRef).asJsObject.fields +
-          ("type" -> JsString("BufferParentsRef")))
-      }
-      case bufferParentRef: BufferParentRef => {
-        JsObject(bufferParentRefFormat.write(bufferParentRef).asJsObject.fields +
-          ("type" -> JsString("BufferParentRef")))
-      }
-      case stackGretelsRef: StackGretelsRef => {
-        JsObject(stackGretelsRefFormat.write(stackGretelsRef).asJsObject.fields +
-          ("type" -> JsString("StackGretelsRef")))
-      }
-      case stackLeftGretelsRef: StackLeftGretelsRef => {
-        JsObject(stackLeftGretelsRefFormat.write(stackLeftGretelsRef).asJsObject.fields +
-          ("type" -> JsString("StackLeftGretelsRef")))
-      }
-      case stackRightGretelsRef: StackRightGretelsRef => {
-        JsObject(stackRightGretelsRefFormat.write(stackRightGretelsRef).asJsObject.fields +
-          ("type" -> JsString("StackRightGretelsRef")))
-      }
-      case bufferGretelsRef: BufferGretelsRef => {
-        JsObject(bufferGretelsRefFormat.write(bufferGretelsRef).asJsObject.fields +
-          ("type" -> JsString("BufferGretelsRef")))
-      }
-      case bufferLeftGretelsRef: BufferLeftGretelsRef => {
-        JsObject(bufferLeftGretelsRefFormat.write(bufferLeftGretelsRef).asJsObject.fields +
-          ("type" -> JsString("BufferLeftGretelsRef")))
-      }
-      case bufferRightGretelsRef: BufferRightGretelsRef => {
-        JsObject(bufferRightGretelsRefFormat.write(bufferRightGretelsRef).asJsObject.fields +
-          ("type" -> JsString("BufferRightGretelsRef")))
-      }
-    }
-
-    def read(value: JsValue): StateRef = value match {
-      case JsString(typeid) => typeid match {
-        case "LastRef" => LastRef
-        case "FirstRef" => FirstRef
-        case "PreviousLinkCrumbRef" => PreviousLinkCrumbRef
-        case "PreviousLinkGretelRef" => PreviousLinkGretelRef
-        case "PreviousLinkCrumbGretelRef" => PreviousLinkCrumbGretelRef
-        case "PreviousLinkGrandgretelRef" => PreviousLinkGrandgretelRef
-      }
-      case JsObject(values) => values("type") match {
-        case JsString("StackRef") => stackRefFormat.read(value)
-        case JsString("BufferRef") => bufferRefFormat.read(value)
-        case JsString("BreadcrumbRef") => breadcrumbRefFormat.read(value)
-        case JsString("StackChildrenRef") => stackChildrenRefFormat.read(value)
-        case JsString("StackChildRef") => stackChildRefFormat.read(value)
-        case JsString("BufferChildrenRef") => bufferChildrenRefFormat.read(value)
-        case JsString("BufferChildRef") => bufferChildRefFormat.read(value)
-        case JsString("StackParentsRef") => stackParentsRefFormat.read(value)
-        case JsString("StackParentRef") => stackParentRefFormat.read(value)
-        case JsString("BufferParentsRef") => bufferParentsRefFormat.read(value)
-        case JsString("BufferParentRef") => bufferParentRefFormat.read(value)
-
-        case JsString("StackGretelsRef") => stackGretelsRefFormat.read(value)
-        case JsString("StackLeftGretelsRef") => stackLeftGretelsRefFormat.read(value)
-        case JsString("StackRightGretelsRef") => stackRightGretelsRefFormat.read(value)
-        case JsString("BufferGretelsRef") => bufferGretelsRefFormat.read(value)
-        case JsString("BufferLeftGretelsRef") => bufferLeftGretelsRefFormat.read(value)
-        case JsString("BufferRightGretelsRef") => bufferRightGretelsRefFormat.read(value)
-        case x => deserializationError(s"Invalid identifier for StateRef: $x")
-      }
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
-    }
-  }
-
-  val stackRefFormat: RootJsonFormat[StackRef] = jsonFormat1(StackRef.apply)
-  val bufferRefFormat: RootJsonFormat[BufferRef] = jsonFormat1(BufferRef.apply)
-  val breadcrumbRefFormat: RootJsonFormat[BreadcrumbRef] = jsonFormat1(BreadcrumbRef.apply)
-  val stackChildrenRefFormat: RootJsonFormat[StackChildrenRef] =
-    jsonFormat1(StackChildrenRef.apply)
-  val stackChildRefFormat: RootJsonFormat[StackChildRef] =
-    jsonFormat2(StackChildRef.apply)
-  val bufferChildrenRefFormat: RootJsonFormat[BufferChildrenRef] =
-    jsonFormat1(BufferChildrenRef.apply)
-  val bufferChildRefFormat: RootJsonFormat[BufferChildRef] =
-    jsonFormat2(BufferChildRef.apply)
-  val stackParentsRefFormat: RootJsonFormat[StackParentsRef] =
-    jsonFormat1(StackParentsRef.apply)
-  val stackParentRefFormat: RootJsonFormat[StackParentRef] =
-    jsonFormat2(StackParentRef.apply)
-  val bufferParentsRefFormat: RootJsonFormat[BufferParentsRef] =
-    jsonFormat1(BufferParentsRef.apply)
-  val bufferParentRefFormat: RootJsonFormat[BufferParentRef] =
-    jsonFormat2(BufferParentRef.apply)
-  val stackGretelsRefFormat: RootJsonFormat[StackGretelsRef] = jsonFormat1(StackGretelsRef.apply)
-  val stackLeftGretelsRefFormat: RootJsonFormat[StackLeftGretelsRef] =
-    jsonFormat1(StackLeftGretelsRef.apply)
-  val stackRightGretelsRefFormat: RootJsonFormat[StackRightGretelsRef] =
-    jsonFormat1(StackRightGretelsRef.apply)
-  val bufferGretelsRefFormat: RootJsonFormat[BufferGretelsRef] =
-    jsonFormat1(BufferGretelsRef.apply)
-  val bufferLeftGretelsRefFormat: RootJsonFormat[BufferLeftGretelsRef] =
-    jsonFormat1(BufferLeftGretelsRef.apply)
-  val bufferRightGretelsRefFormat: RootJsonFormat[BufferRightGretelsRef] =
-    jsonFormat1(BufferRightGretelsRef.apply)
+  implicit val stateRefJsonFormat = parentFormat[StateRef](
+    childFormat[LastRef.type, StateRef],
+    childFormat[FirstRef.type, StateRef],
+    childFormat[PreviousLinkCrumbRef.type, StateRef],
+    childFormat[PreviousLinkGretelRef.type, StateRef],
+    childFormat[PreviousLinkCrumbGretelRef.type, StateRef],
+    childFormat[PreviousLinkGrandgretelRef.type, StateRef],
+    childFormat[StackRef, StateRef],
+    childFormat[BufferRef, StateRef],
+    childFormat[BreadcrumbRef, StateRef],
+    childFormat[StackChildrenRef, StateRef],
+    childFormat[StackChildRef, StateRef],
+    childFormat[BufferChildrenRef, StateRef],
+    childFormat[BufferChildRef, StateRef],
+    childFormat[StackParentsRef, StateRef],
+    childFormat[BufferParentsRef, StateRef],
+    childFormat[BufferParentRef, StateRef],
+    childFormat[StackGretelsRef, StateRef],
+    childFormat[StackLeftGretelsRef, StateRef],
+    childFormat[StackRightGretelsRef, StateRef],
+    childFormat[BufferGretelsRef, StateRef],
+    childFormat[BufferLeftGretelsRef, StateRef],
+    childFormat[BufferRightGretelsRef, StateRef]
+  )
 }
 
 /** A StackRef is a StateRef (see above) whose apply operation returns the `index`th element of
@@ -356,7 +255,9 @@ case class BufferChildrenRef(val bufferIndex: Int) extends StateRef {
   require(bufferIndex >= 0, "the index of a BufferChildrenRef must be a nonnegative integer")
 
   override def apply(state: TransitionParserState): Seq[Int] = {
-    BufferRef(bufferIndex)(state) flatMap { nodeIndex => state.children.getOrElse(nodeIndex, Seq()) }
+    BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
+      state.children.getOrElse(nodeIndex, Seq())
+    }
   }
 
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}c")

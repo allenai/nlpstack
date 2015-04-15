@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
 import org.allenai.nlpstack.parse.poly.fsm.ClassificationTask
-import spray.json.DefaultJsonProtocol._
+
+import reming.DefaultJsonProtocol._
 
 trait FeatureVectorSource {
   def vectorIterator: Iterator[FeatureVector]

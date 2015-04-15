@@ -1,14 +1,18 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{ File, PrintWriter }
-import org.allenai.common.json._
+import org.allenai.nlpstack.core.PostaggedToken
+import org.allenai.nlpstack.core.{ Token => NLPStackToken }
+import org.allenai.nlpstack.core.Tokenizer
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
-import spray.json._
+import org.allenai.nlpstack.postag.defaultPostagger
+
+import reming.DefaultJsonProtocol._
+
+import java.io.{ File, PrintWriter }
 
 import scala.annotation.tailrec
 import scala.io.Source
-import spray.json.DefaultJsonProtocol._
 
 /** Generic interface for the label assigned to a parse arc. */
 trait ArcLabel {
@@ -38,38 +42,15 @@ case class SingleSymbolArcLabel(sym: Symbol) extends ArcLabel {
 
 object ArcLabel {
 
-  /** Boilerplate code to serialize an ArcLabel to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM ArcLabel, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object ArcLabelJsonFormat extends RootJsonFormat[ArcLabel] {
+  private implicit val noArcLabelFormat = jsonFormat0(() => NoArcLabel)
+  private implicit val singleSymbolFormat = jsonFormat1(SingleSymbolArcLabel.apply)
+  private implicit val dpArcLabelFormat = jsonFormat2(DependencyParsingArcLabel.apply)
 
-    implicit val singleSymbolFormat =
-      jsonFormat1(SingleSymbolArcLabel.apply).pack("type" -> "SingleSymbolArcLabel")
-    implicit val dependencyParsingArcLabelFormat =
-      jsonFormat2(DependencyParsingArcLabel.apply).pack("type" -> "DependencyParsingArcLabel")
-
-    def write(transform: ArcLabel): JsValue = transform match {
-      case NoArcLabel => JsString("NoArcLabel")
-      case ss: SingleSymbolArcLabel => ss.toJson
-      case dp: DependencyParsingArcLabel => dp.toJson
-    }
-
-    def read(value: JsValue): ArcLabel = value match {
-      case JsString(typeid) => typeid match {
-        case "NoArcLabel" => NoArcLabel
-        case x => deserializationError(s"Invalid identifier for TokenTransform: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        singleSymbolFormat,
-        dependencyParsingArcLabelFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
-    }
-  }
+  implicit val arcLabelJsonFormat = parentFormat[ArcLabel](
+    childFormat[NoArcLabel.type, ArcLabel],
+    childFormat[SingleSymbolArcLabel, ArcLabel],
+    childFormat[DependencyParsingArcLabel, ArcLabel]
+  )
 }
 
 /** A PolytreeParse is a polytree-structured dependency parse. A polytree is a directed graph
@@ -441,10 +422,14 @@ object PolytreeParse {
         var prev: Iterator[T] = Iterator.empty
         override def hasNext = base.hasNext
         override def next() = {
-          while (prev.hasNext) prev.next() // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          while (prev.hasNext) prev.next()
           prev = Iterator(base.next()) ++ new Iterator[T] {
             var hasMore = true
-            override def hasNext = { hasMore = hasMore && base.hasNext && !startsGroup(base.head); hasMore }
+            override def hasNext = {
+              hasMore = hasMore && base.hasNext && !startsGroup(base.head)
+              hasMore
+            }
             override def next() = if (hasNext) base.next() else Iterator.empty.next()
           }
           prev

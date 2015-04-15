@@ -1,10 +1,9 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.polyparser._
-import org.allenai.common.json._
 
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 /** A ClassificationTask specifies a particular classification task for which we want
   * to collect feature vectors and train a classifier.
@@ -18,39 +17,17 @@ abstract class ClassificationTask {
 }
 
 object ClassificationTask {
+  implicit object ClassificationTaskJsonFormat extends LazyFormat[ClassificationTask] {
+    private implicit val applicabilitySignatureFormat = jsonFormat4(ApplicabilitySignature.apply)
+    private implicit val stateRefPropertyFormat = jsonFormat3(StateRefProperty.apply)
+    private implicit val simpleTaskFormat = jsonFormat1(SimpleTask.apply)
+    private implicit val taskConjunctionFormat = jsonFormat1(TaskConjunction.apply)
 
-  /** Boilerplate code to serialize a ClassificationTask to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM ClassificationTask, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object ClassificationTaskJsonFormat extends RootJsonFormat[ClassificationTask] {
-    implicit val applicabilitySignatureFormat =
-      jsonFormat4(ApplicabilitySignature.apply).pack("type" -> "ApplicabilitySignature")
-
-    implicit val stateRefPropertyFormat =
-      jsonFormat3(StateRefProperty.apply).pack("type" -> "StateRefProperty")
-
-    implicit val taskConjunctionFormat =
-      jsonFormat1(TaskConjunction.apply).pack("type" -> "TaskConjunction")
-
-    implicit val simpleTaskFormat =
-      jsonFormat1(SimpleTask.apply).pack("type" -> "SimpleTask")
-
-    def write(task: ClassificationTask): JsValue = task match {
-      case appSignature: ApplicabilitySignature => appSignature.toJson
-      case stateRefProperty: StateRefProperty => stateRefProperty.toJson
-      case taskConjunction: TaskConjunction => taskConjunction.toJson
-      case simpleTask: SimpleTask => simpleTask.toJson
-    }
-
-    def read(value: JsValue): ClassificationTask = value.asJsObject.unpackWith(
-      applicabilitySignatureFormat,
-      stateRefPropertyFormat,
-      taskConjunctionFormat,
-      simpleTaskFormat
+    override val delegate = parentFormat[ClassificationTask](
+      childFormat[ApplicabilitySignature, ClassificationTask],
+      childFormat[StateRefProperty, ClassificationTask],
+      childFormat[TaskConjunction, ClassificationTask],
+      childFormat[SimpleTask, ClassificationTask]
     )
   }
 }
@@ -77,54 +54,26 @@ case class TaskConjunction(val tasks: Seq[ClassificationTask]) extends Classific
   }
 }
 
-object TaskConjunction {
-  implicit val jsFormat = jsonFormat1(TaskConjunction.apply)
-}
-
 /** A TaskIdentifier identifies the ClassificationTask required to determine the next transition
   * from a given parser state.
   */
 trait TaskIdentifier extends (State => Option[ClassificationTask])
 
 object TaskIdentifier {
+  implicit object TaskIdentifierJsonFormat extends LazyFormat[TaskIdentifier] {
+    private implicit val arcEagerTaskIdentifierFormat = jsonFormat0(() => ArcEagerTaskIdentifier)
+    private implicit val arcHybridTaskIdentifierFormat = jsonFormat0(() => ArcHybridTaskIdentifier)
+    private implicit val stateRefPropertyIdentifierFormat =
+      jsonFormat2(StateRefPropertyIdentifier.apply)
+    private implicit val taskConjunctionIdentifierFormat =
+      jsonFormat2(TaskConjunctionIdentifier.apply)
 
-  /** Boilerplate code to serialize a TaskIdentifier to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM TaskIdentifier, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object TaskIdentifierJsonFormat extends RootJsonFormat[TaskIdentifier] {
-
-    implicit val stateRefPropertyIdentifierFormat =
-      jsonFormat2(StateRefPropertyIdentifier.apply).pack("type" -> "StateRefPropertyIdentifier")
-
-    implicit val taskConjunctionIdentifierFormat =
-      jsonFormat2(TaskConjunctionIdentifier.apply).pack("type" -> "TaskConjunctionIdentifier")
-
-    def write(taskIdentifier: TaskIdentifier): JsValue = taskIdentifier match {
-      case ArcEagerTaskIdentifier =>
-        JsString("ArcEagerTaskIdentifier")
-      case ArcHybridTaskIdentifier =>
-        JsString("ArcHybridTaskIdentifier")
-      case stateRefPropertyIdentifier: StateRefPropertyIdentifier =>
-        stateRefPropertyIdentifier.toJson
-      case taskIdentifier: TaskConjunctionIdentifier => taskIdentifier.toJson
-    }
-
-    def read(value: JsValue): TaskIdentifier = value match {
-      case JsString(typeid) => typeid match {
-        case "ArcEagerTaskIdentifier" => ArcEagerTaskIdentifier
-        case "ArcHybridTaskIdentifier" => ArcHybridTaskIdentifier
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        stateRefPropertyIdentifierFormat,
-        taskConjunctionIdentifierFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
+    override val delegate = parentFormat[TaskIdentifier](
+      childFormat[ArcEagerTaskIdentifier.type, TaskIdentifier],
+      childFormat[ArcHybridTaskIdentifier.type, TaskIdentifier],
+      childFormat[StateRefPropertyIdentifier, TaskIdentifier],
+      childFormat[TaskConjunctionIdentifier, TaskIdentifier]
+    )
   }
 }
 

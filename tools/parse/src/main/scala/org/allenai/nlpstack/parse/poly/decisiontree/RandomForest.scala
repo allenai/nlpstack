@@ -1,12 +1,14 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import java.io.{ PrintWriter, File }
-
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.CompactPrinter
+import reming.DefaultJsonProtocol._
+
+import java.io.{ BufferedWriter, File, FileWriter, PrintWriter }
+
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
@@ -110,8 +112,8 @@ class RandomForestTrainer(validationPercentage: Float, numDecisionTrees: Int,
         case dt: DecisionTree =>
           val tempFile: File = File.createTempFile("temp.", ".dt")
           tempFile.deleteOnExit()
-          Resource.using(new PrintWriter(tempFile)) { writer =>
-            writer.println(dt.toJson.compactPrint)
+          Resource.using(new PrintWriter(new BufferedWriter(new FileWriter(tempFile)))) { writer =>
+            writer.println(CompactPrinter.printTo(writer, dt))
           }
           tempFile
       }
@@ -119,15 +121,7 @@ class RandomForestTrainer(validationPercentage: Float, numDecisionTrees: Int,
     val futureSubtreeFiles: Future[Seq[File]] = Future.sequence(tasks)
     val subtreeFiles = Await.result(futureSubtreeFiles, 30 days)
     val subtrees: Seq[DecisionTree] = subtreeFiles map {
-      case subtreeFile =>
-        Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>
-          val jsVal = Util.getJsValueFromStream(stream)
-          jsVal match {
-            case JsObject(_) => jsVal.convertTo[DecisionTree]
-            case _ => deserializationError("Unexpected JsValue type. Must be " +
-              "JsObject.")
-          }
-        }
+      case subtreeFile => Util.readFromUrl[DecisionTree](subtreeFile.toURI.toURL)
     }
     System.clearProperty("scala.concurrent.context.numThreads")
     RandomForest(data.allOutcomes, subtrees)

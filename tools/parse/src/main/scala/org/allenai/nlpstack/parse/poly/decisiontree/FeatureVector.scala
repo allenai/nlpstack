@@ -1,27 +1,16 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import org.allenai.common.json._
-
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 private object FeatureVector {
+  implicit val denseFormat = jsonFormat2(DenseVector.apply)
 
-  implicit val denseFormat = jsonFormat2(DenseVector.apply).pack("type" -> "dense")
+  implicit val sparseFormat = jsonFormat3(SparseVector.apply)
 
-  implicit val sparseFormat = jsonFormat3(SparseVector.apply).pack("type" -> "sparse")
-
-  implicit object FeatureVectorJsonFormat extends JsonFormat[FeatureVector] {
-
-    override def write(featureVector: FeatureVector): JsValue = featureVector match {
-      case dense: DenseVector => dense.toJson
-      case sparse: SparseVector => sparse.toJson
-    }
-
-    override def read(value: JsValue): FeatureVector = {
-      value.asJsObject.unpackWith[FeatureVector](denseFormat, sparseFormat)
-    }
-  }
+  implicit val featureVectorJsonFormat = parentFormat[FeatureVector](
+    childFormat[DenseVector, FeatureVector],
+    childFormat[SparseVector, FeatureVector]
+  )
 }
 
 /** A feature vector with integral features and outcome. */

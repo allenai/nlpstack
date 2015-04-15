@@ -1,13 +1,14 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{ InputStream, File, PrintWriter }
-
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence, Util }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
-import org.allenai.common.json._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import reming.{ CompactPrinter, JsonParser, LazyFormat }
+import reming.DefaultJsonProtocol._
+
+import java.io.{ BufferedWriter, InputStream, File, FileWriter, PrintWriter }
+
+import scala.io.BufferedSource
 
 /** A TransitionParser implements a parsing algorithm for a transition-based parser. */
 abstract class TransitionParser {
@@ -58,32 +59,14 @@ abstract class TransitionParser {
 }
 
 object TransitionParser {
-  /** Boilerplate code to serialize a NeighborhoodExtractor to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM NeighborhoodExtractor, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object ParserJsonFormat extends RootJsonFormat[TransitionParser] {
+  implicit object TransitionParserFormat extends LazyFormat[TransitionParser] {
+    private implicit val parseCacheFormat = jsonFormat2(ParseCache.apply)
+    private implicit val rerankingParserFormat = jsonFormat1(RerankingTransitionParser.apply)
 
-    implicit val rerankingParserFormat =
-      jsonFormat1(RerankingTransitionParser.apply).pack("type" -> "RerankingParser")
-
-    implicit val parseCacheFormat =
-      jsonFormat2(ParseCache.apply).pack("type" -> "ParseCache")
-
-    def write(parser: TransitionParser): JsValue = parser match {
-      case rerankingParser: RerankingTransitionParser =>
-        rerankingParser.toJson
-      case parseCache: ParseCache =>
-        parseCache.toJson
-    }
-
-    def read(value: JsValue): TransitionParser = value match {
-      case jsObj: JsObject => jsObj.unpackWith(rerankingParserFormat, parseCacheFormat)
-      case _ => deserializationError("Unexpected JsValue type. Must be JsObject.")
-    }
+    override val delegate = parentFormat[TransitionParser](
+      childFormat[ParseCache, TransitionParser],
+      childFormat[RerankingTransitionParser, TransitionParser]
+    )
   }
 
   /** Save a parser to a file.
@@ -94,8 +77,9 @@ object TransitionParser {
     * @param modelFilePrefix the file to save the configuration to
     */
   def save(parser: TransitionParser, modelFilePrefix: String): Unit = {
-    Resource.using(new PrintWriter(new File(modelFilePrefix + ".poly.json"))) { writer =>
-      writer.println(parser.toJson.compactPrint)
+    val filename = modelFilePrefix + ".poly.json"
+    Resource.using(new PrintWriter(new BufferedWriter(new FileWriter(filename)))) { writer =>
+      CompactPrinter.printTo(writer, parser)
     }
   }
 
@@ -112,22 +96,13 @@ object TransitionParser {
     println("Loading parser.")
     System.gc()
     val initialMemory = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
-    val result = convertJsValueToConfig(Util.getJsValueFromStream(stream))
+    val result = Util.readFromStream[TransitionParser](stream)
     System.gc()
     val memoryAfterLoading = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory()
     println("Parser memory footprint: %.1f MB".format(
       (memoryAfterLoading - initialMemory).toDouble / Math.pow(10.0, 6.0)
     ))
     result
-  }
-
-  private def convertJsValueToConfig(jsVal: JsValue): TransitionParser = {
-    jsVal match {
-      case JsObject(values) =>
-      case _ => deserializationError("Unexpected JsValue type. Must be " +
-        "JsObject.")
-    }
-    jsVal.convertTo[TransitionParser]
   }
 }
 

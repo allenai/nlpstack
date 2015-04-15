@@ -1,8 +1,7 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.polyparser._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import reming.DefaultJsonProtocol._
 
 abstract class StateTransition extends (Option[State] => Option[State]) {
   val name: String
@@ -22,68 +21,29 @@ object StateTransition {
     transition(state) != None
   }
 
-  /** Boilerplate code to serialize a Transition to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM Transition, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object TransitionJsonFormat extends RootJsonFormat[StateTransition] {
-    def write(transition: StateTransition): JsValue = transition match {
-      case ArcEagerShift => JsString("Sh")
-      case ArcEagerReduce => JsString("Re")
-      case ArcHybridShift => JsString("HySh")
-      case Fallback => JsString("Fb")
-      case lt: ArcEagerLeftArc => {
-        JsObject(leftArcFormat.write(lt).asJsObject.fields + ("type" -> JsString("Lt")))
-      }
-      case rt: ArcEagerRightArc => {
-        JsObject(rightArcFormat.write(rt).asJsObject.fields + ("type" -> JsString("Rt")))
-      }
-      case hylt: ArcHybridLeftArc => {
-        JsObject(hybridLeftArcFormat.write(hylt).asJsObject.fields + ("type" -> JsString("HyLt")))
-      }
-      case hyrt: ArcHybridRightArc => {
-        JsObject(hybridRightArcFormat.write(hyrt).asJsObject.fields + ("type" -> JsString("HyRt")))
-      }
-      case larc: LabelLeftArc => {
-        JsObject(leftLabelArcFormat.write(larc).asJsObject.fields +
-          ("type" -> JsString("LtLbl")))
-      }
-      case larc: LabelRightArc => {
-        JsObject(rightLabelArcFormat.write(larc).asJsObject.fields +
-          ("type" -> JsString("RtLbl")))
-      }
-    }
+  private implicit val arcEagerShiftFormat = jsonFormat0(() => ArcEagerShift)
+  private implicit val arcEagerReduceFormat = jsonFormat0(() => ArcEagerReduce)
+  private implicit val arcHybridShiftFormat = jsonFormat0(() => ArcHybridShift)
+  private implicit val fallbackFormat = jsonFormat0(() => Fallback)
+  private implicit val leftArcFormat = jsonFormat1(ArcEagerLeftArc.apply)
+  private implicit val rightArcFormat = jsonFormat1(ArcEagerRightArc.apply)
+  private implicit val hybridLeftArcFormat = jsonFormat1(ArcHybridLeftArc.apply)
+  private implicit val hybridRightArcFormat = jsonFormat1(ArcHybridRightArc.apply)
+  private implicit val leftLabelArcFormat = jsonFormat1(LabelLeftArc.apply)
+  private implicit val rightLabelArcFormat = jsonFormat1(LabelRightArc.apply)
 
-    def read(value: JsValue): StateTransition = value match {
-      case JsString(typeid) => typeid match {
-        case "Sh" => ArcEagerShift
-        case "Re" => ArcEagerReduce
-        case "HySh" => ArcHybridShift
-        case "Fb" => Fallback
-        case x => deserializationError(s"Invalid identifier for Transition: $x")
-      }
-      case JsObject(values) => values("type") match {
-        case JsString("Lt") => leftArcFormat.read(value)
-        case JsString("Rt") => rightArcFormat.read(value)
-        case JsString("HyLt") => hybridLeftArcFormat.read(value)
-        case JsString("HyRt") => hybridRightArcFormat.read(value)
-        case JsString("LtLbl") => leftLabelArcFormat.read(value)
-        case JsString("RtLbl") => rightLabelArcFormat.read(value)
-        case x => deserializationError(s"Invalid identifier for Transition: $x")
-      }
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
-    }
-  }
-
-  val leftArcFormat: RootJsonFormat[ArcEagerLeftArc] = jsonFormat1(ArcEagerLeftArc.apply)
-  val rightArcFormat: RootJsonFormat[ArcEagerRightArc] = jsonFormat1(ArcEagerRightArc.apply)
-  val hybridLeftArcFormat: RootJsonFormat[ArcHybridLeftArc] = jsonFormat1(ArcHybridLeftArc.apply)
-  val hybridRightArcFormat: RootJsonFormat[ArcHybridRightArc] = jsonFormat1(ArcHybridRightArc.apply)
-  val leftLabelArcFormat: RootJsonFormat[LabelLeftArc] = jsonFormat1(LabelLeftArc.apply)
-  val rightLabelArcFormat: RootJsonFormat[LabelRightArc] = jsonFormat1(LabelRightArc.apply)
+  implicit val stateTransitionJsonFormat = parentFormat[StateTransition](
+    childFormat[ArcEagerShift.type, StateTransition]("Sh"),
+    childFormat[ArcEagerReduce.type, StateTransition]("Re"),
+    childFormat[ArcHybridShift.type, StateTransition]("HySh"),
+    childFormat[Fallback.type, StateTransition]("Fb"),
+    childFormat[ArcEagerLeftArc, StateTransition]("Lt"),
+    childFormat[ArcEagerRightArc, StateTransition]("Rt"),
+    childFormat[ArcHybridLeftArc, StateTransition]("HyLt"),
+    childFormat[ArcHybridRightArc, StateTransition]("HyRt"),
+    childFormat[LabelLeftArc, StateTransition]("LtLbl"),
+    childFormat[LabelRightArc, StateTransition]("RtLbl")
+  )
 }
 
 case object Fallback extends StateTransition {

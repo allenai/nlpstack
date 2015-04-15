@@ -1,8 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import org.allenai.common.json._
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 trait ProbabilisticClassifier {
 
@@ -29,33 +28,14 @@ trait ProbabilisticClassifier {
 
 object ProbabilisticClassifier {
 
-  /** Boilerplate code to serialize a ProbabilisticClassifier to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM ProbabilisticClassifier, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object ProbabilisticClassifierJsonFormat
-      extends RootJsonFormat[ProbabilisticClassifier] {
+  implicit object ProbabilisticClassifierFormat extends LazyFormat[ProbabilisticClassifier] {
+    private implicit val randomForestFormat = jsonFormat2(RandomForest.apply)
+    private implicit val oneVersusAllFormat = jsonFormat1(OneVersusAll.apply)
 
-    implicit val decisionTreeFormat = DecisionTree.dtFormat.pack("type" -> "DecisionTree")
-    implicit val randomForestFormat =
-      jsonFormat2(RandomForest.apply).pack(
-        "type" -> "RandomForest"
-      )
-    implicit val oneVersusAllFormat =
-      jsonFormat1(OneVersusAll.apply).pack("type" -> "OneVersusAll")
-
-    def write(classifier: ProbabilisticClassifier): JsValue = classifier match {
-      case decisionTree: DecisionTree => decisionTree.toJson
-      case randomForest: RandomForest => randomForest.toJson
-      case oneVersusAll: OneVersusAll => oneVersusAll.toJson
-      case x => deserializationError(s"Cannot serialize this classifier type: $x")
-    }
-
-    def read(value: JsValue): ProbabilisticClassifier = value.asJsObject.unpackWith(
-      decisionTreeFormat, randomForestFormat, oneVersusAllFormat
+    override val delegate = parentFormat[ProbabilisticClassifier](
+      childFormat[DecisionTree, ProbabilisticClassifier],
+      childFormat[RandomForest, ProbabilisticClassifier],
+      childFormat[OneVersusAll, ProbabilisticClassifier]
     )
   }
 

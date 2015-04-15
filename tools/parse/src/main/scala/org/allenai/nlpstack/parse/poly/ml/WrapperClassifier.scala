@@ -8,7 +8,9 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
   ProbabilisticClassifier
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
-import spray.json.DefaultJsonProtocol._
+
+import reming.DefaultJsonProtocol._
+
 import scala.collection.immutable.HashSet
 
 /** A WrapperClassifier wraps a ProbabilisticClassifier (which uses integer-based feature

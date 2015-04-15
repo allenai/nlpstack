@@ -3,8 +3,8 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm.StateTransition
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+
+import reming.{ CompactPrinter, JsonParser }
 
 class TransitionSpec extends UnitSpec {
   // scalastyle:off
@@ -201,8 +201,11 @@ class TransitionSpec extends UnitSpec {
   }
 
   "Serializing a list of Transitions" should "preserve it" in {
+    import reming.DefaultJsonProtocol._
     val transitions: List[StateTransition] = List(ArcEagerShift, ArcEagerReduce,
       ArcEagerLeftArc(SingleSymbolArcLabel('a)), ArcEagerRightArc(SingleSymbolArcLabel('b)))
-    transitions.toJson.convertTo[List[StateTransition]] shouldBe transitions
+    JsonParser.read[List[StateTransition]](CompactPrinter.printToString(transitions)) shouldBe (
+      transitions
+    )
   }
 }
