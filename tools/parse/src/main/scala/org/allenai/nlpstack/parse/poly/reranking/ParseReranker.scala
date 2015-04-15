@@ -253,7 +253,8 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     }
     val falseFeatureValueExplanations = for {
       falsePropertyExplanation <- explanationsGroupedByTrueFalseProperty.getOrElse(
-          false, Seq.empty[(String, String)])
+        false, Seq.empty[(String, String)]
+      )
     } yield {
       "  [ " + falsePropertyExplanation._1 + falsePropertyExplanation._2 + " ]"
     }
@@ -275,11 +276,11 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         case dtJustification: DecisionTreeJustification =>
           prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)
         case rfJustification: RandomForestJustification =>
-           s"\nRandom Forest with ${rfJustification.totalDtCount} trees, of which " +
-           s"${rfJustification.dtCountForOutcome} trees voted for the current outcome\n" +
-           s"Top ${rfJustification.dtJustifications.size} decision tree justification(s):\n" +
-          "[ " + rfJustification.dtJustifications.map(dtJustification =>
-            prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)).
+          s"\nRandom Forest with ${rfJustification.totalDtCount} trees, of which " +
+            s"${rfJustification.dtCountForOutcome} trees voted for the current outcome\n" +
+            s"Top ${rfJustification.dtJustifications.size} decision tree justification(s):\n" +
+            "[ " + rfJustification.dtJustifications.map(dtJustification =>
+              prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)).
             mkString(", ") + " ]"
       }
     }).getOrElse("")
