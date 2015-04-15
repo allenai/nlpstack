@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 
 /** Structure to represent a decision tree's justification for a certain classification outcome.
   * Contains index of the chosen node and the breadcrumb that led to it:
-  * (feature index, feature value) tuple at each decision point. 
+  * (feature index, feature value) tuple at each decision point.
   */
 case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)], node: Int) extends Justification
 
