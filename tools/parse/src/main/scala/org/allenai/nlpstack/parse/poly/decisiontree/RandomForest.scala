@@ -11,9 +11,13 @@ import spray.json._
 /** Random Forest outcomes can be explained in terms of the individual decision trees'
   * justifications.
   * @param dtJustifications contains all individual decision trees' justifications.
+  * @param dtCountForOutcome no. of decision trees that voted for the outcome associated with this
+  * justification. (A classifier outcome will have a justification associated with it -- refer to
+  * the return type of the classifyAndJustify method, for e.g.).
+  * @param totalDtCount total no. of decision trees in the random forest.
   */
-case class RandomForestJustification(dtJustifications: Seq[DecisionTreeJustification])
-  extends Justification
+case class RandomForestJustification(dtJustifications: Seq[DecisionTreeJustification],
+    dtCountForOutcome: Int, totalDtCount: Int) extends Justification
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -52,10 +56,19 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     // aggregate total counts of the number of trees producing each outcome, and aggregate
     // corresponding justifications from the individual decision trees.
     val outcomeHistogram =
-      decisionTrees map { decisionTree => decisionTree.classifyAndJustify(featureVector)
-      } groupBy { x => x._1 }
+      (for {
+        decisionTree <- decisionTrees
+      } yield {
+        val outcome = decisionTree.classifyAndJustify(featureVector)
+        val dtJustification = outcome._2 match {
+          case justification: DecisionTreeJustification =>
+            justification.asInstanceOf[DecisionTreeJustification]
+        }
+        val nodeScore = decisionTree.getNodeDivergenceScore(dtJustification.node)
+        (outcome._1, dtJustification, nodeScore)
+      }).groupBy { x => x._1 }
     val outcomeHistogramWithDtJustifications: Map[Int, (Int, RandomForestJustification)] =
-      aggregateJustifications(outcomeHistogram)
+      aggregateOutcomeCountsAndJustifications(outcomeHistogram, Some(1), decisionTrees.size)
     RandomForest.normalizeHistogram(
       outcomeHistogramWithDtJustifications.map { case (k, v) => (k, v._1) }
     ).map {
@@ -63,27 +76,37 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       }
   }
 
-  /* Aggregate justifications for each outcome
+  /* Aggregate counts for each outcome (by summing them up), and aggregate the
+   * decision tree justifications by creating a RandomForestJustification out of them.
+   * 
+   * @param outcomeHistogram  a map of each outcome to a seq of indivdual occurrences of that
+   * outcome, with from various decision trees, the decision tree justification for each,
+   * and the score for the decision tree node chosen for each case.
+   * @param numDecisionTreesToConsiderForJustification  an optional integer specifying a number
+   * for the top n decision tree justifications to propagate to the random forest justification. The
+   * justifications are ranked by the associated node's score. If this parameter is unspecified, all
+   * decision tree justifications are bubbled up to the random forest justification.
+   * @param totalDtCount total no. of decision trees in the random forest- used to bubble up to 
+   * the random forest justification that is created here and returned.
+   * 
    */
-  private def aggregateJustifications(
-    outcomeHistogram: Map[Int, Seq[(Int, Justification)]]
+  private def aggregateOutcomeCountsAndJustifications(
+    outcomeHistogram: Map[Int, Seq[(Int, DecisionTreeJustification, Double)]],
+    numDecisionTreesToConsiderForJustification: Option[Int] = None,
+    totalDtCount: Int
   ): Map[Int, (Int, RandomForestJustification)] = {
-    // Aggregate justifications by performing the following steps -
-    // 1. Use a fold operation to get a Seq of all justifications from all the individual decision
-    //  trees.
-    // 2. Convert the Seq[Justification] to a Seq[DecisionTreeJustification].
-    // 3. Create a RandomForestJustification out of the Seq of DecisionTreeJustifications.
     (outcomeHistogram mapValues { v =>
-      (v.size, v.foldLeft(Seq.empty[Justification])((dtJustifications, dtOutcomeAndJustification) =>
-        dtJustifications :+ dtOutcomeAndJustification._2))
+      (v.size, v)
     }) mapValues {
-      case (totalCount: Int, (dtJustifications: Seq[Justification])) =>
-        {
-          (totalCount, new RandomForestJustification(dtJustifications map {
-            case justification: DecisionTreeJustification =>
-              justification.asInstanceOf[DecisionTreeJustification]
-          }))
-        }
+      case (outcomeCount: Int,
+          (dtJustificationsWithScores: Seq[(Int, DecisionTreeJustification, Double)])) =>
+        // Sort Decision Tree justifications by descending order of node scores and take the top
+        // n justifications to build the Random Forest Justification.
+        val dtJustificationsToReport = dtJustificationsWithScores.sortBy(_._3).reverse.take(
+          numDecisionTreesToConsiderForJustification.getOrElse(dtJustificationsWithScores.size)).
+            map(x => x._2)
+        (outcomeCount,
+            new RandomForestJustification(dtJustificationsToReport, outcomeCount, totalDtCount))
     }
   }
 

@@ -120,6 +120,9 @@ case class JustifyingWrapperClassifier(
   def prettyPrintRandomForestJustification(
     justification: RandomForestJustification
   ): String = {
+    s"\nRandom Forest with ${justification.totalDtCount} trees, of which " +
+    s"${justification.dtCountForOutcome} trees voted for the current outcome\n" +
+    s"Top ${justification.dtJustifications.size} decision tree justification(s):\n" +
     "[\n" + justification.dtJustifications.map(j =>
       prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
   }

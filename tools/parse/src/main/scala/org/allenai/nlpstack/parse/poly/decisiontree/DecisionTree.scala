@@ -3,7 +3,9 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 import spray.json._
 import scala.annotation.tailrec
 
-case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)]) extends Justification
+/** Structure to represent a decision tree's justification for a certain classification outcome.
+  */
+case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)], node: Int) extends Justification
 
 /** Immutable decision tree for integer-valued features and outcomes.
   *
@@ -21,7 +23,6 @@ case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)]) extends Justif
 case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]],
   splittingFeature: IndexedSeq[Option[Int]], outcomeHistograms: IndexedSeq[Map[Int, Int]])
     extends JustifyingProbabilisticClassifier {
-
   /*
   @transient lazy val decisionPaths: IndexedSeq[Seq[(Int, Int)]] = {
     var pathMap = Map[Int, Seq[(Int, Int)]]()
@@ -52,6 +53,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   }
   */
 
+  // For use in KL Divergence calculation. Calculating Root distribution upfront to avoid having
+  // to calculate during every call to getNodeDivergenceScore.
+   @transient val outcomeDistributionRoot = (ProbabilisticClassifier.normalizeDistribution(
+     (outcomeHistograms(0) mapValues { _.toDouble }).toSeq)).toMap
+        
   /** Gets a probability distribution over possible outcomes..
     *
     * @param featureVector feature vector to compute the distribution for
@@ -77,8 +83,24 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
       mapValues { _.toDouble }).toSeq
     ) map {
       case (outcome: Int, conf: Double) =>
-        (outcome, (conf, new DecisionTreeJustification(breadCrumb)))
+        (outcome, (conf, new DecisionTreeJustification(breadCrumb, node)))
     }).toMap
+  }
+
+  /* Return node divergence against root node. This is: 
+   * Total no. of outcomes * KL Divergence for requested node against the root node of the tree.
+   */
+  def getNodeDivergenceScore(node: Int): Double = {
+    val outcomeDistributionThisNode = (ProbabilisticClassifier.normalizeDistribution(
+        (outcomeHistograms(node) mapValues { _.toDouble }).toSeq)).toMap
+    val klDivergence = (for {
+      (k,q) <- outcomeDistributionRoot
+      p <- outcomeDistributionThisNode.get(k)
+      if ((q != 0) && (p != 0))
+    } yield {
+      p * math.log(p / q)
+    }).sum
+    outcomes.size * klDivergence
   }
 
   def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {
