@@ -120,11 +120,11 @@ case class JustifyingWrapperClassifier(
   def prettyPrintRandomForestJustification(
     justification: RandomForestJustification
   ): String = {
-    s"\nRandom Forest with ${justification.totalDtCount} trees, of which " +
-    s"${justification.dtCountForOutcome} trees voted for the current outcome\n" +
-    s"Top ${justification.dtJustifications.size} decision tree justification(s):\n" +
-    "[\n" + justification.dtJustifications.map(j =>
-      prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
+    s"\nRandom Forest with ${justification.totalDecisionTreeCount} trees, of which " +
+      s"${justification.decisionTreeCountForOutcome} trees voted for the current outcome\n" +
+      s"Top ${justification.decisionTreeJustifications.size} decision tree justification(s):\n" +
+      "[\n" + justification.decisionTreeJustifications.map(j =>
+        prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
   }
 
   def prettyPrintJustification(justification: Justification): String = {
@@ -151,7 +151,7 @@ case class JustifyingWrapperClassifier(
     )
   }
 
-  /** Takes a Decision Tree Justification and turns into a map of feature-value pairs by
+  /** Takes a Decision Tree Justification and turns it into a map of feature-value pairs by
     * mapping feature indexes to respective (String) names based on the featureNameMap
     * field.
     */
@@ -165,7 +165,7 @@ case class JustifyingWrapperClassifier(
     }).toMap
   }
 
-  /** Takes a Random Forest Justification and turns into a seq of explainable decision tree
+  /** Takes a Random Forest Justification and turns it into a seq of explainable decision tree
     * justifications, as defined in getExplainableDecisionTreeJustification-- there is an
     * explainable decision tree justification for each decision tree in the random forest that
     * voted for the chosen outcome.
@@ -173,12 +173,15 @@ case class JustifyingWrapperClassifier(
   def getExplainableRandomForestJustification(
     justification: RandomForestJustification
   ): Seq[Map[FeatureName, Int]] = {
-    justification.dtJustifications map { dtJustification =>
+    justification.decisionTreeJustifications map { dtJustification =>
       getExplainableDecisionTreeJustification(dtJustification)
     }
   }
 }
 
+/** Provide Serialization and Deserialization methods based on the runtime type of
+  * WrapperClassifier.
+  */
 object WrapperClassifier {
 
   implicit object WrapperClassifierJsonFormat

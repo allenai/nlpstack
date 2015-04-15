@@ -10,14 +10,19 @@ import spray.json._
 
 /** Random Forest outcomes can be explained in terms of the individual decision trees'
   * justifications.
-  * @param dtJustifications contains all individual decision trees' justifications.
+  * @param dtJustifications contains individual decision trees' justifications: this may be a pruned
+  * list of justifications based on the chosen cutoff for top n decision trees-- currently not a
+  * tunable parameter but hardcoded in outcomeDistributionWithJustification to 1, which will result
+  * in only the top scoring decision tree's justification being bubbled up here.
   * @param dtCountForOutcome no. of decision trees that voted for the outcome associated with this
   * justification. (A classifier outcome will have a justification associated with it -- refer to
   * the return type of the classifyAndJustify method, for e.g.).
   * @param totalDtCount total no. of decision trees in the random forest.
   */
-case class RandomForestJustification(dtJustifications: Seq[DecisionTreeJustification],
-    dtCountForOutcome: Int, totalDtCount: Int) extends Justification
+case class RandomForestJustification(
+  decisionTreeJustifications: Seq[DecisionTreeJustification],
+  decisionTreeCountForOutcome: Int, totalDecisionTreeCount: Int
+) extends Justification
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -47,7 +52,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * normalized histogram of the votes.
     *
     * @param featureVector feature vector to find outcome distribution for
-    * @return a probability distribution over outcomes, together with explanations for the outcomes.
+    * @return a probability distribution over outcomes, and justifications for the outcomes.
     */
   override def outcomeDistributionWithJustification(
     featureVector: FeatureVector
@@ -88,7 +93,6 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
    * decision tree justifications are bubbled up to the random forest justification.
    * @param totalDtCount total no. of decision trees in the random forest- used to bubble up to 
    * the random forest justification that is created here and returned.
-   * 
    */
   private def aggregateOutcomeCountsAndJustifications(
     outcomeHistogram: Map[Int, Seq[(Int, DecisionTreeJustification, Double)]],
@@ -99,14 +103,15 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       (v.size, v)
     }) mapValues {
       case (outcomeCount: Int,
-          (dtJustificationsWithScores: Seq[(Int, DecisionTreeJustification, Double)])) =>
+        (dtJustificationsWithScores: Seq[(Int, DecisionTreeJustification, Double)])) =>
         // Sort Decision Tree justifications by descending order of node scores and take the top
         // n justifications to build the Random Forest Justification.
         val dtJustificationsToReport = dtJustificationsWithScores.sortBy(_._3).reverse.take(
-          numDecisionTreesToConsiderForJustification.getOrElse(dtJustificationsWithScores.size)).
-            map(x => x._2)
+          numDecisionTreesToConsiderForJustification.getOrElse(dtJustificationsWithScores.size)
+        ).
+          map(x => x._2)
         (outcomeCount,
-            new RandomForestJustification(dtJustificationsToReport, outcomeCount, totalDtCount))
+          new RandomForestJustification(dtJustificationsToReport, outcomeCount, totalDtCount))
     }
   }
 

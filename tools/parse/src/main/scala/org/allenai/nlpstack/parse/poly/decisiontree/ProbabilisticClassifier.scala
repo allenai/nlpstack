@@ -32,7 +32,8 @@ trait ProbabilisticClassifier {
   */
 trait Justification
 
-/** Justifying classifier extends ProbabilisticClassifier
+/** Probabilistic Classifier that classifies a given feature vector and provides justification for
+  * the obtained outcome.
   */
 trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
 
@@ -123,6 +124,8 @@ object ProbabilisticClassifier {
   }
 }
 
+/** Companion object to the JustifyingProbabilisticClassifier to enable proper deserialization.
+  */
 object JustifyingProbabilisticClassifier {
   import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat
   import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat._

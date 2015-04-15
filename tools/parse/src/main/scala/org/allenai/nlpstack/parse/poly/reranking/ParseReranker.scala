@@ -276,10 +276,12 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         case dtJustification: DecisionTreeJustification =>
           prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)
         case rfJustification: RandomForestJustification =>
-          s"\nRandom Forest with ${rfJustification.totalDtCount} trees, of which " +
-            s"${rfJustification.dtCountForOutcome} trees voted for the current outcome\n" +
-            s"Top ${rfJustification.dtJustifications.size} decision tree justification(s):\n" +
-            "[ " + rfJustification.dtJustifications.map(dtJustification =>
+          s"\nRandom Forest with ${rfJustification.totalDecisionTreeCount} trees, of which " +
+            s"${rfJustification.decisionTreeCountForOutcome} trees " +
+            s"voted for the current outcome\n" +
+            s"Top ${rfJustification.decisionTreeJustifications.size} " +
+            s"decision tree justification(s):\n" +
+            "[ " + rfJustification.decisionTreeJustifications.map(dtJustification =>
               prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)).
             mkString(", ") + " ]"
       }
