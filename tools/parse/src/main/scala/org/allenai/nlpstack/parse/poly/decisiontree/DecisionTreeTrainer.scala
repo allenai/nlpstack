@@ -169,10 +169,10 @@ private class Node(data: Option[FeatureVectorSource], val featureVectorSubset: S
 }
 
 sealed trait InformationGainMetric {
-  val minimumGain: Double
+  val minimumGain: Float
 }
-case class EntropyGainMetric(minimumGain: Double) extends InformationGainMetric
-case class MultinomialGainMetric(minimumGain: Double) extends InformationGainMetric
+case class EntropyGainMetric(minimumGain: Float) extends InformationGainMetric
+case class MultinomialGainMetric(minimumGain: Float) extends InformationGainMetric
 
 /** A DecisionTreeTrainer trains decision trees from data.
   *
@@ -183,9 +183,9 @@ case class MultinomialGainMetric(minimumGain: Double) extends InformationGainMet
   * @param maximumDepth the maximum desired depth of the trained decision tree
   */
 class DecisionTreeTrainer(
-    validationPercentage: Double,
+    validationPercentage: Float,
     informationGainMetric: InformationGainMetric,
-    featuresExaminedPerNode: Double = 1.0,
+    featuresExaminedPerNode: Float = 1.0f,
     maximumDepth: Int = Integer.MAX_VALUE
 ) extends ProbabilisticClassifierTrainer {
 
@@ -254,7 +254,7 @@ class DecisionTreeTrainer(
 
         // Computes information gain of each selected feature.
         // Can be expensive.
-        val infoGainByFeature: Seq[(Int, Double)] = (informationGainMetric match {
+        val infoGainByFeature: Seq[(Int, Float)] = (informationGainMetric match {
           case EntropyGainMetric(_) =>
             computeEntropyBasedInformationGain(
               data, node.featureVectorSubset, featuresToExamine
@@ -338,13 +338,13 @@ class DecisionTreeTrainer(
     data: FeatureVectorSource,
     featureVectorSubset: Seq[Int],
     featureSubset: Seq[Int]
-  ): Seq[(Int, Double)] = {
+  ): Seq[(Int, Float)] = {
 
     def computeOutcomeEntropy(featureVectorSubstream: Seq[FeatureVector]) = {
       def computeEntropy(histogram: Map[Int, Int]) = {
         val frequencies = histogram.values
         val unnormalizedEntropy = (frequencies map { freq =>
-          freq.toDouble * math.log(freq)
+          freq.toFloat * math.log(freq)
         }).sum
         val normalizer = frequencies.sum
         math.log(normalizer) - ((1.0 / normalizer) * unnormalizedEntropy)
@@ -358,14 +358,14 @@ class DecisionTreeTrainer(
     require(featureSubset.nonEmpty)
     val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map data.getNthVector
     val unsplitEntropy = computeOutcomeEntropy(featureVectorSubstream)
-    val informationGainByFeatureValue: Iterable[Double] = for {
+    val informationGainByFeatureValue: Iterable[Float] = for {
       feature <- featureSubset
     } yield {
       val vectorsByFeatureValue: Map[Int, Seq[FeatureVector]] =
         featureVectorSubstream groupBy { x => x.getFeature(feature) }
-      unsplitEntropy - ((vectorsByFeatureValue.values map { x =>
+      (unsplitEntropy - ((vectorsByFeatureValue.values map { x =>
         x.size * computeOutcomeEntropy(x)
-      }).sum / featureVectorSubset.size)
+      }).sum / featureVectorSubset.size)).toFloat
     }
     featureSubset.zip(informationGainByFeatureValue)
   }
@@ -384,11 +384,11 @@ class DecisionTreeTrainer(
     data: FeatureVectorSource,
     featureVectorSubset: Seq[Int],
     featureSubset: Seq[Int]
-  ): Seq[(Int, Double)] = {
+  ): Seq[(Int, Float)] = {
 
     def getEmpiricalOutcomeDistribution(
       featureVectorSubstream: Seq[FeatureVector]
-    ): Map[Int, Double] = {
+    ): Map[Int, Float] = {
       val outcomes: Seq[Int] = featureVectorSubstream flatMap { featureVec => featureVec.outcome }
       val outcomeHistogram: Map[Int, Int] = outcomes groupBy { x => x } mapValues { _.size }
       val numOutcomes = outcomes.size
@@ -399,22 +399,22 @@ class DecisionTreeTrainer(
     }
 
     def computeMultinomialNegativeLogProbability(
-      multinoulli: Map[Int, Double],
+      multinoulli: Map[Int, Float],
       histogram: Map[Int, Int]
-    ): Double = {
+    ): Float = {
       val n = histogram.values.sum
       val positiveResult = (n * math.log(n)) + (histogram map {
         case (outcome, outcomeCount) =>
           outcomeCount * (math.log(multinoulli(outcome)) - math.log(outcomeCount))
       }).sum
-      -positiveResult
+      -positiveResult.toFloat
     }
 
     require(featureVectorSubset.nonEmpty)
     require(featureSubset.nonEmpty)
     val featureVectorSubstream: Seq[FeatureVector] = featureVectorSubset map data.getNthVector
     val baselineOutcomeDistribution = getEmpiricalOutcomeDistribution(featureVectorSubstream)
-    val informationGainByFeatureValue: Iterable[Double] = for {
+    val informationGainByFeatureValue: Iterable[Float] = for {
       feature <- featureSubset
     } yield {
       val outcomesByFeatureValue: Map[Int, Seq[Int]] =

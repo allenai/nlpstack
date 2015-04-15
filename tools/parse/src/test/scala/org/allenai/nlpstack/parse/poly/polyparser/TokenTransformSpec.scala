@@ -25,7 +25,9 @@ object TokenTransformTestData {
     bufferPosition = 5,
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0, 3 -> 5, 4 -> 5),
     children = Map(0 -> Set(2), 2 -> Set(1), 5 -> Set(3, 4)),
-    arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
+    arcLabels = Map(Set(0, 2) -> SingleSymbolArcLabel('root),
+      Set(2, 1) -> SingleSymbolArcLabel('nsubj), Set(3, 5) -> SingleSymbolArcLabel('det),
+      Set(4, 5) -> SingleSymbolArcLabel('amod)),
     sentence =
       Sentence(Vector(NexusToken, Token.create("we", "NN"), Token.create("saw", "VBD"),
         Token.create("a", "DET"),

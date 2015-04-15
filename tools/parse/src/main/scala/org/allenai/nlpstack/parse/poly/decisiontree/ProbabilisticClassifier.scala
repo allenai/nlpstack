@@ -10,7 +10,7 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double]
+  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float]
 
   /** Classifies an feature vector.
     *
@@ -47,18 +47,18 @@ object ProbabilisticClassifier {
     * @param unnormalizedDist a map from integers to probability mass (not necessarily normalized)
     * @return the normalized version of the argument distribution
     */
-  def normalizeDistribution(unnormalizedDist: Seq[(Int, Double)]): Seq[(Int, Double)] = {
+  def normalizeDistribution(unnormalizedDist: Seq[(Int, Float)]): Seq[(Int, Float)] = {
     require(unnormalizedDist.nonEmpty, ".normalizeDistribution cannot be called on an empty seq")
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
-    if (normalizer > 0d) {
+    if (normalizer > 0f) {
       unnormalizedDist map {
         case (outcome, unnormalized) =>
-          (outcome, unnormalized / normalizer)
+          (outcome, unnormalized / normalizer.toFloat)
       }
     } else {
       unnormalizedDist map {
         case (outcome, _) =>
-          (outcome, 1.0 / unnormalizedDist.length)
+          (outcome, 1.0f / unnormalizedDist.length)
       }
     }
   }

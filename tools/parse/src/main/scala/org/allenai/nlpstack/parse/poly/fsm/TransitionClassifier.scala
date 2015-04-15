@@ -19,7 +19,7 @@ abstract class TransitionClassifier {
     * @param featureVector the feature vector to use to compute the distribution
     * @return a probability distribution over Transitions
     */
-  def getDistribution(featureVector: FeatureVector): Map[StateTransition, Double]
+  def getDistribution(featureVector: FeatureVector): Map[StateTransition, Float]
 
 }
 

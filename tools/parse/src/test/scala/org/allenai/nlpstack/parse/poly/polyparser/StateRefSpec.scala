@@ -26,7 +26,8 @@ class StateRefSpec extends UnitSpec {
     bufferPosition = 6,
     breadcrumb = Map(0 -> -1, 1 -> 2, 2 -> 0),
     children = Map(0 -> Set(2), 2 -> Set(1)),
-    arcLabels = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj),
+    arcLabels = Map(Set(0, 2) -> SingleSymbolArcLabel('root),
+      Set(2, 1) -> SingleSymbolArcLabel('nsubj)),
     sentence =
       Sentence(Vector(NexusToken, Token('we), Token('saw), Token('a),
         Token('white), Token('cat), Token('with), Token('a), Token('telescope)))
@@ -37,7 +38,9 @@ class StateRefSpec extends UnitSpec {
     bufferPosition = 6,
     breadcrumb = Map(0 -> -1, 1 -> 2, 5 -> 2, 3 -> 5, 4 -> 5),
     children = Map(2 -> Set(1, 5), 3 -> Set(5), 4 -> Set(5)),
-    arcLabels = Map(Set(1, 2) -> 'nsubj, Set(2, 5) -> 'dobj, Set(3, 5) -> 'det, Set(4, 5) -> 'amod),
+    arcLabels = Map(Set(1, 2) -> SingleSymbolArcLabel('nsubj),
+      Set(2, 5) -> SingleSymbolArcLabel('dobj), Set(3, 5) -> SingleSymbolArcLabel('det),
+      Set(4, 5) -> SingleSymbolArcLabel('amod)),
     sentence =
       Sentence(Vector(
         NexusToken,

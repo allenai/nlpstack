@@ -61,7 +61,7 @@ case object AllChildrenExtractor extends NeighborhoodExtractor {
 case object AllParentsExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    Seq(Neighborhood(parse.getParents().getOrElse(token, Seq())))
+    Seq(Neighborhood(parse.getParents.getOrElse(token, Seq())))
   }
 }
 
@@ -81,7 +81,7 @@ case object EachChildExtractor extends NeighborhoodExtractor {
 case object EachParentExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    parse.getParents().getOrElse(token, Seq()) map { parent => Neighborhood(Seq(parent)) }
+    parse.getParents.getOrElse(token, Seq()) map { parent => Neighborhood(Seq(parent)) }
   }
 }
 
@@ -108,7 +108,7 @@ case class SpecificParentExtractor(parentIndex: Int) extends NeighborhoodExtract
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
+      parse.getParents.getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
         Neighborhood(Seq(x))
       }
     ).flatten
@@ -138,7 +138,7 @@ case class SelfAndSpecificParentExtractor(parentIndex: Int) extends Neighborhood
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
+      parse.getParents.getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
         Neighborhood(Seq(x, token))
       }
     ).flatten

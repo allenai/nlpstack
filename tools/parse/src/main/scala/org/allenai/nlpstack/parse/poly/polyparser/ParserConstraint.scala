@@ -25,7 +25,7 @@ case class ForbiddenEdge(token1: Int, token2: Int) extends TransitionConstraint
   * @param arcLabel label that is forbidden between the two tokens
   */
 case class ForbiddenArcLabel(token1: Int, token2: Int,
-  arcLabel: Symbol) extends TransitionConstraint
+  arcLabel: ArcLabel) extends TransitionConstraint
 
 /** A RequestedArc constraint requests that the output parse MUST contain the requested arc.
   *
@@ -40,7 +40,7 @@ case class ForbiddenArcLabel(token1: Int, token2: Int,
   * @param arcLabel desired label for the arc
   */
 case class RequestedArc(token1: Int, token2: Int,
-  arcLabel: Option[Symbol] = None) extends TransitionConstraint
+  arcLabel: Option[ArcLabel] = None) extends TransitionConstraint
 
 /** A RequestedCpos constraint specifies the coarse part-of-speech tag of a particular token.
   * This means that in the returned parse, the 'cpos property for that token will correspond

@@ -18,6 +18,7 @@ import spray.json.DefaultJsonProtocol._
   * reming (or allow the banker UI to stay on spray-json).
   * The banker UI uses TransitionConstraint and PolytreeParse in its models.
   */
+/*
 object BankerProtocol {
   // TransitionConstraint format.
   implicit val forbiddenEdgeFormat =
@@ -57,3 +58,4 @@ object BankerProtocol {
   implicit val sentenceFormat = jsonFormat1(Sentence.apply)
   implicit val polytreeParseFormat = jsonFormat4(PolytreeParse.apply)
 }
+*/

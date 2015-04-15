@@ -42,8 +42,8 @@ case class EmbeddedClassifier(
     transitions(classifier.classify(createDTFeatureVector(featureVector)))
   }
 
-  override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Double] = {
-    val dist: Map[Int, Double] = classifier.outcomeDistribution(
+  override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Float] = {
+    val dist: Map[Int, Float] = classifier.outcomeDistribution(
       createDTFeatureVector(featureVector)
     )
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
