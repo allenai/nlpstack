@@ -475,6 +475,14 @@ object PolytreeParse {
                 Some(row(iCoarsePos))
               } else {
                 None
+              },
+            goldPos =
+              // if there's a gold fine POS tag, use that to create the coarse POS tag
+              // otherwise, use the coarse POS tag, if available
+              if (useGoldPosTags && row(iFinePos) != "_") {
+                Some(row(iFinePos))
+              } else {
+                None
               }
           )
         )
