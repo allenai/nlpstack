@@ -4,6 +4,8 @@ import spray.json._
 import scala.annotation.tailrec
 
 /** Structure to represent a decision tree's justification for a certain classification outcome.
+  * Contains index of the chosen node and the breadcrumb that led to it:
+  * (feature index, feature value) tuple at each decision point. 
   */
 case class DecisionTreeJustification(breadCrumb: Seq[(Int, Int)], node: Int) extends Justification
 
@@ -55,9 +57,10 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
 
   // For use in KL Divergence calculation. Calculating Root distribution upfront to avoid having
   // to calculate during every call to getNodeDivergenceScore.
-   @transient val outcomeDistributionRoot = (ProbabilisticClassifier.normalizeDistribution(
-     (outcomeHistograms(0) mapValues { _.toDouble }).toSeq)).toMap
-        
+  @transient val outcomeDistributionRoot = (ProbabilisticClassifier.normalizeDistribution(
+    (outcomeHistograms(0) mapValues { _.toDouble }).toSeq
+  )).toMap
+
   /** Gets a probability distribution over possible outcomes..
     *
     * @param featureVector feature vector to compute the distribution for
@@ -92,9 +95,10 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
    */
   def getNodeDivergenceScore(node: Int): Double = {
     val outcomeDistributionThisNode = (ProbabilisticClassifier.normalizeDistribution(
-        (outcomeHistograms(node) mapValues { _.toDouble }).toSeq)).toMap
+      (outcomeHistograms(node) mapValues { _.toDouble }).toSeq
+    )).toMap
     val klDivergence = (for {
-      (k,q) <- outcomeDistributionRoot
+      (k, q) <- outcomeDistributionRoot
       p <- outcomeDistributionThisNode.get(k)
       if ((q != 0) && (p != 0))
     } yield {
