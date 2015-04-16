@@ -91,7 +91,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
    * decision tree justifications by creating a RandomForestJustification out of them.
    * 
    * @param outcomeHistogram  a map of each outcome to a seq of indivdual occurrences of that
-   * outcome, with from various decision trees, the decision tree justification for each,
+   * outcome from various decision trees, with the decision tree justification for each,
    * and the score for the decision tree node chosen for each case.
    * @param numDecisionTreesToConsiderForJustification  an optional integer specifying a number
    * for the top n decision tree justifications to propagate to the random forest justification. The
