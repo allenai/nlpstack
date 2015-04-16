@@ -11,7 +11,7 @@ import org.allenai.common.testkit.UnitSpec
   * @param feature4 the fourth-highest priority feature
   */
 case class MockBinaryProbabilisticClassifier(val feature1: Int, val feature2: Int,
-    val feature3: Int, val feature4: Int) extends BasicProbabilisticClassifier {
+    val feature3: Int, val feature4: Int) extends ProbabilisticClassifier {
 
   /** Gets the probability distribution over outcomes.
     *
