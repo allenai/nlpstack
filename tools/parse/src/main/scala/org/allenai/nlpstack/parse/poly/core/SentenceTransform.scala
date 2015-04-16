@@ -5,58 +5,26 @@ import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
-import org.allenai.common.json._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import reming.DefaultJsonProtocol._
 
 trait SentenceTransform {
   def transform(sentence: Sentence): Sentence
 }
 
 object SentenceTransform {
+  private implicit val factorieSentenceTaggerFormat = jsonFormat0(() => FactorieSentenceTagger)
+  private implicit val stanfordSentenceTaggerFormat = jsonFormat0(() => StanfordSentenceTagger)
+  private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTagger)
+  private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTagger.apply)
+  private implicit val verbnetTaggerFormat = jsonFormat1(VerbnetTagger.apply)
 
-  /** Boilerplate code to serialize a SentenceTagger to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM SentenceTagger, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object SentenceTransformJsonFormat extends RootJsonFormat[SentenceTransform] {
-
-    implicit val brownClustersTaggerFormat =
-      jsonFormat1(BrownClustersTagger.apply).pack("type" -> "BrownClustersTagger")
-
-    implicit val verbnetTaggerFormat =
-      jsonFormat1(VerbnetTagger.apply).pack("type" -> "VerbnetTagger")
-
-    def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
-      case FactorieSentenceTagger =>
-        JsString("FactorieSentenceTagger")
-      case StanfordSentenceTagger =>
-        JsString("StanfordSentenceTagger")
-      case LexicalPropertiesTagger =>
-        JsString("LexicalPropertiesTagger")
-      case brownClustersTagger: BrownClustersTagger =>
-        brownClustersTagger.toJson
-      case verbnetTagger: VerbnetTagger =>
-        verbnetTagger.toJson
-    }
-
-    def read(value: JsValue): SentenceTransform = value match {
-      case JsString(typeid) => typeid match {
-        case "FactorieSentenceTagger" => FactorieSentenceTagger
-        case "StanfordSentenceTagger" => StanfordSentenceTagger
-        case "LexicalPropertiesTagger" => LexicalPropertiesTagger
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        brownClustersTaggerFormat,
-        verbnetTaggerFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
-  }
+  implicit val sentenceTransformJsonFormat = parentFormat[SentenceTransform](
+    childFormat[FactorieSentenceTagger.type, SentenceTransform],
+    childFormat[StanfordSentenceTagger.type, SentenceTransform],
+    childFormat[LexicalPropertiesTagger.type, SentenceTransform],
+    childFormat[BrownClustersTagger, SentenceTransform],
+    childFormat[VerbnetTagger, SentenceTransform]
+  )
 }
 
 /** The FactorieSentenceTagger tags an input sentence with automatic part-of-speech tags

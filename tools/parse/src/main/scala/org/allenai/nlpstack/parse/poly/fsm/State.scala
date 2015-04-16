@@ -1,9 +1,8 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.polyparser.TransitionParserState
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.DefaultJsonProtocol._
 
 /** A state of a finite-state machine. */
 trait State {
@@ -12,19 +11,8 @@ trait State {
 }
 
 object State {
-  implicit object StateJsonFormat extends RootJsonFormat[State] {
-    implicit val transitionParserStateFormat =
-      jsonFormat8(TransitionParserState.apply).pack("type" -> "TransitionParserState")
-
-    def write(state: State): JsValue = state match {
-      case tpState: TransitionParserState => tpState.toJson
-      case x => deserializationError(s"Cannot serialize this state type: $x")
-    }
-
-    def read(value: JsValue): State = value.asJsObject.unpackWith(
-      transitionParserStateFormat
-    )
-  }
+  private implicit val transitionParserStateFormat = jsonFormat8(TransitionParserState.apply)
+  implicit val stateJsonFormat = parentFormat[State](childFormat[TransitionParserState, State])
 }
 
 /** A StateCost maps a state to a cost. */

@@ -1,17 +1,57 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import java.io.{ File, PrintWriter }
-import org.allenai.nlpstack.parse.poly.core._
-import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
-
-import scala.annotation.tailrec
-import scala.compat.Platform
-import scala.io.Source
-import spray.json.DefaultJsonProtocol._
 import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.nlpstack.core.{ Token => NLPStackToken }
 import org.allenai.nlpstack.core.Tokenizer
+import org.allenai.nlpstack.parse.poly.core._
+import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
 import org.allenai.nlpstack.postag.defaultPostagger
+
+import reming.DefaultJsonProtocol._
+
+import java.io.{ File, PrintWriter }
+
+import scala.annotation.tailrec
+import scala.io.Source
+
+/** Generic interface for the label assigned to a parse arc. */
+trait ArcLabel {
+  def toSymbol: Symbol
+}
+
+/** Indicates that a given arc has no assigned label. */
+case object NoArcLabel extends ArcLabel {
+  private val noLabel = 'NONE
+
+  override def toSymbol: Symbol = noLabel
+
+  override def toString: String = noLabel.name
+}
+
+/** A simple symbolic label for an arc in a parse tree.
+  *
+  * Used when an arc label can be expressed by an atomic string with no nested structure.
+  *
+  * @param sym the symbol representation of the arc label
+  */
+case class SingleSymbolArcLabel(sym: Symbol) extends ArcLabel {
+  override def toSymbol: Symbol = sym
+
+  override def toString: String = sym.name
+}
+
+object ArcLabel {
+
+  private implicit val noArcLabelFormat = jsonFormat0(() => NoArcLabel)
+  private implicit val singleSymbolFormat = jsonFormat1(SingleSymbolArcLabel.apply)
+  private implicit val dpArcLabelFormat = jsonFormat2(DependencyParsingArcLabel.apply)
+
+  implicit val arcLabelJsonFormat = parentFormat[ArcLabel](
+    childFormat[NoArcLabel.type, ArcLabel],
+    childFormat[SingleSymbolArcLabel, ArcLabel],
+    childFormat[DependencyParsingArcLabel, ArcLabel]
+  )
+}
 
 /** A PolytreeParse is a polytree-structured dependency parse. A polytree is a directed graph
   * whose undirected structure is a tree. The nodes of this graph will correspond to an indexed
@@ -42,11 +82,12 @@ import org.allenai.nlpstack.postag.defaultPostagger
   * @param arclabels the set of labeled neighbors of each token in the undirected tree
   */
 case class PolytreeParse(
-    val sentence: Sentence,
-    val breadcrumb: Vector[Int],
-    val children: Vector[Set[Int]],
-    val arclabels: Vector[Set[(Int, Symbol)]]
+    sentence: Sentence,
+    breadcrumb: Vector[Int],
+    children: Vector[Set[Int]],
+    arclabels: Vector[Set[(Int, ArcLabel)]]
 ) extends MarbleBlock with Sculpture {
+
   require(breadcrumb(0) == -1)
   require(sentence.size == breadcrumb.size)
   require(sentence.size == children.size)
@@ -72,7 +113,7 @@ case class PolytreeParse(
   @transient lazy val gretels: Map[Int, Vector[Int]] = breadcrumb.zipWithIndex groupBy
     { _._1 } mapValues { x => x map { _._2 } }
 
-  def getParents(): Map[Int, Seq[Int]] = {
+  def getParents: Map[Int, Seq[Int]] = {
     (for {
       (x, y) <- children.zipWithIndex
       z <- x
@@ -83,17 +124,17 @@ case class PolytreeParse(
     * of the arc that connects them (regardless of directionality).
     */
   @transient
-  val arcLabelByEndNodes: Map[Set[Int], Symbol] = {
+  val arcLabelByEndNodes: Map[Set[Int], ArcLabel] = {
     (for {
       (labeledNeighbors, node1) <- arclabels.zipWithIndex
       (node2, label) <- labeledNeighbors
-    } yield (Set(node1, node2) -> label)).toMap
+    } yield Set(node1, node2) -> label).toMap
   }
 
   /** Maps each token index to the arclabel between itself and its breadcrumb. */
   @transient
-  lazy val breadcrumbArcLabel: Vector[Symbol] = {
-    'NEXUS +: (breadcrumb.zipWithIndex.tail map {
+  lazy val breadcrumbArcLabel: Vector[ArcLabel] = {
+    SingleSymbolArcLabel('NEXUS) +: (breadcrumb.zipWithIndex.tail map {
       case (crumb, index) =>
         arcLabelByEndNodes(Set(crumb, index))
     })
@@ -134,7 +175,7 @@ case class PolytreeParse(
       val childrenStr = (children map {
         case child =>
           val label = arcLabelByEndNodes(Set(parent, child))
-          s"${label.name}:${printToken(child)}"
+          s"${label}:${printToken(child)}"
       }).mkString(" ")
       s"${printToken(parent)} -> $childrenStr"
     }).getOrElse("")
@@ -210,7 +251,7 @@ case class PolytreeParse(
             case x => x.name
           },
           "_", crumb,
-          arcLabelByEndNodes(Set(crumb, index)).name,
+          arcLabelByEndNodes(Set(crumb, index)),
           "_", "_").mkString("\t")
       }
     }
@@ -227,7 +268,7 @@ case class PolytreeParse(
     val allNodes: IndexedSeq[DirectedGraphNode] = {
       val internalNodes: Seq[DirectedGraphNode] = Range(1, breadcrumb.size) map { index =>
         DirectedGraphNode(Map(
-          ConstituencyParse.constituencyLabelName -> breadcrumbArcLabel(index).name
+          ConstituencyParse.constituencyLabelName -> breadcrumbArcLabel(index).toString
         ))
       }
       val leafNodes: Seq[DirectedGraphNode] = Range(1, breadcrumb.size) map { index =>
@@ -265,6 +306,7 @@ case class PolytreeParse(
     digraph.toPositionTree(rootNode)
   }
 
+  /*
   @transient
   lazy val relativeCposMap: Map[Int, ((Boolean, Symbol), Int)] = {
     relativeCposMapHelper(depthFirstPreorder, Map())
@@ -293,6 +335,7 @@ case class PolytreeParse(
         )
     }
   }
+  */
 
   override def toString: String = {
     (Range(0, tokens.size) map { tokenIndex => printFamily(tokenIndex) }).mkString(" ")
@@ -379,10 +422,14 @@ object PolytreeParse {
         var prev: Iterator[T] = Iterator.empty
         override def hasNext = base.hasNext
         override def next() = {
-          while (prev.hasNext) prev.next() // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          // Exhaust previous iterator; take* and drop* do NOT always work!!  (Jira SI-5002?)
+          while (prev.hasNext) prev.next()
           prev = Iterator(base.next()) ++ new Iterator[T] {
             var hasMore = true
-            override def hasNext = { hasMore = hasMore && base.hasNext && !startsGroup(base.head); hasMore }
+            override def hasNext = {
+              hasMore = hasMore && base.hasNext && !startsGroup(base.head)
+              hasMore
+            }
             override def next() = if (hasNext) base.next() else Iterator.empty.next()
           }
           prev
@@ -406,9 +453,11 @@ object PolytreeParse {
     // For the following, note that each row has 10 elements. The relevant elements are:
     // - row(0) is the word position (in the sentence)
     // - row(1) is the word
+    // - row(3) is the coarse POS tag
     // - row(4) is the fine POS tag
     // - row(6) is the breadcrumb
     // - row(7) is the arc label (for the unique arc between the word and its breadcrumb)
+    val iCoarsePos = 3
     val iFinePos = 4
     val sentence =
       Sentence(
@@ -417,11 +466,16 @@ object PolytreeParse {
           Symbol(row(1)),
           Token.createProperties(
             row(1),
-            goldCpos = if (useGoldPosTags) {
-              WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
-            } else {
-              None
-            }
+            goldCpos =
+              // if there's a gold fine POS tag, use that to create the coarse POS tag
+              // otherwise, use the coarse POS tag, if available
+              if (useGoldPosTags && row(iFinePos) != "_") {
+                WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
+              } else if (useGoldPosTags && row(iCoarsePos) != "_") {
+                Some(row(iCoarsePos))
+              } else {
+                None
+              }
           )
         )
       })).toVector
@@ -437,11 +491,11 @@ object PolytreeParse {
     val neighbors: Vector[Set[Int]] = ((0 to (sentence.tokens.size - 1)) map { i =>
       childMap.getOrElse(i, Set()) + breadcrumb(i)
     }).toVector
-    val arcLabelByTokenPair: Map[Set[Int], Symbol] = rows.map(row => (Set(
+    val arcLabelByTokenPair: Map[Set[Int], ArcLabel] = rows.map(row => (Set(
       row(0).toInt,
       row(breadcrumbPos).toInt
-    ), Symbol(row(arcLabelPos).toUpperCase))).toMap
-    val arcLabels: Vector[Set[(Int, Symbol)]] = for {
+    ), SingleSymbolArcLabel(Symbol(row(arcLabelPos).toUpperCase)))).toMap
+    val arcLabels: Vector[Set[(Int, ArcLabel)]] = for {
       (neighborSet, i) <- neighbors.zipWithIndex
     } yield for {
       neighbor <- neighborSet
@@ -466,15 +520,10 @@ object PolytreeParse {
     } yield token.word.name
   }
 
-  val arcInverterGoogleUniversal = new ArcInverter(Set('adp, 'adpmod, 'advmod, 'amod,
-    'appos, 'aux, 'auxpass,
-    'ccomp, 'compmod, 'dep, 'det, 'infmod, 'neg, 'nmod, 'num, 'p, 'parataxis, 'partmod,
-    'poss, 'prt, 'rcmod, 'rel))
-
   val arcInverterStanford = new ArcInverter(Set('ADVCL, 'ADVMOD, 'AMOD, 'APPOS,
     'AUX, 'AUXPASS, 'CC, 'CONJ, 'DET, 'DISCOURSE, 'GOESWITH, 'MARK, 'MWE, 'NEG,
     'NPADVMOD, 'NN, 'NUM, 'NUMBER, 'POSS, 'POSSESSIVE, 'PRECONJ, 'PREDET,
-    'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD))
+    'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD) map SingleSymbolArcLabel.apply)
 
   implicit val jsFormat = jsonFormat4(PolytreeParse.apply)
 }

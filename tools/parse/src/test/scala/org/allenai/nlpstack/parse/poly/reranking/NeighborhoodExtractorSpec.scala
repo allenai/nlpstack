@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence }
-import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.polyparser.{ SingleSymbolArcLabel, Neighborhood, PolytreeParse }
 
 class NeighborhoodExtractorSpec extends UnitSpec {
 
@@ -10,16 +10,16 @@ class NeighborhoodExtractorSpec extends UnitSpec {
     * format: OFF
     *
     * NEXUS_0
-    *   |
-    *   |       the_1--
-    *   |              \
-    *   |               -->cat_2
-    *   \              /
-    *    -----> sat_3--
-    *   /
-    * by_4
-    *   \
-    *    --> me_5
+    *     |
+    *     |       the_1--
+    *     |              \
+    *     |               -->cat_2
+    *     \              /
+    *      -----> sat_3--
+    *        /
+    * by_4 --
+    *        \
+    *         --> me_5
     *
     * format: ON
     */
@@ -28,9 +28,17 @@ class NeighborhoodExtractorSpec extends UnitSpec {
       Token('by), Token('me))),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
-    arclabels = Vector(Set((3, 'root)), Set((2, 'det)), Set((1, 'det), (3, 'nsubj)),
-      Set((0, 'root), (2, 'nsubj), (4, 'prep)), Set((3, 'prep), (5, 'pobj)), Set((4, 'pobj))))
-
+    arclabels =
+      Vector(
+        Set((3, SingleSymbolArcLabel('root))),
+        Set((2, SingleSymbolArcLabel('det))),
+        Set((1, SingleSymbolArcLabel('det)), (3, SingleSymbolArcLabel('nsubj))),
+        Set((0, SingleSymbolArcLabel('root)), (2, SingleSymbolArcLabel('nsubj)),
+          (4, SingleSymbolArcLabel('prep))),
+        Set((3, SingleSymbolArcLabel('prep)), (5, SingleSymbolArcLabel('pobj))),
+        Set((4, SingleSymbolArcLabel('pobj)))
+      )
+  )
 
   "Calling the .apply method of AllChildrenExtractor" should "return the correct value" in {
     AllChildrenExtractor(parse1, 0) shouldBe Seq(Neighborhood(Seq(3)))

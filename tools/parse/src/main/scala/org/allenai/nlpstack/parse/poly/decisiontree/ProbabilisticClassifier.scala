@@ -1,8 +1,7 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import org.allenai.common.json._
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import reming.{ JsonFormat, JsonParser, JsonPrinter, LazyFormat }
+import reming.DefaultJsonProtocol._
 
 trait ProbabilisticClassifier {
 
@@ -11,7 +10,7 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double]
+  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float]
 
   /** Classifies an feature vector.
     *
@@ -45,7 +44,7 @@ trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
     */
   def outcomeDistributionWithJustification(
     featureVector: FeatureVector
-  ): Map[Int, (Double, Justification)]
+  ): Map[Int, (Float, Justification)]
 
   /** Classifies a feature vector and produces a justification for the result produced.
     *
@@ -63,34 +62,15 @@ trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
 
 object ProbabilisticClassifier {
 
-  /** Boilerplate code to serialize a ProbabilisticClassifier to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM ProbabilisticClassifier, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object ProbabilisticClassifierJsonFormat
-      extends RootJsonFormat[ProbabilisticClassifier] {
+  implicit object ProbabilisticClassifierFormat extends LazyFormat[ProbabilisticClassifier] {
+    private implicit val randomForestFormat = jsonFormat2(RandomForest.apply)
+    private implicit val oneVersusAllFormat = jsonFormat1(OneVersusAll.apply)
 
-    implicit val decisionTreeFormat = DecisionTree.dtFormat.pack("type" -> "DecisionTree")
-    implicit val randomForestFormat =
-      jsonFormat2(RandomForest.apply).pack(
-        "type" -> "RandomForest"
-      )
-    implicit val oneVersusAllFormat =
-      jsonFormat1(OneVersusAll.apply).pack("type" -> "OneVersusAll")
-
-    def write(classifier: ProbabilisticClassifier): JsValue = classifier match {
-      case decisionTree: DecisionTree => decisionTree.toJson
-      case randomForest: RandomForest => randomForest.toJson
-      case oneVersusAll: OneVersusAll => oneVersusAll.toJson
-      case x => deserializationError(s"Cannot serialize this classifier type: $x")
-    }
-
-    def read(value: JsValue): ProbabilisticClassifier = {
-      value.asJsObject.unpackWith(decisionTreeFormat, randomForestFormat, oneVersusAllFormat)
-    }
+    override val delegate = parentFormat[ProbabilisticClassifier](
+      childFormat[DecisionTree, ProbabilisticClassifier],
+      childFormat[RandomForest, ProbabilisticClassifier],
+      childFormat[OneVersusAll, ProbabilisticClassifier]
+    )
   }
 
   /** Normalizes an unnormalized distribution over integers.
@@ -101,18 +81,18 @@ object ProbabilisticClassifier {
     * @param unnormalizedDist a map from integers to probability mass (not necessarily normalized)
     * @return the normalized version of the argument distribution
     */
-  def normalizeDistribution(unnormalizedDist: Seq[(Int, Double)]): Seq[(Int, Double)] = {
+  def normalizeDistribution(unnormalizedDist: Seq[(Int, Float)]): Seq[(Int, Float)] = {
     require(unnormalizedDist.nonEmpty, ".normalizeDistribution cannot be called on an empty seq")
     val normalizer: Double = (unnormalizedDist map { _._2 }).sum
-    if (normalizer > 0d) {
+    if (normalizer > 0f) {
       unnormalizedDist map {
         case (outcome, unnormalized) =>
-          (outcome, unnormalized / normalizer)
+          (outcome, unnormalized / normalizer.toFloat)
       }
     } else {
       unnormalizedDist map {
         case (outcome, _) =>
-          (outcome, 1.0 / unnormalizedDist.length)
+          (outcome, 1.0f / unnormalizedDist.length)
       }
     }
   }
@@ -127,20 +107,16 @@ object ProbabilisticClassifier {
 /** Companion object to the JustifyingProbabilisticClassifier to enable proper deserialization.
   */
 object JustifyingProbabilisticClassifier {
-  import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat
-  import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat._
-
   implicit object JustifyingProbabilisticClassifierJsonFormat
-      extends RootJsonFormat[JustifyingProbabilisticClassifier] {
-
-    def write(classifier: JustifyingProbabilisticClassifier): JsValue = {
-      ProbabilisticClassifierJsonFormat.write(classifier)
+      extends JsonFormat[JustifyingProbabilisticClassifier] {
+    private val wrappedFormat = implicitly[LazyFormat[ProbabilisticClassifier]]
+    override def write(obj: JustifyingProbabilisticClassifier, printer: JsonPrinter): Unit = {
+      wrappedFormat.write(obj, printer)
     }
-
-    def read(value: JsValue): JustifyingProbabilisticClassifier = {
-      ProbabilisticClassifierJsonFormat.read(value) match {
-        case classifier: JustifyingProbabilisticClassifier => classifier
-        case x => deserializationError(s"Cannot serialize this classifier type: $x")
+    override def read(parser: JsonParser): JustifyingProbabilisticClassifier = {
+      wrappedFormat.read(parser) match {
+        case j: JustifyingProbabilisticClassifier => j
+        case bad => deserializationError("Non-JustifyingProbabilisticClassifier found: " + bad)
       }
     }
   }

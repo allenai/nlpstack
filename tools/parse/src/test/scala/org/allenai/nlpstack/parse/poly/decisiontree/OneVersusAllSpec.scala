@@ -18,17 +18,17 @@ case class MockBinaryProbabilisticClassifier(val feature1: Int, val feature2: In
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     if (featureVector.nonzeroFeatures.contains(feature1)) {
-      Map(0 -> 0.2, 1 -> 0.8)
+      Map(0 -> 0.2f, 1 -> 0.8f)
     } else if (featureVector.nonzeroFeatures.contains(feature2)) {
-      Map(0 -> 0.4, 1 -> 0.6)
+      Map(0 -> 0.4f, 1 -> 0.6f)
     } else if (featureVector.nonzeroFeatures.contains(feature3)) {
-      Map(0 -> 0.6, 1 -> 0.4)
+      Map(0 -> 0.6f, 1 -> 0.4f)
     } else if (featureVector.nonzeroFeatures.contains(feature4)) {
-      Map(0 -> 0.8, 1 -> 0.2)
+      Map(0 -> 0.8f, 1 -> 0.2f)
     } else {
-      Map(0 -> 1.0, 1 -> 0.0)
+      Map(0 -> 1.0f, 1 -> 0.0f)
     }
   }
 
@@ -58,13 +58,13 @@ class OneVersusAllSpec extends UnitSpec {
       outcome = None,
       numFeatures = 5, trueFeatures = Set(1, 2)
     ))
-    outcomeDist(0) shouldBe 0.3 +- 0.001
-    outcomeDist(1) shouldBe 0.4 +- 0.001
-    outcomeDist(2) shouldBe 0.3 +- 0.001
+    outcomeDist(0) shouldBe 0.3f +- 0.001f
+    outcomeDist(1) shouldBe 0.4f +- 0.001f
+    outcomeDist(2) shouldBe 0.3f +- 0.001f
   }
 
   it should "return a uniform distribution if all subclassifiers return zero" in {
     classifier2.outcomeDistribution(new SparseVector(outcome = None, numFeatures = 5,
-      trueFeatures = Set(4))) shouldBe Map(0 -> 0.25, 1 -> 0.25, 2 -> 0.25, 3 -> 0.25)
+      trueFeatures = Set(4))) shouldBe Map(0 -> 0.25f, 1 -> 0.25f, 2 -> 0.25f, 3 -> 0.25f)
   }
 }

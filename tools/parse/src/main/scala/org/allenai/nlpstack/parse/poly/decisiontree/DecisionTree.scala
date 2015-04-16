@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import spray.json._
 import scala.annotation.tailrec
+
+import reming.DefaultJsonProtocol._
 
 /** Structure to represent a decision tree's justification for a certain classification outcome.
   * Contains index of the chosen node and the breadcrumb that led to it:
@@ -58,7 +59,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   // For use in KL Divergence calculation. Calculating Root distribution upfront to avoid having
   // to calculate during every call to getNodeDivergenceScore.
   @transient val outcomeDistributionRoot = (ProbabilisticClassifier.normalizeDistribution(
-    (outcomeHistograms(0) mapValues { _.toDouble }).toSeq
+    (outcomeHistograms(0) mapValues { _.toFloat }).toSeq
   )).toMap
 
   /** Gets a probability distribution over possible outcomes..
@@ -66,12 +67,13 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     * @param featureVector feature vector to compute the distribution for
     * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts)
-      mapValues { _.toDouble }).toSeq
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues {
+      _.toFloat
+    }).toSeq
     ).toMap
   }
 
@@ -80,15 +82,15 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     */
   override def outcomeDistributionWithJustification(
     featureVector: FeatureVector
-  ): Map[Int, (Double, DecisionTreeJustification)] = {
+  ): Map[Int, (Float, DecisionTreeJustification)] = {
     val (node, breadCrumb) =
       findDecisionPointWithBreabcrumb(featureVector, 0, Seq.empty[(Int, Int)])
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     (ProbabilisticClassifier.normalizeDistribution(
       (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts)
-      mapValues { _.toDouble }).toSeq
+      mapValues { _.toFloat }).toSeq
     ) map {
-      case (outcome: Int, conf: Double) =>
+      case (outcome: Int, conf: Float) =>
         (outcome, (conf, new DecisionTreeJustification(breadCrumb, node)))
     }).toMap
   }
@@ -98,7 +100,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
    */
   def getNodeDivergenceScore(node: Int): Double = {
     val outcomeDistributionThisNode = (ProbabilisticClassifier.normalizeDistribution(
-      (outcomeHistograms(node) mapValues { _.toDouble }).toSeq
+      (outcomeHistograms(node) mapValues { _.toFloat }).toSeq
     )).toMap
     val klDivergence = (for {
       (k, q) <- outcomeDistributionRoot
@@ -212,17 +214,5 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
 }
 
 object DecisionTree {
-  // Override the Spray/JSON serialization for maps with integer keys, because these
-  // don't work out-of-the-box.
-  import spray.json.DefaultJsonProtocol.{ mapFormat => _, _ }
-  implicit val intMapFormat = new JsonFormat[Map[Int, Int]] {
-    override def write(map: Map[Int, Int]): JsValue = {
-      map.toSeq.toJson
-    }
-    override def read(json: JsValue): Map[Int, Int] = json match {
-      case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
-      case _ => throw new DeserializationException("Expected JSArray for int map")
-    }
-  }
-  implicit val dtFormat = jsonFormat4(DecisionTree.apply)
+  implicit val decisionTreeFormat = jsonFormat4(DecisionTree.apply)
 }

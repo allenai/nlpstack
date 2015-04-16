@@ -1,6 +1,11 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ SentenceTransform, AnnotatedSentence, WordClusters, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{
+  AnnotatedSentence,
+  Sentence,
+  SentenceTransform,
+  WordClusters
+}
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
 
@@ -33,8 +38,8 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
             Some(ApplicabilitySignature(
               StateTransition.applicable(ArcEagerShift, Some(state)),
               StateTransition.applicable(ArcEagerReduce, Some(state)),
-              StateTransition.applicable(ArcEagerLeftArc('NONE), Some(state)),
-              StateTransition.applicable(ArcEagerRightArc('NONE), Some(state))
+              StateTransition.applicable(ArcEagerLeftArc(NoArcLabel), Some(state)),
+              StateTransition.applicable(ArcEagerRightArc(NoArcLabel), Some(state))
             ))
           case DependencyParserModes.LEFTLABEL =>
             Some(SimpleTask("dt-leftlabel"))
@@ -157,7 +162,7 @@ case object ArcEagerReduce extends TransitionParserStateTransition {
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerLeftArc(label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcEagerLeftArc(label: ArcLabel = NoArcLabel) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     state match {
@@ -180,7 +185,7 @@ case class ArcEagerLeftArc(label: Symbol = 'NONE) extends TransitionParserStateT
   }
 
   @transient
-  override val name: String = s"Lt[${label.name}]"
+  override val name: String = s"Lt[$label]"
 }
 
 /** The ArcEagerRightArc operator creates an arc from the stack top to the next buffer item and then
@@ -188,7 +193,7 @@ case class ArcEagerLeftArc(label: Symbol = 'NONE) extends TransitionParserStateT
   *
   * @param label the label to attach to the created arc
   */
-case class ArcEagerRightArc(label: Symbol = 'NONE) extends TransitionParserStateTransition {
+case class ArcEagerRightArc(label: ArcLabel = NoArcLabel) extends TransitionParserStateTransition {
 
   override def satisfiesPreconditions(state: TransitionParserState): Boolean = {
     state match {
@@ -215,7 +220,7 @@ case class ArcEagerRightArc(label: Symbol = 'NONE) extends TransitionParserState
   }
 
   @transient
-  override val name: String = s"Rt[${label.name}]"
+  override val name: String = s"Rt[$label]"
 }
 
 /** The ArcEagerGuidedCostFunction uses a gold parse tree to make deterministic decisions
@@ -230,17 +235,19 @@ class ArcEagerGuidedCostFunction(
     override val transitionSystem: TransitionSystem
 ) extends StateCostFunction {
 
-  override def apply(state: State): Map[StateTransition, Double] = {
+  private val augmentedParse = DependencyParsingTransitionSystem.transformArcLabels(parse)
+
+  override def apply(state: State): Map[StateTransition, Float] = {
     state match {
       case tpState: TransitionParserState =>
         require(tpState.stack.nonEmpty)
         if (tpState.parserMode == DependencyParserModes.LEFTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = augmentedParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelLeftArc(arclabel) -> 0)
         } else if (tpState.parserMode == DependencyParserModes.RIGHTLABEL) {
           val (crumb, gretel) = tpState.previousLink.get
-          val arclabel = parse.arcLabelByEndNodes(Set(crumb, gretel))
+          val arclabel = augmentedParse.arcLabelByEndNodes(Set(crumb, gretel))
           Map(LabelRightArc(arclabel) -> 0)
         } else if (tpState.bufferIsEmpty) {
           Map(ArcEagerReduce -> 0)

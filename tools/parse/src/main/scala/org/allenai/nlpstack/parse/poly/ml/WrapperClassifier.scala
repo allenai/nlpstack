@@ -14,8 +14,7 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
   RandomForestJustification
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 import scala.collection.immutable.HashSet
 
 /** A WrapperClassifier wraps a ProbabilisticClassifier (which uses integer-based feature
@@ -57,7 +56,7 @@ sealed trait WrapperClassifier {
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
     */
-  def getDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  def getDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     classifier.outcomeDistribution(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )
@@ -145,7 +144,7 @@ case class JustifyingWrapperClassifier(
     */
   def getDistributionWithJustification(
     featureVector: FeatureVector
-  ): Map[Int, (Double, Justification)] = {
+  ): Map[Int, (Float, Justification)] = {
     classifier.outcomeDistributionWithJustification(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )
@@ -183,27 +182,12 @@ case class JustifyingWrapperClassifier(
   * WrapperClassifier.
   */
 object WrapperClassifier {
-
-  implicit object WrapperClassifierJsonFormat
-      extends RootJsonFormat[WrapperClassifier] {
-
-    implicit val basicWCformat = jsonFormat2(BasicWrapperClassifier.apply).pack("type" -> "basic")
-
-    import ProbabilisticClassifier.ProbabilisticClassifierJsonFormat._
-
-    implicit val justifyingWCformat =
-      jsonFormat2(JustifyingWrapperClassifier.apply).pack("type" -> "justifying")
-
-    def write(classifier: WrapperClassifier): JsValue = classifier match {
-      case basic: BasicWrapperClassifier => basic.toJson
-      case justifying: JustifyingWrapperClassifier => justifying.toJson
-      case x => deserializationError(s"Cannot serialize this classifier type: $x")
-    }
-
-    def read(value: JsValue): WrapperClassifier = {
-      value.asJsObject.unpackWith(basicWCformat, justifyingWCformat)
-    }
-  }
+  implicit val basicWCformat = jsonFormat2(BasicWrapperClassifier.apply)
+  implicit val justifyingWCformat = jsonFormat2(JustifyingWrapperClassifier.apply)
+  implicit val wcJsonFormat = parentFormat[WrapperClassifier](
+    childFormat[BasicWrapperClassifier, WrapperClassifier],
+    childFormat[JustifyingWrapperClassifier, WrapperClassifier]
+  )
 
   /** Converts a string-based feature vector into an integer-based feature vector.
     *
@@ -266,4 +250,3 @@ class WrapperClassifierTrainer(
     }
   }
 }
-

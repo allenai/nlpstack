@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** A Neighborhood is a sequence of token indices, generally referring to a parse tree.
   *

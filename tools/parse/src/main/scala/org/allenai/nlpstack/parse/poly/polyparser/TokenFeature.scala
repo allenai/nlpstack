@@ -1,11 +1,11 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, Token }
-import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 class TokenFeatureTagger(tokenFeatures: Seq[TokenFeature]) {
 
@@ -37,50 +37,22 @@ sealed abstract class TokenFeature extends ((Sentence, Int) => Seq[(FeatureName,
 }
 
 object TokenFeature {
+  implicit object TokenFeatureJsonFormat extends LazyFormat[TokenFeature] {
+    private implicit val wordFeatureFormat = jsonFormat0(() => WordFeature)
+    private implicit val tokenPositionFeatureFormat = jsonFormat0(() => TokenPositionFeature)
+    private implicit val tokenPropertyFeatureFormat = jsonFormat1(TokenPropertyFeature.apply)
+    private implicit val keywordFeatureFormat = jsonFormat1(KeywordFeature.apply)
+    private implicit val suffixFeatureFormat = jsonFormat1(SuffixFeature.apply)
+    private implicit val prefixFeatureFormat = jsonFormat1(PrefixFeature.apply)
 
-  /** Boilerplate code to serialize a TokenFeature to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM TokenFeature, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object TokenFeatureJsonFormat extends RootJsonFormat[TokenFeature] {
-
-    implicit val tokenPropertyFeatureFormat =
-      jsonFormat1(TokenPropertyFeature.apply).pack("type" -> "TokenPropertyFeature")
-
-    implicit val keywordFeatureFormat =
-      jsonFormat1(KeywordFeature.apply).pack("type" -> "KeywordFeature")
-
-    implicit val suffixFeatureFormat =
-      jsonFormat1(SuffixFeature.apply).pack("type" -> "SuffixFeature")
-
-    implicit val prefixFeatureFormat =
-      jsonFormat1(PrefixFeature.apply).pack("type" -> "PrefixFeature")
-
-    def write(transform: TokenFeature): JsValue = transform match {
-      case WordFeature => JsString("WordFeature")
-      case TokenPositionFeature => JsString("TokenPositionFeature")
-      case tp: TokenPropertyFeature => tp.toJson
-      case kt: KeywordFeature => kt.toJson
-      case st: SuffixFeature => st.toJson
-      case pt: PrefixFeature => pt.toJson
-    }
-
-    def read(value: JsValue): TokenFeature = value match {
-      case JsString(typeid) => typeid match {
-        case "WordFeature" => WordFeature
-        case "TokenPositionFeature" => TokenPositionFeature
-        case x => deserializationError(s"Invalid identifier for TokenFeature: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        tokenPropertyFeatureFormat,
-        keywordFeatureFormat,
-        suffixFeatureFormat, prefixFeatureFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString or JsObject.")
-    }
+    override val delegate = parentFormat[TokenFeature](
+      childFormat[WordFeature.type, TokenFeature],
+      childFormat[TokenPositionFeature.type, TokenFeature],
+      childFormat[TokenPropertyFeature, TokenFeature],
+      childFormat[KeywordFeature, TokenFeature],
+      childFormat[SuffixFeature, TokenFeature],
+      childFormat[PrefixFeature, TokenFeature]
+    )
   }
 }
 

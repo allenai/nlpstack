@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.Config.EnhancedConfig
-import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
@@ -91,12 +90,7 @@ object Training {
       artifactName <- verbnetConfig.get[String]("name")
       version <- verbnetConfig.get[Int]("version")
     } yield {
-      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
-        groupName,
-        artifactName,
-        version
-      )
-      VerbnetTagger(new Verbnet(verbnetPath.toString))
+      VerbnetTagger(new Verbnet(groupName, artifactName, version))
     }
 
     val taggers: Seq[SentenceTransform] =

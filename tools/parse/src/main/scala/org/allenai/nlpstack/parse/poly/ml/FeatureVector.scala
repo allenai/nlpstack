@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** The name of a feature, represented as a list of Symbols.
   *

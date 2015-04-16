@@ -1,12 +1,17 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import java.io.{ PrintWriter, File }
-
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.CompactPrinter
+import reming.DefaultJsonProtocol._
+
+import java.io.{ BufferedWriter, File, FileWriter, PrintWriter }
+
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 /** Random Forest outcomes can be explained in terms of the individual decision trees'
   * justifications.
@@ -41,7 +46,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val outcomeHistogram = decisionTrees map { decisionTree =>
       decisionTree.classify(featureVector)
     } groupBy { x => x } mapValues { v => v.size }
@@ -56,7 +61,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     */
   override def outcomeDistributionWithJustification(
     featureVector: FeatureVector
-  ): Map[Int, (Double, RandomForestJustification)] = {
+  ): Map[Int, (Float, RandomForestJustification)] = {
     // Call 'classifyAndJustify' on each decision tree in the forest, group by outcomes, and
     // aggregate total counts of the number of trees producing each outcome, and aggregate
     // corresponding justifications from the individual decision trees.
@@ -120,7 +125,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
     */
-  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Double] = {
+  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
     val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
       decisionTree.outcomeHistogram(featureVector).toSeq
     } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
@@ -133,7 +138,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
   }
 
   /*
-  @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Double)] = {
+  @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Float)] = {
     (decisionTrees flatMap { decisionTree =>
       decisionTree.decisionPaths zip (decisionTree.distribution map { x => x(1) })
     }).toSet.toSeq
@@ -149,8 +154,8 @@ object RandomForest {
     * @param histogram maps each (integral valued) outcome to its count
     * @return the normalized histogram
     */
-  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Double] = {
-    val normalizer: Double = histogram.values.sum
+  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Float] = {
+    val normalizer: Float = histogram.values.sum
     require(normalizer > 0d)
     histogram mapValues { _ / normalizer }
   }
@@ -161,13 +166,18 @@ object RandomForest {
   * @param validationPercentage percentage of feature vectors to hold out for decision tree
   * validation
   * @param numDecisionTrees desired number of decision trees in the forest
-  * @param featuresExaminedPerNode during decision tree induction, desired number of randomly
+  * @param featuresExaminedPerNode during decision tree induction, desired percentage of randomly
   * selected features to consider at each node
   */
-class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
-  featuresExaminedPerNode: Int, gainMetric: InformationGainMetric, useBagging: Boolean = false,
-  maximumDepthPerTree: Int = Integer.MAX_VALUE)
+class RandomForestTrainer(validationPercentage: Float, numDecisionTrees: Int,
+  featuresExaminedPerNode: Float, gainMetric: InformationGainMetric, useBagging: Boolean = false,
+  maximumDepthPerTree: Int = Integer.MAX_VALUE, numThreads: Int = 1)
     extends ProbabilisticClassifierTrainer {
+
+  require(
+    featuresExaminedPerNode >= 0 && featuresExaminedPerNode <= 1,
+    s"featuresExaminedPerNode = $featuresExaminedPerNode, which is not between 0 and 1"
+  )
 
   private val dtTrainer = new DecisionTreeTrainer(validationPercentage, gainMetric,
     featuresExaminedPerNode, maximumDepth = maximumDepthPerTree)
@@ -178,28 +188,25 @@ class RandomForestTrainer(validationPercentage: Double, numDecisionTrees: Int,
     * @return the induced random forest
     */
   override def apply(data: FeatureVectorSource): ProbabilisticClassifier = {
-    val subtreeFiles = Seq.fill(numDecisionTrees) {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    System.setProperty("scala.concurrent.context.numThreads", numThreads.toString)
+    val tasks: Seq[Future[File]] = for (i <- Range(0, numDecisionTrees)) yield Future {
       dtTrainer(data) match {
         case dt: DecisionTree =>
           val tempFile: File = File.createTempFile("temp.", ".dt")
           tempFile.deleteOnExit()
-          Resource.using(new PrintWriter(tempFile)) { writer =>
-            writer.println(dt.toJson.compactPrint)
+          Resource.using(new PrintWriter(new BufferedWriter(new FileWriter(tempFile)))) { writer =>
+            writer.println(CompactPrinter.printTo(writer, dt))
           }
           tempFile
       }
     }
+    val futureSubtreeFiles: Future[Seq[File]] = Future.sequence(tasks)
+    val subtreeFiles = Await.result(futureSubtreeFiles, 30 days)
     val subtrees: Seq[DecisionTree] = subtreeFiles map {
-      case subtreeFile =>
-        Resource.using(subtreeFile.toURI.toURL.openStream()) { stream =>
-          val jsVal = Util.getJsValueFromStream(stream)
-          jsVal match {
-            case JsObject(_) => jsVal.convertTo[DecisionTree]
-            case _ => deserializationError("Unexpected JsValue type. Must be " +
-              "JsObject.")
-          }
-        }
+      case subtreeFile => Util.readFromUrl[DecisionTree](subtreeFile.toURI.toURL)
     }
+    System.clearProperty("scala.concurrent.context.numThreads")
     RandomForest(data.allOutcomes, subtrees)
   }
 }

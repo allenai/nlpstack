@@ -1,15 +1,15 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.core.SentenceSource
 import org.allenai.nlpstack.parse.poly.eval._
-import org.allenai.nlpstack.parse.poly.fsm.{
-  ClassifierBasedCostFunction,
-  RerankingFunction,
-  FeatureUnion
-}
+import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
 import scopt.OptionParser
 
 import scala.compat.Platform
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.language.postfixOps
 
 private case class ParseFileConfig(configFilename: String = "", testFilename: String = "",
   dataSource: String = "", oracleNbest: Int = ParseFile.defaultOracleNbest)
@@ -57,33 +57,72 @@ object ParseFile {
       config.oracleNbest)
   }
 
+  /** Parses a sequence of sentences.
+    *
+    * @param parser the parser we want to use to parse the sentences
+    * @param sentenceSource the sentences to parse
+    */
+  def parseTestSet(
+    parser: TransitionParser,
+    sentenceSource: SentenceSource
+  ): Iterator[Option[PolytreeParse]] = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val parseTasks: Iterator[Future[Option[PolytreeParse]]] =
+      for {
+        sentence <- sentenceSource.sentenceIterator
+      } yield Future {
+        parser.parse(sentence)
+      }
+    val futureParses: Future[Iterator[Option[PolytreeParse]]] = Future.sequence(parseTasks)
+    Await.result(futureParses, 2 days)
+  }
+
   /** Re-parses a sequence of parses, and compares the results
     * to the gold standard.
     *
     * @param parser the parser we want to use to parse the sentences
-    * @param parseSource the gold parses
+    * @param parseSource the parses we want to evaluate against
     */
-  def parseTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
+  def evaluateParserOnTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
     val startTime: Long = Platform.currentTime
-    val candidateParses: Iterator[Option[PolytreeParse]] = {
-      parseSource.parseIterator map {
-        parse => parser.parse(parse.sentence)
-      }
-    }
+    val candidateParses = parseTestSet(parser, parseSource)
     val stats: Seq[ParseStatistic] = Seq(
       UnlabeledBreadcrumbAccuracy,
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
-      PathAccuracy(true, true)
+      PathAccuracy(true, true),
+      CposAccuracy(false)
     )
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
-
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
       UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
       (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
     ))
+  }
+
+  def nbestParseTestSet(
+    parser: TransitionParser,
+    sentenceSource: SentenceSource,
+    nbestSize: Int
+  ): Iterator[ParsePool] = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    parser match {
+      case rerankingParser: RerankingTransitionParser =>
+        val parserConfig = rerankingParser.config.copy(parsingNbestSize = nbestSize)
+        val baseParser: NbestParser = new NbestParser(parserConfig)
+        val parseTasks: Iterator[Future[ParsePool]] =
+          for {
+            sentence <- sentenceSource.sentenceIterator
+          } yield Future {
+            ParsePool(baseParser.parse(sentence, Set()))
+          }
+        val futureParses: Future[Iterator[ParsePool]] = Future.sequence(parseTasks)
+        Await.result(futureParses, 2 days)
+    }
   }
 
   /** Determines the oracle score for n-best parsing a sequence of parses.
@@ -138,7 +177,7 @@ object ParseFile {
       }).toMap
     for ((sourcePath, testSource) <- testSources) {
       println(s"Checking parser accuracy on test set ${sourcePath}.")
-      ParseFile.parseTestSet(parser, testSource)
+      ParseFile.evaluateParserOnTestSet(parser, testSource)
 
       if (oracleNbestSize > 0) {
         println(s"Checking oracle accuracy on test set ${sourcePath}.")

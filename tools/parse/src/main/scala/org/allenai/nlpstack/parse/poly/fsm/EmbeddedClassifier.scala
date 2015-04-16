@@ -1,7 +1,5 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
-import java.io.{ InputStream, File, PrintWriter }
-
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.decisiontree.{
@@ -11,7 +9,10 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
 }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
-import spray.json._
+import reming.CompactPrinter
+
+import java.io.{ File, PrintWriter }
+
 import scala.collection.immutable.HashSet
 
 /** An EmbeddedClassifier wraps a
@@ -41,8 +42,8 @@ case class EmbeddedClassifier(
     transitions(classifier.classify(createDTFeatureVector(featureVector)))
   }
 
-  override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Double] = {
-    val dist: Map[Int, Double] = classifier.outcomeDistribution(
+  override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Float] = {
+    val dist: Map[Int, Float] = classifier.outcomeDistribution(
       createDTFeatureVector(featureVector)
     )
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
@@ -93,22 +94,14 @@ class DTCostFunctionTrainer(
         val tempFile: File = File.createTempFile("temp", "ecl")
         tempFile.deleteOnExit()
         Resource.using(new PrintWriter(tempFile)) { writer =>
-          writer.println(classifier.toJson.compactPrint)
+          CompactPrinter.printTo(writer, classifier)
         }
         progressCounter += 1
         (task, tempFile)
     }
     taskClassifierSeq.toMap mapValues {
       case classifierFile =>
-        Resource.using(classifierFile.toURI.toURL.openStream()) { stream =>
-          val jsVal = Util.getJsValueFromStream(stream)
-          jsVal match {
-            case JsObject(values) =>
-            case _ => deserializationError("Unexpected JsValue type. Must be " +
-              "JsObject.")
-          }
-          jsVal.convertTo[TransitionClassifier]
-        }
+        Util.readFromUrl[TransitionClassifier](classifierFile.toURI.toURL)
     }
   }
 
@@ -116,10 +109,12 @@ class DTCostFunctionTrainer(
     trainingVectorIter: Iterator[FSMTrainingVector]): EmbeddedClassifier = {
 
     println(s"Task ${progressCounter} of ${trainingVectorSource.tasks.size}")
+    val trainingVectors = trainingVectorIter.toIterable
+    println(s"Num training vectors: ${trainingVectors.size}")
     val vectors: DTFeatureVectorSource =
       createDTFeatureVectorSource(
         task,
-        trainingVectorIter
+        trainingVectors.iterator
       )
     println("Now training.")
     val inducedClassifier: ProbabilisticClassifier = classifierTrainer(vectors)

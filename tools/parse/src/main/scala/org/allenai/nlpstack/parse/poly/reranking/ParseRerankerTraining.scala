@@ -33,12 +33,6 @@ object ParseRerankerTraining {
 
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PRTCommandLine]("ParseRerankerTraining") {
-      opt[String]('n', "nbestfiles") required () valueName "<file>" action { (x, c) =>
-        c.copy(nbestFilenames = x)
-      } text "the file containing the nbest lists"
-      opt[String]('m', "othernbestfile") required () valueName "<file>" action { (x, c) =>
-        c.copy(otherNbestFilename = x)
-      } text "the file containing the test nbest lists"
       opt[String]('g', "goldfile") required () valueName "<file>" action { (x, c) =>
         c.copy(goldParseFilename = x)
       } text "the file containing the gold parses"
@@ -86,41 +80,45 @@ object ParseRerankerTraining {
       artifactName <- verbnetConfig.get[String]("name")
       version <- verbnetConfig.get[Int]("version")
     } yield {
-      val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
-        groupName,
-        artifactName,
-        version
-      )
-      ("verbnet", VerbnetTransform(new Verbnet(verbnetPath.toString)))
+      ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
-    val nbestSource: ParsePoolSource =
-      InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val (rerankingFunction: RerankingFunction, classifier) =
-      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, nbestSource)
 
-    println("Evaluating test vectors.")
+    val nbestSize = 20
+    val parser: TransitionParser = TransitionParser.load(clArgs.parserFilename)
+    println("Creating training data.")
+    val trainingPools: ParsePoolSource =
+      InMemoryParsePoolSource(ParseFile.nbestParseTestSet(parser, goldParseSource, nbestSize))
+    println("Training reranker.")
+
+    val (rerankingFunction: RerankingFunction, classifier) =
+      rerankingFunctionTrainer.trainRerankingFunction(goldParseSource, trainingPools)
+
+    println("Creating test data.")
     val otherGoldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.otherGoldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
     )
-    val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
+    //val otherNbestSource: ParsePoolSource = FileBasedParsePoolSource(clArgs.otherNbestFilename)
+    val testPools: ParsePoolSource =
+      InMemoryParsePoolSource(ParseFile.nbestParseTestSet(parser, otherGoldParseSource, nbestSize))
     val testData =
-      createTrainingData(otherGoldParseSource, otherNbestSource, feature)
-    testData.labeledVectors foreach { x => println(x) }
+      createTrainingData(otherGoldParseSource, testPools, feature)
+
+    println("Evaluating test vectors.")
     evaluate(testData, classifier)
 
     println("Saving reranking function.")
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) =
+  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = {
     new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(
         ("children", AllChildrenExtractor)
@@ -160,6 +158,7 @@ object ParseRerankerTraining {
         ("direction", DirectionNhTransform)
       ))
     ))
+  }
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {
@@ -181,7 +180,7 @@ object ParseRerankerTraining {
       }).toIterable
     println("Creating negative examples.")
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
-      Range(0, 4) flatMap { _ =>
+      Range(0, 3) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
           parsePools.poolIterator flatMap { parsePool =>
             Range(0, 1) map { i =>
@@ -192,8 +191,8 @@ object ParseRerankerTraining {
         parsePairs flatMap {
           case (candidateParse, goldParse) =>
             val badTokens: Set[Int] =
+              // TODO: consider labels as well?
               (candidateParse.families.toSet -- goldParse.families.toSet) map {
-                // TODO: consider labels as well?
                 case family =>
                   family.tokens.head
               }
@@ -230,11 +229,17 @@ case class RerankingFunctionTrainer(parseNodeFeature: ParseNodeFeature) {
   ): (RerankingFunction, WrapperClassifier) = {
 
     println("Creating training vectors.")
-    val trainingData =
-      ParseRerankerTraining.createTrainingData(goldParseSource, nbestSource, parseNodeFeature)
+    val trainingData = ParseRerankerTraining.createTrainingData(
+      goldParseSource,
+      nbestSource,
+      parseNodeFeature
+    )
+    //trainingData.labeledVectors foreach { case (vec, label) =>
+    //  println(vec)
+    //}
     println("Training classifier.")
     val trainer = new WrapperClassifierTrainer(
-      new RandomForestTrainer(0, 10, 200, EntropyGainMetric(0))
+      new RandomForestTrainer(0, 12, 0.1f, EntropyGainMetric(0), numThreads = 6)
     )
     val classifier: WrapperClassifier = trainer(trainingData)
     println("Evaluating classifier.")
@@ -273,7 +278,7 @@ case class WeirdParseNodeRerankingFunction(
     * @param parse the parse tree to analyze
     * @return the indices , weirdness score and justification for all tokens
     */
-  def getNodes(parse: PolytreeParse): Set[(Int, Double, Option[Justification])] = {
+  def getNodes(parse: PolytreeParse): Set[(Int, Float, Option[Justification])] = {
     Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
       classifier match {
         case c: JustifyingWrapperClassifier =>
@@ -281,15 +286,14 @@ case class WeirdParseNodeRerankingFunction(
             (c.asInstanceOf[JustifyingWrapperClassifier].getDistributionWithJustification(
               feature(parse, tokenIndex)
             ) mapValues (v => (v._1, Some(v._2)))).
-              getOrElse(0, (0.0, None))
+              getOrElse(0, (0.0f, None))
           (tokenIndex, confAndJustification._1, confAndJustification._2)
         case _ =>
           (
             tokenIndex,
-            classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0), None
+            classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0f), None
           )
       }
-
     }
   }
 

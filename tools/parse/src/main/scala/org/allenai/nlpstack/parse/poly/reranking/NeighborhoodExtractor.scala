@@ -1,9 +1,13 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.polyparser.{ NeighborhoodSource, Neighborhood, PolytreeParseSource, PolytreeParse }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  NeighborhoodSource,
+  Neighborhood,
+  PolytreeParseSource,
+  PolytreeParse
+}
+
+import reming.DefaultJsonProtocol._
 
 /** Maps a parse tree node to one or more of its neighborhoods.
   *
@@ -16,60 +20,29 @@ import spray.json._
 trait NeighborhoodExtractor extends ((PolytreeParse, Int) => Seq[Neighborhood])
 
 object NeighborhoodExtractor {
+  private implicit val specificParentTransformFormat = jsonFormat1(SpecificParentExtractor.apply)
+  private implicit val specificChildTransformFormat = jsonFormat1(SpecificChildExtractor.apply)
+  private implicit val selfAndSpecificParentTransformFormat =
+    jsonFormat1(SelfAndSpecificParentExtractor.apply)
+  private implicit val selfAndSpecificChildTransformFormat =
+    jsonFormat1(SelfAndSpecificChildExtractor.apply)
+  private implicit val allChildrenExtractorFormat = jsonFormat0(() => AllChildrenExtractor)
+  private implicit val allParentsExtractorFormat = jsonFormat0(() => AllParentsExtractor)
+  private implicit val eachChildExtractorFormat = jsonFormat0(() => EachChildExtractor)
+  private implicit val eachParentExtractorFormat = jsonFormat0(() => EachParentExtractor)
+  private implicit val selfExtractorFormat = jsonFormat0(() => SelfExtractor)
 
-  /** Boilerplate code to serialize a NeighborhoodExtractor to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM NeighborhoodExtractor, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object NeighborhoodExtractorJsonFormat extends RootJsonFormat[NeighborhoodExtractor] {
-
-    implicit val specificParentTransformFormat =
-      jsonFormat1(SpecificParentExtractor.apply).pack("type" -> "SpecificParentExtractor")
-    implicit val specificChildTransformFormat =
-      jsonFormat1(SpecificChildExtractor.apply).pack("type" -> "SpecificChildExtractor")
-    implicit val selfAndSpecificParentTransformFormat =
-      jsonFormat1(SelfAndSpecificParentExtractor.apply).pack(
-        "type" -> "SelfAndSpecificParentExtractor"
-      )
-    implicit val selfAndSpecificChildTransformFormat =
-      jsonFormat1(SelfAndSpecificChildExtractor.apply).pack("type" ->
-        "SelfAndSpecificChildExtractor")
-
-    def write(extractor: NeighborhoodExtractor): JsValue = extractor match {
-      case specificParentExtractor: SpecificParentExtractor => specificParentExtractor.toJson
-      case specificChildExtractor: SpecificChildExtractor => specificChildExtractor.toJson
-      case selfAndSpecificParentExtractor: SelfAndSpecificParentExtractor =>
-        selfAndSpecificParentExtractor.toJson
-      case selfAndSpecificChildExtractor: SelfAndSpecificChildExtractor =>
-        selfAndSpecificChildExtractor.toJson
-      case AllChildrenExtractor => JsString("AllChildrenExtractor")
-      case AllParentsExtractor => JsString("AllParentsExtractor")
-      case EachChildExtractor => JsString("EachChildExtractor")
-      case EachParentExtractor => JsString("EachParentExtractor")
-      case SelfExtractor => JsString("SelfExtractor")
-    }
-
-    def read(value: JsValue): NeighborhoodExtractor = value match {
-      case JsString(typeid) => typeid match {
-        case "AllChildrenExtractor" => AllChildrenExtractor
-        case "AllParentsExtractor" => AllParentsExtractor
-        case "EachChildExtractor" => EachChildExtractor
-        case "EachParentExtractor" => EachParentExtractor
-        case "SelfExtractor" => SelfExtractor
-        case x => deserializationError(s"Invalid identifier for NeighborhoodExtractor: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        specificParentTransformFormat,
-        specificChildTransformFormat,
-        selfAndSpecificParentTransformFormat,
-        selfAndSpecificChildTransformFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
-  }
+  implicit val neighborhoodExtractorJsonFormat = parentFormat[NeighborhoodExtractor](
+    childFormat[SpecificParentExtractor, NeighborhoodExtractor],
+    childFormat[SpecificChildExtractor, NeighborhoodExtractor],
+    childFormat[SelfAndSpecificParentExtractor, NeighborhoodExtractor],
+    childFormat[SelfAndSpecificChildExtractor, NeighborhoodExtractor],
+    childFormat[AllChildrenExtractor.type, NeighborhoodExtractor],
+    childFormat[AllParentsExtractor.type, NeighborhoodExtractor],
+    childFormat[EachChildExtractor.type, NeighborhoodExtractor],
+    childFormat[EachParentExtractor.type, NeighborhoodExtractor],
+    childFormat[SelfExtractor.type, NeighborhoodExtractor]
+  )
 }
 
 /** Extracts the neighborhood (child1, ..., childK) from a parse tree, where childI is
@@ -88,7 +61,7 @@ case object AllChildrenExtractor extends NeighborhoodExtractor {
 case object AllParentsExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    Seq(Neighborhood(parse.getParents().getOrElse(token, Seq())))
+    Seq(Neighborhood(parse.getParents.getOrElse(token, Seq())))
   }
 }
 
@@ -108,7 +81,7 @@ case object EachChildExtractor extends NeighborhoodExtractor {
 case object EachParentExtractor extends NeighborhoodExtractor {
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
-    parse.getParents().getOrElse(token, Seq()) map { parent => Neighborhood(Seq(parent)) }
+    parse.getParents.getOrElse(token, Seq()) map { parent => Neighborhood(Seq(parent)) }
   }
 }
 
@@ -135,7 +108,7 @@ case class SpecificParentExtractor(parentIndex: Int) extends NeighborhoodExtract
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
+      parse.getParents.getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
         Neighborhood(Seq(x))
       }
     ).flatten
@@ -165,7 +138,7 @@ case class SelfAndSpecificParentExtractor(parentIndex: Int) extends Neighborhood
 
   override def apply(parse: PolytreeParse, token: Int): Seq[Neighborhood] = {
     Seq(
-      parse.getParents().getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
+      parse.getParents.getOrElse(token, Seq[Int]()).lift(parentIndex) map { x =>
         Neighborhood(Seq(x, token))
       }
     ).flatten

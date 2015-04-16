@@ -21,13 +21,7 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
   val artifactName = verbnetConfig.getString("name")
   val version = verbnetConfig.getInt("version")
 
-  val verbnetPath: java.nio.file.Path = Datastore.directoryPath(
-    groupName,
-    artifactName,
-    version
-  )
-
-  val verbnet = new Verbnet(verbnetPath.toString)
+  val verbnet = new Verbnet(groupName, artifactName, version)
 
   "VerbnetUtil.getVerbnetClasses" should
     "return the correct answer for verbs present in VerbNet" in {
