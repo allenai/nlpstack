@@ -53,8 +53,9 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     RandomForest.normalizeHistogram(outcomeHistogram)
   }
 
-  /** Each decision gets a single vote about the outcome. The produced distribution is the
-    * normalized histogram of the votes.
+  /** As in the outcomeDistribution method, returns the produced distribution as a
+    * normalized histogram of the votes from individual decision trees. In addition, produces
+    * a justification for each outcome, by aggregating decision tree justifications.
     *
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes, and justifications for the outcomes.

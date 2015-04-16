@@ -36,7 +36,8 @@ trait Justification
   */
 trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
 
-  /** Gets the probability distribution over outcomes.
+  /** Gets the probability distribution over outcomes, with justification for each outcome in the
+    * distribution.
     *
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data with associated

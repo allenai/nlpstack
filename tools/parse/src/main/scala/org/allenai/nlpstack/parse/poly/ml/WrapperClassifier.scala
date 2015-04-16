@@ -101,41 +101,6 @@ case class JustifyingWrapperClassifier(
       }
   }
 
-  def prettyPrintDecisionTreeJustification(
-    justification: DecisionTreeJustification
-  ): String = {
-    // Map the feature indexes to their feature names
-    val featureTuples: Seq[(FeatureName, Int)] = justification.breadCrumb.map {
-      case (featureNameIx: Int, featureVal: Int) =>
-        (featureNameForIndex(featureNameIx), featureVal)
-    }
-    "[ " + (for {
-      featureTuple <- featureTuples
-    } yield {
-      featureTuple._1 + " = " + featureTuple._2
-    }).mkString(", ") + " ]"
-  }
-
-  def prettyPrintRandomForestJustification(
-    justification: RandomForestJustification
-  ): String = {
-    s"\nRandom Forest with ${justification.totalDecisionTreeCount} trees, of which " +
-      s"${justification.decisionTreeCountForOutcome} trees voted for the current outcome\n" +
-      s"Top ${justification.decisionTreeJustifications.size} decision tree justification(s):\n" +
-      "[\n" + justification.decisionTreeJustifications.map(j =>
-        prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
-  }
-
-  def prettyPrintJustification(justification: Justification): String = {
-    justification match {
-      case dtJustification: DecisionTreeJustification =>
-        prettyPrintDecisionTreeJustification(dtJustification)
-      case rfJustification: RandomForestJustification =>
-        prettyPrintRandomForestJustification(rfJustification)
-      case _ => ""
-    }
-  }
-
   /** Returns a distribution over all (integer) outcomes, given the input feature vector.
     *
     * @param featureVector the feature vector to classify
@@ -176,6 +141,46 @@ case class JustifyingWrapperClassifier(
       getExplainableDecisionTreeJustification(dtJustification)
     }
   }
+
+  /** Stringifies a Decision Tree justification into a set of feature-value pairs corresponding
+    * to every decision in the breadcrumb that led to a classification outcome.
+    */
+  def prettyPrintDecisionTreeJustification(
+    justification: DecisionTreeJustification
+  ): String = {
+    // Map the feature indexes to their feature names
+    val featureMap = getExplainableDecisionTreeJustification(justification)
+    "[ " + (for {
+      (featureName, featureVal) <- featureMap
+    } yield {
+      featureName + " = " + featureVal
+    }).mkString(", ") + " ]"
+  }
+
+  /** Stringifies a Random Forest justification.
+    */
+  def prettyPrintRandomForestJustification(
+    justification: RandomForestJustification
+  ): String = {
+    s"\nRandom Forest with ${justification.totalDecisionTreeCount} trees, of which " +
+      s"${justification.decisionTreeCountForOutcome} trees voted for the current outcome\n" +
+      s"Top ${justification.decisionTreeJustifications.size} decision tree justification(s):\n" +
+      "[\n" + justification.decisionTreeJustifications.map(j =>
+        prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
+  }
+
+  /** Stringifies a classifier's justification.
+    */
+  def prettyPrintJustification(justification: Justification): String = {
+    justification match {
+      case dtJustification: DecisionTreeJustification =>
+        prettyPrintDecisionTreeJustification(dtJustification)
+      case rfJustification: RandomForestJustification =>
+        prettyPrintRandomForestJustification(rfJustification)
+      case _ => ""
+    }
+  }
+
 }
 
 /** Provide Serialization and Deserialization methods based on the runtime type of
