@@ -87,8 +87,8 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       }
   }
 
-  /* Aggregate counts for each outcome (by summing them up), and aggregate the
-   * decision tree justifications by creating a RandomForestJustification out of them.
+  /* Aggregate counts for each outcome, and aggregate the decision tree justifications
+   * by creating a RandomForestJustification out of them.
    * 
    * @param outcomeHistogram  a map of each outcome to a seq of indivdual occurrences of that
    * outcome from various decision trees, with the decision tree justification for each,
