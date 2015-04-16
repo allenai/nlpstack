@@ -29,7 +29,6 @@ class PolytreeParserSpec extends UnitSpec {
 
   val pancake = "A waffle is like a pancake with a syrup trap."
 
-  /*
   "PolytreeParserParser" should "correctly parse a simple sentence" in {
     val parseTreeStr = parseTreeString(pancake)
     val expectedParseTreeStr =
@@ -68,6 +67,5 @@ class PolytreeParserSpec extends UnitSpec {
         |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
-  */
 
 }
