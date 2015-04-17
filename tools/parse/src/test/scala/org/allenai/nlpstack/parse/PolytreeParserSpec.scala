@@ -32,17 +32,17 @@ class PolytreeParserSpec extends UnitSpec {
   "PolytreeParserParser" should "correctly parse a simple sentence" in {
     val parseTreeStr = parseTreeString(pancake)
     val expectedParseTreeStr =
-      """|det(waffle-2, A-1)
-         |nsubj(is-3, waffle-2)
-         |root(ROOT-0, is-3)
-         |prep(is-3, like-4)
-         |det(pancake-6, a-5)
-         |pobj(like-4, pancake-6)
-         |prep(pancake-6, with-7)
-         |det(trap-10, a-8)
-         |nn(trap-10, syrup-9)
-         |pobj(with-7, trap-10)
-         |punct(is-3, .-11)""".stripMargin
+      """quantmod(waffle-2, A-1)
+        |nsubj(is-3, waffle-2)
+        |root(ROOT-0, is-3)
+        |prep(is-3, like-4)
+        |det(pancake-6, a-5)
+        |pobj(like-4, pancake-6)
+        |prep(is-3, with-7)
+        |det(trap-10, a-8)
+        |nn(trap-10, syrup-9)
+        |pobj(with-7, trap-10)
+        |punct(is-3, .-11)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
 
