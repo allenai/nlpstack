@@ -92,7 +92,7 @@ object ParseReranker {
 case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     extends ParseStatistic {
 
-  var sentencesWithMistakes = Seq[(Sentence, Set[String], Set[String])]()
+  var sentenceGoldParsesAndMistakes = Seq[(Sentence, Set[String], Set[String], Set[String])]()
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     candidateParse map { candParse =>
@@ -105,6 +105,10 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         } filter { tokIndex =>
           candParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
         }
+
+      val goldFamilyStrings = (Range(0, goldParse.tokens.size) map {
+        tokenIx => goldParse.printFamily(tokenIx)
+      }).toSet
 
       val falsePositiveMessages = weirdGoldNodes map {
         case (goldNodeIx, justificationOption) =>
@@ -122,17 +126,22 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
       }
 
       if (falsePositiveMessages.nonEmpty || trueNegativeMessages.nonEmpty) {
-        sentencesWithMistakes = sentencesWithMistakes :+
-          Tuple3(goldParse.sentence, falsePositiveMessages, trueNegativeMessages)
+        sentenceGoldParsesAndMistakes = sentenceGoldParsesAndMistakes :+
+          Tuple4(goldParse.sentence, goldFamilyStrings, falsePositiveMessages, trueNegativeMessages)
       }
     }
   }
 
   override def report(diagnosticWriter: Option[PrintWriter]): Unit = {
-    sentencesWithMistakes foreach {
-      case (sentence, falsePositiveMessages, trueNegativeMessages) =>
+    sentenceGoldParsesAndMistakes foreach {
+      case (sentence, goldParseFamilies, falsePositiveMessages, trueNegativeMessages) =>
         logMessage(diagnosticWriter, "")
         logMessage(diagnosticWriter, sentence.asWhitespaceSeparatedString)
+        logMessage(diagnosticWriter, "Gold Families:")
+        goldParseFamilies.foreach { goldParseFamily =>
+          logMessage(diagnosticWriter, s"  ${goldParseFamily}")
+        }
+        logMessage(diagnosticWriter, "")
         if (falsePositiveMessages.nonEmpty) {
           logMessage(diagnosticWriter, "Good families, classified as weird:")
           falsePositiveMessages foreach { message =>
@@ -149,7 +158,7 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
   }
 
   override def reset(): Unit = {
-    sentencesWithMistakes = Seq[(Sentence, Set[String], Set[String])]()
+    sentenceGoldParsesAndMistakes = Seq[(Sentence, Set[String], Set[String], Set[String])]()
   }
 
   /** Helper method used to check whether the WrapperClassifier in use is a
