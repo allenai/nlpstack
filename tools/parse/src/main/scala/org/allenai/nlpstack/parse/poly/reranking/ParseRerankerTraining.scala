@@ -276,25 +276,28 @@ case class WeirdParseNodeRerankingFunction(
   /** Gets the set of tokens in a parse.
     *
     * @param parse the parse tree to analyze
-    * @return the indices , weirdness score and justification for all tokens
+    * @return tuples containing the indices of the nodes, and the classifier outcome,
+    * the weirdness score and the justification for each.
     */
-  def getNodes(parse: PolytreeParse): Set[(Int, Float, Option[Justification])] = {
-    Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
-      classifier match {
+  def getNodes(parse: PolytreeParse): Set[(Int, Int, Float, Option[Justification])] = {
+    (Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
+      val distWithJustification : Map[Int, (Float, Option[Justification])]= classifier match {
         case c: JustifyingWrapperClassifier =>
-          val confAndJustification =
-            (c.asInstanceOf[JustifyingWrapperClassifier].getDistributionWithJustification(
-              feature(parse, tokenIndex)
-            ) mapValues (v => (v._1, Some(v._2)))).
-              getOrElse(0, (0.0f, None))
-          (tokenIndex, confAndJustification._1, confAndJustification._2)
+          c.asInstanceOf[JustifyingWrapperClassifier].getDistributionWithJustification(
+            feature(parse, tokenIndex)) mapValues (v => (v._1, Option(v._2)))
         case _ =>
-          (
-            tokenIndex,
-            classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0f), None
-          )
+          classifier.getDistribution(feature(parse, tokenIndex)).mapValues(
+              v => (v, None))
       }
-    }
+      (for {
+        outcome <- distWithJustification.keys
+      } yield {
+        (tokenIndex,
+          outcome,
+          distWithJustification(outcome)._1,
+          distWithJustification(outcome)._2)
+      }).toSet
+    }).flatten
   }
 
   /** Gets the set of "weird" tokens in a parse.
@@ -305,10 +308,10 @@ case class WeirdParseNodeRerankingFunction(
   def getWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
     val nodeWeirdness = getNodes(parse)
     nodeWeirdness filter {
-      case (_, weirdness, _) =>
-        weirdness >= weirdnessThreshold
+      case (_, outcome, weirdness, _) =>
+        ((outcome == 0) && (weirdness >= weirdnessThreshold))
     } map {
-      case (node, _, justification) =>
+      case (node, _, _, justification) =>
         (node, justification)
     } filter {
       case (tokenIndex, justification) =>
@@ -324,10 +327,10 @@ case class WeirdParseNodeRerankingFunction(
   def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
     val nodeWeirdness = getNodes(parse)
     nodeWeirdness filter {
-      case (_, weirdness, _) =>
-        weirdness < weirdnessThreshold
+      case (_, outcome, weirdness, _) =>
+        ((outcome != 0) || (weirdness < weirdnessThreshold))
     } map {
-      case (node, _, justification) =>
+      case (node, _, _, justification) =>
         (node, justification)
     } filter {
       case (tokenIndex, justification) =>
