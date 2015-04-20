@@ -53,10 +53,14 @@ trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
     * @return predicted outcome with justification
     */
   def classifyAndJustify(featureVector: FeatureVector): (Int, Justification) = {
-    val (bestClass, (bestProb, bestClassJustification)) =
-      outcomeDistributionWithJustification(featureVector) maxBy {
+    val (bestClass, (bestProb, bestClassJustification)) = {
+      val s = outcomeDistributionWithJustification(featureVector)
+      println(s)
+      s maxBy {
         case (_, (prob, justification)) => prob
       }
+    }
+    println(bestClass)
     (bestClass, bestClassJustification)
   }
 }

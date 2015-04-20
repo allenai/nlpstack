@@ -285,6 +285,9 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         case dtJustification: DecisionTreeJustification =>
           prettyPrintDecisionTreeWeirdnessExplanation(dtJustification, justifyingClassifier)
         case rfJustification: RandomForestJustification =>
+          if (rfJustification.decisionTreeCountForOutcome < 6) {
+            println("UHOH!")
+          }
           s"\nRandom Forest with ${rfJustification.totalDecisionTreeCount} trees, of which " +
             s"${rfJustification.decisionTreeCountForOutcome} trees " +
             s"voted for the current outcome\n" +

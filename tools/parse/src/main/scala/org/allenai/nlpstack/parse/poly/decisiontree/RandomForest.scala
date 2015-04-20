@@ -66,30 +66,35 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     // Call 'classifyAndJustify' on each decision tree in the forest, group by outcomes, and
     // aggregate total counts of the number of trees producing each outcome, and aggregate
     // corresponding justifications from the individual decision trees.
-    val outcomeHistogram =
+    val outcomeHistogram: Map[Int, Seq[(Int, DecisionTreeJustification, Double)]] =
       (for {
         decisionTree <- decisionTrees
       } yield {
         val outcome = decisionTree.classifyAndJustify(featureVector)
         val dtJustification = outcome._2 match {
           case justification: DecisionTreeJustification =>
-            justification.asInstanceOf[DecisionTreeJustification]
+            justification
         }
         val nodeScore = decisionTree.getNodeDivergenceScore(dtJustification.node)
         (outcome._1, dtJustification, nodeScore)
       }).groupBy { x => x._1 }
     val outcomeHistogramWithDtJustifications: Map[Int, (Int, RandomForestJustification)] =
       aggregateOutcomeCountsAndJustifications(outcomeHistogram, Some(1), decisionTrees.size)
+    println(outcomeHistogramWithDtJustifications)
     RandomForest.normalizeHistogram(
       outcomeHistogramWithDtJustifications.map { case (k, v) => (k, v._1) }
     ).map {
-        case (k, v) => (k, (v, outcomeHistogramWithDtJustifications(k)._2))
+        case (k, v) =>
+          println(s"k=$k")
+          println(v)
+          println(outcomeHistogramWithDtJustifications(k)._2)
+          (k, (v, outcomeHistogramWithDtJustifications(k)._2))
       }
   }
 
   /* Aggregate counts for each outcome, and aggregate the decision tree justifications
    * by creating a RandomForestJustification out of them.
-   * 
+   *
    * @param outcomeHistogram  a map of each outcome to a seq of indivdual occurrences of that
    * outcome from various decision trees, with the decision tree justification for each,
    * and the score for the decision tree node chosen for each case.
@@ -97,7 +102,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
    * for the top n decision tree justifications to propagate to the random forest justification. The
    * justifications are ranked by the associated node's score. If this parameter is unspecified, all
    * decision tree justifications are bubbled up to the random forest justification.
-   * @param totalDtCount total no. of decision trees in the random forest- used to bubble up to 
+   * @param totalDtCount total no. of decision trees in the random forest- used to bubble up to
    * the random forest justification that is created here and returned.
    */
   private def aggregateOutcomeCountsAndJustifications(
@@ -105,9 +110,13 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     numDecisionTreesToConsiderForJustification: Option[Int] = None,
     totalDtCount: Int
   ): Map[Int, (Int, RandomForestJustification)] = {
-    (outcomeHistogram mapValues { v =>
-      (v.size, v)
-    }) mapValues {
+
+    val v: Map[Int, (Int, Seq[(Int, DecisionTreeJustification, Double)])] =
+      outcomeHistogram mapValues { v =>
+        (v.size, v)
+      }
+
+    v.mapValues {
       case (outcomeCount: Int,
         (dtJustificationsWithScores: Seq[(Int, DecisionTreeJustification, Double)])) =>
         // Sort Decision Tree justifications by descending order of node scores and take the top
@@ -127,10 +136,16 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @return a probability distribution over outcomes
     */
   def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
+    val outcomeHistograms: String = decisionTrees flatMap { decisionTree =>
+      decisionTree.outcomeHistogram(featureVector).toSeq
+    }
+    outcomeHistograms map { hist => hist.}
+    /*
     val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
       decisionTree.outcomeHistogram(featureVector).toSeq
     } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
     RandomForest.normalizeHistogram(summedOutcomeHistograms)
+    */
   }
 
   /** The set of all features found in at least one decision tree of the collection. */
