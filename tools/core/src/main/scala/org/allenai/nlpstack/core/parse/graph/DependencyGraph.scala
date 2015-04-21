@@ -287,7 +287,14 @@ class DependencyGraph private (
         ))
       ))
 
-    DependencyGraph(graph.vertices, graph.edges)
+    val graphIsSane =
+      (graph.vertices.count(graph.indegree(_) == 0) == 1) &&
+        graph.vertices.count(_.id < 0) == 0 &&
+        graph.edges.count(e => e.source.id < 0 || e.dest.id < 0) == 0
+    if (graphIsSane)
+      DependencyGraph(graph.vertices, graph.edges)
+    else
+      this
   }
 
   /** Simplify xsubj and nsubj to just subj. */
