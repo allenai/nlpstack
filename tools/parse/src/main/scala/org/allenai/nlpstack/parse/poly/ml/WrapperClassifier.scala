@@ -22,7 +22,7 @@ import scala.collection.immutable.HashSet
   * org.allenai.nlpstack.parse.poly.ml FeatureVector format for classification.
   * This is a trait that specific wrappers can extend.
   */
-sealed trait WrapperClassifier {
+case class WrapperClassifier {
   def classifier(): ProbabilisticClassifier
   def featureNameMap(): Seq[(Int, FeatureName)]
 
@@ -61,26 +61,6 @@ sealed trait WrapperClassifier {
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )
   }
-}
-/* A case class extending the WrapperClassifier trait. Does not support any new functionality.
-  * @param classifier the embedded classifier (which uses integer-based feature names)
-  * @param featureNameMap a map from the integer feature names to their string-based form
-  */
-case class BasicWrapperClassifier(
-    classifier: ProbabilisticClassifier,
-    featureNameMap: Seq[(Int, FeatureName)]
-) extends WrapperClassifier {
-}
-
-/* A case class extending the WrapperClassifier trait, that supports methods to classify and
-  * provide justification for the classification.
-  * @param classifier a justifying classifier (which uses integer-based feature names)
-  * @param featureNameMap a map from the integer feature names to their string-based form
-  */
-case class JustifyingWrapperClassifier(
-    classifier: JustifyingProbabilisticClassifier,
-    featureNameMap: Seq[(Int, FeatureName)]
-) extends WrapperClassifier {
 
   /** Given the input feature vector, returns the most probable (integer) outcome, along
     * with a justification for the outcome.
@@ -105,7 +85,7 @@ case class JustifyingWrapperClassifier(
     *
     * @param featureVector the feature vector to classify
     * @return a tuple with the most probable (integer) outcome and the classifier justification for
-    *   the outcome
+    * the outcome
     */
   def getDistributionWithJustification(
     featureVector: FeatureVector
@@ -171,6 +151,7 @@ case class JustifyingWrapperClassifier(
 
   /** Stringifies a classifier's justification.
     */
+  /*
   def prettyPrintJustification(justification: Justification): String = {
     justification match {
       case dtJustification: DecisionTreeJustification =>
@@ -180,6 +161,7 @@ case class JustifyingWrapperClassifier(
       case _ => ""
     }
   }
+  */
 
 }
 

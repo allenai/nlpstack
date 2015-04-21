@@ -13,20 +13,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
 
-/** Random Forest outcomes can be explained in terms of the individual decision trees'
-  * justifications.
-  * @param dtJustifications contains individual decision trees' justifications: this may be a pruned
-  * list of justifications based on the chosen cutoff for top n decision trees-- currently not a
-  * tunable parameter but hardcoded in outcomeDistributionWithJustification to 1, which will result
-  * in only the top scoring decision tree's justification being bubbled up here.
-  * @param dtCountForOutcome no. of decision trees that voted for the outcome associated with this
-  * justification. (A classifier outcome will have a justification associated with it -- refer to
-  * the return type of the classifyAndJustify method, for e.g.).
-  * @param totalDtCount total no. of decision trees in the random forest.
-  */
 case class RandomForestJustification(
-  decisionTreeJustifications: Seq[DecisionTreeJustification],
-  decisionTreeCountForOutcome: Int, totalDecisionTreeCount: Int
+  tree: Int, treeNode: Int
 ) extends Justification
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
@@ -36,9 +24,52 @@ case class RandomForestJustification(
   * @param decisionTrees the collection of decision trees
   */
 case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
-    extends JustifyingProbabilisticClassifier {
+    extends ProbabilisticClassifier {
 
   require(decisionTrees.nonEmpty, "Cannot initialize a RandomForest with zero decision trees")
+
+  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+    val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
+      decisionTree.classify(featureVector)
+    }
+    val outcomeHistogram = decisionTreeOutputs map {
+      _._1
+    } groupBy { x =>
+      x
+    } mapValues { v =>
+      v.size
+    }
+    val (bestOutcome, _) = outcomeHistogram maxBy { case (_, numVotes) => numVotes }
+    val majorityJustifications: Seq[(Int, Justification)] =
+      (decisionTreeOutputs.zipWithIndex filter {
+        case ((outcome, _), _) =>
+          outcome == bestOutcome
+      } map {
+        case ((_, maybeJustification), treeIndex) =>
+          maybeJustification map { justification =>
+            (treeIndex, justification)
+          }
+      }).flatten
+    val justification =
+      if (majorityJustifications.isEmpty) {
+        None
+      } else {
+        val (mostConvincingTree, mostConvincingJustification) =
+          majorityJustifications maxBy {
+            case (treeIndex, justification) =>
+              justification match {
+                case dtJust: DecisionTreeJustification =>
+                  decisionTrees(treeIndex).getNodeDivergenceScore(dtJust.node)
+              }
+          }
+        val mostConvincingNode = mostConvincingJustification match {
+          case dtJust: DecisionTreeJustification =>
+            dtJust.node
+        }
+        Some(RandomForestJustification(mostConvincingTree, mostConvincingNode))
+      }
+    (bestOutcome, justification)
+  }
 
   /** Each decision gets a single vote about the outcome. The produced distribution is the
     * normalized histogram of the votes.
@@ -49,17 +80,21 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
   override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val outcomeHistogram = decisionTrees map { decisionTree =>
       decisionTree.classify(featureVector)
-    } groupBy { x => x } mapValues { v => v.size }
-    RandomForest.normalizeHistogram(outcomeHistogram)
+    } map {
+      case (decision, _) =>
+        decision
+    }
+    RandomForest.normalizeHistogram(outcomeHistogram groupBy { x => x } mapValues { v => v.size })
   }
 
   /** As in the outcomeDistribution method, returns the produced distribution as a
     * normalized histogram of the votes from individual decision trees. In addition, produces
     * a justification for each outcome, by aggregating decision tree justifications.
     *
-    * @param featureVector feature vector to find outcome distribution for
+    * param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes, and justifications for the outcomes.
     */
+  /*
   override def outcomeDistributionWithJustification(
     featureVector: FeatureVector
   ): Map[Int, (Float, RandomForestJustification)] = {
@@ -80,17 +115,23 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       }).groupBy { x => x._1 }
     val outcomeHistogramWithDtJustifications: Map[Int, (Int, RandomForestJustification)] =
       aggregateOutcomeCountsAndJustifications(outcomeHistogram, Some(1), decisionTrees.size)
-    println(outcomeHistogramWithDtJustifications)
-    RandomForest.normalizeHistogram(
+    val result = RandomForest.normalizeHistogram(
       outcomeHistogramWithDtJustifications.map { case (k, v) => (k, v._1) }
     ).map {
         case (k, v) =>
-          println(s"k=$k")
-          println(v)
-          println(outcomeHistogramWithDtJustifications(k)._2)
-          (k, (v, outcomeHistogramWithDtJustifications(k)._2))
+          println(s"k=$k; v=$v")
+          val justification: RandomForestJustification = outcomeHistogramWithDtJustifications(k)._2
+          (k, (v, justification))
       }
+    val maxime = result maxBy { x => x._2._1 }
+    val bestJust = maxime._2._2
+    println(s"Best justification: $bestJust")
+    if(bestJust.decisionTreeCountForOutcome < 6) {
+      println("EH OH!")
+    }
+    result
   }
+  */
 
   /* Aggregate counts for each outcome, and aggregate the decision tree justifications
    * by creating a RandomForestJustification out of them.
@@ -105,6 +146,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
    * @param totalDtCount total no. of decision trees in the random forest- used to bubble up to
    * the random forest justification that is created here and returned.
    */
+  /*
   private def aggregateOutcomeCountsAndJustifications(
     outcomeHistogram: Map[Int, Seq[(Int, DecisionTreeJustification, Double)]],
     numDecisionTreesToConsiderForJustification: Option[Int] = None,
@@ -129,6 +171,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
           new RandomForestJustification(dtJustificationsToReport, outcomeCount, totalDtCount))
     }
   }
+  */
 
   /** An experimental weighted version of the above .outcomeDistribution method.
     *
@@ -136,16 +179,16 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @return a probability distribution over outcomes
     */
   def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
-    val outcomeHistograms: String = decisionTrees flatMap { decisionTree =>
-      decisionTree.outcomeHistogram(featureVector).toSeq
-    }
-    outcomeHistograms map { hist => hist.}
-    /*
+    //val outcomeHistograms: String = decisionTrees flatMap { decisionTree =>
+    //  decisionTree.outcomeHistogram(featureVector).toSeq
+    //}
+    //outcomeHistograms map { hist => hist.}
+
     val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
       decisionTree.outcomeHistogram(featureVector).toSeq
     } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
     RandomForest.normalizeHistogram(summedOutcomeHistograms)
-    */
+
   }
 
   /** The set of all features found in at least one decision tree of the collection. */

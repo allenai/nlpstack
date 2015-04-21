@@ -1,7 +1,13 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
 import reming.{ JsonFormat, JsonParser, JsonPrinter, LazyFormat }
 import reming.DefaultJsonProtocol._
+
+/* Abstract "justification" for a particular classifier decision. */
+trait Justification {
+  def prettyPrint(featureNames: Map[Int, FeatureName])
+}
 
 trait ProbabilisticClassifier {
 
@@ -12,28 +18,25 @@ trait ProbabilisticClassifier {
     */
   def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float]
 
-  /** Classifies an feature vector.
+  /** Classifies an feature vector and optionally returns a "justification" for the classification
+    * decision.
     *
     * @param featureVector feature vector to classify
-    * @return predicted outcome
+    * @return (predicted outcome, optional justification for the prediction)
     */
-  def classify(featureVector: FeatureVector): Int = {
-    val (bestClass, bestProb) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
-    bestClass
-  }
+  def classify(featureVector: FeatureVector): (Int, Option[Justification]) //= {
+  //val (bestClass, _) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
+  //bestClass
+  //}
 
   /** All features used by the classifier. */
   def allFeatures: Set[Int]
 }
 
-/** Trait to be implemented based on the required structure for the justification for a particular
-  * classifier.
-  */
-trait Justification
-
 /** Probabilistic Classifier that classifies a given feature vector and provides justification for
   * the obtained outcome.
   */
+/*
 trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
 
   /** Gets the probability distribution over outcomes, with justification for each outcome in the
@@ -64,6 +67,7 @@ trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
     (bestClass, bestClassJustification)
   }
 }
+*/
 
 object ProbabilisticClassifier {
 
@@ -109,24 +113,4 @@ object ProbabilisticClassifier {
   }
 }
 
-/** Companion object to the JustifyingProbabilisticClassifier to enable proper deserialization.
-  */
-object JustifyingProbabilisticClassifier {
-  implicit object JustifyingProbabilisticClassifierJsonFormat
-      extends JsonFormat[JustifyingProbabilisticClassifier] {
-    private val wrappedFormat = implicitly[LazyFormat[ProbabilisticClassifier]]
-    override def write(obj: JustifyingProbabilisticClassifier, printer: JsonPrinter): Unit = {
-      wrappedFormat.write(obj, printer)
-    }
-    override def read(parser: JsonParser): JustifyingProbabilisticClassifier = {
-      wrappedFormat.read(parser) match {
-        case j: JustifyingProbabilisticClassifier => j
-        case bad => deserializationError("Non-JustifyingProbabilisticClassifier found: " + bad)
-      }
-    }
-  }
-}
-
 trait ProbabilisticClassifierTrainer extends (FeatureVectorSource => ProbabilisticClassifier)
-
-trait JustifyingProbabilisticClassifierTrainer extends (FeatureVectorSource => JustifyingProbabilisticClassifier)

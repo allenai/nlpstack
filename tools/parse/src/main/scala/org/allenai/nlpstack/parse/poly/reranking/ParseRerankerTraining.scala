@@ -283,7 +283,7 @@ case class WeirdParseNodeRerankingFunction(
     (Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
       val distWithJustification: Map[Int, (Float, Option[Justification])] = classifier match {
         case c: JustifyingWrapperClassifier =>
-          c.asInstanceOf[JustifyingWrapperClassifier].getDistributionWithJustification(
+          c.getDistributionWithJustification(
             feature(parse, tokenIndex)
           ) mapValues (v => (v._1, Option(v._2)))
         case _ =>
