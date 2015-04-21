@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.core.parse.graph
 
+import org.allenai.common.Logging
 import org.allenai.nlpstack.core.graph.Graph.Edge
 import org.allenai.nlpstack.core.graph.{ Direction, DownEdge, Graph, UpEdge }
 import org.allenai.nlpstack.core._
@@ -18,7 +19,7 @@ class DependencyGraph private (
     val root: Option[DependencyNode],
     vertices: Set[DependencyNode],
     edges: Set[Edge[DependencyNode]]
-) extends Graph[DependencyNode](vertices, edges) {
+) extends Graph[DependencyNode](vertices, edges) with Logging {
 
   val nodes = vertices
   val dependencies = edges
@@ -262,6 +263,8 @@ class DependencyGraph private (
       if (newGraph.vertices.count(newGraph.indegree(_) == 0) == 1) {
         newGraph
       } else {
+        logger.warn("Collapsing produced two root nodes. Use info log level for more information.")
+        logger.info(s"Problematic graph: $this")
         graph
       }
     }
@@ -291,10 +294,13 @@ class DependencyGraph private (
       (graph.vertices.count(graph.indegree(_) == 0) == 1) &&
         graph.vertices.count(_.id < 0) == 0 &&
         graph.edges.count(e => e.source.id < 0 || e.dest.id < 0) == 0
-    if (graphIsSane)
+    if (graphIsSane) {
       DependencyGraph(graph.vertices, graph.edges)
-    else
+    } else {
+      logger.warn("Collapsing produced insane graph. Use info log level for more information.")
+      logger.info(s"Problematic graph: $this")
       this
+    }
   }
 
   /** Simplify xsubj and nsubj to just subj. */
