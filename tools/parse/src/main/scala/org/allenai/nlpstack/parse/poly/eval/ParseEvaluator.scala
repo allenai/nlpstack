@@ -136,14 +136,16 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
       case Some(candParse) =>
         if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
           numParses += 1
-          numTotal += goldParse.breadcrumb.tail.size
+          val totalIncrement = goldParse.breadcrumb.tail.size
+          numTotal += totalIncrement
           // skip the first element because it is the nexus (hence it has no part-of-speech)
-          numCorrect +=
+          val correctIncrement =
             candParse.tokens.tail.zip(goldParse.tokens.tail) count {
               case (candToken, goldToken) =>
                 candToken.getDeterministicProperty('cpos) ==
                   goldToken.getDeterministicProperty('cpos)
             }
+          numCorrect += correctIncrement
           candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
             case (candToken, goldToken) =>
               candToken.getDeterministicProperty('cpos) != goldToken.getDeterministicProperty('cpos)
@@ -212,6 +214,8 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
       case (correctIncrement, totalIncrement) =>
         numCorrect += correctIncrement
         numTotal += totalIncrement
+        println(s"Sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
+        println(s"  ${correctIncrement / totalIncrement.toFloat}")
     }
   }
 
