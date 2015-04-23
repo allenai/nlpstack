@@ -201,26 +201,6 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     outcomeHistograms(findDecisionPoint(featureVector))
   }
 
-  /** Get the probability distribution for the various outcomes together with the justification
-    * for each.
-    */
-  /*
-  override def outcomeDistributionWithJustification(
-    featureVector: FeatureVector
-  ): Map[Int, (Float, DecisionTreeJustification)] = {
-    val (node, breadCrumb) =
-      findDecisionPointWithBreabcrumb(featureVector, 0, Seq.empty[(Int, Int)])
-    val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
-    (ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts)
-      mapValues { _.toFloat }).toSeq
-    ) map {
-      case (outcome: Int, conf: Float) =>
-        (outcome, (conf, new DecisionTreeJustification(breadCrumb, node)))
-    }).toMap
-  }
-  */
-
   /* Return node divergence against root node. This is calculated as:
    * Total no. of outcomes * KL Divergence for requested node against the root node of the tree.
    */
@@ -261,28 +241,6 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     }
   }
 
-  /** Enhanced version of the selectChild method above that returns not only the selected child's
-    * node index but also the feature index and value in the path that led to that node.
-    * and the node's splitting feature (if there is one).
-    *
-    * param nodeId the id of the node
-    * param featureVector the feature vector
-    * @return the node id of the correct child (if there is one), together with a tuple containing
-    * the index of the feature and feature value that led to that node from the previous node.
-    */
-  /*
-  protected def getChildWithPathInfo(
-    nodeId: Int, featureVector: FeatureVector
-  ): Option[(Int, (Int, Int))] = {
-    for {
-      feature <- splittingFeature(nodeId)
-      child <- child(nodeId).get(featureVector.getFeature(feature))
-    } yield {
-      (child, (feature, featureVector.getFeature(feature)))
-    }
-  }
-  */
-
   /** Finds the "decision point" of the specified feature vector. This is the node for which no
     * child covers the feature vector.
     *
@@ -297,24 +255,6 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
       case Some(child) => findDecisionPoint(featureVector, child)
     }
   }
-
-  /** Enhanced version of findDecisionPoint that finds both the decision point and the cumulative
-    * path all the way from the root that led to this point.
-    *
-    * param featureVector feature vector to classify
-    * @return the decision tree node that the feature vector is classified into
-    */
-  /*
-  @tailrec protected final def findDecisionPointWithBreabcrumb(
-    featureVector: FeatureVector, nodeId: Int = 0, breadCrumb: Seq[(Int, Int)]
-  ): (Int, Seq[(Int, Int)]) = {
-    getChildWithPathInfo(nodeId, featureVector) match {
-      case None => (nodeId, breadCrumb)
-      case Some((child, path)) =>
-        findDecisionPointWithBreabcrumb(featureVector, child, breadCrumb :+ path)
-    }
-  }
-  */
 
   /** A topological order of the decision tree nodes (where the root is the first node). */
   @transient lazy val topologicalOrder: Seq[Int] = {

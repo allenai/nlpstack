@@ -24,50 +24,11 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to classify
     * @return (predicted outcome, optional justification for the prediction)
     */
-  def classify(featureVector: FeatureVector): (Int, Option[Justification]) //= {
-  //val (bestClass, _) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
-  //bestClass
-  //}
+  def classify(featureVector: FeatureVector): (Int, Option[Justification])
 
   /** All features used by the classifier. */
   def allFeatures: Set[Int]
 }
-
-/** Probabilistic Classifier that classifies a given feature vector and provides justification for
-  * the obtained outcome.
-  */
-/*
-trait JustifyingProbabilisticClassifier extends ProbabilisticClassifier {
-
-  /** Gets the probability distribution over outcomes, with justification for each outcome in the
-    * distribution.
-    *
-    * @param featureVector feature vector to find outcome distribution for
-    * @return probability distribution of outcomes according to training data with associated
-    * explanations for each outcome.
-    */
-  def outcomeDistributionWithJustification(
-    featureVector: FeatureVector
-  ): Map[Int, (Float, Justification)]
-
-  /** Classifies a feature vector and produces a justification for the result produced.
-    *
-    * @param featureVector feature vector to classify
-    * @return predicted outcome with justification
-    */
-  def classifyAndJustify(featureVector: FeatureVector): (Int, Justification) = {
-    val (bestClass, (bestProb, bestClassJustification)) = {
-      val s = outcomeDistributionWithJustification(featureVector)
-      println(s)
-      s maxBy {
-        case (_, (prob, justification)) => prob
-      }
-    }
-    println(bestClass)
-    (bestClass, bestClassJustification)
-  }
-}
-*/
 
 object ProbabilisticClassifier {
 

@@ -86,7 +86,7 @@ object AdaptiveTraining {
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))
 
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcHybridTransitionSystemFactory(taggers)
+      ArcEagerTransitionSystemFactory(taggers)
 
     println("Training parser.")
     val baseCostFunctionFactory: Option[StateCostFunctionFactory] =
