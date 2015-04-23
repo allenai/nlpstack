@@ -55,7 +55,7 @@ case class WrapperClassifier(
   def getDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     classifier.outcomeDistribution(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
-    )
+    )._1.dist
   }
 }
 

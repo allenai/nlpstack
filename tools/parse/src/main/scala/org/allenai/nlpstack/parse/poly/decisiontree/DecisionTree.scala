@@ -170,23 +170,15 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     (outcomeHistograms(0) mapValues { _.toFloat }).toSeq
   ).toMap
 
-  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
-    val (distribution, decisionNode) = outcomeDistributionExplicit(featureVector)
-    val (bestClass, _) = distribution maxBy { case (_, prob) => prob }
-    (bestClass, Some(DecisionTreeJustification(this, decisionNode)))
-  }
-
   /** Gets a probability distribution over possible outcomes..
     *
     * @param featureVector feature vector to compute the distribution for
     * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
-    val (result, _) = outcomeDistributionExplicit(featureVector)
-    result
-  }
+  override def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification]) = {
 
-  private def outcomeDistributionExplicit(featureVector: FeatureVector): (Map[Int, Float], Int) = {
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     val distribution = ProbabilisticClassifier.normalizeDistribution(
@@ -194,7 +186,7 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
       _.toFloat
     }).toSeq
     ).toMap
-    (distribution, node)
+    (OutcomeDistribution(distribution), Some(DecisionTreeJustification(this, node)))
   }
 
   def outcomeHistogram(featureVector: FeatureVector): Map[Int, Int] = {

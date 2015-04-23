@@ -9,6 +9,15 @@ trait Justification {
   def prettyPrint(featureNames: Map[Int, FeatureName]): String
 }
 
+case class OutcomeDistribution(dist: Map[Int, Float]) {
+
+  /** The most probable outcome according to the distribution. */
+  val mostProbableOutcome: Int = {
+    val (bestOutcome, _) = dist maxBy { case (_, prob) => prob }
+    bestOutcome
+  }
+}
+
 trait ProbabilisticClassifier {
 
   /** Gets the probability distribution over outcomes.
@@ -16,7 +25,9 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float]
+  def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification])
 
   /** Classifies an feature vector and optionally returns a "justification" for the classification
     * decision.
@@ -24,7 +35,10 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to classify
     * @return (predicted outcome, optional justification for the prediction)
     */
-  def classify(featureVector: FeatureVector): (Int, Option[Justification])
+  def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+    val (distribution, justification) = outcomeDistribution(featureVector)
+    (distribution.mostProbableOutcome, justification)
+  }
 
   /** All features used by the classifier. */
   def allFeatures: Set[Int]

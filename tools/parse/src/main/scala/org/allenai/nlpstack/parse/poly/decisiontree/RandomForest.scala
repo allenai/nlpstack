@@ -35,7 +35,16 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
 
   require(decisionTrees.nonEmpty, "Cannot initialize a RandomForest with zero decision trees")
 
-  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+  /** Each decision gets a single vote about the outcome. The produced distribution is the
+    * normalized histogram of the votes.
+    *
+    * @param featureVector feature vector to find outcome distribution for
+    * @return a probability distribution over outcomes
+    */
+  override def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification]) = {
+
     val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
       decisionTree.classify(featureVector)
     }
@@ -63,8 +72,8 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       } else {
         val (mostConvincingTree, mostConvincingJustification) =
           majorityJustifications maxBy {
-            case (treeIndex, justification) =>
-              justification match {
+            case (treeIndex, just) =>
+              just match {
                 case dtJust: DecisionTreeJustification =>
                   decisionTrees(treeIndex).getNodeDivergenceScore(dtJust.node)
               }
@@ -75,23 +84,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
         }
         Some(RandomForestJustification(this, mostConvincingTree, mostConvincingNode))
       }
-    (bestOutcome, justification)
-  }
-
-  /** Each decision gets a single vote about the outcome. The produced distribution is the
-    * normalized histogram of the votes.
-    *
-    * @param featureVector feature vector to find outcome distribution for
-    * @return a probability distribution over outcomes
-    */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
-    val outcomeHistogram = decisionTrees map { decisionTree =>
-      decisionTree.classify(featureVector)
-    } map {
-      case (decision, _) =>
-        decision
-    }
-    RandomForest.normalizeHistogram(outcomeHistogram groupBy { x => x } mapValues { v => v.size })
+    (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), justification)
   }
 
   /** An experimental weighted version of the above .outcomeDistribution method.

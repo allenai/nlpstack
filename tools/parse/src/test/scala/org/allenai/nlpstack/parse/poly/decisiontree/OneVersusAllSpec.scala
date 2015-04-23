@@ -13,28 +13,29 @@ import org.allenai.common.testkit.UnitSpec
 case class MockBinaryProbabilisticClassifier(feature1: Int, feature2: Int,
     feature3: Int, feature4: Int) extends ProbabilisticClassifier {
 
-  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
-    val (bestClass, _) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
-    (bestClass, None)
-  }
-
   /** Gets the probability distribution over outcomes.
     *
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
-    if (featureVector.nonzeroFeatures.contains(feature1)) {
-      Map(0 -> 0.2f, 1 -> 0.8f)
-    } else if (featureVector.nonzeroFeatures.contains(feature2)) {
-      Map(0 -> 0.4f, 1 -> 0.6f)
-    } else if (featureVector.nonzeroFeatures.contains(feature3)) {
-      Map(0 -> 0.6f, 1 -> 0.4f)
-    } else if (featureVector.nonzeroFeatures.contains(feature4)) {
-      Map(0 -> 0.8f, 1 -> 0.2f)
-    } else {
-      Map(0 -> 1.0f, 1 -> 0.0f)
-    }
+  override def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification]) = {
+
+    val distribution = OutcomeDistribution(
+      if (featureVector.nonzeroFeatures.contains(feature1)) {
+        Map(0 -> 0.2f, 1 -> 0.8f)
+      } else if (featureVector.nonzeroFeatures.contains(feature2)) {
+        Map(0 -> 0.4f, 1 -> 0.6f)
+      } else if (featureVector.nonzeroFeatures.contains(feature3)) {
+        Map(0 -> 0.6f, 1 -> 0.4f)
+      } else if (featureVector.nonzeroFeatures.contains(feature4)) {
+        Map(0 -> 0.8f, 1 -> 0.2f)
+      } else {
+        Map(0 -> 1.0f, 1 -> 0.0f)
+      }
+    )
+    (distribution, None)
   }
 
   /** All features used by the classifier. */
@@ -62,7 +63,7 @@ class OneVersusAllSpec extends UnitSpec {
     val outcomeDist = classifier.outcomeDistribution(new SparseVector(
       outcome = None,
       numFeatures = 5, trueFeatures = Set(1, 2)
-    ))
+    ))._1.dist
     outcomeDist(0) shouldBe 0.3f +- 0.001f
     outcomeDist(1) shouldBe 0.4f +- 0.001f
     outcomeDist(2) shouldBe 0.3f +- 0.001f
@@ -70,6 +71,6 @@ class OneVersusAllSpec extends UnitSpec {
 
   it should "return a uniform distribution if all subclassifiers return zero" in {
     classifier2.outcomeDistribution(new SparseVector(outcome = None, numFeatures = 5,
-      trueFeatures = Set(4))) shouldBe Map(0 -> 0.25f, 1 -> 0.25f, 2 -> 0.25f, 3 -> 0.25f)
+      trueFeatures = Set(4)))._1.dist shouldBe Map(0 -> 0.25f, 1 -> 0.25f, 2 -> 0.25f, 3 -> 0.25f)
   }
 }
