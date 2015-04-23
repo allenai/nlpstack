@@ -273,39 +273,6 @@ case class WeirdParseNodeRerankingFunction(
     result
   }
 
-  /** Gets the set of tokens in a parse.
-    *
-    * param parse the parse tree to analyze
-    * @return tuples containing the indices of the nodes, and the classifier outcome,
-    * the weirdness score and the justification for each.
-    */
-  /*
-  def getNodes(parse: PolytreeParse): Set[(Int, Int, Float, Option[Justification])] = {
-    (Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
-      val distWithJustification: Map[Int, (Float, Option[Justification])] = classifier match {
-        case c: JustifyingWrapperClassifier =>
-          c.getDistributionWithJustification(
-            feature(parse, tokenIndex)
-          ) mapValues (v => (v._1, Option(v._2)))
-        case _ =>
-          classifier.getDistribution(feature(parse, tokenIndex)).mapValues(
-            v => (v, None)
-          )
-      }
-      (for {
-        outcome <- distWithJustification.keys
-      } yield {
-        (
-          tokenIndex,
-          outcome,
-          distWithJustification(outcome)._1,
-          distWithJustification(outcome)._2
-        )
-      }).toSet
-    }).flatten
-  }
-  */
-
   /** Gets the set of "weird" tokens in a parse.
     *
     * @param parse the parse tree to analyze
@@ -332,25 +299,4 @@ case class WeirdParseNodeRerankingFunction(
         parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
     }
   }
-
-  /** Gets the set of "NOT weird" tokens in a parse.
-    *
-    * param parse the parse tree to analyze
-    * @return the indices and explanation for all tokens classified as weird
-    */
-
-  /*def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
-    val nodeWeirdness = getNodes(parse)
-    nodeWeirdness filter {
-      case (_, outcome, weirdness, _) =>
-        ((outcome != 0) || (weirdness < weirdnessThreshold))
-    } map {
-      case (node, _, _, justification) =>
-        (node, justification)
-    } filter {
-      case (tokenIndex, justification) =>
-        parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
-    }
-  }
-  */
 }

@@ -57,8 +57,8 @@ object ParseReranker {
     val diagnosticWriter = new PrintWriter(new File(clArgs.diagnosticFilename))
 
     println("Parsing test set.")
-    val candidateParses: Iterator[Option[PolytreeParse]] = {
-      ParseFile.parseTestSet(parser, goldParseSource)
+    val candidateParses: Iterable[Option[PolytreeParse]] = {
+      ParseFile.parseTestSet(parser, goldParseSource).toIterable
     }
 
     println("Evaluating test set.")
@@ -67,7 +67,7 @@ object ParseReranker {
         val stats: Seq[ParseStatistic] = Seq(WeirdnessAnalyzer(weirdReranker))
         stats foreach { stat => stat.reset() }
         ParseEvaluator.evaluate(
-          candidateParses, goldParseSource.parseIterator, stats, Some(diagnosticWriter)
+          candidateParses.iterator, goldParseSource.parseIterator, stats, Some(diagnosticWriter)
         )
     }
     diagnosticWriter.close()
