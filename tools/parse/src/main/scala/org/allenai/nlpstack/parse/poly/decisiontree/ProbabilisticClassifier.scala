@@ -6,7 +6,7 @@ import reming.DefaultJsonProtocol._
 
 /* Abstract "justification" for a particular classifier decision. */
 trait Justification {
-  def prettyPrint(featureNames: Map[Int, FeatureName])
+  def prettyPrint(featureNames: Map[Int, FeatureName]): String
 }
 
 trait ProbabilisticClassifier {

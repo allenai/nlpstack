@@ -1,17 +1,12 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.decisiontree.{
   FeatureVector => DTFeatureVector,
   ProbabilisticClassifierTrainer,
-  JustifyingProbabilisticClassifierTrainer,
   InMemoryFeatureVectorSource,
   SparseVector,
   ProbabilisticClassifier,
-  JustifyingProbabilisticClassifier,
-  Justification,
-  DecisionTreeJustification,
-  RandomForestJustification
+  Justification
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
 import reming.DefaultJsonProtocol._
@@ -22,9 +17,10 @@ import scala.collection.immutable.HashSet
   * org.allenai.nlpstack.parse.poly.ml FeatureVector format for classification.
   * This is a trait that specific wrappers can extend.
   */
-case class WrapperClassifier {
-  def classifier(): ProbabilisticClassifier
-  def featureNameMap(): Seq[(Int, FeatureName)]
+case class WrapperClassifier(
+    classifier: ProbabilisticClassifier,
+    featureNameMap: Seq[(Int, FeatureName)]
+) {
 
   /** The inverse of featureNameMap. */
   @transient
@@ -45,7 +41,7 @@ case class WrapperClassifier {
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
     */
-  def classify(featureVector: FeatureVector): Int = {
+  def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
     classifier.classify(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )
@@ -62,43 +58,11 @@ case class WrapperClassifier {
     )
   }
 
-  /** Given the input feature vector, returns the most probable (integer) outcome, along
-    * with a justification for the outcome.
-    *
-    * @param featureVector the feature vector to classify
-    * @return a tuple containing the most probable (integer) outcome and the justification
-    * (a text explanation) for that outcome.
-    */
-  def classifyAndJustify(featureVector: FeatureVector): (Int, String) = {
-    (classifier.classifyAndJustify(
-      WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
-    )) match {
-        case (outcome: Int, justification: DecisionTreeJustification) =>
-          (outcome, prettyPrintDecisionTreeJustification(justification))
-        case (outcome: Int, justification: RandomForestJustification) =>
-          (outcome, prettyPrintRandomForestJustification(justification))
-        case (outcome: Int, _) => (outcome, "")
-      }
-  }
-
-  /** Returns a distribution over all (integer) outcomes, given the input feature vector.
-    *
-    * @param featureVector the feature vector to classify
-    * @return a tuple with the most probable (integer) outcome and the classifier justification for
-    * the outcome
-    */
-  def getDistributionWithJustification(
-    featureVector: FeatureVector
-  ): Map[Int, (Float, Justification)] = {
-    classifier.outcomeDistributionWithJustification(
-      WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
-    )
-  }
-
   /** Takes a Decision Tree Justification and turns it into a map of feature-value pairs by
     * mapping feature indexes to respective (String) names based on the featureNameMap
     * field.
     */
+  /*
   def getExplainableDecisionTreeJustification(
     justification: DecisionTreeJustification
   ): Map[FeatureName, Int] = {
@@ -108,12 +72,14 @@ case class WrapperClassifier {
         (featureNameForIndex(featureNameIx), featureVal)
     }).toMap
   }
+  */
 
   /** Takes a Random Forest Justification and turns it into a seq of explainable decision tree
     * justifications, as defined in getExplainableDecisionTreeJustification-- there is an
     * explainable decision tree justification for each decision tree in the random forest that
     * voted for the chosen outcome.
     */
+  /*
   def getExplainableRandomForestJustification(
     justification: RandomForestJustification
   ): Seq[Map[FeatureName, Int]] = {
@@ -121,10 +87,12 @@ case class WrapperClassifier {
       getExplainableDecisionTreeJustification(dtJustification)
     }
   }
+  */
 
   /** Stringifies a Decision Tree justification into a set of feature-value pairs corresponding
     * to every decision in the breadcrumb that led to a classification outcome.
     */
+  /*
   def prettyPrintDecisionTreeJustification(
     justification: DecisionTreeJustification
   ): String = {
@@ -136,9 +104,11 @@ case class WrapperClassifier {
       featureName + " = " + featureVal
     }).mkString(", ") + " ]"
   }
+  */
 
   /** Stringifies a Random Forest justification.
     */
+  /*
   def prettyPrintRandomForestJustification(
     justification: RandomForestJustification
   ): String = {
@@ -148,6 +118,7 @@ case class WrapperClassifier {
       "[\n" + justification.decisionTreeJustifications.map(j =>
         prettyPrintDecisionTreeJustification(j)).mkString(",\n\n") + "\n]\n"
   }
+  */
 
   /** Stringifies a classifier's justification.
     */
@@ -169,12 +140,7 @@ case class WrapperClassifier {
   * WrapperClassifier.
   */
 object WrapperClassifier {
-  implicit val basicWCformat = jsonFormat2(BasicWrapperClassifier.apply)
-  implicit val justifyingWCformat = jsonFormat2(JustifyingWrapperClassifier.apply)
-  implicit val wcJsonFormat = parentFormat[WrapperClassifier](
-    childFormat[BasicWrapperClassifier, WrapperClassifier],
-    childFormat[JustifyingWrapperClassifier, WrapperClassifier]
-  )
+  implicit val wcFormat = jsonFormat2(WrapperClassifier.apply)
 
   /** Converts a string-based feature vector into an integer-based feature vector.
     *
@@ -196,7 +162,6 @@ object WrapperClassifier {
         .map(featureNameToIndex).toSeq: _*)
     new SparseVector(outcome, featureNameToIndex.values.max + 1, trueAttributes)
   }
-
 }
 
 /** Trains a WrapperClassifier from training data.
@@ -226,14 +191,6 @@ class WrapperClassifierTrainer(
       } map {
         _.swap
       }
-    inducedClassifier match {
-      case c: JustifyingProbabilisticClassifier =>
-        new JustifyingWrapperClassifier(
-          inducedClassifier.asInstanceOf[JustifyingProbabilisticClassifier], featureMap
-        )
-      case _ =>
-        BasicWrapperClassifier(inducedClassifier, featureMap)
-
-    }
+    WrapperClassifier(inducedClassifier, featureMap)
   }
 }

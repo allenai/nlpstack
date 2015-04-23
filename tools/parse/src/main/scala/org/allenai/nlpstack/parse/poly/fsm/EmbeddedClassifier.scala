@@ -39,7 +39,7 @@ case class EmbeddedClassifier(
     }).toMap
 
   override def classify(featureVector: FeatureVector): StateTransition = {
-    transitions(classifier.classify(createDTFeatureVector(featureVector)))
+    transitions(classifier.classify(createDTFeatureVector(featureVector))._1)
   }
 
   override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Float] = {

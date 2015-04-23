@@ -212,7 +212,7 @@ object ParseRerankerTraining {
   def evaluate(trainingData: TrainingData, classifier: WrapperClassifier) {
     val numCorrect = trainingData.labeledVectors count {
       case (vec, outcome) =>
-        classifier.classify(vec) == outcome
+        classifier.classify(vec)._1 == outcome
     }
     val total = trainingData.labeledVectors.size
     println(numCorrect)
@@ -266,7 +266,7 @@ case class WeirdParseNodeRerankingFunction(
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     val result = sculpture match {
       case parse: PolytreeParse => {
-        getWeirdNodes(parse).size.toDouble
+        getNodesWithOutcome(parse, 1).size.toDouble
       }
       case _ => Double.MaxValue
     }
@@ -275,10 +275,11 @@ case class WeirdParseNodeRerankingFunction(
 
   /** Gets the set of tokens in a parse.
     *
-    * @param parse the parse tree to analyze
+    * param parse the parse tree to analyze
     * @return tuples containing the indices of the nodes, and the classifier outcome,
     * the weirdness score and the justification for each.
     */
+  /*
   def getNodes(parse: PolytreeParse): Set[(Int, Int, Float, Option[Justification])] = {
     (Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
       val distWithJustification: Map[Int, (Float, Option[Justification])] = classifier match {
@@ -303,20 +304,29 @@ case class WeirdParseNodeRerankingFunction(
       }).toSet
     }).flatten
   }
+  */
 
   /** Gets the set of "weird" tokens in a parse.
     *
     * @param parse the parse tree to analyze
     * @return the indices and explanation for all tokens classified as weird
     */
-  def getWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
-    val nodeWeirdness = getNodes(parse)
-    nodeWeirdness filter {
-      case (_, outcome, weirdness, _) =>
-        ((outcome == 0) && (weirdness >= weirdnessThreshold))
+  def getNodesWithOutcome(
+    parse: PolytreeParse,
+    desiredOutcome: Int
+  ): Set[(Int, Option[Justification])] = {
+
+    val nodeOutcomes: Set[(Int, Int, Option[Justification])] =
+      Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
+        val (outcome, justification) = classifier.classify(feature(parse, tokenIndex))
+        (tokenIndex, outcome, justification)
+      }
+    nodeOutcomes filter {
+      case (_, outcome, _) =>
+        outcome == desiredOutcome
     } map {
-      case (node, _, _, justification) =>
-        (node, justification)
+      case (tokenIndex, _, maybeJustification) =>
+        (tokenIndex, maybeJustification)
     } filter {
       case (tokenIndex, justification) =>
         parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
@@ -325,10 +335,11 @@ case class WeirdParseNodeRerankingFunction(
 
   /** Gets the set of "NOT weird" tokens in a parse.
     *
-    * @param parse the parse tree to analyze
+    * param parse the parse tree to analyze
     * @return the indices and explanation for all tokens classified as weird
     */
-  def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
+
+  /*def getNotWeirdNodes(parse: PolytreeParse): Set[(Int, Option[Justification])] = {
     val nodeWeirdness = getNodes(parse)
     nodeWeirdness filter {
       case (_, outcome, weirdness, _) =>
@@ -341,4 +352,5 @@ case class WeirdParseNodeRerankingFunction(
         parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
     }
   }
+  */
 }

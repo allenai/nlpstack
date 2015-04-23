@@ -3,6 +3,7 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
 
 import reming.CompactPrinter
 import reming.DefaultJsonProtocol._
@@ -14,8 +15,14 @@ import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
 
 case class RandomForestJustification(
-  tree: Int, treeNode: Int
-) extends Justification
+    randomForest: RandomForest, tree: Int, treeNode: Int
+) extends Justification {
+
+  def prettyPrint(featureNames: Map[Int, FeatureName]): String = {
+    val dtJustification = DecisionTreeJustification(randomForest.decisionTrees(tree), treeNode)
+    dtJustification.prettyPrint(featureNames)
+  }
+}
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -66,7 +73,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
           case dtJust: DecisionTreeJustification =>
             dtJust.node
         }
-        Some(RandomForestJustification(mostConvincingTree, mostConvincingNode))
+        Some(RandomForestJustification(this, mostConvincingTree, mostConvincingNode))
       }
     (bestOutcome, justification)
   }

@@ -19,6 +19,11 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 case class OneVersusAll(binaryClassifiers: Seq[(Int, ProbabilisticClassifier)])
     extends ProbabilisticClassifier {
 
+  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+    val (bestClass, _) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
+    (bestClass, None)
+  }
+
   override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val unnormalizedDist: Seq[(Int, Float)] =
       binaryClassifiers map {
