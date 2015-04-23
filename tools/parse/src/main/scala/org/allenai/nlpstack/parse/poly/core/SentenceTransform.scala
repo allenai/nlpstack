@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Tokenizer }
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
+import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Postagger, Tokenizer }
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, GoogleUnigram, NgramInfo, Verbnet }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -30,6 +30,9 @@ object SentenceTransform {
     implicit val verbnetTaggerFormat =
       jsonFormat1(VerbnetTagger.apply).pack("type" -> "VerbnetTagger")
 
+    implicit val googleUnigramTaggerFormat =
+      jsonFormat1(GoogleUnigramTagger.apply).pack("type" -> "GoogleUnigramTagger")
+
     def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
       case FactorieSentenceTagger =>
         JsString("FactorieSentenceTagger")
@@ -41,6 +44,8 @@ object SentenceTransform {
         brownClustersTagger.toJson
       case verbnetTagger: VerbnetTagger =>
         verbnetTagger.toJson
+      case googleUnigramTagger: GoogleUnigramTagger =>
+        googleUnigramTagger.toJson
     }
 
     def read(value: JsValue): SentenceTransform = value match {
@@ -52,10 +57,20 @@ object SentenceTransform {
       }
       case jsObj: JsObject => jsObj.unpackWith(
         brownClustersTaggerFormat,
-        verbnetTaggerFormat
+        verbnetTaggerFormat,
+        googleUnigramTaggerFormat
       )
       case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
     }
+  }
+
+  /** Given a Sentences, produce a seq of PostaggedTokens.
+    */
+  def getPostaggedTokens(sentence: Sentence, posTagger: Postagger): IndexedSeq[PostaggedToken] = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    posTagger.postagTokenized(nlpStackTokens).toIndexedSeq
   }
 }
 
@@ -65,11 +80,7 @@ object SentenceTransform {
 case object FactorieSentenceTagger extends SentenceTransform {
 
   def transform(sentence: Sentence): Sentence = {
-    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
-    val nlpStackTokens: IndexedSeq[NLPStackToken] =
-      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
-    val taggedTokens: IndexedSeq[PostaggedToken] =
-      defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
         val autoPos = Symbol(tagged.postag)
@@ -89,14 +100,10 @@ case object FactorieSentenceTagger extends SentenceTransform {
   */
 case object StanfordSentenceTagger extends SentenceTransform {
 
-  @transient private val stanfordTagger = new StanfordPostagger()
+   @transient private val stanfordTagger = new StanfordPostagger()
 
   def transform(sentence: Sentence): Sentence = {
-    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
-    val nlpStackTokens: IndexedSeq[NLPStackToken] =
-      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
-    val taggedTokens: IndexedSeq[PostaggedToken] =
-      stanfordTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, stanfordTagger)
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
         val autoPos = Symbol(tagged.postag)
@@ -165,11 +172,7 @@ case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends SentenceTra
 case object FactorieLemmatizer extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {
-    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
-    val nlpStackTokens: IndexedSeq[NLPStackToken] =
-      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
-    val taggedTokens: IndexedSeq[PostaggedToken] =
-      defaultPostagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
     val lemmatizedTaggedTokens: IndexedSeq[Lemmatized[PostaggedToken]] =
       taggedTokens map {
         x => Lemmatized[PostaggedToken](x, MorphaStemmer.lemmatize(x.string, x.postag))
@@ -193,9 +196,62 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
     } yield {
       val tokLemmaLC = tok.getDeterministicProperty('factorieLemma).name.toLowerCase
       val tokVerbnetPrimaryFrames = verbnet.getVerbnetFramePrimaryNames(tokLemmaLC)
-      val tokVerbnetSecondaryFrames = verbnet.getVerbnetFrameSecondaryNames(tokLemmaLC)
       tok.updateProperties(Map('verbnetPrimaryFrames -> tokVerbnetPrimaryFrames))
     })
   }
 }
 
+/** Frequency Distribution of dependency labels for tokens based on Google Ngram's Nodes (unigrams).
+  */
+case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransform {
+
+   @transient private val stanfordTagger = new StanfordPostagger()
+
+  override def transform(sentence: Sentence): Sentence = {
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+      val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
+            tagged, googleNgram.ngramMap, googleNgram.frequencyCutoff)
+      // Create feature for each depenedency label based on the normalized frequency
+      // bucket it lies in.
+      val frequencyFeatureMap = (for {
+        (depLabel, normalizedFrequency) <- depLabelFreqMap
+      } yield {
+        val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
+        if (normalizedFrequency <= 0.1) {
+          ('depLabelFreq1to10 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.2) {
+          ('depLabelFreq11to20 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.3) {
+          ('depLabelFreq21to30 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.4) {
+          ('depLabelFreq31to40 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.5) {
+          ('depLabelFreq41to50 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.6) {
+          ('depLabelFreq51to60 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.7) {
+          ('depLabelFreq61to70 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.8) {
+          ('depLabelFreq71to80 -> symbolSetWithCurrentDepLabel)
+        }
+        else if (normalizedFrequency <= 0.9) {
+          ('depLabelFreq81to90 -> symbolSetWithCurrentDepLabel)
+        }
+        else {
+          ('depLabelFreq91to100 -> symbolSetWithCurrentDepLabel)
+        }
+      }).toMap
+      //println(s"frequencyFeatureMap: ${frequencyFeatureMap}")
+      untagged.updateProperties(frequencyFeatureMap)
+    }))
+  }
+}

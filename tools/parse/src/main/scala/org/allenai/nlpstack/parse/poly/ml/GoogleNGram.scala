@@ -1,10 +1,14 @@
 package org.allenai.nlpstack.parse.poly.ml
 
 import org.allenai.datastore._
+import org.allenai.nlpstack.core.PostaggedToken
 
 import java.io._
 
 import scala.io._
+
+import spray.json._
+import DefaultJsonProtocol._
 
 /** A class that parses Google N-Gram data
   * (http://commondatastorage.googleapis.com/books/syntactic-ngrams/index.html) to provide
@@ -25,62 +29,40 @@ import scala.io._
   *   “1” refers to the first token in the list, 2 the second,
   *      and 0 indicates that the head is the root of the fragment.
   */
-case class GoogleNGram() {
+case class GoogleNGram(
+    groupName: String, artifactName: String, version: Int, frequencyCutoff: Int) {
 
-  val ngramLoc = "/Users/sumithrab/Downloads/google-ngrams/nodes"
-  val ngramDir = new File(ngramLoc)
+  //@transient val googleNgramPath = Datastore.directoryPath(
+  //    groupName,
+  //    artifactName,
+  //    version
+  //  )
 
-  //val ngramMap = GoogleNGram.constructNgramTable(ngramDir)
-
-  //val ngramMapFile = "/Users/sumithrab/Downloads/google-ngrams/node-map.txt"
-  //val writer = new PrintWriter(new File(ngramMapFile))
-  //val sortedKeys = ngramMap.keySet.toSeq.sorted
-  //writer.write(s"Total no. of keys: ${sortedKeys.length}\n")
-  //for (k <- sortedKeys) {
-  //  writer.write(k + "\n")
-  //  for (x <- ngramMap(k)) {
-  //    writer.write(x.syntacticNgrams.mkString(" ") + "\t" + x.frequency + "\n")
-  //  }
-  //  writer.write("\n")
-  //}
-  //writer.close
-  val ngramFreqs = "/Users/sumithrab/Downloads/google-ngrams/uniquenodes-freq1000.txt"
-  GoogleNGram.getNgramFrequencies(ngramDir, ngramFreqs)
+  //@transient val googleNgramDir = new File(googleNgramPath.toString)
+  @transient val googleNgramDir = new File("/Users/sumithrab/Downloads/google-ngrams/nodes")
+  //println(s"googleNgramPath: ${googleNgramPath}")
+  @transient val ngramMap = GoogleNGram.constructNgramTable(googleNgramDir, frequencyCutoff)
+  println(s"ngramMap: ${ngramMap}")
+  
 }
 
-case class SyntacticNgram(word: String, posTag: String, depLabel: String, headIndex: Int)
-case class NgramInfo(syntacticNgrams: Seq[SyntacticNgram], frequency: Long)
+/** Utility case classes to represent information associated with an ngram in the Google Ngram
+  * corpus. 
+  */
+case class SyntacticInfo(word: String, posTag: String, depLabel: String, headIndex: Int)
+case class NgramInfo(syntacticNgram: Seq[SyntacticInfo], frequency: Long)
 
+/** Companion object. Contains methods to parse a Google Ngram corpus. This is not specific to 
+  * the type of corpus, i.e. whether unigram, bigram, etc.
+  */
 object GoogleNGram {
 
-  val freqCutoff: Int = 1000
+  implicit val jsonFormat = jsonFormat4(GoogleNGram.apply)
 
-  def createSyntacticNgram(syntacticNgramsStr: String): Seq[SyntacticNgram] = {
-    val syntacticNgramStrs = syntacticNgramsStr.split(" ").map(x => x.trim).toSeq
-    for {
-      syntacticNgramStr <- syntacticNgramStrs
-      syntacticNgram <- getSyntacticNgram(syntacticNgramStr)
-    } yield {
-      syntacticNgram
-    }
-  }
-
-  def getSyntacticNgram(syntacticNgramStr: String): Option[SyntacticNgram] = {
-    syntacticNgramStr.split("/").map(x => x.trim) match {
-      case Array(word: String, posTag: String, depLabel: String, headIxStr: String) =>
-        Some(new SyntacticNgram(word, posTag, depLabel, headIxStr.toInt))
-      case _ => None
-    }
-  }
-
-  def parseLine(line: String): (String, Seq[SyntacticNgram], Long) = {
-    line.split("\t").map(x => x.trim) match {
-      case Array(ngram: String, syntacticNgramStr: String, freqStr: String, _*) =>
-        (ngram, createSyntacticNgram(syntacticNgramStr), freqStr.toLong)
-    }
-  }
-
-  def constructNgramTable(ngramDir: File): Map[String, Seq[NgramInfo]] = {
+  /** Constructs a table to map a word to the sequence of different ngrams associated with it
+    * with associated info for each ngram.
+    */
+  def constructNgramTable(ngramDir: File, frequencyCutoff: Int): Map[String, Seq[NgramInfo]] = {
     val table = scala.collection.mutable.HashMap.empty[String, Seq[NgramInfo]]
     for {
       file <- ngramDir.listFiles
@@ -88,7 +70,7 @@ object GoogleNGram {
     } yield {
       val ngramDetails = parseLine(line)
       val alphaNumPattern = """[a-zA-Z]+"""
-      if (ngramDetails._1.matches(alphaNumPattern) && (ngramDetails._3 > freqCutoff)) {
+      if (ngramDetails._1.matches(alphaNumPattern) && (ngramDetails._3 > frequencyCutoff)) {
         table(ngramDetails._1) = table.getOrElse(ngramDetails._1, Seq.empty) :+
           new NgramInfo(ngramDetails._2, ngramDetails._3)
       }
@@ -96,28 +78,120 @@ object GoogleNGram {
     table.mapValues(x => x.sortBy(_.frequency).reverse).toMap
   }
 
-  def getNgramFrequencies(ngramDir: File, ngramFreqs: String): Unit = {
-    // Open Writer to output frequencies of the ngrams
-    val opWriter = new PrintWriter(ngramFreqs)
-    var prevToken = ""
-    var numTokens = 0
+  /** Helper Method. Takes a string of the following format:
+   *  shepherd/NNP/nn/2 woods/NNS/pobj/0
+   *  which can contain multiple syntactic n-grams, and generates a seq of SyntacticInfo objects,
+   *  one for each word in the ngram, to create the NgramInfo from.
+   */
+  private def createSyntacticNgram(syntacticNgramsStr: String): Seq[SyntacticInfo] = {
+    val syntacticNgramStrs = syntacticNgramsStr.split(" ").map(x => x.trim).toSeq
     for {
-      file <- ngramDir.listFiles
-      line <- Source.fromFile(file).getLines
+      syntacticNgramStr <- syntacticNgramStrs
+      syntacticNgram <- getSyntacticInfo(syntacticNgramStr)
     } yield {
-      val ngramDetails = parseLine(line)
-      val alphaNumPattern = """[a-zA-Z]+"""
-      if (ngramDetails._1.matches(alphaNumPattern) && (ngramDetails._3 > freqCutoff) &&
-        !ngramDetails._1.equalsIgnoreCase(prevToken)) {
-        opWriter.write(
-          ngramDetails._1 + "\t" /*+ ngramDetails._2.mkString(" ")  + "\t"*/ +
-            ngramDetails._3 + "\n"
-        )
-        prevToken = ngramDetails._1
-        numTokens += 1
+      syntacticNgram
+    }
+  }
+
+  /** Helper Method. Takes a string representing a single syntactic ngram and creates a
+    * SyntacticNgram object from it.
+    */
+  private def getSyntacticInfo(syntacticNgramStr: String): Option[SyntacticInfo] = {
+    syntacticNgramStr.split("/").map(x => x.trim) match {
+      case Array(word: String, posTag: String, depLabel: String, headIxStr: String) =>
+        Some(new SyntacticInfo(word, posTag, depLabel, headIxStr.toInt))
+      case _ => None
+    }
+  }
+
+  /** Helper Method. Breaks a tab-separated line with below format:
+   *  woods shepherd/NNP/nn/2 woods/NNS/pobj/0  11 1895,1  1899,1  1923,1  1933,3
+   *  and creates a tuple containing the word the line is about, the sequence of SyntacticInfo
+   *  objects for the words in each ngram associated with the word, and the total frequency for
+   *  each ngram. Ignores the last field (year-wise frequency breakdown) in the tab-delimited line.
+   */
+  private def parseLine(line: String): (String, Seq[SyntacticInfo], Long) = {
+    line.split("\t").map(x => x.trim) match {
+      case Array(ngram: String, syntacticNgramStr: String, freqStr: String, _*) =>
+        (ngram.toLowerCase, createSyntacticNgram(syntacticNgramStr), freqStr.toLong)
+    }
+  }
+}
+
+/** Encapsulates unigram info pertaining to a word. Instead of a seq of SyntacticInfo objects in the
+  * general purpose NgramInfo class, here we have a single SyntacticInfo representing the info for
+  * a single gram.
+  */
+case class UnigramInfo(syntacticUnigram: SyntacticInfo, frequency: Long)
+
+/** Object encapsulating some functionality specific to unigrams. Used wherever features need to be
+  * constructed based on unigrams (Google Ngram Nodes).
+  */
+object GoogleUnigram {
+
+  /** Looks up specified ngramMap for the given token and returns a map of the frequency for each
+    * dependency label for the given token word and POS, normalized over the total frequency for all
+    * possible dependency labels.
+    * @param token the token to look up
+    * @param ngramMap the table mapping a word to the sequence of NgramInfos, as obtained from the
+    * GoogleNGram class object
+    * @param frequencyCutoff the frequency cutoff that was used to construct the map. This is used
+    * here to shift the scale of the frequencies to start from the cutoff point instead of 1.
+    */
+  def getDepLabelNormalizedDistribution(
+      token: PostaggedToken, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int)
+    : Map[String, Double] = {
+    //println(s"token: ${token.string}, ${token.postag}")
+    val tokenNodeInfos = (for {
+      tokNgrams <- ngramMap.get(token.string.toLowerCase)
+    } yield {
+      //println(s"tokNgrams: ${tokNgrams}")
+      val x = getTokenUnigramInfo(
+        token.postag, tokNgrams, frequencyCutoff)
+      //println(s"tokenUnigramInfo: ${x}")
+      x
+    }).getOrElse(Seq.empty[UnigramInfo])
+
+    // Get the total frequency for all nodes aggregated above for the current token to
+    // normalize them.
+    val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
+    //println(s"totalFrequency: ${totalFrequency}")
+    // Iterate over all the nodes, normalize frequencies by the total frequency and set
+    // appropriate feature values based on the normalized frequency bucket they fall in.
+    val x = (for {
+      tokenNodeInfo <- tokenNodeInfos
+     } yield {
+       val normalizedFrequency = tokenNodeInfo.frequency.toDouble / totalFrequency
+       (tokenNodeInfo.syntacticUnigram.depLabel -> normalizedFrequency)
+     }).toMap
+     //println("Returning:")
+     //println(s"${x}")
+     x
+  }
+
+  /** Helper Method. Takes a token and a seq of NgramInfos associated with it and filters them to
+    * just the ones that are relevant to the given token's POS tag.
+    * For unigrams, we expect just one SyntacticNgram per NgramInfo.
+    * E.g: NgramInfo entries for the word "a" look like below:
+    * SyntacticNgram(a,DT,dep,0) 14737935
+    * SyntacticNgram(a,NNP,nn,0)  4184390
+    * SyntacticNgram(a,NNP,dep,0) 2070101
+    * SyntacticNgram(a,DT,quantmod,0) 2069740
+    * SyntacticNgram(a,DT,ROOT,0) 1368856
+    * where each NgramInfo (one per line) has only one SyntacticNgram. Here we try to aggregate
+    * the SyntacticNgrams that match the POS tag of the current token and get the frequency
+    * distribution of the different possible dependency labels.
+    */
+  private def getTokenUnigramInfo(
+      posTag: String, ngramInfos: Seq[NgramInfo], frequencyCutoff: Int): Seq[UnigramInfo] = {
+       ngramInfos.filter(ngramInfo =>
+        ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(posTag)).
+          map {
+            ngramInfoForThisTok =>
+              // Scale down the frequencies so that the cutoff frequency (minimum) is treated as the
+              // starting point (frequency 1).
+              new UnigramInfo(ngramInfoForThisTok.syntacticNgram.head,
+                ngramInfoForThisTok.frequency - frequencyCutoff)
       }
     }
-    opWriter.println(s"Total no. of tokens: ${numTokens}")
-    opWriter.close
-  }
 }

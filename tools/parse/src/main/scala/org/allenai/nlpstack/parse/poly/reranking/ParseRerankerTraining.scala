@@ -68,9 +68,6 @@ object ParseRerankerTraining {
     val clArgs: PRTCommandLine =
       optionParser.parse(args, PRTCommandLine()).get
 
-    val googNgram = new GoogleNGram()
-    println("Created Google Ngram Util Class")
-
     println("Creating reranker.")
 
     // Read in taggers config file if specified. This will contain config info necessary to
@@ -87,10 +84,23 @@ object ParseRerankerTraining {
     } yield {
       ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
-    val feature = defaultParseNodeFeature(verbnetTransformOption)
+
+    val googleUnigramTransformOption: Option[(String, GoogleUnigramTransform)] = for {
+      taggersConfig <- taggersConfigOption
+      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
+      groupName <- googleUnigramConfig.get[String]("group")
+      artifactName <- googleUnigramConfig.get[String]("name")
+      version <- googleUnigramConfig.get[Int]("version")
+    } yield {
+      ("googleUnigram", GoogleUnigramTransform(
+          new GoogleNGram(groupName, artifactName, version, 1000)))
+    }
+
+    val feature = defaultParseNodeFeature(verbnetTransformOption, googleUnigramTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
-    val nbestSource: ParsePoolSource = InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
+    val nbestSource: ParsePoolSource =
+      InMemoryParsePoolSource(FileBasedParsePoolSource(clArgs.nbestFilenames).poolIterator)
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
       clArgs.goldParseFilename,
       ConllX(true, makePoly = true), clArgs.dataSource
@@ -113,45 +123,48 @@ object ParseRerankerTraining {
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = new ParseNodeFeatureUnion(Seq(
-    TransformedNeighborhoodFeature(Seq(
-      ("children", AllChildrenExtractor)
-    ), Seq(
-      ("card", CardinalityNhTransform)
-    )),
-    TransformedNeighborhoodFeature(Seq(
-      ("self", SelfExtractor),
-      ("parent", EachParentExtractor),
-      ("child", EachChildExtractor),
-      ("parent1", SpecificParentExtractor(0)),
-      ("parent2", SpecificParentExtractor(1)),
-      ("parent3", SpecificParentExtractor(2)),
-      ("parent4", SpecificParentExtractor(3)),
-      ("child1", SpecificChildExtractor(0)),
-      ("child2", SpecificChildExtractor(1)),
-      ("child3", SpecificChildExtractor(2)),
-      ("child4", SpecificChildExtractor(3)),
-      ("child5", SpecificChildExtractor(4))
-    ), Seq(
-      ("cpos", PropertyNhTransform('cpos)),
-      ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
-      ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-    ) ++ verbnetTransformOption),
-    TransformedNeighborhoodFeature(Seq(
-      ("parent1", SelfAndSpecificParentExtractor(0)),
-      ("parent2", SelfAndSpecificParentExtractor(1)),
-      ("parent3", SelfAndSpecificParentExtractor(2)),
-      ("parent4", SelfAndSpecificParentExtractor(3)),
-      ("child1", SelfAndSpecificChildExtractor(0)),
-      ("child2", SelfAndSpecificChildExtractor(1)),
-      ("child3", SelfAndSpecificChildExtractor(2)),
-      ("child4", SelfAndSpecificChildExtractor(3)),
-      ("child5", SelfAndSpecificChildExtractor(4))
-    ), Seq(
-      ("alabel", ArclabelNhTransform),
-      ("direction", DirectionNhTransform)
+  def defaultParseNodeFeature(
+      verbnetTransformOption: Option[(String, VerbnetTransform)],
+      googleUnigramTransformOption: Option[(String, GoogleUnigramTransform)]) =
+    new ParseNodeFeatureUnion(Seq(
+      TransformedNeighborhoodFeature(Seq(
+        ("children", AllChildrenExtractor)
+      ), Seq(
+        ("card", CardinalityNhTransform)
+      )),
+      TransformedNeighborhoodFeature(Seq(
+        ("self", SelfExtractor),
+        ("parent", EachParentExtractor),
+        ("child", EachChildExtractor),
+        ("parent1", SpecificParentExtractor(0)),
+        ("parent2", SpecificParentExtractor(1)),
+        ("parent3", SpecificParentExtractor(2)),
+        ("parent4", SpecificParentExtractor(3)),
+        ("child1", SpecificChildExtractor(0)),
+        ("child2", SpecificChildExtractor(1)),
+        ("child3", SpecificChildExtractor(2)),
+        ("child4", SpecificChildExtractor(3)),
+        ("child5", SpecificChildExtractor(4))
+      ), Seq(
+        ("cpos", PropertyNhTransform('cpos)),
+        ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
+        ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
+      ) ++ verbnetTransformOption ++ googleUnigramTransformOption),
+      TransformedNeighborhoodFeature(Seq(
+        ("parent1", SelfAndSpecificParentExtractor(0)),
+        ("parent2", SelfAndSpecificParentExtractor(1)),
+        ("parent3", SelfAndSpecificParentExtractor(2)),
+        ("parent4", SelfAndSpecificParentExtractor(3)),
+        ("child1", SelfAndSpecificChildExtractor(0)),
+        ("child2", SelfAndSpecificChildExtractor(1)),
+        ("child3", SelfAndSpecificChildExtractor(2)),
+        ("child4", SelfAndSpecificChildExtractor(3)),
+        ("child5", SelfAndSpecificChildExtractor(4))
+      ), Seq(
+        ("alabel", ArclabelNhTransform),
+        ("direction", DirectionNhTransform)
+      ))
     ))
-  ))
 
   def createTrainingData(goldParseSource: PolytreeParseSource, parsePools: ParsePoolSource,
     feature: ParseNodeFeature): TrainingData = {

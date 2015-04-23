@@ -4,7 +4,7 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, Verbnet }
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -93,9 +93,19 @@ object Training {
       VerbnetTagger(new Verbnet(groupName, artifactName, version))
     }
 
+    val googleUnigramTransformOption: Option[GoogleUnigramTagger] = for {
+      taggersConfig <- taggersConfigOption
+      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
+      groupName <- googleUnigramConfig.get[String]("group")
+      artifactName <- googleUnigramConfig.get[String]("name")
+      version <- googleUnigramConfig.get[Int]("version")
+    } yield {
+      GoogleUnigramTagger(new GoogleNGram(groupName, artifactName, version, 1000))
+    }
+
     val taggers: Seq[SentenceTransform] =
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ verbnetTaggerOption
+        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++ googleUnigramTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)

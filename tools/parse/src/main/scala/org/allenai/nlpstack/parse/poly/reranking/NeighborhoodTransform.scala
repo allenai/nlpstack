@@ -3,7 +3,7 @@ package org.allenai.nlpstack.parse.poly.reranking
 import org.allenai.common.json._
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken }
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, GoogleNGram, GoogleUnigram, Verbnet }
 import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -35,6 +35,8 @@ object NeighborhoodTransform {
       jsonFormat1(KeywordNhTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
     implicit val verbnetTransformFormat =
       jsonFormat1(VerbnetTransform.apply).pack("type" -> "VerbnetTransform")
+   implicit val googleNgramTransformFormat =
+      jsonFormat1(GoogleUnigramTransform.apply).pack("type" -> "GoogleUnigramTransform")
 
     def write(feature: NeighborhoodTransform): JsValue = feature match {
       case ArclabelNhTransform => JsString("ArcLabelNeighborhoodTransform")
@@ -48,6 +50,8 @@ object NeighborhoodTransform {
         keywordNeighborhoodTransform.toJson
       case verbnetTransform: VerbnetTransform =>
         verbnetTransform.toJson
+      case googleUnigramTransform: GoogleUnigramTransform =>
+        googleUnigramTransform.toJson
     }
 
     def read(value: JsValue): NeighborhoodTransform = value match {
@@ -124,7 +128,7 @@ case class KeywordNhTransform(keywords: Seq[String])
 /** Creates a feature per frame for all verbnet frames corresponding to the tokens
   * in the input neighborhood.
   *
-  * @param keywords the set of words to consider
+  * @param verbnet the Verbnet utility object to query
   */
 case class VerbnetTransform(verbnet: Verbnet)
     extends NeighborhoodTransform {
@@ -139,6 +143,46 @@ case class VerbnetTransform(verbnet: Verbnet)
     } yield {
       FeatureName(Seq(featureName))
     }
+  }
+}
+
+/** Creates a feature per dependency label for all applicable labels corresponding to the tokens'
+  * word and POS tag.
+  *
+  * @param googleUnigram the GoogleNGram object constructed for unigrams
+  */
+case class GoogleUnigramTransform(googleNgram: GoogleNGram)
+    extends NeighborhoodTransform {
+
+  override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {
+    (for {
+      tokIx <- event.tokens
+    } yield {
+      val token = parse.tokens(tokIx)
+      val postaggedToken =
+        new PostaggedToken(token.getDeterministicProperty('pos), token.word.name, tokIx)
+      val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
+            postaggedToken, googleNgram.ngramMap, googleNgram.frequencyCutoff)
+      // Create feature for each dependency label based on the normalized frequency
+      // bucket it lies in.
+      for {
+        (depLabel, normalizedFrequency) <- depLabelFreqMap
+      } yield {
+        val symbolForCurrentDepLabel = Symbol(depLabel)
+        if (normalizedFrequency <= 0.25) {
+          FeatureName(Seq('depLabelFreq1to25, symbolForCurrentDepLabel))
+        }
+        else if (normalizedFrequency <= 0.5) {
+          FeatureName(Seq('depLabelFreq26to50, symbolForCurrentDepLabel))
+        }
+        else if (normalizedFrequency <= 0.75) {
+          FeatureName(Seq('depLabelFreq51to75, symbolForCurrentDepLabel))
+        }
+        else {
+          FeatureName(Seq('depLavelFreq76to100, symbolForCurrentDepLabel))
+        }
+      }
+    }).flatten
   }
 }
 
