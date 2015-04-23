@@ -10,8 +10,13 @@ import org.allenai.common.testkit.UnitSpec
   * @param feature3 the third-highest priority feature
   * @param feature4 the fourth-highest priority feature
   */
-case class MockBinaryProbabilisticClassifier(val feature1: Int, val feature2: Int,
-    val feature3: Int, val feature4: Int) extends ProbabilisticClassifier {
+case class MockBinaryProbabilisticClassifier(feature1: Int, feature2: Int,
+    feature3: Int, feature4: Int) extends ProbabilisticClassifier {
+
+  override def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+    val (bestClass, _) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
+    (bestClass, None)
+  }
 
   /** Gets the probability distribution over outcomes.
     *
