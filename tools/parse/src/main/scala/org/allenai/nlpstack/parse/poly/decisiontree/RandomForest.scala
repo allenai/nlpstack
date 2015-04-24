@@ -87,24 +87,6 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), justification)
   }
 
-  /** An experimental weighted version of the above .outcomeDistribution method.
-    *
-    * @param featureVector feature vector to find outcome distribution for
-    * @return a probability distribution over outcomes
-    */
-  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
-    //val outcomeHistograms: String = decisionTrees flatMap { decisionTree =>
-    //  decisionTree.outcomeHistogram(featureVector).toSeq
-    //}
-    //outcomeHistograms map { hist => hist.}
-
-    val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
-      decisionTree.outcomeHistogram(featureVector).toSeq
-    } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
-    RandomForest.normalizeHistogram(summedOutcomeHistograms)
-
-  }
-
   /** The set of all features found in at least one decision tree of the collection. */
   override def allFeatures: Set[Int] = {
     (decisionTrees map { _.allFeatures }) reduce { (x, y) => x ++ y }

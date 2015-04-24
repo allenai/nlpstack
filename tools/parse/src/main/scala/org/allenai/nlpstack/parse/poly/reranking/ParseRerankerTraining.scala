@@ -167,7 +167,7 @@ object ParseRerankerTraining {
     val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
       (parse.sentence.asWhitespaceSeparatedString, parse)
     }).toMap
-    println("Creating positive examples.")
+    println("Creating negative (non-weird) examples.")
     val positiveExamples: Iterable[(FeatureVector, Int)] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
@@ -175,10 +175,10 @@ object ParseRerankerTraining {
         Range(0, goldParse.sentence.tokens.size) filter { tokenIndex =>
           goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
         } map { tokenIndex =>
-          (feature(goldParse, tokenIndex), 1)
+          (feature(goldParse, tokenIndex), 0)
         }
       }).toIterable
-    println("Creating negative examples.")
+    println("Creating positive (weird) examples.")
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
       Range(0, 3) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
@@ -199,7 +199,7 @@ object ParseRerankerTraining {
             badTokens filter { tokenIndex =>
               goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
             } map { badToken =>
-              (feature(candidateParse, badToken), 0)
+              (feature(candidateParse, badToken), 1)
             }
         }
       }

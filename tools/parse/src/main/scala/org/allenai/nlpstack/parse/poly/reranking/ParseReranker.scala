@@ -87,10 +87,8 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     candidateParse map { candParse =>
-      val time0: Long = Platform.currentTime
       val weirdGoldNodes = rerankingFunction.getNodesWithOutcome(goldParse, 1)
       val notWeirdCandidateNodes = rerankingFunction.getNodesWithOutcome(candParse, 0)
-      val time1: Long = Platform.currentTime
       val badCandidateTokens: Set[Int] =
         (candParse.families.toSet -- goldParse.families.toSet) map {
           case family =>
@@ -98,32 +96,30 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         } filter { tokIndex =>
           candParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
         }
-      val time2: Long = Platform.currentTime
 
-      val falsePositiveMessages = weirdGoldNodes map {
+      val falsePositiveMessages = weirdGoldNodes flatMap {
         case (goldNodeIx, Some(justification)) =>
-          s"  ${goldParse.printFamily(goldNodeIx)}\nClassifier Explanation: " +
-            s"${justification.prettyPrint(rerankingFunction.classifier.featureNameMap.toMap)}\n"
+          Some(s"  ${goldParse.printFamily(goldNodeIx)}\nClassifier Explanation: " +
+            s"${justification.prettyPrint(rerankingFunction.classifier.featureNameMap.toMap)}\n")
+        case _ => None
       }
-      val time3: Long = Platform.currentTime
       val trueNegativeNodesAndJustifications = notWeirdCandidateNodes filter {
         node => badCandidateTokens.contains(node._1)
       }
-      val time4: Long = Platform.currentTime
-      val trueNegativeMessages = trueNegativeNodesAndJustifications map {
+      val trueNegativeMessages = trueNegativeNodesAndJustifications flatMap {
         case (misclassifiedNodeIx, Some(justification)) =>
-          s"  ${candParse.printFamily(misclassifiedNodeIx)}\n" +
-            s"    (should be: ${goldParse.printFamily(misclassifiedNodeIx)})\nClassifier Explanation:" +
-            s" ${justification.prettyPrint(rerankingFunction.classifier.featureNameMap.toMap)}\n"
+          Some(s"  ${candParse.printFamily(misclassifiedNodeIx)}\n" +
+            s"    (should be: ${goldParse.printFamily(misclassifiedNodeIx)})" +
+            s"\nClassifier Explanation:" +
+            s" ${justification.prettyPrint(rerankingFunction.classifier.featureNameMap.toMap)}\n")
+        case _ =>
+          None
       }
-      val time5: Long = Platform.currentTime
 
       if (falsePositiveMessages.nonEmpty || trueNegativeMessages.nonEmpty) {
         sentenceGoldParsesAndMistakes = sentenceGoldParsesAndMistakes :+
           Tuple3(goldParse, falsePositiveMessages, trueNegativeMessages)
       }
-      val time6: Long = Platform.currentTime
-      println(s"$time0:$time1:$time2:$time3:$time4:$time5:$time6")
     }
   }
 
