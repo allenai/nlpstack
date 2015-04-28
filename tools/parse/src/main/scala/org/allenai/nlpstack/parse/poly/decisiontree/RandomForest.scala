@@ -67,7 +67,7 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
           }
       }).flatten
     val justification =
-      if (majorityJustifications.isEmpty) {
+      if (majorityJustifications.isEmpty) { // i.e. the underlying DT doesn't support justification
         None
       } else {
         val (mostConvincingTree, mostConvincingJustification) =
