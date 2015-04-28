@@ -1,10 +1,6 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser.{
-  InMemoryPolytreeParseSource,
-  PolytreeParseSource,
-  PolytreeParse
-}
+import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
 
 object ParseEvaluator {
 
@@ -145,7 +141,8 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
           numCorrect +=
             candParse.tokens.tail.zip(goldParse.tokens.tail) count {
               case (candToken, goldToken) =>
-                candToken.getDeterministicProperty('cpos) == goldToken.getDeterministicProperty('cpos)
+                candToken.getDeterministicProperty('cpos) ==
+                  goldToken.getDeterministicProperty('cpos)
             }
           candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
             case (candToken, goldToken) =>
@@ -299,7 +296,7 @@ case class PathAccuracyScore(
   }).toMap
 
   /** Converts a path in the parse tree to its arc labels. */
-  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[Symbol] = {
+  private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[ArcLabel] = {
     path map { pathToken =>
       parse.breadcrumbArcLabel(pathToken)
     }

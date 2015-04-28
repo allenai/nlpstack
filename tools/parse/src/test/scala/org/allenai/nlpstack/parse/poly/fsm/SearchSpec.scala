@@ -97,7 +97,7 @@ case class AlphabetBlockTransitionSystem(marbleBlock: MarbleBlock) extends Trans
 case class AlphabetBlockCostFunction1(transitionSystem: TransitionSystem)
     extends StateCostFunction {
 
-  override def apply(state: State): Map[StateTransition, Double] = {
+  override def apply(state: State): Map[StateTransition, Float] = {
     Map(Forward -> 1, Backward -> 2, Flip -> 3)
   }
 }

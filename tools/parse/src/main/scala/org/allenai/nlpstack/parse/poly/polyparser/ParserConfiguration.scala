@@ -4,10 +4,12 @@ import java.io.{ PrintWriter, File, InputStream }
 import java.net.URL
 
 import org.allenai.common.Resource._
-import spray.json.DefaultJsonProtocol._
-import org.allenai.nlpstack.parse.poly.fsm.{ StateCostFunctionFactory, RerankingFunction, StateCostFunction }
-import org.allenai.nlpstack.parse.poly.core.Util
-import spray.json._
+import org.allenai.nlpstack.parse.poly.fsm.{
+  RerankingFunction,
+  StateCostFunction,
+  StateCostFunctionFactory
+}
+import reming.DefaultJsonProtocol._
 
 /** Contains the key components of a parser (for serialization purposes).
   *
@@ -22,5 +24,5 @@ case class ParserConfiguration(
 )
 
 object ParserConfiguration {
-  implicit val jsFormat = jsonFormat3(ParserConfiguration.apply)
+  implicit val parserConfigurationFormat = jsonFormat3(ParserConfiguration.apply)
 }

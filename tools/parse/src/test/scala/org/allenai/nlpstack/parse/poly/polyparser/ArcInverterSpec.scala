@@ -5,7 +5,10 @@ import org.allenai.common.testkit.UnitSpec
 class ArcInverterSpec extends UnitSpec {
 
   "Calling apply" should "give back a modified parse for a simple parse" in {
-    val inverter: ArcInverter = new ArcInverter(Set('det, 'amod, 'prep))
+    val inverter: ArcInverter =
+      new ArcInverter(
+        Set(SingleSymbolArcLabel('det), SingleSymbolArcLabel('amod), SingleSymbolArcLabel('prep))
+      )
     inverter(PolytreeParseTestData.parse1) shouldBe PolytreeParseTestData.parse1b
   }
 

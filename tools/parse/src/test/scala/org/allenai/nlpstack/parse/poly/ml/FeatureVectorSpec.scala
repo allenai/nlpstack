@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.ml
 
 import org.allenai.common.testkit.UnitSpec
-import spray.json._
+
+import reming.{ CompactPrinter, JsonParser }
 
 class FeatureVectorSpec extends UnitSpec {
   // scalastyle:off
@@ -39,6 +40,6 @@ class FeatureVectorSpec extends UnitSpec {
 
   "Serializing a FeatureVector" should "preserve the vector" in {
     val vec1 = FeatureVector(Seq(nameA -> 0.5, nameB -> 0.3))
-    vec1.toJson.convertTo[FeatureVector] shouldBe vec1
+    JsonParser.read[FeatureVector](CompactPrinter.printToString(vec1)) shouldBe vec1
   }
 }

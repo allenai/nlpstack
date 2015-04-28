@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.core.Util
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.DefaultJsonProtocol._
 
 /** A sequence of (scored) sculptures. */
 case class NbestList(scoredSculptures: Iterable[(Sculpture, Double)])
@@ -18,13 +18,5 @@ case class NbestCorpus(nbestLists: Iterable[NbestList])
 object NbestCorpus {
   implicit val jsFormat = jsonFormat1(NbestCorpus.apply)
 
-  def loadNbestCorpus(filename: String): NbestCorpus = {
-    val jsValue = Util.getJsValueFromFile(filename)
-    jsValue match {
-      case JsObject(values) =>
-      case _ => deserializationError("Unexpected JsValue type. Must be " +
-        "JsObject.")
-    }
-    jsValue.convertTo[NbestCorpus]
-  }
+  def loadNbestCorpus(filename: String): NbestCorpus = Util.readFromFile(filename)
 }

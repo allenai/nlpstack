@@ -28,21 +28,21 @@ class PolytreeParserSpec extends UnitSpec {
    */
 
   val pancake = "A waffle is like a pancake with a syrup trap."
-  /*
+
   "PolytreeParserParser" should "correctly parse a simple sentence" in {
     val parseTreeStr = parseTreeString(pancake)
     val expectedParseTreeStr =
-      """|det(waffle-2, A-1)
-         |nsubj(is-3, waffle-2)
-         |root(ROOT-0, is-3)
-         |prep(is-3, like-4)
-         |det(pancake-6, a-5)
-         |pobj(like-4, pancake-6)
-         |prep(pancake-6, with-7)
-         |det(trap-10, a-8)
-         |nn(trap-10, syrup-9)
-         |pobj(with-7, trap-10)
-         |punct(is-3, .-11)""".stripMargin
+      """quantmod(waffle-2, A-1)
+        |nsubj(is-3, waffle-2)
+        |root(ROOT-0, is-3)
+        |prep(is-3, like-4)
+        |det(pancake-6, a-5)
+        |pobj(like-4, pancake-6)
+        |prep(is-3, with-7)
+        |det(trap-10, a-8)
+        |nn(trap-10, syrup-9)
+        |pobj(with-7, trap-10)
+        |punct(is-3, .-11)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
 
@@ -57,8 +57,8 @@ class PolytreeParserSpec extends UnitSpec {
         |root(ROOT-0, refused-4)
         |aux(step-6, to-5)
         |xcomp(refused-4, step-6)
-        |prep(step-6, up-7)
-        |prep(up-7, to-8)
+        |prt(step-6, up-7)
+        |prep(step-6, to-8)
         |det(plate-10, the-9)
         |pobj(to-8, plate-10)
         |punct(say-13, ,-11)
@@ -67,5 +67,5 @@ class PolytreeParserSpec extends UnitSpec {
         |punct(refused-4, .-14)""".stripMargin
     assert(parseTreeStr === expectedParseTreeStr)
   }
-  */
+
 }

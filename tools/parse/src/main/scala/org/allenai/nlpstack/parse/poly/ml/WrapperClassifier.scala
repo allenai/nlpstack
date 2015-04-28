@@ -8,7 +8,9 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
   ProbabilisticClassifier
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
-import spray.json.DefaultJsonProtocol._
+
+import reming.DefaultJsonProtocol._
+
 import scala.collection.immutable.HashSet
 
 /** A WrapperClassifier wraps a ProbabilisticClassifier (which uses integer-based feature
@@ -47,7 +49,7 @@ case class WrapperClassifier(
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
     */
-  def getDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  def getDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     classifier.outcomeDistribution(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )

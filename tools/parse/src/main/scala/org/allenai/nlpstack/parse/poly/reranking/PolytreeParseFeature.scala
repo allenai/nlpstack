@@ -1,46 +1,28 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.common.json._
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureName => MLFeatureName, FeatureVector => MLFeatureVector }
+import org.allenai.nlpstack.parse.poly.ml.{
+  FeatureName => MLFeatureName,
+  FeatureVector => MLFeatureVector
+}
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 /** Maps a scored parse into a feature vector. */
 abstract class PolytreeParseFeature extends ((PolytreeParse, Double) => MLFeatureVector)
 
 object PolytreeParseFeature {
+  implicit object PolytreeParseFeatureJsonFormat extends LazyFormat[PolytreeParseFeature] {
+    implicit val polytreeParseFeatureUnionFormat = jsonFormat1(PolytreeParseFeatureUnion.apply)
+    implicit val baseParserScoreFeatureFormat = jsonFormat0(() => BaseParserScoreFeature)
+    implicit val sentenceLengthFeatureFormat = jsonFormat0(() => SentenceLengthFeature)
 
-  /** Boilerplate code to serialize a PolytreeParseFeature to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM PolytreeParseFeature, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object PolytreeParseFeatureJsonFormat extends RootJsonFormat[PolytreeParseFeature] {
-
-    implicit val polytreeParseFeatureUnionFormat =
-      jsonFormat1(PolytreeParseFeatureUnion.apply).pack("type" -> "PolytreeParseFeatureUnion")
-
-    def write(feature: PolytreeParseFeature): JsValue = feature match {
-      case BaseParserScoreFeature => JsString("BaseParserScoreFeature")
-      case SentenceLengthFeature => JsString("SentenceLengthFeature")
-      case polytreeParseFeatureUnion: PolytreeParseFeatureUnion =>
-        polytreeParseFeatureUnion.toJson
-    }
-
-    def read(value: JsValue): PolytreeParseFeature = value match {
-      case JsString(typeid) => typeid match {
-        case "BaseParserScoreFeature" => BaseParserScoreFeature
-        case "SentenceLengthFeature" => SentenceLengthFeature
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        polytreeParseFeatureUnionFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
+    override val delegate = parentFormat[PolytreeParseFeature](
+      childFormat[PolytreeParseFeatureUnion, PolytreeParseFeature],
+      childFormat[BaseParserScoreFeature.type, PolytreeParseFeature],
+      childFormat[SentenceLengthFeature.type, PolytreeParseFeature]
+    )
   }
 }
 

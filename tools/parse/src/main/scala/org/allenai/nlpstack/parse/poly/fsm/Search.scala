@@ -72,7 +72,7 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
         (ScoredWalk(Walk(initialState, stepsSoFar), costSoFar) +: mementosSoFar,
           constraintEncountered)
       case Some(initialState) =>
-        val transitionCosts: List[(StateTransition, Double)] =
+        val transitionCosts: List[(StateTransition, Float)] =
           costFunction(initialState).toList sortBy { x => x._2 }
 
         // Filter out transitions that are disallowed by transition and parser constraints.
@@ -86,7 +86,7 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
             None
           }
 
-        val filteredTransitionCosts: List[(StateTransition, Double)] =
+        val filteredTransitionCosts: List[(StateTransition, Float)] =
           applicableTransitionCosts filter {
             case (transition, _) =>
               !(constraints map { x =>
@@ -95,7 +95,7 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
                 constraintInterpretation(initialState, transition)
               }).contains(true)
           }
-        val promisingTransitions: List[(StateTransition, Double)] =
+        val promisingTransitions: List[(StateTransition, Float)] =
           collectPromisingTransitions(filteredTransitionCosts)
         promisingTransitions.headOption match {
           case Some((bestTransition, bestCost)) =>
@@ -118,8 +118,8 @@ class NostalgicSearch(val costFunction: StateCostFunction, qualifyingCostDelta: 
   }
 
   private def collectPromisingTransitions(
-    transitionCosts: List[(StateTransition, Double)]
-  ): List[(StateTransition, Double)] = {
+    transitionCosts: List[(StateTransition, Float)]
+  ): List[(StateTransition, Float)] = {
 
     transitionCosts.headOption match {
       case Some((_, minCost)) =>

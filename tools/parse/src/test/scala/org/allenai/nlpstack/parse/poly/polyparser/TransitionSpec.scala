@@ -3,15 +3,15 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, NexusToken, Token }
 import org.allenai.nlpstack.parse.poly.fsm.StateTransition
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+
+import reming.{ CompactPrinter, JsonParser }
 
 class TransitionSpec extends UnitSpec {
   // scalastyle:off
 
-  val leftArc: StateTransition = new ArcEagerLeftArc('dummy)
+  val leftArc: StateTransition = new ArcEagerLeftArc(NoArcLabel)
 
-  val rightArc: StateTransition = new ArcEagerRightArc('dummy)
+  val rightArc: StateTransition = new ArcEagerRightArc(NoArcLabel)
 
   val tokens1: Vector[Token] = Vector(NexusToken, Token('we), Token('saw), Token('a),
     Token('white), Token('cat), Token('with), Token('a), Token('telescope))
@@ -20,7 +20,8 @@ class TransitionSpec extends UnitSpec {
 
   val children1: Map[Int, Set[Int]] = Map(0 -> Set(2), 2 -> Set(1))
 
-  val arcLabels1: Map[Set[Int], Symbol] = Map(Set(0, 2) -> 'root, Set(2, 1) -> 'nsubj)
+  val arcLabels1: Map[Set[Int], ArcLabel] =
+    Map(Set(0, 2) -> SingleSymbolArcLabel('root), Set(2, 1) -> SingleSymbolArcLabel('nsubj))
 
   val state1: TransitionParserState = TransitionParserState(Vector(2, 0), 3, breadcrumb1,
     children1, arcLabels1, Sentence(tokens1))
@@ -34,8 +35,10 @@ class TransitionSpec extends UnitSpec {
 
   val children2: Map[Int, Set[Int]] = Map(0 -> Set(2), 2 -> Set(1, 3))
 
-  val arcLabels2: Map[Set[Int], Symbol] = Map(Set(0, 2) -> 'root, Set(2, 1) ->
-    'nsubj, Set(2, 3) -> 'dobj)
+  val arcLabels2: Map[Set[Int], ArcLabel] = Map(
+    Set(0, 2) -> SingleSymbolArcLabel('root),
+    Set(2, 1) -> SingleSymbolArcLabel('nsubj), Set(2, 3) -> SingleSymbolArcLabel('dobj)
+  )
 
   val state2a: TransitionParserState = TransitionParserState(Vector(2, 0), 3, breadcrumb2,
     children2, arcLabels2, Sentence(tokens2))
@@ -55,7 +58,10 @@ class TransitionSpec extends UnitSpec {
 
   val children3: Map[Int, Set[Int]] = Map(2 -> Set(1, 3))
 
-  val arcLabels3: Map[Set[Int], Symbol] = Map(Set(2, 1) -> 'nsubj, Set(2, 3) -> 'dobj)
+  val arcLabels3: Map[Set[Int], ArcLabel] = Map(
+    Set(2, 1) -> SingleSymbolArcLabel('nsubj),
+    Set(2, 3) -> SingleSymbolArcLabel('dobj)
+  )
 
   val state3a: TransitionParserState = TransitionParserState(Vector(3, 2, 0), 4, breadcrumb3,
     children3, arcLabels3, Sentence(tokens3))
@@ -77,7 +83,7 @@ class TransitionSpec extends UnitSpec {
       Some(TransitionParserState(Vector(3, 2, 0), 5,
         state1b.breadcrumb + (4 -> 5),
         state1b.children,
-        state1b.arcLabels + (Set(4, 5) -> 'dummy),
+        state1b.arcLabels + (Set(4, 5) -> NoArcLabel),
         state1b.sentence,
         Some(5 -> 4),
         DependencyParserModes.LEFTLABEL))
@@ -88,7 +94,7 @@ class TransitionSpec extends UnitSpec {
       Some(TransitionParserState(Vector(5, 4, 3, 2, 0), 6,
         state1b.breadcrumb + (5 -> 4),
         state1b.children,
-        state1b.arcLabels + (Set(4, 5) -> 'dummy),
+        state1b.arcLabels + (Set(4, 5) -> NoArcLabel),
         state1b.sentence,
         Some(4 -> 5),
         DependencyParserModes.RIGHTLABEL))
@@ -195,8 +201,11 @@ class TransitionSpec extends UnitSpec {
   }
 
   "Serializing a list of Transitions" should "preserve it" in {
+    import reming.DefaultJsonProtocol._
     val transitions: List[StateTransition] = List(ArcEagerShift, ArcEagerReduce,
-      ArcEagerLeftArc('a), ArcEagerRightArc('b))
-    transitions.toJson.convertTo[List[StateTransition]] shouldBe transitions
+      ArcEagerLeftArc(SingleSymbolArcLabel('a)), ArcEagerRightArc(SingleSymbolArcLabel('b)))
+    JsonParser.read[List[StateTransition]](CompactPrinter.printToString(transitions)) shouldBe (
+      transitions
+    )
   }
 }

@@ -35,8 +35,16 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
     )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
-    arclabels = Vector(Set((3, 'ROOT)), Set((2, 'DET)), Set((1, 'DET), (3, 'NSUBJ)),
-      Set((0, 'ROOT), (2, 'NSUBJ), (4, 'PREP)), Set((3, 'PREP), (5, 'POBJ)), Set((4, 'POBJ)))
+    arclabels =
+      Vector(
+        Set((3, SingleSymbolArcLabel('ROOT))),
+        Set((2, SingleSymbolArcLabel('DET))),
+        Set((1, SingleSymbolArcLabel('DET)), (3, SingleSymbolArcLabel('NSUBJ))),
+        Set((0, SingleSymbolArcLabel('ROOT)), (2, SingleSymbolArcLabel('NSUBJ)),
+          (4, SingleSymbolArcLabel('PREP))),
+        Set((3, SingleSymbolArcLabel('PREP)), (5, SingleSymbolArcLabel('POBJ))),
+        Set((4, SingleSymbolArcLabel('POBJ)))
+      )
   )
 
   /** This represents the following parse:
@@ -66,8 +74,15 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
     )),
     breadcrumb = Vector(-1, 0, 1, 4, 1),
     children = Vector(Set(1), Set(2, 4), Set(), Set(), Set(3)),
-    arclabels = Vector(Set((1, 'n2a)), Set((0, 'n2a), (2, 'a2b), (4, 'a2d)), Set((1, 'a2b)),
-      Set((4, 'd2c)), Set((1, 'a2d), (3, 'd2c)))
+    arclabels =
+      Vector(
+        Set((1, SingleSymbolArcLabel('n2a))),
+        Set((0, SingleSymbolArcLabel('n2a)), (2, SingleSymbolArcLabel('a2b)),
+          (4, SingleSymbolArcLabel('a2d))),
+        Set((1, SingleSymbolArcLabel('a2b))),
+        Set((4, SingleSymbolArcLabel('d2c))),
+        Set((1, SingleSymbolArcLabel('a2d)), (3, SingleSymbolArcLabel('d2c)))
+      )
   )
 
   "Calling GuidedCostFunction's apply" should "duplicate the steps needed to create parse1" in {
@@ -78,16 +93,16 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
     greedySearch.find(initialState, Set()) map { walk => walk.transitions } shouldBe Some(List(
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('DET),
+      LabelLeftArc(DependencyParsingArcLabel('DET, 'DT)),
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('NSUBJ),
+      LabelLeftArc(DependencyParsingArcLabel('NSUBJ, 'NN)),
       ArcEagerRightArc(),
-      LabelRightArc('ROOT),
+      LabelRightArc(DependencyParsingArcLabel('ROOT, 'VB)),
       ArcEagerRightArc(),
-      LabelRightArc('PREP),
+      LabelRightArc(DependencyParsingArcLabel('PREP, 'IN)),
       ArcEagerRightArc(),
-      LabelRightArc('POBJ),
+      LabelRightArc(DependencyParsingArcLabel('POBJ, 'PRP)),
       ArcEagerReduce,
       ArcEagerReduce,
       ArcEagerReduce
@@ -101,15 +116,15 @@ class ArcEagerTransitionSystemSpec extends UnitSpec {
     val greedySearch = new GreedySearch(costFunction)
     greedySearch.find(initialState, Set()) map { walk => walk.transitions} shouldBe Some(List(
       ArcEagerRightArc(),
-      LabelRightArc('n2a),
+      LabelRightArc(DependencyParsingArcLabel('n2a, 'AA)),
       ArcEagerRightArc(),
-      LabelRightArc('a2b),
+      LabelRightArc(DependencyParsingArcLabel('a2b, 'BB)),
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('d2c),
+      LabelLeftArc(DependencyParsingArcLabel('d2c, 'CC)),
       ArcEagerReduce,
       ArcEagerRightArc(),
-      LabelRightArc('a2d),
+      LabelRightArc(DependencyParsingArcLabel('a2d, 'DD)),
       ArcEagerReduce,
       ArcEagerReduce
     ))

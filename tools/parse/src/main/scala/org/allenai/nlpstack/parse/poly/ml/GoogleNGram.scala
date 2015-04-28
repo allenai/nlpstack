@@ -5,10 +5,9 @@ import org.allenai.nlpstack.core.PostaggedToken
 
 import java.io._
 
-import scala.io._
+import reming.DefaultJsonProtocol._
 
-import spray.json._
-import DefaultJsonProtocol._
+import scala.io._
 
 /** A class that parses Google N-Gram data
   * (http://commondatastorage.googleapis.com/books/syntactic-ngrams/index.html) to provide
@@ -30,29 +29,26 @@ import DefaultJsonProtocol._
   *      and 0 indicates that the head is the root of the fragment.
   */
 case class GoogleNGram(
-    groupName: String, artifactName: String, version: Int, frequencyCutoff: Int) {
+    groupName: String, artifactName: String, version: Int, frequencyCutoff: Int
+) {
 
-  //@transient val googleNgramPath = Datastore.directoryPath(
-  //    groupName,
-  //    artifactName,
-  //    version
-  //  )
+  @transient val googleNgramPath = Datastore.directoryPath(
+    groupName,
+    artifactName,
+    version
+  )
 
-  //@transient val googleNgramDir = new File(googleNgramPath.toString)
-  @transient val googleNgramDir = new File("/Users/sumithrab/Downloads/google-ngrams/nodes")
-  //println(s"googleNgramPath: ${googleNgramPath}")
+  @transient val googleNgramDir = new File(googleNgramPath.toString)
   @transient val ngramMap = GoogleNGram.constructNgramTable(googleNgramDir, frequencyCutoff)
-  println(s"ngramMap: ${ngramMap}")
-  
 }
 
 /** Utility case classes to represent information associated with an ngram in the Google Ngram
-  * corpus. 
+  * corpus.
   */
 case class SyntacticInfo(word: String, posTag: String, depLabel: String, headIndex: Int)
 case class NgramInfo(syntacticNgram: Seq[SyntacticInfo], frequency: Long)
 
-/** Companion object. Contains methods to parse a Google Ngram corpus. This is not specific to 
+/** Companion object. Contains methods to parse a Google Ngram corpus. This is not specific to
   * the type of corpus, i.e. whether unigram, bigram, etc.
   */
 object GoogleNGram {
@@ -79,10 +75,10 @@ object GoogleNGram {
   }
 
   /** Helper Method. Takes a string of the following format:
-   *  shepherd/NNP/nn/2 woods/NNS/pobj/0
-   *  which can contain multiple syntactic n-grams, and generates a seq of SyntacticInfo objects,
-   *  one for each word in the ngram, to create the NgramInfo from.
-   */
+    * shepherd/NNP/nn/2 woods/NNS/pobj/0
+    * which can contain multiple syntactic n-grams, and generates a seq of SyntacticInfo objects,
+    * one for each word in the ngram, to create the NgramInfo from.
+    */
   private def createSyntacticNgram(syntacticNgramsStr: String): Seq[SyntacticInfo] = {
     val syntacticNgramStrs = syntacticNgramsStr.split(" ").map(x => x.trim).toSeq
     for {
@@ -105,11 +101,11 @@ object GoogleNGram {
   }
 
   /** Helper Method. Breaks a tab-separated line with below format:
-   *  woods shepherd/NNP/nn/2 woods/NNS/pobj/0  11 1895,1  1899,1  1923,1  1933,3
-   *  and creates a tuple containing the word the line is about, the sequence of SyntacticInfo
-   *  objects for the words in each ngram associated with the word, and the total frequency for
-   *  each ngram. Ignores the last field (year-wise frequency breakdown) in the tab-delimited line.
-   */
+    * woods shepherd/NNP/nn/2 woods/NNS/pobj/0  11 1895,1  1899,1  1923,1  1933,3
+    * and creates a tuple containing the word the line is about, the sequence of SyntacticInfo
+    * objects for the words in each ngram associated with the word, and the total frequency for
+    * each ngram. Ignores the last field (year-wise frequency breakdown) in the tab-delimited line.
+    */
   private def parseLine(line: String): (String, Seq[SyntacticInfo], Long) = {
     line.split("\t").map(x => x.trim) match {
       case Array(ngram: String, syntacticNgramStr: String, freqStr: String, _*) =>
@@ -139,34 +135,28 @@ object GoogleUnigram {
     * here to shift the scale of the frequencies to start from the cutoff point instead of 1.
     */
   def getDepLabelNormalizedDistribution(
-      token: PostaggedToken, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int)
-    : Map[String, Double] = {
-    //println(s"token: ${token.string}, ${token.postag}")
+    token: PostaggedToken, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
+  ): Map[String, Double] = {
     val tokenNodeInfos = (for {
       tokNgrams <- ngramMap.get(token.string.toLowerCase)
     } yield {
-      //println(s"tokNgrams: ${tokNgrams}")
-      val x = getTokenUnigramInfo(
-        token.postag, tokNgrams, frequencyCutoff)
-      //println(s"tokenUnigramInfo: ${x}")
-      x
+      getTokenUnigramInfo(
+        token.postag, tokNgrams, frequencyCutoff
+      )
     }).getOrElse(Seq.empty[UnigramInfo])
 
     // Get the total frequency for all nodes aggregated above for the current token to
     // normalize them.
     val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
-    //println(s"totalFrequency: ${totalFrequency}")
+
     // Iterate over all the nodes, normalize frequencies by the total frequency and set
     // appropriate feature values based on the normalized frequency bucket they fall in.
-    val x = (for {
+    (for {
       tokenNodeInfo <- tokenNodeInfos
-     } yield {
-       val normalizedFrequency = tokenNodeInfo.frequency.toDouble / totalFrequency
-       (tokenNodeInfo.syntacticUnigram.depLabel -> normalizedFrequency)
-     }).toMap
-     //println("Returning:")
-     //println(s"${x}")
-     x
+    } yield {
+      val normalizedFrequency = tokenNodeInfo.frequency.toDouble / totalFrequency
+      (tokenNodeInfo.syntacticUnigram.depLabel -> normalizedFrequency)
+    }).toMap
   }
 
   /** Helper Method. Takes a token and a seq of NgramInfos associated with it and filters them to
@@ -183,15 +173,18 @@ object GoogleUnigram {
     * distribution of the different possible dependency labels.
     */
   private def getTokenUnigramInfo(
-      posTag: String, ngramInfos: Seq[NgramInfo], frequencyCutoff: Int): Seq[UnigramInfo] = {
-       ngramInfos.filter(ngramInfo =>
-        ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(posTag)).
-          map {
-            ngramInfoForThisTok =>
-              // Scale down the frequencies so that the cutoff frequency (minimum) is treated as the
-              // starting point (frequency 1).
-              new UnigramInfo(ngramInfoForThisTok.syntacticNgram.head,
-                ngramInfoForThisTok.frequency - frequencyCutoff)
+    posTag: String, ngramInfos: Seq[NgramInfo], frequencyCutoff: Int
+  ): Seq[UnigramInfo] = {
+    ngramInfos.filter(ngramInfo =>
+      ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(posTag)).
+      map {
+        ngramInfoForThisTok =>
+          // Scale down the frequencies so that the cutoff frequency (minimum) is treated as the
+          // starting point (frequency 1).
+          new UnigramInfo(
+            ngramInfoForThisTok.syntacticNgram.head,
+            ngramInfoForThisTok.frequency - frequencyCutoff
+          )
       }
-    }
+  }
 }

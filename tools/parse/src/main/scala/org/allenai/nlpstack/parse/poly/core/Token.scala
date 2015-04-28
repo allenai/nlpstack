@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** A Token is the basic atom of a sentence.
   *

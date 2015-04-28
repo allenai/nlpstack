@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import spray.json._
 import scala.annotation.tailrec
+
+import reming.DefaultJsonProtocol._
 
 /** Immutable decision tree for integer-valued features and outcomes.
   *
@@ -55,11 +56,13 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
     * @param featureVector feature vector to compute the distribution for
     * @return probability distribution of outcomes according to training data
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Double] = {
+  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     val node = findDecisionPoint(featureVector)
     val priorCounts = outcomes.toList.map(_ -> 1).toMap // add-one smoothing
     ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues { _.toDouble }).toSeq
+      (ProbabilisticClassifier.addMaps(outcomeHistograms(node), priorCounts) mapValues {
+      _.toFloat
+    }).toSeq
     ).toMap
   }
 
@@ -129,17 +132,5 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
 }
 
 object DecisionTree {
-  // Override the Spray/JSON serialization for maps with integer keys, because these
-  // don't work out-of-the-box.
-  import spray.json.DefaultJsonProtocol.{ mapFormat => _, _ }
-  implicit val intMapFormat = new JsonFormat[Map[Int, Int]] {
-    override def write(map: Map[Int, Int]): JsValue = {
-      map.toSeq.toJson
-    }
-    override def read(json: JsValue): Map[Int, Int] = json match {
-      case value: JsArray => value.convertTo[Seq[(Int, Int)]].toMap
-      case _ => throw new DeserializationException("Expected JSArray for int map")
-    }
-  }
-  implicit val dtFormat = jsonFormat4(DecisionTree.apply)
+  implicit val decisionTreeFormat = jsonFormat4(DecisionTree.apply)
 }

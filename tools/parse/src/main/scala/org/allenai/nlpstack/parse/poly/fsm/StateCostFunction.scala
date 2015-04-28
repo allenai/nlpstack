@@ -1,9 +1,9 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
-import org.allenai.common.json._
+
+import reming.LazyFormat
+import reming.DefaultJsonProtocol._
 
 /** A StateCostFunction assigns a (real-valued) cost to the Transitions that can potentially
   * be applied to a State. Generally speaking: the lower the cost, the better
@@ -14,7 +14,7 @@ import org.allenai.common.json._
   * GuidedCostFunction in [[org.allenai.nlpstack.parse.poly.polyparser.ArcEagerGuidedCostFunction]]
   * for a cost function that uses a gold parse tree as the basis for its cost function.
   */
-abstract class StateCostFunction extends (State => Map[StateTransition, Double]) {
+abstract class StateCostFunction extends (State => Map[StateTransition, Float]) {
 
   def transitionSystem: TransitionSystem
 
@@ -28,24 +28,6 @@ abstract class StateCostFunction extends (State => Map[StateTransition, Double])
   }
 }
 
-object StateCostFunction {
-  /*
-  implicit object StateJsonFormat extends RootJsonFormat[StateCostFunction] {
-    implicit val classifierBasedCostFunctionFormat =
-      jsonFormat5(ClassifierBasedCostFunction.apply).pack("type" -> "ClassifierBasedCostFunction")
-
-    def write(costFunction: StateCostFunction): JsValue = costFunction match {
-      case cbCostFunction: ClassifierBasedCostFunction => cbCostFunction.toJson
-      case x => deserializationError(s"Cannot serialize this cost function type: $x")
-    }
-
-    def read(value: JsValue): StateCostFunction = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFormat
-    )
-  }
-  */
-}
-
 case class ClassifierBasedCostFunction(
     transitionSystem: TransitionSystem, transitions: Seq[StateTransition],
     taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
@@ -56,8 +38,8 @@ case class ClassifierBasedCostFunction(
   @transient
   lazy val taskClassifiers = taskClassifierList.toMap
 
-  override def apply(state: State): Map[StateTransition, Double] = {
-    transitionCosts(state, 0.0)
+  override def apply(state: State): Map[StateTransition, Float] = {
+    transitionCosts(state, 0.0f)
   }
 
   /** Returns a distribution over all possible transitions, according to the classifier associated
@@ -76,16 +58,16 @@ case class ClassifierBasedCostFunction(
     */
   private def transitionDistribution(
     state: State,
-    minProb: Double
-  ): Map[StateTransition, Double] = {
+    minProb: Float
+  ): Map[StateTransition, Float] = {
 
     transitionSystem.taskIdentifier(state) match {
       case Some(task) =>
         val featureVector: FeatureVector = transitionSystem.computeFeature(state)
-        val topLevelDistribution: Map[StateTransition, Double] = {
+        val topLevelDistribution: Map[StateTransition, Float] = {
           if (!taskClassifiers.contains(task)) {
             transitions.zip(transitions.map { _ =>
-              1.0 / transitions.size
+              1.0f / transitions.size
             }).toMap
           } else {
             taskClassifiers(task).getDistribution(featureVector) filter {
@@ -95,14 +77,15 @@ case class ClassifierBasedCostFunction(
         }
         val result = if (topLevelDistribution.contains(Fallback)) {
           require(baseCostFunction != None)
-          val baseCosts: Map[StateTransition, Double] = (baseCostFunction.get)(state)
-          val baseDistribution = baseCosts mapValues (x => Math.exp(-x))
-          val fallbackProb: Double = topLevelDistribution(Fallback)
-          val topLevelDistributionWithoutFallback = topLevelDistribution - Fallback
+          val baseCosts: Map[StateTransition, Float] = (baseCostFunction.get)(state)
+          val baseDistribution: Map[StateTransition, Float] = baseCosts mapValues (x => Math.exp(-x).toFloat)
+          val fallbackProb: Float = topLevelDistribution(Fallback)
+          val topLevelDistributionWithoutFallback: Map[StateTransition, Float] = topLevelDistribution - Fallback
           (for {
             key <- baseDistribution.keys ++ topLevelDistributionWithoutFallback.keys
-          } yield (key, topLevelDistributionWithoutFallback.getOrElse(key, 0.0) +
-            fallbackProb * baseDistribution.getOrElse(key, 0.0))).toMap
+          } yield (key,
+            topLevelDistributionWithoutFallback.getOrElse(key, 0.0f) +
+            fallbackProb * baseDistribution.getOrElse(key, 0.0f))).toMap
         } else {
           topLevelDistribution
         }
@@ -129,10 +112,10 @@ case class ClassifierBasedCostFunction(
     */
   private def transitionCosts(
     state: State,
-    minProb: Double
-  ): Map[StateTransition, Double] = {
+    minProb: Float
+  ): Map[StateTransition, Float] = {
 
-    transitionDistribution(state, minProb) mapValues (-Math.log(_))
+    transitionDistribution(state, minProb) mapValues (-Math.log(_).toFloat)
   }
 
 }
@@ -145,27 +128,19 @@ trait StateCostFunctionFactory {
 }
 
 object StateCostFunctionFactory {
-  implicit object StateCostFunctionFactoryJsonFormat
-      extends RootJsonFormat[StateCostFunctionFactory] {
+  implicit object StateCostFunctionFactoryFormat extends LazyFormat[StateCostFunctionFactory] {
+    private implicit val classifierBasedCostFunctionFactoryFormat =
+      jsonFormat4(ClassifierBasedCostFunctionFactory.apply)
 
-    implicit val classifierBasedCostFunctionFactoryFormat =
-      jsonFormat4(ClassifierBasedCostFunctionFactory.apply).pack(
-        "type" -> "ClassifierBasedCostFunctionFactory"
-      )
-
-    def write(costFunctionFactory: StateCostFunctionFactory): JsValue = costFunctionFactory match {
-      case cbFactory: ClassifierBasedCostFunctionFactory => cbFactory.toJson
-      case x => deserializationError(s"Cannot serialize this cost function factory type: $x")
-    }
-
-    def read(value: JsValue): StateCostFunctionFactory = value.asJsObject.unpackWith(
-      classifierBasedCostFunctionFactoryFormat
+    override val delegate = parentFormat[StateCostFunctionFactory](
+      childFormat[ClassifierBasedCostFunctionFactory, StateCostFunctionFactory]
     )
   }
 }
 
 case class ClassifierBasedCostFunctionFactory(
-    transitionSystemFactory: TransitionSystemFactory, transitions: Seq[StateTransition],
+    transitionSystemFactory: TransitionSystemFactory,
+    transitions: Seq[StateTransition],
     taskClassifierList: List[(ClassificationTask, TransitionClassifier)],
     baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
 ) extends StateCostFunctionFactory {

@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import spray.json.DefaultJsonProtocol._
+import reming.DefaultJsonProtocol._
 
 /** Maps feature names to integers. Useful for serializing TrainingData instances for
   * consumption by command-line machine learning tools.

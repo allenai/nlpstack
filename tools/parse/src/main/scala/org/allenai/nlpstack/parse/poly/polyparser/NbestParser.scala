@@ -4,7 +4,6 @@ import java.io.{ File, PrintWriter }
 
 import org.allenai.nlpstack.parse.poly.core.{ Sentence, SentenceSource }
 import org.allenai.nlpstack.parse.poly.fsm._
-import spray.json._
 
 import scopt.OptionParser
 

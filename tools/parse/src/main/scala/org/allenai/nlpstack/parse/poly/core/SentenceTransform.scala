@@ -5,64 +5,28 @@ import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, GoogleUn
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
-import org.allenai.common.json._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import reming.DefaultJsonProtocol._
 
 trait SentenceTransform {
   def transform(sentence: Sentence): Sentence
 }
 
 object SentenceTransform {
+  private implicit val factorieSentenceTaggerFormat = jsonFormat0(() => FactorieSentenceTagger)
+  private implicit val stanfordSentenceTaggerFormat = jsonFormat0(() => StanfordSentenceTagger)
+  private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTagger)
+  private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTagger.apply)
+  private implicit val verbnetTaggerFormat = jsonFormat1(VerbnetTagger.apply)
+  private implicit val googleUnigramTaggerFormat = jsonFormat1(GoogleUnigramTagger.apply)
 
-  /** Boilerplate code to serialize a SentenceTagger to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM SentenceTagger, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object SentenceTransformJsonFormat extends RootJsonFormat[SentenceTransform] {
-
-    implicit val brownClustersTaggerFormat =
-      jsonFormat1(BrownClustersTagger.apply).pack("type" -> "BrownClustersTagger")
-
-    implicit val verbnetTaggerFormat =
-      jsonFormat1(VerbnetTagger.apply).pack("type" -> "VerbnetTagger")
-
-    implicit val googleUnigramTaggerFormat =
-      jsonFormat1(GoogleUnigramTagger.apply).pack("type" -> "GoogleUnigramTagger")
-
-    def write(sentenceTagger: SentenceTransform): JsValue = sentenceTagger match {
-      case FactorieSentenceTagger =>
-        JsString("FactorieSentenceTagger")
-      case StanfordSentenceTagger =>
-        JsString("StanfordSentenceTagger")
-      case LexicalPropertiesTagger =>
-        JsString("LexicalPropertiesTagger")
-      case brownClustersTagger: BrownClustersTagger =>
-        brownClustersTagger.toJson
-      case verbnetTagger: VerbnetTagger =>
-        verbnetTagger.toJson
-      case googleUnigramTagger: GoogleUnigramTagger =>
-        googleUnigramTagger.toJson
-    }
-
-    def read(value: JsValue): SentenceTransform = value match {
-      case JsString(typeid) => typeid match {
-        case "FactorieSentenceTagger" => FactorieSentenceTagger
-        case "StanfordSentenceTagger" => StanfordSentenceTagger
-        case "LexicalPropertiesTagger" => LexicalPropertiesTagger
-        case x => deserializationError(s"Invalid identifier for TaskIdentifier: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        brownClustersTaggerFormat,
-        verbnetTaggerFormat,
-        googleUnigramTaggerFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
-  }
+  implicit val sentenceTransformJsonFormat = parentFormat[SentenceTransform](
+    childFormat[FactorieSentenceTagger.type, SentenceTransform],
+    childFormat[StanfordSentenceTagger.type, SentenceTransform],
+    childFormat[LexicalPropertiesTagger.type, SentenceTransform],
+    childFormat[BrownClustersTagger, SentenceTransform],
+    childFormat[VerbnetTagger, SentenceTransform],
+    childFormat[GoogleUnigramTagger, SentenceTransform]
+  )
 
   /** Given a Sentences, produce a seq of PostaggedTokens.
     */
@@ -100,7 +64,7 @@ case object FactorieSentenceTagger extends SentenceTransform {
   */
 case object StanfordSentenceTagger extends SentenceTransform {
 
-   @transient private val stanfordTagger = new StanfordPostagger()
+  @transient private val stanfordTagger = new StanfordPostagger()
 
   def transform(sentence: Sentence): Sentence = {
     val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, stanfordTagger)
@@ -205,53 +169,49 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
   */
 case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransform {
 
-   @transient private val stanfordTagger = new StanfordPostagger()
+  @transient private val stanfordTagger = new StanfordPostagger()
 
   override def transform(sentence: Sentence): Sentence = {
     val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
-      val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
-            tagged, googleNgram.ngramMap, googleNgram.frequencyCutoff)
-      // Create feature for each depenedency label based on the normalized frequency
-      // bucket it lies in.
-      val frequencyFeatureMap = (for {
-        (depLabel, normalizedFrequency) <- depLabelFreqMap
-      } yield {
-        val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
-        if (normalizedFrequency <= 0.1) {
-          ('depLabelFreq1to10 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.2) {
-          ('depLabelFreq11to20 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.3) {
-          ('depLabelFreq21to30 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.4) {
-          ('depLabelFreq31to40 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.5) {
-          ('depLabelFreq41to50 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.6) {
-          ('depLabelFreq51to60 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.7) {
-          ('depLabelFreq61to70 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.8) {
-          ('depLabelFreq71to80 -> symbolSetWithCurrentDepLabel)
-        }
-        else if (normalizedFrequency <= 0.9) {
-          ('depLabelFreq81to90 -> symbolSetWithCurrentDepLabel)
-        }
-        else {
-          ('depLabelFreq91to100 -> symbolSetWithCurrentDepLabel)
-        }
-      }).toMap
-      //println(s"frequencyFeatureMap: ${frequencyFeatureMap}")
-      untagged.updateProperties(frequencyFeatureMap)
+        val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
+          tagged, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        )
+        // Create feature for each dependency label based on the normalized frequency
+        // bucket it lies in.
+        val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
+          depLabel <- depLabelFreqMap.keySet
+        } yield {
+          val normalizedFrequency = depLabelFreqMap(depLabel)
+          val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
+          if (normalizedFrequency <= 0.0009) {
+            ('depLabelFreqSmall, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.01) {
+            ('depLabelFreqBelow1, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.1) {
+            ('depLabelFreq1to10, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.2) {
+            ('depLabelFreq11to20, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.3) {
+            ('depLabelFreq21to30, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.4) {
+            ('depLabelFreq31to40, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.5) {
+            ('depLabelFreq41to50, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.6) {
+            ('depLabelFreq51to60, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.7) {
+            ('depLabelFreq61to70, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.8) {
+            ('depLabelFreq71to80, symbolSetWithCurrentDepLabel)
+          } else if (normalizedFrequency <= 0.9) {
+            ('depLabelFreq81to90, symbolSetWithCurrentDepLabel)
+          } else {
+            ('depLabelFreq91to100, symbolSetWithCurrentDepLabel)
+          }
+        }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
+        untagged.updateProperties(frequencyFeatureMap)
     }))
   }
 }

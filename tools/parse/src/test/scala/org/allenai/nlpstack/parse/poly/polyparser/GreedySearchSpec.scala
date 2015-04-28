@@ -35,8 +35,16 @@ class GreedySearchSpec extends UnitSpec {
     )),
     breadcrumb = Vector(-1, 2, 3, 0, 3, 4),
     children = Vector(Set(3), Set(2), Set(), Set(2), Set(3, 5), Set()),
-    arclabels = Vector(Set((3, 'ROOT)), Set((2, 'DET)), Set((1, 'DET), (3, 'NSUBJ)),
-      Set((0, 'ROOT), (2, 'NSUBJ), (4, 'PREP)), Set((3, 'PREP), (5, 'POBJ)), Set((4, 'POBJ)))
+    arclabels =
+      Vector(
+        Set((3, SingleSymbolArcLabel('ROOT))),
+        Set((2, SingleSymbolArcLabel('DET))),
+        Set((1, SingleSymbolArcLabel('DET)), (3, SingleSymbolArcLabel('NSUBJ))),
+        Set((0, SingleSymbolArcLabel('ROOT)), (2, SingleSymbolArcLabel('NSUBJ)),
+          (4, SingleSymbolArcLabel('PREP))),
+        Set((3, SingleSymbolArcLabel('PREP)), (5, SingleSymbolArcLabel('POBJ))),
+        Set((4, SingleSymbolArcLabel('POBJ)))
+      )
   )
 
   "Calling GreedySearch's find" should "re-create parse1" in {
@@ -50,16 +58,16 @@ class GreedySearchSpec extends UnitSpec {
     bestWalk map { _.transitions } shouldBe Some(List(
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('DET),
+      LabelLeftArc(DependencyParsingArcLabel('DET, 'DT)),
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('NSUBJ),
+      LabelLeftArc(DependencyParsingArcLabel('NSUBJ, 'NN)),
       ArcEagerRightArc(),
-      LabelRightArc('ROOT),
+      LabelRightArc(DependencyParsingArcLabel('ROOT, 'VB)),
       ArcEagerRightArc(),
-      LabelRightArc('PREP),
+      LabelRightArc(DependencyParsingArcLabel('PREP, 'IN)),
       ArcEagerRightArc(),
-      LabelRightArc('POBJ),
+      LabelRightArc(DependencyParsingArcLabel('POBJ, 'PRP)),
       ArcEagerReduce,
       ArcEagerReduce,
       ArcEagerReduce
@@ -88,16 +96,16 @@ class GreedySearchSpec extends UnitSpec {
     bestWalk map { _.transitions } shouldBe Some(List(
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('DET),
+      LabelLeftArc(DependencyParsingArcLabel('DET, 'DT)),
       ArcEagerShift,
       ArcEagerLeftArc(),
-      LabelLeftArc('NSUBJ),
+      LabelLeftArc(DependencyParsingArcLabel('NSUBJ, 'NN)),
       ArcEagerRightArc(),
-      LabelRightArc('ROOT),
+      LabelRightArc(DependencyParsingArcLabel('ROOT, 'VB)),
       ArcEagerRightArc(),
-      LabelRightArc('PREP),
+      LabelRightArc(DependencyParsingArcLabel('PREP, 'IN)),
       ArcEagerRightArc(),
-      LabelRightArc('POBJ),
+      LabelRightArc(DependencyParsingArcLabel('POBJ, 'PRP)),
       ArcEagerReduce,
       ArcEagerReduce,
       ArcEagerReduce

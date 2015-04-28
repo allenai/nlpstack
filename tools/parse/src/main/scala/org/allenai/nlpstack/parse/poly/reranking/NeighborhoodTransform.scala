@@ -1,12 +1,11 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.common.json._
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, GoogleNGram, GoogleUnigram, Verbnet }
 import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+
+import reming.DefaultJsonProtocol._
 
 /** A NeighborhoodTransform maps a Neighborhood to zero or more feature names.
   *
@@ -17,58 +16,25 @@ import spray.json._
 trait NeighborhoodTransform extends ((PolytreeParse, Neighborhood) => Seq[FeatureName])
 
 object NeighborhoodTransform {
+  private implicit val arclabelNhTransformJsonFormat = jsonFormat0(() => ArclabelNhTransform)
+  private implicit val directionNhTransform = jsonFormat0(() => DirectionNhTransform)
+  private implicit val cardinalityNhTransform = jsonFormat0(() => CardinalityNhTransform)
+  private implicit val propertyNhTransformFormat = jsonFormat1(PropertyNhTransform.apply)
+  private implicit val suffixNeighborhoodTransformFormat = jsonFormat1(SuffixNhTransform.apply)
+  private implicit val keywordNeighborhoodTransformFormat = jsonFormat1(KeywordNhTransform.apply)
+  private implicit val verbnetTransformFormat = jsonFormat1(VerbnetTransform.apply)
+  private implicit val googleUnigramTransformFormat = jsonFormat1(GoogleUnigramTransform.apply)
 
-  /** Boilerplate code to serialize an EventTransform to JSON using Spray.
-    *
-    * NOTE: If a subclass has a field named `type`, this will fail to serialize.
-    *
-    * NOTE: IF YOU INHERIT FROM EventTransform, THEN YOU MUST MODIFY THESE SUBROUTINES
-    * IN ORDER TO CORRECTLY EMPLOY JSON SERIALIZATION FOR YOUR NEW SUBCLASS.
-    */
-  implicit object NeighborhoodTransformJsonFormat extends RootJsonFormat[NeighborhoodTransform] {
-
-    implicit val propertyNhTransformFormat =
-      jsonFormat1(PropertyNhTransform.apply).pack("type" -> "PropertyNhTransform")
-    implicit val suffixNeighborhoodTransformFormat =
-      jsonFormat1(SuffixNhTransform.apply).pack("type" -> "SuffixNeighborhoodTransform")
-    implicit val keywordNeighborhoodTransformFormat =
-      jsonFormat1(KeywordNhTransform.apply).pack("type" -> "KeywordNeighborhoodTransform")
-    implicit val verbnetTransformFormat =
-      jsonFormat1(VerbnetTransform.apply).pack("type" -> "VerbnetTransform")
-   implicit val googleNgramTransformFormat =
-      jsonFormat1(GoogleUnigramTransform.apply).pack("type" -> "GoogleUnigramTransform")
-
-    def write(feature: NeighborhoodTransform): JsValue = feature match {
-      case ArclabelNhTransform => JsString("ArcLabelNeighborhoodTransform")
-      case DirectionNhTransform => JsString("DirectionNeighborhoodTransform")
-      case CardinalityNhTransform => JsString("CardinalityNhTransform")
-      case propertyNhTransform: PropertyNhTransform =>
-        propertyNhTransform.toJson
-      case suffixNeighborhoodTransform: SuffixNhTransform =>
-        suffixNeighborhoodTransform.toJson
-      case keywordNeighborhoodTransform: KeywordNhTransform =>
-        keywordNeighborhoodTransform.toJson
-      case verbnetTransform: VerbnetTransform =>
-        verbnetTransform.toJson
-      case googleUnigramTransform: GoogleUnigramTransform =>
-        googleUnigramTransform.toJson
-    }
-
-    def read(value: JsValue): NeighborhoodTransform = value match {
-      case JsString(typeid) => typeid match {
-        case "ArcLabelNeighborhoodTransform" => ArclabelNhTransform
-        case "DirectionNeighborhoodTransform" => DirectionNhTransform
-        case "CardinalityNhTransform" => CardinalityNhTransform
-        case x => deserializationError(s"Invalid identifier for NeighborhoodExtractor: $x")
-      }
-      case jsObj: JsObject => jsObj.unpackWith(
-        propertyNhTransformFormat,
-        suffixNeighborhoodTransformFormat, keywordNeighborhoodTransformFormat,
-        verbnetTransformFormat
-      )
-      case _ => deserializationError("Unexpected JsValue type. Must be JsString.")
-    }
-  }
+  implicit val neighborhoodTransformJsonFormat = parentFormat[NeighborhoodTransform](
+    childFormat[ArclabelNhTransform.type, NeighborhoodTransform],
+    childFormat[DirectionNhTransform.type, NeighborhoodTransform],
+    childFormat[CardinalityNhTransform.type, NeighborhoodTransform],
+    childFormat[PropertyNhTransform, NeighborhoodTransform],
+    childFormat[SuffixNhTransform, NeighborhoodTransform],
+    childFormat[KeywordNhTransform, NeighborhoodTransform],
+    childFormat[VerbnetTransform, NeighborhoodTransform],
+    childFormat[GoogleUnigramTransform, NeighborhoodTransform]
+  )
 }
 
 /** Maps the tokens of a neighborhood to a particular property in their token's property map.
@@ -162,23 +128,22 @@ case class GoogleUnigramTransform(googleNgram: GoogleNGram)
       val postaggedToken =
         new PostaggedToken(token.getDeterministicProperty('pos), token.word.name, tokIx)
       val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
-            postaggedToken, googleNgram.ngramMap, googleNgram.frequencyCutoff)
+        postaggedToken, googleNgram.ngramMap, googleNgram.frequencyCutoff
+      )
       // Create feature for each dependency label based on the normalized frequency
       // bucket it lies in.
       for {
-        (depLabel, normalizedFrequency) <- depLabelFreqMap
+        depLabel <- depLabelFreqMap.keySet
       } yield {
+        val normalizedFrequency = depLabelFreqMap(depLabel)
         val symbolForCurrentDepLabel = Symbol(depLabel)
         if (normalizedFrequency <= 0.25) {
           FeatureName(Seq('depLabelFreq1to25, symbolForCurrentDepLabel))
-        }
-        else if (normalizedFrequency <= 0.5) {
+        } else if (normalizedFrequency <= 0.5) {
           FeatureName(Seq('depLabelFreq26to50, symbolForCurrentDepLabel))
-        }
-        else if (normalizedFrequency <= 0.75) {
+        } else if (normalizedFrequency <= 0.75) {
           FeatureName(Seq('depLabelFreq51to75, symbolForCurrentDepLabel))
-        }
-        else {
+        } else {
           FeatureName(Seq('depLavelFreq76to100, symbolForCurrentDepLabel))
         }
       }
@@ -205,7 +170,7 @@ case object ArclabelNhTransform extends NeighborhoodTransform {
     )
     Seq(
       FeatureName(Seq(
-        parse.arcLabelByEndNodes(Set(event.tokens(0), event.tokens(1)))
+        parse.arcLabelByEndNodes(Set(event.tokens(0), event.tokens(1))).toSymbol
       ))
     )
   }

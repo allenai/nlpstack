@@ -189,6 +189,7 @@ object NlpstackBuild extends Build {
       libraryDependencies ++= Seq(
         factorie,
         scopt,
+        reming,
         datastore,
         jVerbnet
       )

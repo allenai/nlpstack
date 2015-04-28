@@ -34,7 +34,9 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     val mappedNbestList: Option[NbestList] = nbestList map { x =>
       NbestList(x.scoredSculptures)
     }
-    val candidate: Option[(Sculpture, Double)] = mappedNbestList flatMap { nbList => reranker.rerankWithScore(nbList) }
+    val candidate: Option[(Sculpture, Double)] = mappedNbestList flatMap { nbList =>
+      reranker.rerankWithScore(nbList)
+    }
     candidate match {
       case Some((parse: PolytreeParse, cost)) =>
 
@@ -43,7 +45,7 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
             tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
           }
         ))
-        Some((mappedParse, cost))
+        Some((parse, cost))
       case _ => None
     }
   }
@@ -52,6 +54,8 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     constraints: Set[TransitionConstraint] = Set()
   ): Option[PolytreeParse] = {
 
+    parseWithScore(sentence, constraints) map { case (parse, _) => parse }
+    /*
     val parsingCostFunction =
       config.parsingCostFunctionFactory.buildCostFunction(sentence, constraints)
     val baseParser = new NbestSearch(parsingCostFunction)
@@ -81,5 +85,6 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
         Some(mappedParse)
       case _ => None
     }
+    */
   }
 }
