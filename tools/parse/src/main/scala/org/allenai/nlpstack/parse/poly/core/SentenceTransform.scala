@@ -185,30 +185,17 @@ case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransfo
         } yield {
           val normalizedFrequency = depLabelFreqMap(depLabel)
           val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
+
           if (normalizedFrequency <= 0.0009) {
-            ('depLabelFreqSmall, symbolSetWithCurrentDepLabel)
+            ('tagFreqSmall, symbolSetWithCurrentDepLabel)
           } else if (normalizedFrequency <= 0.01) {
-            ('depLabelFreqBelow1, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.1) {
-            ('depLabelFreq1to10, symbolSetWithCurrentDepLabel)
+            ('tagFreqBelow1, symbolSetWithCurrentDepLabel)
           } else if (normalizedFrequency <= 0.2) {
-            ('depLabelFreq11to20, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.3) {
-            ('depLabelFreq21to30, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.4) {
-            ('depLabelFreq31to40, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.5) {
-            ('depLabelFreq41to50, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.6) {
-            ('depLabelFreq51to60, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.7) {
-            ('depLabelFreq61to70, symbolSetWithCurrentDepLabel)
+            ('tagFreqBelow20, symbolSetWithCurrentDepLabel)
           } else if (normalizedFrequency <= 0.8) {
-            ('depLabelFreq71to80, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.9) {
-            ('depLabelFreq81to90, symbolSetWithCurrentDepLabel)
+            ('tagFreqBelow80, symbolSetWithCurrentDepLabel)
           } else {
-            ('depLabelFreq91to100, symbolSetWithCurrentDepLabel)
+            ('tagFreqDominant, symbolSetWithCurrentDepLabel)
           }
         }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
         untagged.updateProperties(frequencyFeatureMap)
