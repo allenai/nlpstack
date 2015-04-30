@@ -8,7 +8,7 @@ import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.core.{
   FactorieSentenceTagger,
-  GoogleUnigramTagger,
+  GoogleUnigramDepLabelTagger,
   Sentence,
   SentenceTransform,
   Token
@@ -73,7 +73,7 @@ class GoogleNGramSpec extends UnitSpec with Logging {
 
   "GoogleUnigramTagger.transform" should
     "return the correct feature value set for a given token" in {
-      val googleUnigramTagger = GoogleUnigramTagger(googleUnigram)
+      val googleUnigramTagger = GoogleUnigramDepLabelTagger(googleUnigram)
       googleUnigramTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
         Sentence(IndexedSeq(
           Token('nexus, Map(

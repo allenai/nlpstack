@@ -93,19 +93,27 @@ object Training {
       VerbnetTagger(new Verbnet(groupName, artifactName, version))
     }
 
-    val googleUnigramTransformOption: Option[GoogleUnigramTagger] = for {
+    val (googleUnigramDepLabelTransformOption, googleUnigramPostagTransformOption) = (for {
       taggersConfig <- taggersConfigOption
       googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
       groupName <- googleUnigramConfig.get[String]("group")
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      GoogleUnigramTagger(new GoogleNGram(groupName, artifactName, version, 1000))
+      val googleNgram = new GoogleNGram(groupName, artifactName, version, 1000)
+      (
+        GoogleUnigramDepLabelTagger(googleNgram),
+        GoogleUnigramPostagTagger(googleNgram)
+      )
+    }) match {
+      case Some((depLabelTagger, postagTagger)) => (Some(depLabelTagger), Some(postagTagger))
+      case _ => (None, None)
     }
 
     val taggers: Seq[SentenceTransform] =
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++ googleUnigramTransformOption
+        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++
+        googleUnigramPostagTransformOption ++ googleUnigramDepLabelTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
