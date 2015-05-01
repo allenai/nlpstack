@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.reranking
 
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken }
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, GoogleNGram, GoogleUnigram, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, Verbnet }
 import org.allenai.nlpstack.parse.poly.polyparser.{ Neighborhood, PolytreeParse }
 
 import reming.DefaultJsonProtocol._
