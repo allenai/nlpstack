@@ -1,7 +1,22 @@
 package org.allenai.nlpstack.parse.poly.decisiontree
 
-import reming.LazyFormat
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
+import reming.{ JsonFormat, JsonParser, JsonPrinter, LazyFormat }
 import reming.DefaultJsonProtocol._
+
+/* Abstract "justification" for a particular classifier decision. */
+trait Justification {
+  def prettyPrint(featureNames: Map[Int, FeatureName]): String
+}
+
+case class OutcomeDistribution(dist: Map[Int, Float]) {
+
+  /** The most probable outcome according to the distribution. */
+  val mostProbableOutcome: Int = {
+    val (bestOutcome, _) = dist maxBy { case (_, prob) => prob }
+    bestOutcome
+  }
+}
 
 trait ProbabilisticClassifier {
 
@@ -10,16 +25,19 @@ trait ProbabilisticClassifier {
     * @param featureVector feature vector to find outcome distribution for
     * @return probability distribution of outcomes according to training data
     */
-  def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float]
+  def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification])
 
-  /** Classifies an feature vector.
+  /** Classifies an feature vector and optionally returns a "justification" for the classification
+    * decision.
     *
     * @param featureVector feature vector to classify
-    * @return predicted outcome
+    * @return (predicted outcome, optional justification for the prediction)
     */
-  def classify(featureVector: FeatureVector): Int = {
-    val (bestClass, bestProb) = outcomeDistribution(featureVector) maxBy { case (_, prob) => prob }
-    bestClass
+  def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
+    val (distribution, justification) = outcomeDistribution(featureVector)
+    (distribution.mostProbableOutcome, justification)
   }
 
   /** All features used by the classifier. */

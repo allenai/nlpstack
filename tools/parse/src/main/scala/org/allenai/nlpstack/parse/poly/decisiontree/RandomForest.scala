@@ -3,6 +3,7 @@ package org.allenai.nlpstack.parse.poly.decisiontree
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.Util
 import org.allenai.nlpstack.parse.poly.fsm.{ TransitionClassifier, ClassificationTask }
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
 
 import reming.CompactPrinter
 import reming.DefaultJsonProtocol._
@@ -12,6 +13,16 @@ import java.io.{ BufferedWriter, File, FileWriter, PrintWriter }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
+
+case class RandomForestJustification(
+    randomForest: RandomForest, tree: Int, treeNode: Int
+) extends Justification {
+
+  def prettyPrint(featureNames: Map[Int, FeatureName]): String = {
+    val dtJustification = DecisionTreeJustification(randomForest.decisionTrees(tree), treeNode)
+    dtJustification.prettyPrint(featureNames)
+  }
+}
 
 /** A RandomForest is a collection of decision trees. Each decision tree gets a single vote
   * about the outcome. The outcome distribution is the normalized histogram of the votes.
@@ -30,37 +41,56 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
     */
-  override def outcomeDistribution(featureVector: FeatureVector): Map[Int, Float] = {
-    val outcomeHistogram = decisionTrees map { decisionTree =>
-      decisionTree.classify(featureVector)
-    } groupBy { x => x } mapValues { v => v.size }
-    RandomForest.normalizeHistogram(outcomeHistogram)
-  }
+  override def outcomeDistribution(
+    featureVector: FeatureVector
+  ): (OutcomeDistribution, Option[Justification]) = {
 
-  /** An experimental weighted version of the above .outcomeDistribution method.
-    *
-    * @param featureVector feature vector to find outcome distribution for
-    * @return a probability distribution over outcomes
-    */
-  def outcomeDistributionAlternate(featureVector: FeatureVector): Map[Int, Float] = {
-    val summedOutcomeHistograms: Map[Int, Int] = decisionTrees flatMap { decisionTree =>
-      decisionTree.outcomeHistogram(featureVector).toSeq
-    } groupBy { case (x, y) => x } mapValues { case x => x map { _._2 } } mapValues { _.sum }
-    RandomForest.normalizeHistogram(summedOutcomeHistograms)
+    val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
+      decisionTree.classify(featureVector)
+    }
+    val outcomeHistogram = decisionTreeOutputs map {
+      _._1
+    } groupBy { x =>
+      x
+    } mapValues { v =>
+      v.size
+    }
+    val (bestOutcome, _) = outcomeHistogram maxBy { case (_, numVotes) => numVotes }
+    val majorityJustifications: Seq[(Int, Justification)] =
+      (decisionTreeOutputs.zipWithIndex filter {
+        case ((outcome, _), _) =>
+          outcome == bestOutcome
+      } map {
+        case ((_, maybeJustification), treeIndex) =>
+          maybeJustification map { justification =>
+            (treeIndex, justification)
+          }
+      }).flatten
+    val justification =
+      if (majorityJustifications.isEmpty) { // i.e. the underlying DT doesn't support justification
+        None
+      } else {
+        val (mostConvincingTree, mostConvincingJustification) =
+          majorityJustifications maxBy {
+            case (treeIndex, just) =>
+              just match {
+                case dtJust: DecisionTreeJustification =>
+                  decisionTrees(treeIndex).getNodeDivergenceScore(dtJust.node)
+              }
+          }
+        val mostConvincingNode = mostConvincingJustification match {
+          case dtJust: DecisionTreeJustification =>
+            dtJust.node
+        }
+        Some(RandomForestJustification(this, mostConvincingTree, mostConvincingNode))
+      }
+    (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), justification)
   }
 
   /** The set of all features found in at least one decision tree of the collection. */
   override def allFeatures: Set[Int] = {
     (decisionTrees map { _.allFeatures }) reduce { (x, y) => x ++ y }
   }
-
-  /*
-  @transient lazy val decisionRules: Seq[(Seq[(Int, Int)], Float)] = {
-    (decisionTrees flatMap { decisionTree =>
-      decisionTree.decisionPaths zip (decisionTree.distribution map { x => x(1) })
-    }).toSet.toSeq
-  }
-  */
 }
 
 object RandomForest {

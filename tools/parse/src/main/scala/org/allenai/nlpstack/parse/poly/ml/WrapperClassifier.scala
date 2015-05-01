@@ -5,20 +5,17 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
   ProbabilisticClassifierTrainer,
   InMemoryFeatureVectorSource,
   SparseVector,
-  ProbabilisticClassifier
+  ProbabilisticClassifier,
+  Justification
 }
 import org.allenai.nlpstack.parse.poly.fsm.SimpleTask
-
 import reming.DefaultJsonProtocol._
-
 import scala.collection.immutable.HashSet
 
 /** A WrapperClassifier wraps a ProbabilisticClassifier (which uses integer-based feature
   * names) in an interface that allows you to use the more natural
   * org.allenai.nlpstack.parse.poly.ml FeatureVector format for classification.
-  *
-  * @param classifier the embedded classifier (which uses integer-based feature names)
-  * @param featureNameMap a map from the integer feature names to their string-based form
+  * This is a trait that specific wrappers can extend.
   */
 case class WrapperClassifier(
     classifier: ProbabilisticClassifier,
@@ -27,24 +24,30 @@ case class WrapperClassifier(
 
   /** The inverse of featureNameMap. */
   @transient
-  private val featureNameToIndex: Map[FeatureName, Int] =
+  protected val featureNameToIndex: Map[FeatureName, Int] =
     (featureNameMap map {
       case (featIndex, feat) =>
         (feat, featIndex)
     }).toMap
+
+  /** Returns a feature name based on an index. */
+  protected def featureNameForIndex(index: Int): FeatureName = {
+    val map = featureNameMap.toMap
+    map(index)
+  }
 
   /** Returns the most probable (integer) outcome, given the input feature vector.
     *
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
     */
-  def classify(featureVector: FeatureVector): Int = {
+  def classify(featureVector: FeatureVector): (Int, Option[Justification]) = {
     classifier.classify(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
     )
   }
 
-  /** Returns a distributions over all (integer) outcomes, given the input feature vector.
+  /** Returns a distribution over all (integer) outcomes, given the input feature vector.
     *
     * @param featureVector the feature vector to classify
     * @return the most probable (integer) outcome
@@ -52,10 +55,13 @@ case class WrapperClassifier(
   def getDistribution(featureVector: FeatureVector): Map[Int, Float] = {
     classifier.outcomeDistribution(
       WrapperClassifier.createDTFeatureVector(featureVector, featureNameToIndex, None)
-    )
+    )._1.dist
   }
 }
 
+/** Provide Serialization and Deserialization methods based on the runtime type of
+  * WrapperClassifier.
+  */
 object WrapperClassifier {
   implicit val wcFormat = jsonFormat2(WrapperClassifier.apply)
 
@@ -85,7 +91,9 @@ object WrapperClassifier {
   *
   * @param classifierTrainer the underlying trainer to use (from the decisiontree package)
   */
-class WrapperClassifierTrainer(classifierTrainer: ProbabilisticClassifierTrainer) {
+class WrapperClassifierTrainer(
+    classifierTrainer: ProbabilisticClassifierTrainer
+) {
 
   def apply(trainingData: TrainingData): WrapperClassifier = {
     val featureNames: Seq[FeatureName] = trainingData.featureNames.toSeq

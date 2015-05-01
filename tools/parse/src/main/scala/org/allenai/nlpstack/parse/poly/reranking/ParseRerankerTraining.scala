@@ -3,7 +3,11 @@ package org.allenai.nlpstack.parse.poly.reranking
 import org.allenai.common.Config.EnhancedConfig
 import org.allenai.datastore._
 import org.allenai.nlpstack.parse.poly.core.WordClusters
-import org.allenai.nlpstack.parse.poly.decisiontree.{ EntropyGainMetric, RandomForestTrainer }
+import org.allenai.nlpstack.parse.poly.decisiontree.{
+  EntropyGainMetric,
+  Justification,
+  RandomForestTrainer
+}
 import org.allenai.nlpstack.parse.poly.fsm.{ RerankingFunction, Sculpture }
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
@@ -56,7 +60,7 @@ object ParseRerankerTraining {
       opt[String]('t', "feature-taggers-config") valueName "<file>" action { (x, c) =>
         c.copy(taggersConfigPathOption = Some(x))
       } text "the path to a config file" +
-        "containing config information required for the required taggers. Currently contains" +
+        "containing config information required for the required taggers. Currently contains " +
         "datastore location info to access Verbnet resources for the Verbnet tagger."
     }
     val clArgs: PRTCommandLine =
@@ -163,7 +167,7 @@ object ParseRerankerTraining {
     val goldParseMap: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
       (parse.sentence.asWhitespaceSeparatedString, parse)
     }).toMap
-    println("Creating positive examples.")
+    println("Creating negative (non-weird) examples.")
     val positiveExamples: Iterable[(FeatureVector, Int)] =
       (parsePools.poolIterator flatMap { parsePool =>
         val parse = parsePool.parses.head
@@ -171,10 +175,10 @@ object ParseRerankerTraining {
         Range(0, goldParse.sentence.tokens.size) filter { tokenIndex =>
           goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
         } map { tokenIndex =>
-          (feature(goldParse, tokenIndex), 1)
+          (feature(goldParse, tokenIndex), 0)
         }
       }).toIterable
-    println("Creating negative examples.")
+    println("Creating positive (weird) examples.")
     val negativeExamples: Iterable[(FeatureVector, Int)] = {
       Range(0, 3) flatMap { _ =>
         val parsePairs: Iterator[(PolytreeParse, PolytreeParse)] =
@@ -195,7 +199,7 @@ object ParseRerankerTraining {
             badTokens filter { tokenIndex =>
               goldParse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
             } map { badToken =>
-              (feature(candidateParse, badToken), 0)
+              (feature(candidateParse, badToken), 1)
             }
         }
       }
@@ -208,7 +212,7 @@ object ParseRerankerTraining {
   def evaluate(trainingData: TrainingData, classifier: WrapperClassifier) {
     val numCorrect = trainingData.labeledVectors count {
       case (vec, outcome) =>
-        classifier.classify(vec) == outcome
+        classifier.classify(vec)._1 == outcome
     }
     val total = trainingData.labeledVectors.size
     println(numCorrect)
@@ -262,7 +266,7 @@ case class WeirdParseNodeRerankingFunction(
   override def apply(sculpture: Sculpture, baseCost: Double): Double = {
     val result = sculpture match {
       case parse: PolytreeParse => {
-        getWeirdNodes(parse).size.toDouble
+        getNodesWithOutcome(parse, 1).size.toDouble
       }
       case _ => Double.MaxValue
     }
@@ -272,21 +276,27 @@ case class WeirdParseNodeRerankingFunction(
   /** Gets the set of "weird" tokens in a parse.
     *
     * @param parse the parse tree to analyze
-    * @return the indices of all weird tokens
+    * @return the indices and explanation for all tokens classified as weird
     */
-  def getWeirdNodes(parse: PolytreeParse): Set[Int] = {
-    val nodeWeirdness: Set[(Int, Float)] =
+  def getNodesWithOutcome(
+    parse: PolytreeParse,
+    desiredOutcome: Int
+  ): Set[(Int, Option[Justification])] = {
+
+    val nodeOutcomes: Set[(Int, Int, Option[Justification])] =
       Range(0, parse.tokens.size).toSet map { tokenIndex: Int =>
-        (tokenIndex, classifier.getDistribution(feature(parse, tokenIndex)).getOrElse(0, 0.0f))
+        val (outcome, justification) = classifier.classify(feature(parse, tokenIndex))
+        (tokenIndex, outcome, justification)
       }
-    nodeWeirdness filter {
-      case (_, weirdness) =>
-        weirdness >= weirdnessThreshold
+    nodeOutcomes filter {
+      case (_, outcome, _) =>
+        outcome == desiredOutcome
     } map {
-      case (node, _) =>
-        node
-    } filter { tokenIndex =>
-      parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
+      case (tokenIndex, _, maybeJustification) =>
+        (tokenIndex, maybeJustification)
+    } filter {
+      case (tokenIndex, justification) =>
+        parse.sentence.tokens(tokenIndex).getDeterministicProperty('cpos) != Symbol(".")
     }
   }
 }
