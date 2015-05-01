@@ -172,33 +172,89 @@ case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransfo
   @transient private val stanfordTagger = new StanfordPostagger()
 
   override def transform(sentence: Sentence): Sentence = {
-    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
-    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+    val nextSent = transformPos(sentence)
+    val taggedTokens = SentenceTransform.getPostaggedTokens(nextSent, defaultPostagger)
+    Sentence(NexusToken +: (taggedTokens.zip(nextSent.tokens.tail) map {
       case (tagged, untagged) =>
-        val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
-          tagged, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        val cposFreqMap = GoogleUnigram.getNormalizedCpostagDistribution(
+          tagged.string, googleNgram.ngramMap, googleNgram.frequencyCutoff
         )
         // Create feature for each dependency label based on the normalized frequency
         // bucket it lies in.
         val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
-          depLabel <- depLabelFreqMap.keySet
+          cposLabel <- cposFreqMap.keySet
         } yield {
-          val normalizedFrequency = depLabelFreqMap(depLabel)
-          val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
+          val normalizedFrequency = cposFreqMap(cposLabel)
+          val symbolSetWithCurrentDepLabel = Set(Symbol(cposLabel))
 
-          if (normalizedFrequency <= 0.0009) {
-            ('tagFreqSmall, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.01) {
-            ('tagFreqBelow1, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.2) {
-            ('tagFreqBelow20, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.8) {
-            ('tagFreqBelow80, symbolSetWithCurrentDepLabel)
+          if (normalizedFrequency >= 0.95) {
+            Some(('tagFreqDominant, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.5) {
+            Some(('tagFreqBelow95, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.1) {
+            Some(('tagFreqBelow50, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.01) {
+            Some(('tagFreqBelow10, symbolSetWithCurrentDepLabel))
           } else {
-            ('tagFreqDominant, symbolSetWithCurrentDepLabel)
+            None
           }
-        }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
-        untagged.updateProperties(frequencyFeatureMap)
+        }).flatten.groupBy(_._1).mapValues(_.flatMap(v => v._2))
+
+        val bestTagMapping: Map[Symbol, Set[Symbol]] =
+          if (cposFreqMap.nonEmpty) {
+            val mostLikelyTag = (cposFreqMap maxBy {
+              _._2
+            })._1
+            Map('mostLikelyTag -> Set(Symbol(mostLikelyTag)))
+          } else {
+            Map()
+          }
+
+        untagged.updateProperties(frequencyFeatureMap ++ bestTagMapping)
     }))
   }
+
+  private def transformPos(sentence: Sentence): Sentence = {
+
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+        val posFreqMap = GoogleUnigram.getNormalizedPostagDistribution(
+          tagged.string, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        )
+        // Create feature for each dependency label based on the normalized frequency
+        // bucket it lies in.
+        val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
+          cposLabel <- posFreqMap.keySet
+        } yield {
+          val normalizedFrequency = posFreqMap(cposLabel)
+          val symbolSetWithCurrentDepLabel = Set(Symbol(cposLabel))
+
+          if (normalizedFrequency >= 0.8) {
+            Some(('posFreqDominant, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.2) {
+            Some(('posFreqBelow80, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.05) {
+            Some(('posFreqBelow20, symbolSetWithCurrentDepLabel))
+          } else if (normalizedFrequency >= 0.01) {
+            Some(('posFreqBelow5, symbolSetWithCurrentDepLabel))
+          } else {
+            None
+          }
+        }).flatten.groupBy(_._1).mapValues(_.flatMap(v => v._2))
+
+        val bestTagMapping: Map[Symbol, Set[Symbol]] =
+          if (posFreqMap.nonEmpty) {
+            val mostLikelyTag = (posFreqMap maxBy {
+              _._2
+            })._1
+            Map('mostLikelyPos -> Set(Symbol(mostLikelyTag)))
+          } else {
+            Map()
+          }
+
+        untagged.updateProperties(frequencyFeatureMap ++ bestTagMapping)
+    }))
+  }
+
 }

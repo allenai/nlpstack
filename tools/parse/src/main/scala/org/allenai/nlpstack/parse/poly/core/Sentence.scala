@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.immutable.Interval
-import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
+import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
 
 import reming.DefaultJsonProtocol._
@@ -80,6 +80,22 @@ object Sentence {
 /** A data source for Sentence objects. */
 trait SentenceSource {
   def sentenceIterator: Iterator[Sentence]
+}
+
+case class TaggedSentence(sentence: Sentence, tags: Map[Int, Symbol]) extends Sculpture {
+  val marbleBlock: MarbleBlock = sentence
+
+  def addTagsToSentenceProperties(tagName: Symbol): Sentence = {
+    val tokensAndTags = Range(0, sentence.size) map { tokIndex =>
+      (sentence.tokens(tokIndex), tags.get(tokIndex))
+    }
+    Sentence(tokensAndTags map {
+      case (token, Some(tag)) =>
+        token.updateProperties(Map(tagName -> Set(tag)))
+      case (token, None) =>
+        token
+    })
+  }
 }
 
 /** An AnnotatedSentence is a sentence whose tokens are each annotated with a feature

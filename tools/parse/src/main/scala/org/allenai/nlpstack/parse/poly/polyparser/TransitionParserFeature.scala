@@ -35,15 +35,15 @@ case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, val stateRe
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
-    state match {
-      case tpState: TransitionParserState =>
-        FeatureVector(
-          for {
-            tokenIndex <- stateRef(tpState).toSeq
-            origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
-          } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
-        )
-    }
+    //state match {
+    //case tpState: TransitionParserState =>
+    FeatureVector(
+      for {
+        tokenIndex <- stateRef(state).toSeq
+        origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
+      } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
+    )
+    //}
   }
 
   override def toString(): String = s"offlineTokenFeature.${stateRef.name}"

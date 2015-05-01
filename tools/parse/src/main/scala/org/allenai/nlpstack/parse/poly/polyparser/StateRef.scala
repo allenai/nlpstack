@@ -1,5 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
+import org.allenai.nlpstack.parse.poly.fsm.State
 import reming.DefaultJsonProtocol._
 
 /** A StateRef allows you to figure out the token that corresponds to a particular aspect of a
@@ -15,11 +16,25 @@ import reming.DefaultJsonProtocol._
   * StateRefFeature).
   *
   */
-sealed abstract class StateRef
-    extends (TransitionParserState => Seq[Int]) {
+abstract class StateRef
+    extends (State => Seq[Int]) {
 
   /** Provides a symbolic representation of the StateRef, used for creating feature names. */
   def name: Symbol
+}
+
+abstract class TransitionParserStateRef extends StateRef {
+
+  override def apply(state: State): Seq[Int] = {
+    state match {
+      case tpState: TransitionParserState =>
+        applyToTpState(tpState)
+      case _ =>
+        Seq()
+    }
+  }
+
+  def applyToTpState(state: TransitionParserState): Seq[Int]
 }
 
 object StateRef {
@@ -80,10 +95,10 @@ object StateRef {
   *
   * @param index the desired stack element, counting from 0 (i.e. 0 is the stack top)
   */
-case class StackRef(val index: Int) extends StateRef {
+case class StackRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0)
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(state.stack.lift(index)).flatten
   }
 
@@ -96,10 +111,10 @@ case class StackRef(val index: Int) extends StateRef {
   *
   * @param index the desired buffer element, counting from 0 (i.e. 0 is the front of the buffer)
   */
-case class BufferRef(val index: Int) extends StateRef {
+case class BufferRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0)
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     val result = state.bufferPosition + index
     if (result < state.sentence.tokens.size) {
       Seq(result)
@@ -115,9 +130,9 @@ case class BufferRef(val index: Int) extends StateRef {
 /** A FirstRef is a StateRef (see above) whose apply operation returns the first element of
   * the sentence.
   */
-case object FirstRef extends StateRef {
+case object FirstRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     if (state.sentence.tokens.size > 1) {
       Seq(1)
     } else {
@@ -132,9 +147,9 @@ case object FirstRef extends StateRef {
 /** A LastRef is a StateRef (see above) whose apply operation returns the final element of
   * the sentence.
   */
-case object LastRef extends StateRef {
+case object LastRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(state.sentence.tokens.size - 1)
   }
 
@@ -214,8 +229,8 @@ case object TokenCrumb extends TokenNeighbors {
 }
 
 // TODO: currently cannot be serialized
-case class TransitiveRef(stateRef: StateRef, neighbors: Seq[TokenNeighbors]) extends StateRef {
-  override def apply(state: TransitionParserState): Seq[Int] = {
+case class TransitiveRef(stateRef: StateRef, neighbors: Seq[TokenNeighbors]) extends TransitionParserStateRef {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     (neighbors.foldLeft(stateRef(state).toSet)((tokens, neighbor) =>
       tokens.flatMap(tok => neighbor(state, tok)))).toSeq.sorted
   }
@@ -228,10 +243,10 @@ case class TransitiveRef(stateRef: StateRef, neighbors: Seq[TokenNeighbors]) ext
 // Beyond this line, these StateRefs should be preserved temporarily for legacy models, but are
 // not needed in the future and should be regarded as deprecated.
 
-case class StackChildrenRef(stackIndex: Int) extends StateRef {
+case class StackChildrenRef(stackIndex: Int) extends TransitionParserStateRef {
   require(stackIndex >= 0, "the index of a StackChildrenRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     StackRef(stackIndex)(state) flatMap { nodeIndex =>
       state.children.getOrElse(nodeIndex, Seq()).toSeq.sorted
     }
@@ -240,21 +255,21 @@ case class StackChildrenRef(stackIndex: Int) extends StateRef {
   @transient override val name: Symbol = Symbol(s"s${stackIndex}c")
 }
 
-case class StackChildRef(val stackIndex: Int, val childIndex: Int) extends StateRef {
+case class StackChildRef(val stackIndex: Int, val childIndex: Int) extends TransitionParserStateRef {
   require(stackIndex >= 0, "the stack index of a StackChildRef must be a nonnegative integer")
   require(childIndex >= 0, "the child index of a StackChildRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(StackChildrenRef(stackIndex)(state).lift(childIndex)).flatten
   }
 
   @transient override val name: Symbol = Symbol(s"s${stackIndex}c${childIndex}")
 }
 
-case class BufferChildrenRef(val bufferIndex: Int) extends StateRef {
+case class BufferChildrenRef(val bufferIndex: Int) extends TransitionParserStateRef {
   require(bufferIndex >= 0, "the index of a BufferChildrenRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
       state.children.getOrElse(nodeIndex, Seq())
     }
@@ -263,20 +278,20 @@ case class BufferChildrenRef(val bufferIndex: Int) extends StateRef {
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}c")
 }
 
-case class BufferChildRef(val bufferIndex: Int, val childIndex: Int) extends StateRef {
+case class BufferChildRef(val bufferIndex: Int, val childIndex: Int) extends TransitionParserStateRef {
   require(childIndex >= 0, "the child index of a BufferChildRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(BufferChildrenRef(bufferIndex)(state).lift(childIndex)).flatten
   }
 
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}c${childIndex}")
 }
 
-case class StackParentsRef(stackIndex: Int) extends StateRef {
+case class StackParentsRef(stackIndex: Int) extends TransitionParserStateRef {
   require(stackIndex >= 0, "the index of a StackParentsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     StackRef(stackIndex)(state) flatMap { nodeIndex =>
       state.getParents(nodeIndex)
     }
@@ -285,21 +300,21 @@ case class StackParentsRef(stackIndex: Int) extends StateRef {
   @transient override val name: Symbol = Symbol(s"s${stackIndex}p")
 }
 
-case class StackParentRef(val stackIndex: Int, val parentIndex: Int) extends StateRef {
+case class StackParentRef(val stackIndex: Int, val parentIndex: Int) extends TransitionParserStateRef {
   require(stackIndex >= 0, "the stack index of a StackParentRef must be a nonnegative integer")
   require(parentIndex >= 0, "the parent index of a StackParentRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(StackParentsRef(stackIndex)(state).lift(parentIndex)).flatten
   }
 
   @transient override val name: Symbol = Symbol(s"s${stackIndex}p${parentIndex}")
 }
 
-case class BufferParentsRef(bufferIndex: Int) extends StateRef {
+case class BufferParentsRef(bufferIndex: Int) extends TransitionParserStateRef {
   require(bufferIndex >= 0, "the index of a BufferParentsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     BufferRef(bufferIndex)(state) flatMap { nodeIndex =>
       state.getParents(nodeIndex)
     }
@@ -308,21 +323,21 @@ case class BufferParentsRef(bufferIndex: Int) extends StateRef {
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}p")
 }
 
-case class BufferParentRef(val bufferIndex: Int, val parentIndex: Int) extends StateRef {
+case class BufferParentRef(val bufferIndex: Int, val parentIndex: Int) extends TransitionParserStateRef {
   require(bufferIndex >= 0, "the buffer index of a BufferParentRef must be a nonnegative integer")
   require(parentIndex >= 0, "the parent index of a BufferParentRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     Seq(BufferParentsRef(bufferIndex)(state).lift(parentIndex)).flatten
   }
 
   @transient override val name: Symbol = Symbol(s"b${bufferIndex}p${parentIndex}")
 }
 
-case class StackGretelsRef(val index: Int) extends StateRef {
+case class StackGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a StackGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     StackRef(index)(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
   }
 
@@ -330,10 +345,10 @@ case class StackGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("sg" + index)
 }
 
-case class StackLeftGretelsRef(val index: Int) extends StateRef {
+case class StackLeftGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a StackLeftGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     StackRef(index)(state) flatMap { nodeIndex =>
       state.getGretels(nodeIndex) filter { gretel =>
         gretel < nodeIndex
@@ -345,10 +360,10 @@ case class StackLeftGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("sgl" + index)
 }
 
-case class StackRightGretelsRef(val index: Int) extends StateRef {
+case class StackRightGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a StackRightGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     StackRef(index)(state) flatMap { nodeIndex =>
       state.getGretels(nodeIndex) filter { gretel =>
         gretel > nodeIndex
@@ -360,10 +375,10 @@ case class StackRightGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("sgr" + index)
 }
 
-case class BufferGretelsRef(val index: Int) extends StateRef {
+case class BufferGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a BufferGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     BufferRef(index)(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
   }
 
@@ -371,10 +386,10 @@ case class BufferGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("bg" + index)
 }
 
-case class BufferLeftGretelsRef(val index: Int) extends StateRef {
+case class BufferLeftGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a BufferLeftGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     BufferRef(index)(state) flatMap { nodeIndex =>
       state.getGretels(nodeIndex) filter { gretel =>
         gretel < nodeIndex
@@ -386,10 +401,10 @@ case class BufferLeftGretelsRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("bgl" + index)
 }
 
-case class BufferRightGretelsRef(val index: Int) extends StateRef {
+case class BufferRightGretelsRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0, "the index of a BufferLeftGretelsRef must be a nonnegative integer")
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     BufferRef(index)(state) flatMap { nodeIndex =>
       state.getGretels(nodeIndex) filter { gretel =>
         gretel > nodeIndex
@@ -406,10 +421,10 @@ case class BufferRightGretelsRef(val index: Int) extends StateRef {
   *
   * @param index the desired stack element, counting from 0 (i.e. 0 is the stack top)
   */
-case class BreadcrumbRef(val index: Int) extends StateRef {
+case class BreadcrumbRef(val index: Int) extends TransitionParserStateRef {
   require(index >= 0)
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     if (index < state.stack.size && state.breadcrumb.getOrElse(state.stack(index), -1) >= 0) {
       Seq(state.breadcrumb(state.stack(index)))
     } else {
@@ -421,9 +436,9 @@ case class BreadcrumbRef(val index: Int) extends StateRef {
   override val name: Symbol = Symbol("crumbRef" + index)
 }
 
-case object PreviousLinkCrumbRef extends StateRef {
+case object PreviousLinkCrumbRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     state.previousLink match {
       case Some((crumb, _)) => Seq(crumb)
       case None => Seq()
@@ -434,9 +449,9 @@ case object PreviousLinkCrumbRef extends StateRef {
   override val name: Symbol = Symbol("pc")
 }
 
-case object PreviousLinkCrumbGretelRef extends StateRef {
+case object PreviousLinkCrumbGretelRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     PreviousLinkCrumbRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
   }
 
@@ -444,9 +459,9 @@ case object PreviousLinkCrumbGretelRef extends StateRef {
   override val name: Symbol = Symbol("pcg")
 }
 
-case object PreviousLinkGretelRef extends StateRef {
+case object PreviousLinkGretelRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     state.previousLink match {
       case Some((_, gretel)) => Seq(gretel)
       case None => Seq()
@@ -457,9 +472,9 @@ case object PreviousLinkGretelRef extends StateRef {
   override val name: Symbol = Symbol("pg")
 }
 
-case object PreviousLinkGrandgretelRef extends StateRef {
+case object PreviousLinkGrandgretelRef extends TransitionParserStateRef {
 
-  override def apply(state: TransitionParserState): Seq[Int] = {
+  override def applyToTpState(state: TransitionParserState): Seq[Int] = {
     PreviousLinkGretelRef(state) flatMap { nodeIndex => state.getGretels(nodeIndex) }
   }
 

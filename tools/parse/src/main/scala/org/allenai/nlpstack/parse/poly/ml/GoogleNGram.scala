@@ -5,6 +5,7 @@ import org.allenai.nlpstack.core.PostaggedToken
 
 import java.io._
 
+import org.allenai.nlpstack.parse.poly.core.WordClusters
 import reming.DefaultJsonProtocol._
 
 import scala.io._
@@ -15,18 +16,20 @@ import scala.io._
   * Takes the datastore location details for a data directory and parses each file, expected
   * to be in the following format
   * (from https://docs.google.com/document/d/14PWeoTkrnKk9H8_7CfVbdvuoFZ7jYivNTkBX2Hj7qLw/edit) -
-  *   head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
+  *
+  * head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
+  *
   * The counts_by_year format is a tab-separated list of year<comma>count items.
   * Years are sorted in ascending order, and only years with non-zero counts are included.
   * The syntactic-ngram format is a space-separated list of tokens, each token format is:
-  *   “word/pos-tag/dep-label/head-index”.
+  * “word/pos-tag/dep-label/head-index”.
   * The word field can contain any non-whitespace character.
   * The other fields can contain any non-whitespace character except for ‘/’.
-  *   pos-tag is a Penn-Treebank part-of-speech tag.
-  *   dep-label is a stanford-basic-dependencies label.
-  *   head-index is an integer, pointing to the head of the current token.
-  *   “1” refers to the first token in the list, 2 the second,
-  *      and 0 indicates that the head is the root of the fragment.
+  * pos-tag is a Penn-Treebank part-of-speech tag.
+  * dep-label is a stanford-basic-dependencies label.
+  * head-index is an integer, pointing to the head of the current token.
+  * “1” refers to the first token in the list, 2 the second,
+  * and 0 indicates that the head is the root of the fragment.
   */
 case class GoogleNGram(
     groupName: String, artifactName: String, version: Int, frequencyCutoff: Int
@@ -137,7 +140,7 @@ object GoogleUnigram {
   def getDepLabelNormalizedDistribution(
     token: PostaggedToken, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
   ): Map[String, Double] = {
-    val tokenNodeInfos = (for {
+    val tokenNodeInfos: Seq[UnigramInfo] = (for {
       tokNgrams <- ngramMap.get(token.string.toLowerCase)
     } yield {
       getTokenUnigramInfo(
@@ -157,6 +160,66 @@ object GoogleUnigram {
       val normalizedFrequency = tokenNodeInfo.frequency.toDouble / totalFrequency
       (tokenNodeInfo.syntacticUnigram.depLabel -> normalizedFrequency)
     }).toMap
+  }
+
+  def getNormalizedCpostagDistribution(
+    token: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
+  ): Map[String, Double] = {
+
+    def normalizeHistogram(histogram: Map[String, Long]): Map[String, Double] = {
+      val normalizer: Float = histogram.values.sum
+      require(normalizer > 0d)
+      histogram mapValues { _ / normalizer }
+    }
+    val maybeNgramInfos: Option[Seq[NgramInfo]] = ngramMap.get(token.toLowerCase)
+    val maybeTagHistogram: Option[Map[String, Long]] = maybeNgramInfos map { ngramInfos =>
+      ngramInfos map { ngramInfo =>
+        (
+          WordClusters.ptbToUniversalPosTag(ngramInfo.syntacticNgram.head.posTag),
+          ngramInfo.frequency
+        )
+      } groupBy {
+        case (tag, _) =>
+          tag
+      } mapValues { x =>
+        (x map { _._2 }).sum
+      }
+    }
+    maybeTagHistogram match {
+      case Some(tagHistogram) =>
+        normalizeHistogram(tagHistogram)
+      case None => Map[String, Double]()
+    }
+  }
+
+  def getNormalizedPostagDistribution(
+    token: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
+  ): Map[String, Double] = {
+
+    def normalizeHistogram(histogram: Map[String, Long]): Map[String, Double] = {
+      val normalizer: Float = histogram.values.sum
+      require(normalizer > 0d)
+      histogram mapValues { _ / normalizer }
+    }
+    val maybeNgramInfos: Option[Seq[NgramInfo]] = ngramMap.get(token.toLowerCase)
+    val maybeTagHistogram: Option[Map[String, Long]] = maybeNgramInfos map { ngramInfos =>
+      ngramInfos map { ngramInfo =>
+        (
+          ngramInfo.syntacticNgram.head.posTag,
+          ngramInfo.frequency
+        )
+      } groupBy {
+        case (tag, _) =>
+          tag
+      } mapValues { x =>
+        (x map { _._2 }).sum
+      }
+    }
+    maybeTagHistogram match {
+      case Some(tagHistogram) =>
+        normalizeHistogram(tagHistogram)
+      case None => Map[String, Double]()
+    }
   }
 
   /** Helper Method. Takes a token and a seq of NgramInfos associated with it and filters them to
