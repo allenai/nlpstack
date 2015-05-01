@@ -9,8 +9,10 @@ import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.core.{
   FactorieSentenceTagger,
   GoogleUnigramDepLabelTagger,
+  GoogleUnigramPostagTagger,
   Sentence,
   SentenceTransform,
+  NexusToken,
   Token
 }
 
@@ -33,6 +35,10 @@ class GoogleNGramSpec extends UnitSpec with Logging {
 
   val sentence1 = Sentence(
     IndexedSeq(Token('The), Token('tiger), Token('is), Token('roaring))
+  )
+
+  val sentence2 = Sentence(
+    IndexedSeq(NexusToken, Token('isolate))
   )
 
   val taggedTokens = SentenceTransform.getPostaggedTokens(sentence1, defaultPostagger)
@@ -71,10 +77,10 @@ class GoogleNGramSpec extends UnitSpec with Logging {
       )
     }
 
-  "GoogleUnigramTagger.transform" should
-    "return the correct feature value set for a given token" in {
-      val googleUnigramTagger = GoogleUnigramDepLabelTagger(googleUnigram)
-      googleUnigramTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
+  "GoogleUnigramDepLabelTagger.transform" should
+    "return the correct dependency label feature value set for a given token" in {
+      val googleUnigramDepLabelTagger = GoogleUnigramDepLabelTagger(googleUnigram)
+      googleUnigramDepLabelTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
         Sentence(IndexedSeq(
           Token('nexus, Map(
             'lcase -> Set('nexus),
@@ -97,14 +103,29 @@ class GoogleNGramSpec extends UnitSpec with Logging {
           )),
           Token('roaring, Map(
             'depLabelFreq11to20 -> Set('xcomp, 'conj),
-            'depLabelFreq1to10 -> Set('pcomp, 'dep, 'ccomp, 'partmod, 'ROOT),
+            'depLabelFreq1to10 -> Set('pcomp, 'dep, 'ccomp, 'partmod, 'nn, 'ROOT, 'pobj, 'advcl,
+              'partmod, 'nn, 'ROOT, 'pobj),
             'autoCpos -> Set('VERB),
             'autoPos -> Set('VBG),
-            'depLabelFreqBelow1 -> Set('rcmod, 'advcl, 'pobj, 'nn),
-            'depLabelFreqSmall -> Set('nsubj, 'dobj),
+            'depLabelFreqBelow1 -> Set('rcmod, 'nsubj, 'dobj),
             'depLabelFreq31to40 -> Set('amod)
           ))
         ))
     }
 
+  "GoogleUnigramPostagTagger.transform" should
+    "return the correct POS tag feature value set for a given token" in {
+      val googleUnigramPostagTagger = GoogleUnigramPostagTagger(googleUnigram)
+      googleUnigramPostagTagger.transform(sentence2) shouldBe
+        Sentence(IndexedSeq(
+          Token('nexus, Map(
+            'lcase -> Set('nexus),
+            'cpos -> Set('nexus)
+          )),
+          Token('isolate, Map(
+            'postagFreq1to10 -> Set('JJ, 'VBP, 'NN),
+            'postagFreq81to90 -> Set('VB)
+          ))
+        ))
+    }
 }

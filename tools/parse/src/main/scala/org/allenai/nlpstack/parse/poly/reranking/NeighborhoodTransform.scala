@@ -23,7 +23,7 @@ object NeighborhoodTransform {
   private implicit val suffixNeighborhoodTransformFormat = jsonFormat1(SuffixNhTransform.apply)
   private implicit val keywordNeighborhoodTransformFormat = jsonFormat1(KeywordNhTransform.apply)
   private implicit val verbnetTransformFormat = jsonFormat1(VerbnetTransform.apply)
-  private implicit val googleUnigramTransformFormat = jsonFormat1(GoogleUnigramTransform.apply)
+  private implicit val googleUnigramTransformFormat = jsonFormat1(GoogleUnigramDepLabelTransform.apply)
 
   implicit val neighborhoodTransformJsonFormat = parentFormat[NeighborhoodTransform](
     childFormat[ArclabelNhTransform.type, NeighborhoodTransform],
@@ -33,7 +33,7 @@ object NeighborhoodTransform {
     childFormat[SuffixNhTransform, NeighborhoodTransform],
     childFormat[KeywordNhTransform, NeighborhoodTransform],
     childFormat[VerbnetTransform, NeighborhoodTransform],
-    childFormat[GoogleUnigramTransform, NeighborhoodTransform]
+    childFormat[GoogleUnigramDepLabelTransform, NeighborhoodTransform]
   )
 }
 
@@ -117,7 +117,7 @@ case class VerbnetTransform(verbnet: Verbnet)
   *
   * @param googleUnigram the GoogleNGram object constructed for unigrams
   */
-case class GoogleUnigramTransform(googleNgram: GoogleNGram)
+case class GoogleUnigramDepLabelTransform(googleNgram: GoogleNGram)
     extends NeighborhoodTransform {
 
   override def apply(parse: PolytreeParse, event: Neighborhood): Seq[FeatureName] = {

@@ -79,14 +79,14 @@ object ParseRerankerTraining {
       ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
 
-    val googleUnigramTransformOption: Option[(String, GoogleUnigramTransform)] = for {
+    val googleUnigramTransformOption: Option[(String, GoogleUnigramDepLabelTransform)] = for {
       taggersConfig <- taggersConfigOption
       googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
       groupName <- googleUnigramConfig.get[String]("group")
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      ("googleUnigram", GoogleUnigramTransform(
+      ("googleUnigram", GoogleUnigramDepLabelTransform(
         new GoogleNGram(groupName, artifactName, version, 1000)
       ))
     }
@@ -129,7 +129,7 @@ object ParseRerankerTraining {
 
   def defaultParseNodeFeature(
     verbnetTransformOption: Option[(String, VerbnetTransform)],
-    googleUnigramTransformOption: Option[(String, GoogleUnigramTransform)]
+    googleUnigramTransformOption: Option[(String, GoogleUnigramDepLabelTransform)]
   ) = {
     new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(

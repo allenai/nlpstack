@@ -225,46 +225,45 @@ case class GoogleUnigramDepLabelTagger(googleNgram: GoogleNGram) extends Sentenc
 case class GoogleUnigramPostagTagger(googleNgram: GoogleNGram) extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {
-    Sentence(for {
-      tok <- sentence.tokens
-    } yield {
-      val postagFreqMap = GoogleUnigram.getPosTagNormalizedDistribution(
-        tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff
-      )
-      // Create feature for each dependency label based on the normalized frequency
-      // bucket it lies in.
-      val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
-        postag <- postagFreqMap.keySet
-      } yield {
-        val normalizedFrequency = postagFreqMap(postag)
-        val symbolSetWithCurrentPostag = Set(Symbol(postag))
-        if (normalizedFrequency <= 0.0009) {
-          ('postagFreqSmall, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.01) {
-          ('postagFreqBelow1, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.1) {
-          ('postagFreq1to10, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.2) {
-          ('postagFreq11to20, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.3) {
-          ('postagFreq21to30, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.4) {
-          ('postagFreq31to40, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.5) {
-          ('postagFreq41to50, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.6) {
-          ('postagFreq51to60, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.7) {
-          ('postagFreq61to70, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.8) {
-          ('postagFreq71to80, symbolSetWithCurrentPostag)
-        } else if (normalizedFrequency <= 0.9) {
-          ('postagFreq81to90, symbolSetWithCurrentPostag)
-        } else {
-          ('postagFreq91to100, symbolSetWithCurrentPostag)
-        }
-      }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
-      tok.updateProperties(frequencyFeatureMap)
-    })
+    Sentence(NexusToken +: ((sentence.tokens.tail) map {
+      tok =>
+        val postagFreqMap = GoogleUnigram.getPosTagNormalizedDistribution(
+          tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        )
+        // Create feature for each dependency label based on the normalized frequency
+        // bucket it lies in.
+        val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
+          postag <- postagFreqMap.keySet
+        } yield {
+          val normalizedFrequency = postagFreqMap(postag)
+          val symbolSetWithCurrentPostag = Set(Symbol(postag))
+          if (normalizedFrequency <= 0.0009) {
+            ('postagFreqSmall, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.01) {
+            ('postagFreqBelow1, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.1) {
+            ('postagFreq1to10, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.2) {
+            ('postagFreq11to20, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.3) {
+            ('postagFreq21to30, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.4) {
+            ('postagFreq31to40, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.5) {
+            ('postagFreq41to50, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.6) {
+            ('postagFreq51to60, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.7) {
+            ('postagFreq61to70, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.8) {
+            ('postagFreq71to80, symbolSetWithCurrentPostag)
+          } else if (normalizedFrequency <= 0.9) {
+            ('postagFreq81to90, symbolSetWithCurrentPostag)
+          } else {
+            ('postagFreq91to100, symbolSetWithCurrentPostag)
+          }
+        }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
+        tok.updateProperties(frequencyFeatureMap)
+    }))
   }
 }

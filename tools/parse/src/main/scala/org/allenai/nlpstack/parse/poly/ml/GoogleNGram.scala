@@ -172,9 +172,7 @@ object GoogleUnigram {
     val tokenNodeInfos = (for {
       tokNgrams <- ngramMap.get(word.toLowerCase)
     } yield {
-      getTokenUnigramInfo(
-        None, tokNgrams, frequencyCutoff
-      )
+      getTokenUnigramInfo(None, tokNgrams, frequencyCutoff)
     }).getOrElse(Seq.empty[UnigramInfo])
 
     // Get the total frequency for all nodes aggregated above for the current token to
@@ -219,12 +217,7 @@ object GoogleUnigram {
     }
     ngramInfosFiltered map {
       ngramInfoForThisTok =>
-        // Scale down the frequencies so that the cutoff frequency (minimum) is treated as the
-        // starting point (frequency 1).
-        new UnigramInfo(
-          ngramInfoForThisTok.syntacticNgram.head,
-          ngramInfoForThisTok.frequency - frequencyCutoff
-        )
+        new UnigramInfo(ngramInfoForThisTok.syntacticNgram.head, ngramInfoForThisTok.frequency)
     }
   }
 }
