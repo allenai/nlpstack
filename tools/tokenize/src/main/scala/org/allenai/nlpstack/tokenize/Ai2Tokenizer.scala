@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.tokenize
 
 import org.allenai.nlpstack.core.{ Token, Tokenizer }
+import org.apache.commons.lang.StringUtils
 
 import scala.collection.mutable
 
@@ -91,17 +92,20 @@ object Ai2Tokenizer extends Tokenizer {
     if (sentence.length == 0) {
       Seq()
     } else {
+      val normalized = sentence.toLowerCase.replaceAll("['’`‘]", "'")
+      require(normalized.length == sentence.length)
+
       // tokenize by character classes
       var i: Int = 1
       var tokenStart: Int = 0
-      var tokenCharacterClass: CharacterClass = characterClassMap(sentence.charAt(0))
+      var tokenCharacterClass: CharacterClass = characterClassMap(normalized.charAt(0))
 
-      val result = new mutable.ArrayBuffer[Token](sentence.length / averageTokenLength)
+      val result = new mutable.ArrayBuffer[Token](normalized.length / averageTokenLength)
       def addToken(start: Int, end: Int): Unit =
         result += Token(sentence.substring(start, end), tokenStart)
 
-      while (i < sentence.length) {
-        val c = sentence.charAt(i)
+      while (i < normalized.length) {
+        val c = normalized.charAt(i)
         val cl = characterClassMap(c)
 
         if (cl != tokenCharacterClass || cl == Punctuation) {
@@ -112,10 +116,10 @@ object Ai2Tokenizer extends Tokenizer {
         }
         i += 1
       }
-      if (tokenStart < sentence.length && tokenCharacterClass != Whitespace) addToken(tokenStart, i)
+      if (tokenStart < normalized.length && tokenCharacterClass != Whitespace) addToken(tokenStart, i)
 
       // glue together special cases
-      val strings = result.map(_.string.toLowerCase.replaceAll("['’`‘]", "'")) // TODO: try replacing apostrophes here
+      val strings = result.map { t => normalized.substring(t.offset, t.offset + t.string.length) }
       specialCases.foreach {
         case (pattern, replacement) =>
           var j = strings.length
