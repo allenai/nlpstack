@@ -99,14 +99,23 @@ object Training {
       groupName <- googleUnigramConfig.get[String]("group")
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
+      features <- googleUnigramConfig.get[Seq[String]]("features")
+      if (!features.isEmpty)
     } yield {
       val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-      (
-        GoogleUnigramDepLabelTagger(googleNgram),
-        GoogleUnigramPostagTagger(googleNgram)
-      )
+      val googUnigramDepLabelTagger = if (features.contains("depLabel")) {
+        Some(GoogleUnigramDepLabelTagger(googleNgram))
+      } else {
+        None
+      }
+      val googUnigramPosTagTagger = if (features.contains("posTag")) {
+        Some(GoogleUnigramPostagTagger(googleNgram))
+      } else {
+        None
+      }
+      (googUnigramDepLabelTagger, googUnigramPosTagTagger)
     }) match {
-      case Some((depLabelTagger, postagTagger)) => (Some(depLabelTagger), Some(postagTagger))
+      case Some(googleUnigramTaggersTuple) => googleUnigramTaggersTuple
       case _ => (None, None)
     }
 
