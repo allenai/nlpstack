@@ -64,29 +64,60 @@ object Ai2Tokenizer extends Tokenizer {
     '°' -> Punctuation
   ).withDefaultValue(Other)
 
-  private val specialCases = Map(
-    Seq("'", "s") -> "'s",
-    Seq("'", "re") -> "'re",
-    Seq("'", "ll") -> "'ll",
-    Seq("'", "m") -> "'m", // I'm doing the thing.
-    Seq("'", "d") -> "'d", // You'd do the same thing.
-    Seq("e", ".", "g", ".") -> "e.g.",
-    Seq("i", ".", "e", ".") -> "e.g.",
-    Seq("a", ".", "m", ".") -> "a.m.",
-    Seq("p", ".", "m", ".") -> "p.m.",
-    Seq("etc", ".") -> "etc.",
-    Seq("U", ".", "S", ".") -> "U.S."
-  ).flatMap {
-      case (pattern, replacement) =>
-        val apostophes = Set('\'', '’', '`', '‘')
-        if (pattern.head.startsWith("'") && replacement.startsWith("'")) {
-          apostophes.map { a =>
-            pattern.updated(0, a.toString) -> replacement.updated(0, a)
-          }
-        } else {
-          Seq(pattern -> replacement)
-        }
-    }
+  private val specialCases = {
+    // These are applied in the order that they appear.
+
+    // shouldn't, couldn't, wouldn't
+    val shouldCouldWould = IndexedSeq(
+      "should",
+      "could",
+      "would",
+      "must",
+      "had",
+      "did",
+      "does",
+      "is",
+      "was",
+      "has",
+      "do",
+      "have",
+      "were",
+      "are"
+    ).map { s =>
+        IndexedSeq(s + "n", "'", "t") -> IndexedSeq(s, "n't")
+      }
+
+    val cases = IndexedSeq(
+      IndexedSeq("'", "s") -> "'s", // He's doing the thing.
+      IndexedSeq("'", "re") -> "'re", // You're doing the thing.
+      IndexedSeq("'", "ll") -> "'ll", // I'll do the thing.
+      IndexedSeq("'", "m") -> "'m", // I'm doing the thing.
+      IndexedSeq("'", "d") -> "'d", // You'd do the same thing.
+      IndexedSeq("'", "t") -> "'t", // I can't do the thing.
+      IndexedSeq("'", "ve") -> "'ve", // I should've done the thing.
+      IndexedSeq("e", ".", "g", ".") -> "e.g.",
+      IndexedSeq("i", ".", "e", ".") -> "e.g.",
+      IndexedSeq("a", ".", "m", ".") -> "a.m.",
+      IndexedSeq("p", ".", "m", ".") -> "p.m.",
+      IndexedSeq("etc", ".") -> "etc.",
+      IndexedSeq("u", ".", "s", ".") -> "u.s."
+    ).map {
+        case (pattern, replacement) =>
+          pattern -> IndexedSeq(replacement)
+      }
+
+    shouldCouldWould ++ cases
+  }
+  require(specialCases.forall {
+    case (pattern, replacement) =>
+      pattern.map(_.length).sum == replacement.map(_.length).sum
+  })
+
+  // This is a weak requirement that makes the algorithm below easier.
+  require(specialCases.forall {
+    case (pattern, replacement) =>
+      pattern.length >= replacement.length
+  })
 
   override def tokenize(sentence: String): Seq[Token] = {
     if (sentence.length == 0) {
@@ -133,47 +164,22 @@ object Ai2Tokenizer extends Tokenizer {
               val patternLength = pattern.map(_.length).sum
               val matchIsOneToken = (matchEndOffset - matchStartOffset) == patternLength
               if (matchIsOneToken) {
-                strings.remove(j + 1, pattern.length - 1)
-                strings.update(j, replacement)
+                strings.remove(j, pattern.length - replacement.length)
+                replacement.zipWithIndex.foreach { case (r, k) => strings.update(j + k, r) }
 
-                val replacementString =
-                  sentence.substring(
-                    result(j).offset,
-                    result(j).offset + replacement.length
-                  )
-                val replacementToken = Token(replacementString, result(j).offset)
-                result.remove(j + 1, pattern.length - 1)
-                result.update(j, replacementToken)
+                var offset = result(j).offset
+                result.remove(j, pattern.length - replacement.length)
+                replacement.zipWithIndex.foreach {
+                  case (r, k) =>
+                    result.update(
+                      j + k,
+                      Token(sentence.substring(offset, offset + r.length), offset)
+                    )
+                    offset += r.length
+                }
               }
             }
           }
-      }
-
-      // glue together "*n't"
-      var k = strings.length
-      while (k >= 0) {
-        k = strings.lastIndexOfSlice(Seq("'", "t"), k - 1)
-        if (k >= 1 && strings(k - 1).endsWith("n")) {
-          // results(k - 1) is don, won, shouldn, couldn, etc.
-          // results(k    ) is '
-          // results(k + 1) is t
-          val previousToken = result(k - 1)
-          val matchStartOffset = previousToken.offset
-          val matchEndOffset = result(k + 1).offset + 1
-          val matchIsOneToken =
-            (matchEndOffset - matchStartOffset) == previousToken.string.length + 2
-          if (matchIsOneToken) {
-            strings.update(k - 1, strings(k - 1).dropRight(1))
-            strings.update(k, s"n${strings(k)}t") // trying to put the same apostrophe back
-            strings.remove(k + 1)
-
-            result.update(k - 1, Token(previousToken.string.dropRight(1), previousToken.offset))
-            val replacementString =
-              sentence.substring(result(k).offset - 1, result(k).offset + 2)
-            result.update(k, Token(replacementString, result(k).offset - 1))
-            result.remove(k + 1)
-          }
-        }
       }
 
       result
