@@ -99,6 +99,7 @@ abstract class LineProcessor(name: String) {
         writer.println(line)
         writer.println()
       }
+      writer.flush()
     }
 
     System.err.println(f"${duration.toUnit(SECONDS)}%1.2f s")
