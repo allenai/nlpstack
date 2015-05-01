@@ -61,6 +61,7 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
+      //TokenPropertyFeature('lexical),
       TokenPropertyFeature('mostLikelyTag),
       TokenPropertyFeature('tagFreqBelow10),
       TokenPropertyFeature('tagFreqBelow50),
@@ -97,7 +98,7 @@ class PostaggerGuidedCostFunction(
         require(!taggerState.isFinal, "Cannot advance a final state.")
         val nextToTag = taggerState.nextTokenToTag.get
         require(taggedSentence.tags.contains(nextToTag), s"Missing gold tag for token $nextToTag.")
-        Map(TagToken(taggedSentence.tags(nextToTag)) -> 0)
+        Map(TagToken(taggedSentence.tags(nextToTag).head) -> 0)
     }
     result
   }

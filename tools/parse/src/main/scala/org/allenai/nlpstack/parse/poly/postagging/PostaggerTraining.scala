@@ -76,7 +76,7 @@ object PostaggerTraining {
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger) ++ googleUnigramTransformOption
+      Seq(LexicalPropertiesTagger) ++ googleUnigramTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)
@@ -94,65 +94,14 @@ object PostaggerTraining {
           trainingVectorSource, None)
       trainer.costFunctionFactory
     }
-    val tagger = Postagger(parsingCostFunctionFactory, BaseCostRerankingFunction, 5)
+    val tagger = SimplePostagger(parsingCostFunctionFactory, BaseCostRerankingFunction, 5)
 
     // save postagger
+    SimplePostagger.save(tagger, trainingConfig.outputPath)
 
     // evaluate postagger
-    def fullTaggingEvaluation(parser: Postagger, testFiles: String,
-      testFileFormat: PolytreeParseFileFormat, dataSource: String,
-      oracleNbestSize: Int): Unit = {
 
-      val testSources: Map[String, PolytreeParseSource] =
-        (testFiles.split(",") map { path =>
-          (path, FileBasedPolytreeParseSource.getParseSource(
-            path,
-            testFileFormat, dataSource
-          ))
-        }).toMap
-      for ((sourcePath, testSource) <- testSources) {
-        println(s"Checking tagging accuracy on test set ${sourcePath}.")
-        evaluateTaggerOnTestSet(tagger, testSource)
-      }
-    }
-
-    def tagTestSet(
-      tagger: Postagger,
-      sentenceSource: SentenceSource
-    ): Iterator[Option[TaggedSentence]] = {
-
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val taggingTasks: Iterator[Future[Option[TaggedSentence]]] =
-        for {
-          sentence <- sentenceSource.sentenceIterator
-        } yield Future {
-          tagger.tag(sentence)
-        }
-      val futureTagged: Future[Iterator[Option[TaggedSentence]]] = Future.sequence(taggingTasks)
-      Await.result(futureTagged, 2 days)
-    }
-
-    def evaluateTaggerOnTestSet(parser: Postagger, parseSource: PolytreeParseSource): Unit = {
-      println("Tagging test set.")
-      val startTime: Long = Platform.currentTime
-      val candidateTaggedSentences = tagTestSet(parser, parseSource) map { maybeTaggedSentence =>
-        maybeTaggedSentence map { taggedSentence =>
-          taggedSentence.addTagsToSentenceProperties('cpos)
-        }
-      }
-      val stats: Seq[EvaluationStatistic] = Seq(
-        CposSentAccuracy(false)
-      )
-      stats foreach { stat => stat.reset() }
-      TaggingEvaluator.evaluate(candidateTaggedSentences, parseSource.sentenceIterator, stats)
-      val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
-      println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
-        UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
-        (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
-      ))
-    }
-
-    fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
+    SimplePostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }
 }
@@ -171,7 +120,7 @@ case class GoldTagsTrainingVectorSource(
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getDeterministicProperty('cpos))
+          (index, tok.getProperty('cpos))
       }).toMap
       )
       vector <- generateVectors(taggedSentence)

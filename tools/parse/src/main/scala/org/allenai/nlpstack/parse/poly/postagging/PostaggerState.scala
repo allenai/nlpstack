@@ -19,7 +19,7 @@ case class PostaggerState(
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
-      Some(TaggedSentence(sentence, existingTags))
+      Some(TaggedSentence(sentence, existingTags mapValues { tag => Set(tag) }))
     } else {
       None
     }

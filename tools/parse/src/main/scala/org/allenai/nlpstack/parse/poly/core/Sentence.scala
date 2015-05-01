@@ -82,7 +82,7 @@ trait SentenceSource {
   def sentenceIterator: Iterator[Sentence]
 }
 
-case class TaggedSentence(sentence: Sentence, tags: Map[Int, Symbol]) extends Sculpture {
+case class TaggedSentence(sentence: Sentence, tags: Map[Int, Set[Symbol]]) extends Sculpture {
   val marbleBlock: MarbleBlock = sentence
 
   def addTagsToSentenceProperties(tagName: Symbol): Sentence = {
@@ -91,7 +91,7 @@ case class TaggedSentence(sentence: Sentence, tags: Map[Int, Symbol]) extends Sc
     }
     Sentence(tokensAndTags map {
       case (token, Some(tag)) =>
-        token.updateProperties(Map(tagName -> Set(tag)))
+        token.updateProperties(Map(tagName -> tag))
       case (token, None) =>
         token
     })

@@ -2,6 +2,7 @@ package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Postagger, Tokenizer }
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, GoogleUnigram, NgramInfo, Verbnet }
+import org.allenai.nlpstack.parse.poly.postagging.{ SimplePostagger, NLPStackPostagger }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -38,13 +39,25 @@ object SentenceTransform {
   }
 }
 
+object SomethingTemporary {
+
+  val qTagger = SimplePostagger.load("/Users/markhopkins/Projects/experiments/parsing/temp/qbank.tagger.json")
+}
+
 /** The FactorieSentenceTagger tags an input sentence with automatic part-of-speech tags
   * from the Factorie tagger.
   */
 case object FactorieSentenceTagger extends SentenceTransform {
 
+  val baseTagger = SomethingTemporary.qTagger
+  //NLPStackPostagger(defaultPostagger)
+
   def transform(sentence: Sentence): Sentence = {
-    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+    val tagged: Option[TaggedSentence] = baseTagger.tag(sentence)
+    require(tagged != None)
+    tagged.get.addTagsToSentenceProperties('autoCpos)
+    //val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+    /*
     Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
       case (tagged, untagged) =>
         val autoPos = Symbol(tagged.postag)
@@ -56,6 +69,7 @@ case object FactorieSentenceTagger extends SentenceTransform {
           'autoCpos -> Set(autoCpos)
         ))
     }))
+    */
   }
 }
 

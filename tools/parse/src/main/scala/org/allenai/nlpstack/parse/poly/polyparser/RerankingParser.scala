@@ -40,11 +40,11 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     candidate match {
       case Some((parse: PolytreeParse, cost)) =>
 
-        val mappedParse = parse.copy(sentence = Sentence(
-          FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
-            tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
-          }
-        ))
+        //val mappedParse = parse.copy(sentence = Sentence(
+        //  FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
+        //    tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
+        //  }
+        //))
         Some((parse, cost))
       case _ => None
     }

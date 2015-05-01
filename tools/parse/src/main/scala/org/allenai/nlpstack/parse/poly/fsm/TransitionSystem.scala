@@ -7,6 +7,7 @@ import org.allenai.nlpstack.parse.poly.polyparser.{
   ArcHybridTransitionSystem,
   ArcHybridTransitionSystemFactory
 }
+import org.allenai.nlpstack.parse.poly.postagging.PostaggerTransitionSystemFactory
 
 import reming.DefaultJsonProtocol._
 
@@ -37,8 +38,10 @@ trait TransitionSystemFactory {
 object TransitionSystemFactory {
   private implicit val arcHybridFormat = jsonFormat1(ArcHybridTransitionSystemFactory.apply)
   private implicit val arcEagerFormat = jsonFormat1(ArcEagerTransitionSystemFactory.apply)
+  private implicit val postaggerFormat = jsonFormat1(PostaggerTransitionSystemFactory.apply)
   implicit val transitionSystemFactoryJsonFormat = parentFormat[TransitionSystemFactory](
     childFormat[ArcHybridTransitionSystemFactory, TransitionSystemFactory],
-    childFormat[ArcEagerTransitionSystemFactory, TransitionSystemFactory]
+    childFormat[ArcEagerTransitionSystemFactory, TransitionSystemFactory],
+    childFormat[PostaggerTransitionSystemFactory, TransitionSystemFactory]
   )
 }
