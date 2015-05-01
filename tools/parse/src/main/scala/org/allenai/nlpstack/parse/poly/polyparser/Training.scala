@@ -4,7 +4,7 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -100,7 +100,7 @@ object Training {
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      val googleNgram = new GoogleNGram(groupName, artifactName, version, 1000)
+      val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
       (
         GoogleUnigramDepLabelTagger(googleNgram),
         GoogleUnigramPostagTagger(googleNgram)

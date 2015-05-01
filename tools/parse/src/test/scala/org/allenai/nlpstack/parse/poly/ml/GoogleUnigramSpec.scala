@@ -31,7 +31,7 @@ class GoogleNGramSpec extends UnitSpec with Logging {
   val version = googleUnigramConfig.getInt("version")
 
   val frequencyCutoff = 1000
-  val googleUnigram = new GoogleNGram(groupName, artifactName, version, frequencyCutoff)
+  val googleUnigram = new DatastoreGoogleNGram(groupName, artifactName, version, frequencyCutoff)
 
   val sentence1 = Sentence(
     IndexedSeq(Token('The), Token('tiger), Token('is), Token('roaring))
@@ -91,24 +91,20 @@ class GoogleNGramSpec extends UnitSpec with Logging {
             'autoCpos -> Set('NOUN)
           )),
           Token('is, Map(
-            'depLabelFreq11to20 -> Set('ccomp),
-            'depLabelFreq1to10 -> Set('advcl, 'rcmod, 'conj, 'dep),
-            'depLabelFreq61to70 -> Set('ROOT),
+            'depLabelFreq51to95 -> Set('ROOT),
+            'depLabelFreq1to5 -> Set('infmod, 'iobj, 'pcomp, 'dobj, 'advmod, 'dep, 'prep, 'nsubjpass,
+              'csubj, 'pred, 'parataxis, 'purpcl, 'amod, 'tmod, 'nsubj, 'xcomp, 'attr, 'acomp,
+              'partmod, 'nn, 'cc, 'csubjpass, 'appos, 'pobj),
             'autoCpos -> Set('VERB),
-            'autoPos -> Set('VBZ),
-            'depLabelFreqBelow1 -> Set('pcomp, 'pred, 'nsubj, 'parataxis),
-            'depLabelFreqSmall -> Set('infmod, 'iobj, 'dobj, 'advmod, 'prep, 'nsubjpass, 'csubj,
-              'purpcl, 'amod, 'tmod, 'xcomp, 'attr, 'acomp, 'partmod, 'nn, 'cc, 'csubjpass,
-              'appos, 'pobj)
+            'depLabelFreq6to20 -> Set('advcl, 'rcmod, 'conj, 'ccomp),
+            'autoPos -> Set('VBZ)
           )),
           Token('roaring, Map(
-            'depLabelFreq11to20 -> Set('xcomp, 'conj),
-            'depLabelFreq1to10 -> Set('pcomp, 'dep, 'ccomp, 'partmod, 'nn, 'ROOT, 'pobj, 'advcl,
-              'partmod, 'nn, 'ROOT, 'pobj),
+            'depLabelFreq1to5 -> Set('rcmod, 'dobj, 'ccomp, 'advcl, 'nsubj, 'nn, 'pobj),
             'autoCpos -> Set('VERB),
+            'depLabelFreq6to20 -> Set('conj, 'pcomp, 'dep, 'xcomp, 'partmod, 'ROOT),
             'autoPos -> Set('VBG),
-            'depLabelFreqBelow1 -> Set('rcmod, 'nsubj, 'dobj),
-            'depLabelFreq31to40 -> Set('amod)
+            'depLabelFreq21to50 -> Set('amod)
           ))
         ))
     }
@@ -123,8 +119,9 @@ class GoogleNGramSpec extends UnitSpec with Logging {
             'cpos -> Set('nexus)
           )),
           Token('isolate, Map(
-            'postagFreq1to10 -> Set('JJ, 'VBP, 'NN),
-            'postagFreq81to90 -> Set('VB)
+            'posTagFreq1to5 -> Set('JJ, 'VBP),
+            'posTagFreq51to95 -> Set('VB),
+            'posTagFreq6to20 -> Set('NN)
           ))
         ))
     }

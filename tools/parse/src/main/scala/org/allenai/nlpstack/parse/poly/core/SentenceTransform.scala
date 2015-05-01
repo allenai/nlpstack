@@ -1,7 +1,20 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Postagger, Tokenizer }
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, GoogleUnigram, NgramInfo, Verbnet }
+import org.allenai.nlpstack.core.{
+  Token => NLPStackToken,
+  Lemmatized,
+  PostaggedToken,
+  Postagger,
+  Tokenizer
+}
+import org.allenai.nlpstack.parse.poly.ml.{
+  BrownClusters,
+  DatastoreGoogleNGram,
+  GoogleNGram,
+  GoogleUnigram,
+  NgramInfo,
+  Verbnet
+}
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -171,7 +184,7 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
 
 /** Frequency Distribution of dependency labels for tokens based on Google Ngram's Nodes (unigrams).
   */
-case class GoogleUnigramDepLabelTagger(googleNgram: GoogleNGram) extends SentenceTransform {
+case class GoogleUnigramDepLabelTagger(googleNgram: DatastoreGoogleNGram) extends SentenceTransform {
 
   @transient private val stanfordTagger = new StanfordPostagger()
 
@@ -189,31 +202,9 @@ case class GoogleUnigramDepLabelTagger(googleNgram: GoogleNGram) extends Sentenc
         } yield {
           val normalizedFrequency = depLabelFreqMap(depLabel)
           val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
-          if (normalizedFrequency <= 0.0009) {
-            ('depLabelFreqSmall, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.01) {
-            ('depLabelFreqBelow1, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.1) {
-            ('depLabelFreq1to10, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.2) {
-            ('depLabelFreq11to20, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.3) {
-            ('depLabelFreq21to30, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.4) {
-            ('depLabelFreq31to40, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.5) {
-            ('depLabelFreq41to50, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.6) {
-            ('depLabelFreq51to60, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.7) {
-            ('depLabelFreq61to70, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.8) {
-            ('depLabelFreq71to80, symbolSetWithCurrentDepLabel)
-          } else if (normalizedFrequency <= 0.9) {
-            ('depLabelFreq81to90, symbolSetWithCurrentDepLabel)
-          } else {
-            ('depLabelFreq91to100, symbolSetWithCurrentDepLabel)
-          }
+          val freqBucket =
+            "depLabel" + GoogleUnigram.getFrequencyBucketForFeature(normalizedFrequency)
+          (Symbol(freqBucket), symbolSetWithCurrentDepLabel)
         }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
         untagged.updateProperties(frequencyFeatureMap)
     }))
@@ -222,7 +213,7 @@ case class GoogleUnigramDepLabelTagger(googleNgram: GoogleNGram) extends Sentenc
 
 /** Frequency Distribution of POS tags for words based on Google Ngram's Nodes (unigrams).
   */
-case class GoogleUnigramPostagTagger(googleNgram: GoogleNGram) extends SentenceTransform {
+case class GoogleUnigramPostagTagger(googleNgram: DatastoreGoogleNGram) extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {
     Sentence(NexusToken +: ((sentence.tokens.tail) map {
@@ -237,31 +228,9 @@ case class GoogleUnigramPostagTagger(googleNgram: GoogleNGram) extends SentenceT
         } yield {
           val normalizedFrequency = postagFreqMap(postag)
           val symbolSetWithCurrentPostag = Set(Symbol(postag))
-          if (normalizedFrequency <= 0.0009) {
-            ('postagFreqSmall, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.01) {
-            ('postagFreqBelow1, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.1) {
-            ('postagFreq1to10, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.2) {
-            ('postagFreq11to20, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.3) {
-            ('postagFreq21to30, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.4) {
-            ('postagFreq31to40, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.5) {
-            ('postagFreq41to50, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.6) {
-            ('postagFreq51to60, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.7) {
-            ('postagFreq61to70, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.8) {
-            ('postagFreq71to80, symbolSetWithCurrentPostag)
-          } else if (normalizedFrequency <= 0.9) {
-            ('postagFreq81to90, symbolSetWithCurrentPostag)
-          } else {
-            ('postagFreq91to100, symbolSetWithCurrentPostag)
-          }
+          val freqBucket =
+            "posTag" + GoogleUnigram.getFrequencyBucketForFeature(normalizedFrequency)
+          (Symbol(freqBucket), symbolSetWithCurrentPostag)
         }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
         tok.updateProperties(frequencyFeatureMap)
     }))
