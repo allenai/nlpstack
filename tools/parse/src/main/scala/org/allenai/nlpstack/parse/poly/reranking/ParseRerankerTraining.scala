@@ -79,19 +79,7 @@ object ParseRerankerTraining {
       ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
 
-    val googleUnigramTransformOption: Option[(String, GoogleUnigramDepLabelTransform)] = for {
-      taggersConfig <- taggersConfigOption
-      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
-      groupName <- googleUnigramConfig.get[String]("group")
-      artifactName <- googleUnigramConfig.get[String]("name")
-      version <- googleUnigramConfig.get[Int]("version")
-    } yield {
-      ("googleUnigram", GoogleUnigramDepLabelTransform(
-        new GoogleNGram(groupName, artifactName, version, 1000)
-      ))
-    }
-
-    val feature = defaultParseNodeFeature(verbnetTransformOption, googleUnigramTransformOption)
+    val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
     val goldParseSource = InMemoryPolytreeParseSource.getParseSource(
@@ -128,8 +116,7 @@ object ParseRerankerTraining {
   }
 
   def defaultParseNodeFeature(
-    verbnetTransformOption: Option[(String, VerbnetTransform)],
-    googleUnigramTransformOption: Option[(String, GoogleUnigramDepLabelTransform)]
+    verbnetTransformOption: Option[(String, VerbnetTransform)]
   ) = {
     new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(
@@ -154,7 +141,7 @@ object ParseRerankerTraining {
         ("cpos", PropertyNhTransform('cpos)),
         ("suffix", SuffixNhTransform(WordClusters.suffixes.toSeq map { _.name })),
         ("keyword", KeywordNhTransform(WordClusters.stopWords.toSeq map { _.name }))
-      ) ++ verbnetTransformOption ++ googleUnigramTransformOption),
+      ) ++ verbnetTransformOption),
       TransformedNeighborhoodFeature(Seq(
         ("parent1", SelfAndSpecificParentExtractor(0)),
         ("parent2", SelfAndSpecificParentExtractor(1)),
