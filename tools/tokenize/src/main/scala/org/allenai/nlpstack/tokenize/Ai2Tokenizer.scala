@@ -77,9 +77,16 @@ object Ai2Tokenizer extends Tokenizer {
     IndexedSeq("'", "t") -> "'t", // I can't do the thing.
     IndexedSeq("'", "ve") -> "'ve", // I should've done the thing.
     IndexedSeq("e", ".", "g", ".") -> "e.g.",
-    IndexedSeq("i", ".", "e", ".") -> "e.g.",
+    IndexedSeq("i", ".", "e", ".") -> "i.e.",
     IndexedSeq("a", ".", "m", ".") -> "a.m.",
     IndexedSeq("p", ".", "m", ".") -> "p.m.",
+    IndexedSeq("et", ".", "al", ".") -> "et.al.",
+    IndexedSeq("ph", ".", "d", ".") -> "ph.d.",
+    IndexedSeq("mr", ".") -> "mr.",
+    IndexedSeq("ms", ".") -> "ms.",
+    IndexedSeq("m", ".", "sc", ".") -> "m.sc.",
+    IndexedSeq("b", ".", "sc", ".") -> "b.sc.",
+    IndexedSeq("b", ".", "a", ".") -> "b.a.",
     IndexedSeq("etc", ".") -> "etc.",
     IndexedSeq("u", ".", "s", ".") -> "u.s."
   ).map {
