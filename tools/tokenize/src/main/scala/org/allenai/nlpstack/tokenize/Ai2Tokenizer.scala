@@ -64,60 +64,45 @@ object Ai2Tokenizer extends Tokenizer {
     '°' -> Punctuation
   ).withDefaultValue(Other)
 
-  private val specialCases = {
-    // These are applied in the order that they appear.
-
-    // shouldn't, couldn't, wouldn't
-    val shouldCouldWould = IndexedSeq(
-      "should",
-      "could",
-      "would",
-      "must",
-      "had",
-      "did",
-      "does",
-      "is",
-      "was",
-      "has",
-      "do",
-      "have",
-      "were",
-      "are"
-    ).map { s =>
-        IndexedSeq(s + "n", "'", "t") -> IndexedSeq(s, "n't")
-      }
-
-    val cases = IndexedSeq(
-      IndexedSeq("'", "s") -> "'s", // He's doing the thing.
-      IndexedSeq("'", "re") -> "'re", // You're doing the thing.
-      IndexedSeq("'", "ll") -> "'ll", // I'll do the thing.
-      IndexedSeq("'", "m") -> "'m", // I'm doing the thing.
-      IndexedSeq("'", "d") -> "'d", // You'd do the same thing.
-      IndexedSeq("'", "t") -> "'t", // I can't do the thing.
-      IndexedSeq("'", "ve") -> "'ve", // I should've done the thing.
-      IndexedSeq("e", ".", "g", ".") -> "e.g.",
-      IndexedSeq("i", ".", "e", ".") -> "e.g.",
-      IndexedSeq("a", ".", "m", ".") -> "a.m.",
-      IndexedSeq("p", ".", "m", ".") -> "p.m.",
-      IndexedSeq("etc", ".") -> "etc.",
-      IndexedSeq("u", ".", "s", ".") -> "u.s."
-    ).map {
-        case (pattern, replacement) =>
-          pattern -> IndexedSeq(replacement)
-      }
-
-    shouldCouldWould ++ cases
-  }
+  private val specialCases = IndexedSeq(
+    IndexedSeq("'", "s") -> "'s", // He's doing the thing.
+    IndexedSeq("'", "re") -> "'re", // You're doing the thing.
+    IndexedSeq("'", "ll") -> "'ll", // I'll do the thing.
+    IndexedSeq("'", "m") -> "'m", // I'm doing the thing.
+    IndexedSeq("'", "d") -> "'d", // You'd do the same thing.
+    IndexedSeq("'", "t") -> "'t", // I can't do the thing.
+    IndexedSeq("'", "ve") -> "'ve", // I should've done the thing.
+    IndexedSeq("e", ".", "g", ".") -> "e.g.",
+    IndexedSeq("i", ".", "e", ".") -> "e.g.",
+    IndexedSeq("a", ".", "m", ".") -> "a.m.",
+    IndexedSeq("p", ".", "m", ".") -> "p.m.",
+    IndexedSeq("etc", ".") -> "etc.",
+    IndexedSeq("u", ".", "s", ".") -> "u.s."
+  ).map {
+      case (pattern, replacement) =>
+        pattern -> IndexedSeq(replacement)
+    }
   require(specialCases.forall {
     case (pattern, replacement) =>
       pattern.map(_.length).sum == replacement.map(_.length).sum
   })
 
-  // This is a weak requirement that makes the algorithm below easier.
-  require(specialCases.forall {
-    case (pattern, replacement) =>
-      pattern.length >= replacement.length
-  })
+  private val shouldCouldWould = Set(
+    "should",
+    "could",
+    "would",
+    "must",
+    "had",
+    "did",
+    "does",
+    "is",
+    "was",
+    "has",
+    "do",
+    "have",
+    "were",
+    "are"
+  ).map(_ + "n")
 
   override def tokenize(sentence: String): Seq[Token] = {
     if (sentence.length == 0) {
@@ -180,6 +165,28 @@ object Ai2Tokenizer extends Tokenizer {
               }
             }
           }
+      }
+
+      // glue together "*n't"
+      var k = strings.length
+      while (k >= 0) {
+        k = strings.lastIndexOf("'t", k - 1)
+        if (k >= 1 && shouldCouldWould.contains(strings(k - 1))) {
+          // results(k - 1) is shouldn, couldn, etc.
+          // results(k    ) is 't
+          val previousToken = result(k - 1)
+          val matchIsOneToken =
+            previousToken.offset + previousToken.string.length == result(k).offset
+          if (matchIsOneToken) {
+            strings.update(k - 1, strings(k - 1).dropRight(1))
+            strings.update(k, "n't")
+
+            result.update(k - 1, Token(previousToken.string.dropRight(1), previousToken.offset))
+            val replacementString =
+              sentence.substring(result(k).offset - 1, result(k).offset + 2)
+            result.update(k, Token(replacementString, result(k).offset - 1))
+          }
+        }
       }
 
       result
