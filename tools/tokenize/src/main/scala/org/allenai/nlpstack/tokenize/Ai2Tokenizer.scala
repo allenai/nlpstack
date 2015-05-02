@@ -64,6 +64,10 @@ object Ai2Tokenizer extends Tokenizer {
     '°' -> Punctuation
   ).withDefaultValue(Other)
 
+  // The code supports replacing one sequence with another (as long as the replacement sequence is
+  // as long or shorter than the pattern sequence). In this version, the replacement sequence is
+  // always of length 1, but hard-coding that assumption has no bearing on performance, and it
+  // doesn't make the code shorter, so I left it this way.
   private val specialCases = IndexedSeq(
     IndexedSeq("'", "s") -> "'s", // He's doing the thing.
     IndexedSeq("'", "re") -> "'re", // You're doing the thing.
@@ -82,11 +86,20 @@ object Ai2Tokenizer extends Tokenizer {
       case (pattern, replacement) =>
         pattern -> IndexedSeq(replacement)
     }
+
   require(specialCases.forall {
     case (pattern, replacement) =>
       pattern.map(_.length).sum == replacement.map(_.length).sum
   })
 
+  // This is a requirement of the algorithm that uses specialCases, but it could be fixed relatively
+  // easily.
+  require(specialCases.forall {
+    case (pattern, replacement) =>
+      pattern.length >= replacement.length
+  })
+
+  // These are for "shouldn't", "couldn't", etc.
   private val shouldCouldWould = Set(
     "should",
     "could",
@@ -101,7 +114,9 @@ object Ai2Tokenizer extends Tokenizer {
     "do",
     "have",
     "were",
-    "are"
+    "are",
+    "wo", // won't
+    "ca" // can't
   ).map(_ + "n")
 
   override def tokenize(sentence: String): Seq[Token] = {
