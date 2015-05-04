@@ -138,7 +138,7 @@ object NlpstackBuild extends Build {
     base = file("tools/tokenize"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
-      libraryDependencies ++= Seq(factorie, commonsIo % "test")
+      libraryDependencies ++= Seq(stanfordCoreNlp, factorie, commonsIo % "test")
     )
   ) dependsOn (core)
 
