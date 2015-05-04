@@ -85,7 +85,7 @@ abstract class DependencyParsingTransitionSystem(
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
       TokenPropertyFeature('autoCpos),
-      //TokenPropertyFeature('autoPos),
+      TokenPropertyFeature('autoPos),
       TokenPropertyFeature('brown0),
       //TokenPropertyFeature('mostLikelyTag),
       //TokenPropertyFeature('tagFreqBelow10),

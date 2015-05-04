@@ -29,16 +29,22 @@ case class Token(word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map()) {
 object Token {
   implicit val tokenJsonFormat = jsonFormat2(Token.apply)
 
-  def createProperties(word: String, goldCpos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
+  def createProperties(word: String, goldCpos: Option[String] = None,
+    goldPos: Option[String] = None): Map[Symbol, Set[Symbol]] = {
+
     val propertyMap = Map('lcase -> Set(Symbol(word.toLowerCase)))
-    goldCpos match {
+    val revisedMap = goldCpos match {
       case Some(cpos) => propertyMap.updated('cpos, Set(Symbol(cpos)))
       case None => propertyMap
     }
+    goldPos match {
+      case Some(pos) => revisedMap.updated('pos, Set(Symbol(pos)))
+      case None => revisedMap
+    }
   }
 
-  def create(word: String, coarsePos: String): Token = {
-    Token(Symbol(word), createProperties(word, Some(coarsePos)))
+  def create(word: String, coarsePos: String, finePos: String): Token = {
+    Token(Symbol(word), createProperties(word, Some(coarsePos), Some(finePos)))
   }
 
   val propertyNotFound = 'notFound

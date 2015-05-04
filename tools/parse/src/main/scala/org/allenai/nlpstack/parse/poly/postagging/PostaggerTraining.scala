@@ -72,7 +72,7 @@ object PostaggerTraining {
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      GoogleUnigramTagger(new GoogleNGram(groupName, artifactName, version, 1000))
+      GoogleUnigramTagger(new GoogleNGram(groupName, artifactName, version, 100))
     }
 
     val taggers: Seq[SentenceTransform] =
@@ -120,12 +120,12 @@ case class GoldTagsTrainingVectorSource(
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getProperty('cpos))
+          (index, tok.getProperty('pos))
       }).toMap
       )
       vector <- generateVectors(taggedSentence)
     } yield {
-      //println(vector)
+      println(vector)
       vector
     }
   }

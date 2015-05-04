@@ -32,7 +32,8 @@ case class NLPStackPostagger(baseTagger: Postagger) extends PolyPostagger {
     val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, baseTagger)
     val tagMap = (taggedTokens.zipWithIndex map {
       case (tok, tokIndex) =>
-        (tokIndex + 1, Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, "X"))))
+        (tokIndex + 1, Set(Symbol(tok.postag)))
+      //Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, "X"))))
     }).toMap
     Some(TaggedSentence(sentence, tagMap))
   }
@@ -76,11 +77,6 @@ object SimplePostagger {
     println("Tagging test set.")
     val startTime: Long = Platform.currentTime
     val candidateTaggedSentences = tagTestSet(tagger, parseSource).flatten
-    /*flatMap { maybeTaggedSentence =>
-      maybeTaggedSentence map { taggedSentence =>
-        taggedSentence.addTagsToSentenceProperties('cpos)
-      }
-    }*/
     val stats: Seq[EvaluationStatistic] = Seq(
       CposSentAccuracy(false)
     )
@@ -93,7 +89,7 @@ object SimplePostagger {
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getProperty('cpos))
+          (index, tok.getProperty('pos))
       }).toMap
       )
     }
@@ -158,7 +154,7 @@ case class SimplePostagger(
         constraints.toSeq
       ) map { initState =>
         // Only do full reranking in the absence of constraints.
-        val nbestsizeMod = 200
+        val nbestsizeMod = 5
         if (constraints.isEmpty) {
           baseParser.find(initState, nbestsizeMod, constraints)
         } else {

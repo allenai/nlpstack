@@ -61,7 +61,12 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
-      //TokenPropertyFeature('lexical),
+      TokenPropertyFeature('lexical),
+      TokenPropertyFeature('mostLikelyPos),
+      TokenPropertyFeature('posFreqBelow10),
+      TokenPropertyFeature('posFreqBelow50),
+      TokenPropertyFeature('posFreqBelow95),
+      TokenPropertyFeature('posFreqDominant),
       TokenPropertyFeature('mostLikelyTag),
       TokenPropertyFeature('tagFreqBelow10),
       TokenPropertyFeature('tagFreqBelow50),

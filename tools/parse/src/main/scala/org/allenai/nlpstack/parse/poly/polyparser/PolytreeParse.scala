@@ -475,6 +475,12 @@ object PolytreeParse {
                 Some(row(iCoarsePos))
               } else {
                 None
+              },
+            goldPos =
+              if (useGoldPosTags && row(iFinePos) != "_") {
+                Some(row(iFinePos))
+              } else {
+                None
               }
           )
         )
