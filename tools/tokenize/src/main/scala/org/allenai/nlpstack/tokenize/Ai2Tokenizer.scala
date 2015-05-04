@@ -81,6 +81,7 @@ object Ai2Tokenizer extends Tokenizer {
     IndexedSeq("a", ".", "m", ".") -> "a.m.",
     IndexedSeq("p", ".", "m", ".") -> "p.m.",
     IndexedSeq("et", ".", "al", ".") -> "et.al.",
+    IndexedSeq("al", ".") -> "al.",
     IndexedSeq("ph", ".", "d", ".") -> "ph.d.",
     IndexedSeq("mr", ".") -> "mr.",
     IndexedSeq("ms", ".") -> "ms.",
