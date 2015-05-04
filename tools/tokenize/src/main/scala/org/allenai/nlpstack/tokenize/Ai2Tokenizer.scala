@@ -139,8 +139,15 @@ object Ai2Tokenizer extends Tokenizer {
       var tokenCharacterClass: CharacterClass = characterClassMap(normalized.charAt(0))
 
       val result = new mutable.ArrayBuffer[Token](normalized.length / averageTokenLength)
-      def addToken(start: Int, end: Int): Unit =
-        result += Token(sentence.substring(start, end), tokenStart)
+      def addToken(start: Int, end: Int): Unit = {
+        normalized.substring(start, end) match {
+          case "cannot" | "gonna" =>
+            result += Token(sentence.substring(start, start + 3), start)
+            result += Token(sentence.substring(start + 3, end), start + 3)
+          case _ =>
+            result += Token(sentence.substring(start, end), start)
+        }
+      }
 
       while (i < normalized.length) {
         val c = normalized.charAt(i)
