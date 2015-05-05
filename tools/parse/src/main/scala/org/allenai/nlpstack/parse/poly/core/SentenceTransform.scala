@@ -1,8 +1,21 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.core.{ Token => NLPStackToken, Lemmatized, PostaggedToken, Postagger, Tokenizer }
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, GoogleNGram, GoogleUnigram, NgramInfo, Verbnet }
-import org.allenai.nlpstack.parse.poly.postagging.{ SimplePostagger, NLPStackPostagger }
+import org.allenai.nlpstack.parse.poly.postagging.SimplePostagger
+import org.allenai.nlpstack.core.{
+  Token => NLPStackToken,
+  Lemmatized,
+  PostaggedToken,
+  Postagger,
+  Tokenizer
+}
+import org.allenai.nlpstack.parse.poly.ml.{
+  BrownClusters,
+  DatastoreGoogleNGram,
+  GoogleNGram,
+  GoogleUnigram,
+  NgramInfo,
+  Verbnet
+}
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -18,7 +31,10 @@ object SentenceTransform {
   private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTagger)
   private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTagger.apply)
   private implicit val verbnetTaggerFormat = jsonFormat1(VerbnetTagger.apply)
-  private implicit val googleUnigramTaggerFormat = jsonFormat1(GoogleUnigramTagger.apply)
+  private implicit val googleUnigramDepLabelTaggerFormat =
+    jsonFormat1(GoogleUnigramDepLabelTagger.apply)
+  private implicit val googleUnigramPostagTaggerFormat =
+    jsonFormat1(GoogleUnigramPostagTagger.apply)
 
   implicit val sentenceTransformJsonFormat = parentFormat[SentenceTransform](
     childFormat[FactorieSentenceTagger.type, SentenceTransform],
@@ -26,7 +42,8 @@ object SentenceTransform {
     childFormat[LexicalPropertiesTagger.type, SentenceTransform],
     childFormat[BrownClustersTagger, SentenceTransform],
     childFormat[VerbnetTagger, SentenceTransform],
-    childFormat[GoogleUnigramTagger, SentenceTransform]
+    childFormat[GoogleUnigramDepLabelTagger, SentenceTransform],
+    childFormat[GoogleUnigramPostagTagger, SentenceTransform]
   )
 
   /** Given a Sentences, produce a seq of PostaggedTokens.
@@ -188,7 +205,38 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
 
 /** Frequency Distribution of dependency labels for tokens based on Google Ngram's Nodes (unigrams).
   */
-case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransform {
+/*
+case class GoogleUnigramDepLabelTagger(googleNgram: DatastoreGoogleNGram) extends SentenceTransform {
+
+  @transient private val stanfordTagger = new StanfordPostagger()
+
+  override def transform(sentence: Sentence): Sentence = {
+    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+    Sentence(NexusToken +: (taggedTokens.zip(sentence.tokens.tail) map {
+      case (tagged, untagged) =>
+        val depLabelFreqMap = GoogleUnigram.getDepLabelNormalizedDistribution(
+          tagged, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        )
+        // Create feature for each dependency label based on the normalized frequency
+        // bucket it lies in.
+        val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
+          depLabel <- depLabelFreqMap.keySet
+        } yield {
+          val normalizedFrequency = depLabelFreqMap(depLabel)
+          val symbolSetWithCurrentDepLabel = Set(Symbol(depLabel))
+          val freqBucket =
+            "depLabel" + GoogleUnigram.getFrequencyBucketForFeature(normalizedFrequency)
+          (Symbol(freqBucket), symbolSetWithCurrentDepLabel)
+        }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
+        untagged.updateProperties(frequencyFeatureMap)
+    }))
+  }
+}
+*/
+/** Frequency Distribution of dependency labels for tokens based on Google Ngram's Nodes (unigrams).
+  */
+
+case class GoogleUnigramDepLabelTagger(googleNgram: DatastoreGoogleNGram) extends SentenceTransform {
 
   override def transform(sentence: Sentence): Sentence = {
     val nextSent = transformPos(sentence)
@@ -276,4 +324,30 @@ case class GoogleUnigramTagger(googleNgram: GoogleNGram) extends SentenceTransfo
     }))
   }
 
+}
+
+/** Frequency Distribution of POS tags for words based on Google Ngram's Nodes (unigrams).
+  */
+case class GoogleUnigramPostagTagger(googleNgram: DatastoreGoogleNGram) extends SentenceTransform {
+
+  override def transform(sentence: Sentence): Sentence = {
+    Sentence(NexusToken +: ((sentence.tokens.tail) map {
+      tok =>
+        val postagFreqMap = GoogleUnigram.getPosTagNormalizedDistribution(
+          tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff
+        )
+        // Create feature for each dependency label based on the normalized frequency
+        // bucket it lies in.
+        val frequencyFeatureMap: Map[Symbol, Set[Symbol]] = (for {
+          postag <- postagFreqMap.keySet
+        } yield {
+          val normalizedFrequency = postagFreqMap(postag)
+          val symbolSetWithCurrentPostag = Set(Symbol(postag))
+          val freqBucket =
+            "posTag" + GoogleUnigram.getFrequencyBucketForFeature(normalizedFrequency)
+          (Symbol(freqBucket), symbolSetWithCurrentPostag)
+        }).groupBy(_._1).mapValues(_.flatMap(v => v._2))
+        tok.updateProperties(frequencyFeatureMap)
+    }))
+  }
 }

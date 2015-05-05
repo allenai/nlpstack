@@ -8,7 +8,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ GoogleNGram, Verbnet, BrownClusters }
+import org.allenai.nlpstack.parse.poly.ml.{ DatastoreGoogleNGram, GoogleNGram, Verbnet, BrownClusters }
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
@@ -65,14 +65,14 @@ object PostaggerTraining {
     val taggersConfigOption =
       trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
 
-    val googleUnigramTransformOption: Option[GoogleUnigramTagger] = for {
+    val googleUnigramTransformOption: Option[GoogleUnigramDepLabelTagger] = for {
       taggersConfig <- taggersConfigOption
       googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
       groupName <- googleUnigramConfig.get[String]("group")
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      GoogleUnigramTagger(new GoogleNGram(groupName, artifactName, version, 100))
+      GoogleUnigramDepLabelTagger(new DatastoreGoogleNGram(groupName, artifactName, version, 100))
     }
 
     val taggers: Seq[SentenceTransform] =

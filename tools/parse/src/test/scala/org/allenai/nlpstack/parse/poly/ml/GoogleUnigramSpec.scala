@@ -8,9 +8,11 @@ import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.core.{
   FactorieSentenceTagger,
-  GoogleUnigramTagger,
+  GoogleUnigramDepLabelTagger,
+  GoogleUnigramPostagTagger,
   Sentence,
   SentenceTransform,
+  NexusToken,
   Token
 }
 
@@ -29,10 +31,14 @@ class GoogleNGramSpec extends UnitSpec with Logging {
   val version = googleUnigramConfig.getInt("version")
 
   val frequencyCutoff = 1000
-  val googleUnigram = new GoogleNGram(groupName, artifactName, version, frequencyCutoff)
+  val googleUnigram = new DatastoreGoogleNGram(groupName, artifactName, version, frequencyCutoff)
 
   val sentence1 = Sentence(
     IndexedSeq(Token('The), Token('tiger), Token('is), Token('roaring))
+  )
+
+  val sentence2 = Sentence(
+    IndexedSeq(NexusToken, Token('isolate))
   )
 
   val taggedTokens = SentenceTransform.getPostaggedTokens(sentence1, defaultPostagger)
@@ -71,10 +77,10 @@ class GoogleNGramSpec extends UnitSpec with Logging {
       )
     }
 
-  "GoogleUnigramTagger.transform" should
-    "return the correct feature value set for a given token" in {
-      val googleUnigramTagger = GoogleUnigramTagger(googleUnigram)
-      googleUnigramTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
+  "GoogleUnigramDepLabelTagger.transform" should
+    "return the correct dependency label feature value set for a given token" in {
+      val googleUnigramDepLabelTagger = GoogleUnigramDepLabelTagger(googleUnigram)
+      googleUnigramDepLabelTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
         Sentence(IndexedSeq(
           Token('nexus, Map(
             'lcase -> Set('nexus),
@@ -85,26 +91,38 @@ class GoogleNGramSpec extends UnitSpec with Logging {
             'autoCpos -> Set('NOUN)
           )),
           Token('is, Map(
-            'depLabelFreq11to20 -> Set('ccomp),
-            'depLabelFreq1to10 -> Set('advcl, 'rcmod, 'conj, 'dep),
-            'depLabelFreq61to70 -> Set('ROOT),
+            'depLabelFreq51to95 -> Set('ROOT),
+            'depLabelFreq1to5 -> Set('infmod, 'iobj, 'pcomp, 'dobj, 'advmod, 'dep, 'prep, 'nsubjpass,
+              'csubj, 'pred, 'parataxis, 'purpcl, 'amod, 'tmod, 'nsubj, 'xcomp, 'attr, 'acomp,
+              'partmod, 'nn, 'cc, 'csubjpass, 'appos, 'pobj),
             'autoCpos -> Set('VERB),
-            'autoPos -> Set('VBZ),
-            'depLabelFreqBelow1 -> Set('pcomp, 'pred, 'nsubj, 'parataxis),
-            'depLabelFreqSmall -> Set('infmod, 'iobj, 'dobj, 'advmod, 'prep, 'nsubjpass, 'csubj,
-              'purpcl, 'amod, 'tmod, 'xcomp, 'attr, 'acomp, 'partmod, 'nn, 'cc, 'csubjpass,
-              'appos, 'pobj)
+            'depLabelFreq6to20 -> Set('advcl, 'rcmod, 'conj, 'ccomp),
+            'autoPos -> Set('VBZ)
           )),
           Token('roaring, Map(
-            'depLabelFreq11to20 -> Set('xcomp, 'conj),
-            'depLabelFreq1to10 -> Set('pcomp, 'dep, 'ccomp, 'partmod, 'ROOT),
+            'depLabelFreq1to5 -> Set('rcmod, 'dobj, 'ccomp, 'advcl, 'nsubj, 'nn, 'pobj),
             'autoCpos -> Set('VERB),
+            'depLabelFreq6to20 -> Set('conj, 'pcomp, 'dep, 'xcomp, 'partmod, 'ROOT),
             'autoPos -> Set('VBG),
-            'depLabelFreqBelow1 -> Set('rcmod, 'advcl, 'pobj, 'nn),
-            'depLabelFreqSmall -> Set('nsubj, 'dobj),
-            'depLabelFreq31to40 -> Set('amod)
+            'depLabelFreq21to50 -> Set('amod)
           ))
         ))
     }
 
+  "GoogleUnigramPostagTagger.transform" should
+    "return the correct POS tag feature value set for a given token" in {
+      val googleUnigramPostagTagger = GoogleUnigramPostagTagger(googleUnigram)
+      googleUnigramPostagTagger.transform(sentence2) shouldBe
+        Sentence(IndexedSeq(
+          Token('nexus, Map(
+            'lcase -> Set('nexus),
+            'cpos -> Set('nexus)
+          )),
+          Token('isolate, Map(
+            'posTagFreq1to5 -> Set('JJ, 'VBP),
+            'posTagFreq51to95 -> Set('VB),
+            'posTagFreq6to20 -> Set('NN)
+          ))
+        ))
+    }
 }

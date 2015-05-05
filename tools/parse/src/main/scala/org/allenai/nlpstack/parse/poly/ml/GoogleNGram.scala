@@ -16,22 +16,36 @@ import scala.io._
   * Takes the datastore location details for a data directory and parses each file, expected
   * to be in the following format
   * (from https://docs.google.com/document/d/14PWeoTkrnKk9H8_7CfVbdvuoFZ7jYivNTkBX2Hj7qLw/edit) -
+<<<<<<< HEAD
   *
   * head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
   *
+=======
+  * format: OFF
+  *   head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
+>>>>>>> origin
   * The counts_by_year format is a tab-separated list of year<comma>count items.
   * Years are sorted in ascending order, and only years with non-zero counts are included.
   * The syntactic-ngram format is a space-separated list of tokens, each token format is:
   * “word/pos-tag/dep-label/head-index”.
   * The word field can contain any non-whitespace character.
   * The other fields can contain any non-whitespace character except for ‘/’.
+<<<<<<< HEAD
   * pos-tag is a Penn-Treebank part-of-speech tag.
   * dep-label is a stanford-basic-dependencies label.
   * head-index is an integer, pointing to the head of the current token.
   * “1” refers to the first token in the list, 2 the second,
   * and 0 indicates that the head is the root of the fragment.
+=======
+  *   pos-tag is a Penn-Treebank part-of-speech tag.
+  *   dep-label is a stanford-basic-dependencies label.
+  *   head-index is an integer, pointing to the head of the current token.
+  *   “1” refers to the first token in the list, 2 the second,
+  *      and 0 indicates that the head is the root of the fragment.
+  * format: ON
+>>>>>>> origin
   */
-case class GoogleNGram(
+case class DatastoreGoogleNGram(
     groupName: String, artifactName: String, version: Int, frequencyCutoff: Int
 ) {
 
@@ -45,18 +59,22 @@ case class GoogleNGram(
   @transient val ngramMap = GoogleNGram.constructNgramTable(googleNgramDir, frequencyCutoff)
 }
 
+/** Companion object.
+  */
+object DatastoreGoogleNGram {
+  implicit val jsonFormat = jsonFormat4(DatastoreGoogleNGram.apply)
+}
+
 /** Utility case classes to represent information associated with an ngram in the Google Ngram
   * corpus.
   */
 case class SyntacticInfo(word: String, posTag: String, depLabel: String, headIndex: Int)
 case class NgramInfo(syntacticNgram: Seq[SyntacticInfo], frequency: Long)
 
-/** Companion object. Contains methods to parse a Google Ngram corpus. This is not specific to
+/** Object containing utility methods to parse a Google Ngram corpus. This is not specific to
   * the type of corpus, i.e. whether unigram, bigram, etc.
   */
 object GoogleNGram {
-
-  implicit val jsonFormat = jsonFormat4(GoogleNGram.apply)
 
   /** Constructs a table to map a word to the sequence of different ngrams associated with it
     * with associated info for each ngram.
@@ -143,17 +161,14 @@ object GoogleUnigram {
     val tokenNodeInfos: Seq[UnigramInfo] = (for {
       tokNgrams <- ngramMap.get(token.string.toLowerCase)
     } yield {
-      getTokenUnigramInfo(
-        token.postag, tokNgrams, frequencyCutoff
-      )
+      getTokenUnigramInfo(Option(token.postag), tokNgrams)
     }).getOrElse(Seq.empty[UnigramInfo])
 
     // Get the total frequency for all nodes aggregated above for the current token to
     // normalize them.
     val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
 
-    // Iterate over all the nodes, normalize frequencies by the total frequency and set
-    // appropriate feature values based on the normalized frequency bucket they fall in.
+    // Iterate over all the nodes, and normalize frequencies by the total frequency.
     (for {
       tokenNodeInfo <- tokenNodeInfos
     } yield {
@@ -222,8 +237,61 @@ object GoogleUnigram {
     }
   }
 
-  /** Helper Method. Takes a token and a seq of NgramInfos associated with it and filters them to
-    * just the ones that are relevant to the given token's POS tag.
+
+  /** Looks up specified ngramMap for the given word and returns a map of the frequency for each
+    * POS tag for the given word, normalized over the total frequency for all possible POS tags.
+    * @param word the word to look up
+    * @param ngramMap the table mapping a word to the sequence of NgramInfos, as obtained from the
+    * GoogleNGram class object
+    * @param frequencyCutoff the frequency cutoff that was used to construct the map. This is used
+    * here to shift the scale of the frequencies to start from the cutoff point instead of 1.
+    */
+  def getPosTagNormalizedDistribution(
+    word: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
+  ): Map[String, Double] = {
+    val tokenNodeInfos = (for {
+      tokNgrams <- ngramMap.get(word.toLowerCase)
+    } yield {
+      getTokenUnigramInfo(None, tokNgrams)
+    }).getOrElse(Seq.empty[UnigramInfo])
+
+    // Get the total frequency for all nodes aggregated above for the current token to
+    // normalize them.
+    val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
+
+    val groupedTokenNodes = tokenNodeInfos.groupBy(_.syntacticUnigram.posTag)
+
+    // Iterate over all keys if the groupedTokenNodes map (the POS tags) and normalize frequencies
+    // by the total frequency.
+    (for {
+      posTag <- groupedTokenNodes.keys
+    } yield {
+      val totalFrequencyThisPostag =
+        groupedTokenNodes(posTag).map(x => x.frequency).foldLeft(0L)((a, b) => a + b)
+      val normalizedFrequency = totalFrequencyThisPostag.toDouble / totalFrequency
+      (posTag, normalizedFrequency)
+    }).toMap
+  }
+
+  /** Method to bucketize a given normalized frequency for feature generation.
+    */
+  def getFrequencyBucketForFeature(frequency: Double) : String = {
+    if (frequency <= 0.05) {
+      "Freq1to5"
+    } else if (frequency <= 0.20) {
+      "Freq6to20"
+    } else if (frequency <= 0.50) {
+      "Freq21to50"
+    } else if (frequency <= 0.95) {
+      "Freq51to95"
+    } else {
+      "Freq96to100"
+    }
+  }
+
+  /** Helper Method. Takes a token's POS tag and a seq of NgramInfos associated with the token
+    * and returns a seq of UnigramInfos, filtered to just the ones that are relevant to the
+    * token POS tag if specified.
     * For unigrams, we expect just one SyntacticNgram per NgramInfo.
     * E.g: NgramInfo entries for the word "a" look like below:
     * SyntacticNgram(a,DT,dep,0) 14737935
@@ -236,18 +304,15 @@ object GoogleUnigram {
     * distribution of the different possible dependency labels.
     */
   private def getTokenUnigramInfo(
-    posTag: String, ngramInfos: Seq[NgramInfo], frequencyCutoff: Int
-  ): Seq[UnigramInfo] = {
-    ngramInfos.filter(ngramInfo =>
-      ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(posTag)).
-      map {
-        ngramInfoForThisTok =>
-          // Scale down the frequencies so that the cutoff frequency (minimum) is treated as the
-          // starting point (frequency 1).
-          new UnigramInfo(
-            ngramInfoForThisTok.syntacticNgram.head,
-            ngramInfoForThisTok.frequency - frequencyCutoff
-          )
-      }
+    posTag: Option[String], ngramInfos: Seq[NgramInfo]): Seq[UnigramInfo] = {
+    val ngramInfosFiltered = posTag match {
+      case Some(x: String) =>
+        ngramInfos.filter(ngramInfo => ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(x))
+      case _ => ngramInfos
+    }
+    ngramInfosFiltered map {
+      ngramInfoForThisTok =>
+        new UnigramInfo(ngramInfoForThisTok.syntacticNgram.head, ngramInfoForThisTok.frequency)
+    }
   }
 }

@@ -39,13 +39,13 @@ case class EmbeddedClassifier(
     }).toMap
 
   override def classify(featureVector: FeatureVector): StateTransition = {
-    transitions(classifier.classify(createDTFeatureVector(featureVector)))
+    transitions(classifier.classify(createDTFeatureVector(featureVector))._1)
   }
 
   override def getDistribution(featureVector: FeatureVector): Map[StateTransition, Float] = {
     val dist: Map[Int, Float] = classifier.outcomeDistribution(
       createDTFeatureVector(featureVector)
-    )
+    )._1.dist
     dist map { case (transitionIndex, prob) => (transitions(transitionIndex), prob) }
   }
 
