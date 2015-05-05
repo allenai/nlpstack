@@ -125,7 +125,7 @@ case class GoldTagsTrainingVectorSource(
       )
       vector <- generateVectors(taggedSentence)
     } yield {
-      println(vector)
+      //println(vector)
       vector
     }
   }

@@ -87,7 +87,8 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     new OfflineTokenFeature(annotatedSentence, OffsetRef(1)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(2)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(-1)),
-    new OfflineTokenFeature(annotatedSentence, OffsetRef(-2))
+    new OfflineTokenFeature(annotatedSentence, OffsetRef(-2)),
+    new OfflineTokenFeature(annotatedSentence, OffsetRef(-3))
   //new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)),
   ))
 }
