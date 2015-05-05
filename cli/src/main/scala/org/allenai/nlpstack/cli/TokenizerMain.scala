@@ -21,10 +21,6 @@ object WhitespaceTokenizerMain extends TokenizerMain {
   val tokenizer = WhitespaceTokenizer
 }
 
-object Ai2TokenizerMain extends TokenizerMain {
-  val tokenizer = Ai2Tokenizer
-}
-
 object StanfordTokenizerMain extends TokenizerMain {
   val tokenizer = StanfordTokenizer
 }
