@@ -4,7 +4,7 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -93,9 +93,36 @@ object Training {
       VerbnetTagger(new Verbnet(groupName, artifactName, version))
     }
 
+    val (googleUnigramDepLabelTransformOption, googleUnigramPostagTransformOption) = (for {
+      taggersConfig <- taggersConfigOption
+      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
+      groupName <- googleUnigramConfig.get[String]("group")
+      artifactName <- googleUnigramConfig.get[String]("name")
+      version <- googleUnigramConfig.get[Int]("version")
+      features <- googleUnigramConfig.get[Seq[String]]("features")
+      if (!features.isEmpty)
+    } yield {
+      val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
+      val googUnigramDepLabelTagger = if (features.contains("depLabel")) {
+        Some(GoogleUnigramDepLabelTagger(googleNgram))
+      } else {
+        None
+      }
+      val googUnigramPosTagTagger = if (features.contains("posTag")) {
+        Some(GoogleUnigramPostagTagger(googleNgram))
+      } else {
+        None
+      }
+      (googUnigramDepLabelTagger, googUnigramPosTagTagger)
+    }) match {
+      case Some(googleUnigramTaggersTuple) => googleUnigramTaggersTuple
+      case _ => (None, None)
+    }
+
     val taggers: Seq[SentenceTransform] =
       Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ verbnetTaggerOption
+        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++
+        googleUnigramPostagTransformOption ++ googleUnigramDepLabelTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)

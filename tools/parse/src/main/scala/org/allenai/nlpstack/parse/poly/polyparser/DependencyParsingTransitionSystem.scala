@@ -88,7 +88,16 @@ abstract class DependencyParsingTransitionSystem(
       TokenPropertyFeature('autoPos),
       TokenPropertyFeature('brown0),
       TokenPropertyFeature('verbnetPrimaryFrames),
-      TokenPropertyFeature('verbnetSecondaryFrames),
+      TokenPropertyFeature('depLabelFreq1to5),
+      TokenPropertyFeature('depLabelFreq6to20),
+      TokenPropertyFeature('depLabelFreq21to50),
+      TokenPropertyFeature('depLabelFreq51to95),
+      TokenPropertyFeature('depLabelFreq96to100),
+      TokenPropertyFeature('posTagFreq1to5),
+      TokenPropertyFeature('posTagFreq6to20),
+      TokenPropertyFeature('posTagFreq21to50),
+      TokenPropertyFeature('posTagFreq51to95),
+      TokenPropertyFeature('posTagFreq96to100),
       KeywordFeature(DependencyParsingTransitionSystem.keywords)
     ))
     tokenFeatureTagger.tag(overriddenSentence)

@@ -92,7 +92,7 @@ case class KeywordNhTransform(keywords: Seq[String])
 /** Creates a feature per frame for all verbnet frames corresponding to the tokens
   * in the input neighborhood.
   *
-  * @param verbnet the verbnet resource
+  * @param verbnet the Verbnet utility object to query
   */
 case class VerbnetTransform(verbnet: Verbnet)
     extends NeighborhoodTransform {

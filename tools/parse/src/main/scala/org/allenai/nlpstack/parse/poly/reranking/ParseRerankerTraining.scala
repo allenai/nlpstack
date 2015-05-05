@@ -82,6 +82,7 @@ object ParseRerankerTraining {
     } yield {
       ("verbnet", VerbnetTransform(new Verbnet(groupName, artifactName, version)))
     }
+
     val feature = defaultParseNodeFeature(verbnetTransformOption)
     val rerankingFunctionTrainer = RerankingFunctionTrainer(feature)
 
@@ -118,7 +119,9 @@ object ParseRerankerTraining {
     RerankingFunction.save(rerankingFunction, clArgs.rerankerFilename)
   }
 
-  def defaultParseNodeFeature(verbnetTransformOption: Option[(String, VerbnetTransform)]) = {
+  def defaultParseNodeFeature(
+    verbnetTransformOption: Option[(String, VerbnetTransform)]
+  ) = {
     new ParseNodeFeatureUnion(Seq(
       TransformedNeighborhoodFeature(Seq(
         ("children", AllChildrenExtractor)

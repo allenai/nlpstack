@@ -11,7 +11,7 @@ import java.net._
 import scala.collection.JavaConverters._
 
 /** A class that uses JVerbnet, a 3rd party Wrapper library for Verbnet data
-  * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various vernbet
+  * (http://projects.csail.mit.edu/jverbnet/),  to quickly look up various verbnet
   * features for a verb.
   */
 case class Verbnet(groupName: String, artifactName: String, version: Int) {
