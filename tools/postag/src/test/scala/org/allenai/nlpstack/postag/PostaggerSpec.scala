@@ -42,16 +42,12 @@ abstract class PostaggerSpec extends UnitSpec {
        |a 130 DT
        |direct 132 JJ
        |, 138 ,
-       |large 140 JJ
-       |- 145 HYPH
-       |scale 146 NN
+       |large-scale 140 JJ
        |assault 152 NN
        |. 159 .
        |A 161 DT
        |small 163 JJ
-       |one 169 CD
-       |- 172 HYPH
-       |man 173 NN
+       |one-man 169 JJ
        |fighter 177 NN
        |should 185 MD
        |be 192 VB
