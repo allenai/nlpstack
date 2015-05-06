@@ -10,40 +10,26 @@ import reming.DefaultJsonProtocol._
 
 import scala.io._
 
-/** A class that parses Google N-Gram data
+/** format: OFF
+  * A class that parses Google N-Gram data
   * (http://commondatastorage.googleapis.com/books/syntactic-ngrams/index.html) to provide
   * information about a requested n-gram.
   * Takes the datastore location details for a data directory and parses each file, expected
   * to be in the following format
   * (from https://docs.google.com/document/d/14PWeoTkrnKk9H8_7CfVbdvuoFZ7jYivNTkBX2Hj7qLw/edit) -
-<<<<<<< HEAD
-  *
-  * head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
-  *
-=======
-  * format: OFF
   *   head_word<TAB>syntactic-ngram<TAB>total_count<TAB>counts_by_year
->>>>>>> origin
   * The counts_by_year format is a tab-separated list of year<comma>count items.
   * Years are sorted in ascending order, and only years with non-zero counts are included.
   * The syntactic-ngram format is a space-separated list of tokens, each token format is:
   * “word/pos-tag/dep-label/head-index”.
   * The word field can contain any non-whitespace character.
   * The other fields can contain any non-whitespace character except for ‘/’.
-<<<<<<< HEAD
-  * pos-tag is a Penn-Treebank part-of-speech tag.
-  * dep-label is a stanford-basic-dependencies label.
-  * head-index is an integer, pointing to the head of the current token.
-  * “1” refers to the first token in the list, 2 the second,
-  * and 0 indicates that the head is the root of the fragment.
-=======
   *   pos-tag is a Penn-Treebank part-of-speech tag.
   *   dep-label is a stanford-basic-dependencies label.
   *   head-index is an integer, pointing to the head of the current token.
   *   “1” refers to the first token in the list, 2 the second,
   *      and 0 indicates that the head is the root of the fragment.
   * format: ON
->>>>>>> origin
   */
 case class DatastoreGoogleNGram(
     groupName: String, artifactName: String, version: Int, frequencyCutoff: Int
@@ -146,39 +132,8 @@ case class UnigramInfo(syntacticUnigram: SyntacticInfo, frequency: Long)
   */
 object GoogleUnigram {
 
-  /** Looks up specified ngramMap for the given token and returns a map of the frequency for each
-    * dependency label for the given token word and POS, normalized over the total frequency for all
-    * possible dependency labels.
-    * @param token the token to look up
-    * @param ngramMap the table mapping a word to the sequence of NgramInfos, as obtained from the
-    * GoogleNGram class object
-    * @param frequencyCutoff the frequency cutoff that was used to construct the map. This is used
-    * here to shift the scale of the frequencies to start from the cutoff point instead of 1.
-    */
-  def getDepLabelNormalizedDistribution(
-    token: PostaggedToken, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
-  ): Map[String, Double] = {
-    val tokenNodeInfos: Seq[UnigramInfo] = (for {
-      tokNgrams <- ngramMap.get(token.string.toLowerCase)
-    } yield {
-      getTokenUnigramInfo(Option(token.postag), tokNgrams)
-    }).getOrElse(Seq.empty[UnigramInfo])
-
-    // Get the total frequency for all nodes aggregated above for the current token to
-    // normalize them.
-    val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
-
-    // Iterate over all the nodes, and normalize frequencies by the total frequency.
-    (for {
-      tokenNodeInfo <- tokenNodeInfos
-    } yield {
-      val normalizedFrequency = tokenNodeInfo.frequency.toDouble / totalFrequency
-      (tokenNodeInfo.syntacticUnigram.depLabel -> normalizedFrequency)
-    }).toMap
-  }
-
-  def getNormalizedCpostagDistribution(
-    token: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
+  def getNormalizedTagDistribution(
+    token: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int, coarsen: Boolean
   ): Map[String, Double] = {
 
     def normalizeHistogram(histogram: Map[String, Long]): Map[String, Double] = {
@@ -190,7 +145,11 @@ object GoogleUnigram {
     val maybeTagHistogram: Option[Map[String, Long]] = maybeNgramInfos map { ngramInfos =>
       ngramInfos map { ngramInfo =>
         (
-          WordClusters.ptbToUniversalPosTag(ngramInfo.syntacticNgram.head.posTag),
+          if(coarsen) {
+            WordClusters.ptbToUniversalPosTag(ngramInfo.syntacticNgram.head.posTag)
+          } else {
+            ngramInfo.syntacticNgram.head.posTag
+          },
           ngramInfo.frequency
         )
       } groupBy {
@@ -205,72 +164,6 @@ object GoogleUnigram {
         normalizeHistogram(tagHistogram)
       case None => Map[String, Double]()
     }
-  }
-
-  def getNormalizedPostagDistribution(
-    token: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
-  ): Map[String, Double] = {
-
-    def normalizeHistogram(histogram: Map[String, Long]): Map[String, Double] = {
-      val normalizer: Float = histogram.values.sum
-      require(normalizer > 0d)
-      histogram mapValues { _ / normalizer }
-    }
-    val maybeNgramInfos: Option[Seq[NgramInfo]] = ngramMap.get(token.toLowerCase)
-    val maybeTagHistogram: Option[Map[String, Long]] = maybeNgramInfos map { ngramInfos =>
-      ngramInfos map { ngramInfo =>
-        (
-          ngramInfo.syntacticNgram.head.posTag,
-          ngramInfo.frequency
-        )
-      } groupBy {
-        case (tag, _) =>
-          tag
-      } mapValues { x =>
-        (x map { _._2 }).sum
-      }
-    }
-    maybeTagHistogram match {
-      case Some(tagHistogram) =>
-        normalizeHistogram(tagHistogram)
-      case None => Map[String, Double]()
-    }
-  }
-
-
-  /** Looks up specified ngramMap for the given word and returns a map of the frequency for each
-    * POS tag for the given word, normalized over the total frequency for all possible POS tags.
-    * @param word the word to look up
-    * @param ngramMap the table mapping a word to the sequence of NgramInfos, as obtained from the
-    * GoogleNGram class object
-    * @param frequencyCutoff the frequency cutoff that was used to construct the map. This is used
-    * here to shift the scale of the frequencies to start from the cutoff point instead of 1.
-    */
-  def getPosTagNormalizedDistribution(
-    word: String, ngramMap: Map[String, Seq[NgramInfo]], frequencyCutoff: Int
-  ): Map[String, Double] = {
-    val tokenNodeInfos = (for {
-      tokNgrams <- ngramMap.get(word.toLowerCase)
-    } yield {
-      getTokenUnigramInfo(None, tokNgrams)
-    }).getOrElse(Seq.empty[UnigramInfo])
-
-    // Get the total frequency for all nodes aggregated above for the current token to
-    // normalize them.
-    val totalFrequency = tokenNodeInfos.foldLeft(0L)((a, b) => a + b.frequency)
-
-    val groupedTokenNodes = tokenNodeInfos.groupBy(_.syntacticUnigram.posTag)
-
-    // Iterate over all keys if the groupedTokenNodes map (the POS tags) and normalize frequencies
-    // by the total frequency.
-    (for {
-      posTag <- groupedTokenNodes.keys
-    } yield {
-      val totalFrequencyThisPostag =
-        groupedTokenNodes(posTag).map(x => x.frequency).foldLeft(0L)((a, b) => a + b)
-      val normalizedFrequency = totalFrequencyThisPostag.toDouble / totalFrequency
-      (posTag, normalizedFrequency)
-    }).toMap
   }
 
   /** Method to bucketize a given normalized frequency for feature generation.
@@ -286,33 +179,6 @@ object GoogleUnigram {
       "Freq51to95"
     } else {
       "Freq96to100"
-    }
-  }
-
-  /** Helper Method. Takes a token's POS tag and a seq of NgramInfos associated with the token
-    * and returns a seq of UnigramInfos, filtered to just the ones that are relevant to the
-    * token POS tag if specified.
-    * For unigrams, we expect just one SyntacticNgram per NgramInfo.
-    * E.g: NgramInfo entries for the word "a" look like below:
-    * SyntacticNgram(a,DT,dep,0) 14737935
-    * SyntacticNgram(a,NNP,nn,0)  4184390
-    * SyntacticNgram(a,NNP,dep,0) 2070101
-    * SyntacticNgram(a,DT,quantmod,0) 2069740
-    * SyntacticNgram(a,DT,ROOT,0) 1368856
-    * where each NgramInfo (one per line) has only one SyntacticNgram. Here we try to aggregate
-    * the SyntacticNgrams that match the POS tag of the current token and get the frequency
-    * distribution of the different possible dependency labels.
-    */
-  private def getTokenUnigramInfo(
-    posTag: Option[String], ngramInfos: Seq[NgramInfo]): Seq[UnigramInfo] = {
-    val ngramInfosFiltered = posTag match {
-      case Some(x: String) =>
-        ngramInfos.filter(ngramInfo => ngramInfo.syntacticNgram.head.posTag.equalsIgnoreCase(x))
-      case _ => ngramInfos
-    }
-    ngramInfosFiltered map {
-      ngramInfoForThisTok =>
-        new UnigramInfo(ngramInfoForThisTok.syntacticNgram.head, ngramInfoForThisTok.frequency)
     }
   }
 }

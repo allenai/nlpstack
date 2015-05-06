@@ -193,12 +193,12 @@ case class GoogleUnigramTagger(
       tok =>
         val tagFreqMap: Map[String, Double] = tagType match {
           case GoogleUnigramPos =>
-            GoogleUnigram.getNormalizedPostagDistribution(
-              tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff
+            GoogleUnigram.getNormalizedTagDistribution(
+              tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff, coarsen = false
             )
           case GoogleUnigramCpos =>
-            GoogleUnigram.getNormalizedCpostagDistribution(
-              tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff
+            GoogleUnigram.getNormalizedTagDistribution(
+              tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff, coarsen = true
             )
         }
         // Create feature for each dependency label based on the normalized frequency
