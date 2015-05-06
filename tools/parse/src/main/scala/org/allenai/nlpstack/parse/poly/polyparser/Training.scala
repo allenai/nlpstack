@@ -5,6 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
+import org.allenai.nlpstack.parse.poly.postagging.FactoriePostaggerInitializer
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -93,7 +94,7 @@ object Training {
       VerbnetTagger(new Verbnet(groupName, artifactName, version))
     }
 
-    val (googleUnigramDepLabelTransformOption, googleUnigramPostagTransformOption) = (for {
+    val googleUnigramPostagTransformOption = (for {
       taggersConfig <- taggersConfigOption
       googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
       groupName <- googleUnigramConfig.get[String]("group")
@@ -103,26 +104,22 @@ object Training {
       if (!features.isEmpty)
     } yield {
       val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-      val googUnigramDepLabelTagger = if (features.contains("depLabel")) {
-        Some(GoogleUnigramDepLabelTagger(googleNgram))
-      } else {
-        None
-      }
       val googUnigramPosTagTagger = if (features.contains("posTag")) {
-        Some(GoogleUnigramPostagTagger(googleNgram))
+        Some(GoogleUnigramTagger(googleNgram, GoogleUnigramPos))
       } else {
         None
       }
-      (googUnigramDepLabelTagger, googUnigramPosTagTagger)
+
+      googUnigramPosTagTagger
     }) match {
       case Some(googleUnigramTaggersTuple) => googleUnigramTaggersTuple
-      case _ => (None, None)
+      case _ => None
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
+      Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer), LexicalPropertiesTagger,
         BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++
-        googleUnigramPostagTransformOption ++ googleUnigramDepLabelTransformOption
+        googleUnigramPostagTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)

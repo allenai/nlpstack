@@ -62,16 +62,18 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
       TokenPropertyFeature('lexical),
-      TokenPropertyFeature('mostLikelyPos),
-      TokenPropertyFeature('posFreqBelow10),
-      TokenPropertyFeature('posFreqBelow50),
-      TokenPropertyFeature('posFreqBelow95),
-      TokenPropertyFeature('posFreqDominant),
-      TokenPropertyFeature('mostLikelyTag),
-      TokenPropertyFeature('tagFreqBelow10),
-      TokenPropertyFeature('tagFreqBelow50),
-      TokenPropertyFeature('tagFreqBelow95),
-      TokenPropertyFeature('tagFreqDominant),
+      TokenPropertyFeature('posTagFreq1to5),
+      TokenPropertyFeature('posTagFreq6to20),
+      TokenPropertyFeature('posTagFreq21to50),
+      TokenPropertyFeature('posTagFreq51to95),
+      TokenPropertyFeature('posTagFreq96to100),
+      TokenPropertyFeature('posTagMostLikely),
+      TokenPropertyFeature('cposTagFreq1to5),
+      TokenPropertyFeature('cposTagFreq6to20),
+      TokenPropertyFeature('cposTagFreq21to50),
+      TokenPropertyFeature('cposTagFreq51to95),
+      TokenPropertyFeature('cposTagFreq96to100),
+      TokenPropertyFeature('cposTagMostLikely),
       SuffixFeature(WordClusters.suffixes.toSeq),
       KeywordFeature(DependencyParsingTransitionSystem.keywords)
     ))
@@ -87,9 +89,8 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     new OfflineTokenFeature(annotatedSentence, OffsetRef(1)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(2)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(-1)),
-    new OfflineTokenFeature(annotatedSentence, OffsetRef(-2)),
-    new OfflineTokenFeature(annotatedSentence, OffsetRef(-3))
-  //new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)),
+    new OfflineTokenFeature(annotatedSentence, OffsetRef(-2))
+  //new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)), TODO: add GuessedPOSTag
   ))
 }
 

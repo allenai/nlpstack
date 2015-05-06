@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ FactorieSentenceTagger, Sentence }
+import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.fsm._
 
 /** Uses the parser model to create an n-best list, then chooses the best parse from this n-best

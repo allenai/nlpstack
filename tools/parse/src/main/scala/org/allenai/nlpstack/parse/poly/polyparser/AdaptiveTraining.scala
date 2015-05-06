@@ -1,17 +1,13 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{
-  BrownClustersTagger,
-  LexicalPropertiesTagger,
-  FactorieSentenceTagger,
-  SentenceTransform
-}
+import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{
   OmnibusTrainer,
   ProbabilisticClassifierTrainer
 }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.postagging.FactoriePostaggerInitializer
 import scopt.OptionParser
 
 private case class AdaptiveTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
@@ -83,7 +79,9 @@ object AdaptiveTraining {
       }
     }
     val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))
+      Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer),
+        LexicalPropertiesTagger, BrownClustersTagger(clusters))
+
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcHybridTransitionSystemFactory(taggers)

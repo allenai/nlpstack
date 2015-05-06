@@ -8,6 +8,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.eval.{ UnlabeledBreadcrumbAccuracy, TaggingEvaluator, CposSentAccuracy, EvaluationStatistic }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.polyparser._
+import org.allenai.nlpstack.postag.{ StanfordPostagger, defaultPostagger }
 import reming.CompactPrinter
 import reming.DefaultJsonProtocol._
 
@@ -21,6 +22,38 @@ trait PolyPostagger {
     sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set()
   ): Option[TaggedSentence]
+}
+
+sealed trait PolyPostaggerInitializer
+
+case object FactoriePostaggerInitializer extends PolyPostaggerInitializer
+case object StanfordPostaggerInitializer extends PolyPostaggerInitializer
+case class SimplePostaggerInitializer(configFile: String) extends PolyPostaggerInitializer
+
+object PolyPostaggerInitializer {
+  private implicit val factorieInitFormat = jsonFormat0(() => FactoriePostaggerInitializer)
+  private implicit val stanfordInitFormat = jsonFormat0(() => StanfordPostaggerInitializer)
+  private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
+
+  implicit val postaggerInitJsonFormat = parentFormat[PolyPostaggerInitializer](
+    childFormat[FactoriePostaggerInitializer.type, PolyPostaggerInitializer],
+    childFormat[StanfordPostaggerInitializer.type, PolyPostaggerInitializer],
+    childFormat[SimplePostaggerInitializer, PolyPostaggerInitializer]
+  )
+}
+
+object PolyPostagger {
+
+  def initializePostagger(initializer: PolyPostaggerInitializer): PolyPostagger = {
+    initializer match {
+      case FactoriePostaggerInitializer =>
+        NLPStackPostagger(defaultPostagger)
+      case StanfordPostaggerInitializer =>
+        NLPStackPostagger(new StanfordPostagger())
+      case SimplePostaggerInitializer(configFile) =>
+        SimplePostagger.load(configFile)
+    }
+  }
 }
 
 case class NLPStackPostagger(baseTagger: Postagger) extends PolyPostagger {

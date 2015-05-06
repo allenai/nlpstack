@@ -65,18 +65,26 @@ object PostaggerTraining {
     val taggersConfigOption =
       trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
 
-    val googleUnigramTransformOption: Option[GoogleUnigramDepLabelTagger] = for {
+    val maybeGoogleNgrams: Option[DatastoreGoogleNGram] = for {
       taggersConfig <- taggersConfigOption
       googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
       groupName <- googleUnigramConfig.get[String]("group")
       artifactName <- googleUnigramConfig.get[String]("name")
       version <- googleUnigramConfig.get[Int]("version")
     } yield {
-      GoogleUnigramDepLabelTagger(new DatastoreGoogleNGram(groupName, artifactName, version, 100))
+      new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
+    }
+    val googleNgramTransforms: Seq[SentenceTransform] = maybeGoogleNgrams match {
+      case Some(googleNgrams) =>
+        Seq(GoogleUnigramCpos, GoogleUnigramPos) map { tagType =>
+          GoogleUnigramTagger(googleNgrams, tagType)
+        }
+      case None =>
+        Seq()
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(LexicalPropertiesTagger) ++ googleUnigramTransformOption
+      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms
 
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)
