@@ -11,9 +11,9 @@ abstract class SegmenterMain
 }
 
 object FactorieSegmenterMain extends SegmenterMain {
-  val sentencer = new FactorieSegmenter()
+  override val sentencer = new FactorieSegmenter()
 }
 
 object StanfordSegmenterMain extends SegmenterMain {
-  val sentencer = StanfordSegmenter
+  override val sentencer = StanfordSegmenter
 }
