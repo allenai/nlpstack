@@ -147,7 +147,11 @@ object NlpstackBuild extends Build {
     base = file("tools/segment"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
-      libraryDependencies ++= Seq(factorie, commonsIo % "test")
+      libraryDependencies ++= Seq(
+        factorie,
+        stanfordCoreNlp,
+        commonsIo % "test"
+      )
     )
   ) dependsOn (core)
 

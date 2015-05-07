@@ -1,8 +1,7 @@
 package org.allenai.nlpstack.cli
 
 import org.allenai.nlpstack.core._
-import org.allenai.nlpstack.segment.ChalkSentenceSegmenter
-import org.allenai.nlpstack.segment.FactorieSegmenter
+import org.allenai.nlpstack.segment.{ StanfordSegmenter, ChalkSentenceSegmenter, FactorieSegmenter }
 
 abstract class SegmenterMain
     extends LineProcessor("segmenter") {
@@ -13,4 +12,8 @@ abstract class SegmenterMain
 
 object FactorieSegmenterMain extends SegmenterMain {
   val sentencer = new FactorieSegmenter()
+}
+
+object StanfordSegmenterMain extends SegmenterMain {
+  val sentencer = StanfordSegmenter
 }
