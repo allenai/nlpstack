@@ -3,12 +3,11 @@ package org.allenai.nlpstack.segment
 import java.util.Properties
 
 import edu.stanford.nlp.ling.CoreAnnotations
-
-import scala.collection.JavaConverters._
-
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation
 import edu.stanford.nlp.pipeline.{ Annotation, StanfordCoreNLP }
 import org.allenai.nlpstack.core.{ Segment, Segmenter }
+
+import scala.collection.JavaConverters._
 
 object StanfordSegmenter extends Segmenter {
   /* This is a bit unfortunate. In Stanford, you tokenize first, and then
