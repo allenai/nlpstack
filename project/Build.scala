@@ -48,7 +48,7 @@ object NlpstackBuild extends Build {
           "https://github.com/allenai/nlpstack.git"
         )),
         conflictManager := ConflictManager.strict,
-        libraryDependencies ++= testingLibraries,
+        libraryDependencies ++= (testingLibraries ++ loggingDependencies),
         ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
         pomExtra :=
           <developers>
