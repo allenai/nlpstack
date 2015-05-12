@@ -89,7 +89,7 @@ object ParseFile {
     val startTime: Long = Platform.currentTime
     val candidateParses = parseTestSet(parser, parseSource)
     val stats: Seq[ParseStatistic] = Seq(
-      UnlabeledBreadcrumbAccuracy,
+      PathAccuracy(false, false, true),
       PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
       PathAccuracy(true, true),
       CposAccuracy(false)
@@ -97,9 +97,10 @@ object ParseFile {
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
+    val numSentences = parseSource.parseIterator.size
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
-      UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
-      (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
+      numSentences, parsingDurationInSeconds,
+      (1.0 * numSentences) / parsingDurationInSeconds
     ))
   }
 
@@ -141,7 +142,7 @@ object ParseFile {
         val oracleScore: ParseScore =
           PathAccuracyScore(
             parseSource,
-            ignorePunctuation = true, ignorePathLabels = false
+            ignorePunctuation = true, ignorePathLabels = false, useCrumbOnly = false
           )
         val oracleRerankingFunction: RerankingFunction =
           ParseRerankingFunction(oracleScore)

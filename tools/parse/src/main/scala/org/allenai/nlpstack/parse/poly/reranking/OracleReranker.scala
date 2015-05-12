@@ -55,7 +55,7 @@ object OracleReranker {
 
     val oracleScore: ParseScore = PathAccuracyScore(
       goldParseSource,
-      ignorePunctuation = true, ignorePathLabels = false
+      ignorePunctuation = true, ignorePathLabels = false, useCrumbOnly = false
     )
     val reranker: Reranker =
       new Reranker(ParseRerankingFunction(oracleScore))
@@ -69,7 +69,7 @@ object OracleReranker {
           case _ => None
         }
       }
-    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
+    val stats: Seq[ParseStatistic] = Seq(PathAccuracy(false, false, true), PathAccuracy(false, false),
       PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
     stats foreach { stat => stat.reset() }
     ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator, stats)

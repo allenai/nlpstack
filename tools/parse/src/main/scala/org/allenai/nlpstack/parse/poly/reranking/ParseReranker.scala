@@ -120,6 +120,10 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     }
   }
 
+  override def result(): Double = {
+    0.0
+  }
+
   override def reset(): Unit = {
     sentencesWithMistakes = Seq[(Sentence, Set[String], Set[String])]()
   }

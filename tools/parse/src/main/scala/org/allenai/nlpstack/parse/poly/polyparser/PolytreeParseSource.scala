@@ -23,6 +23,18 @@ case class InMemoryPolytreeParseSource(
   }
 }
 
+object PolytreeParseSource {
+  def countTokens(parseSource: PolytreeParseSource, excludePunctuation: Boolean): Int = {
+    (parseSource.parseIterator map { parse =>
+      if (excludePunctuation) {
+        parse.tokens.tail count { tok => tok.getDeterministicProperty('cpos) != Symbol(".") }
+      } else {
+        parse.tokens.tail.size
+      }
+    }).sum
+  }
+}
+
 object InMemoryPolytreeParseSource {
 
   /** Create an InMemoryPolytreeParseSource from a filename and a file format.

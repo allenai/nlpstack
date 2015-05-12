@@ -28,6 +28,40 @@ object ParseEvaluator {
       stat <- statistics
     } stat.report()
   }
+
+  def compareParseBanks(
+    bank1: Map[String, PolytreeParse],
+    bank2: Map[String, PolytreeParse],
+    statistics: Seq[ParseStatistic]
+  ): Unit = {
+
+    val commonKeys = bank1.keySet intersect bank2.keySet
+    compareParseStreamToParseBank(
+      bank1.toSeq filter { case (key, value) => commonKeys.contains(key) },
+      bank2,
+      statistics
+    )
+  }
+
+  def compareParseStreamToParseBank(
+    parses: Seq[(String, PolytreeParse)],
+    bank: Map[String, PolytreeParse],
+    statistics: Seq[ParseStatistic]
+  ): Unit = {
+
+    for {
+      stat <- statistics
+    } stat.reset()
+    val bankKeys = bank.keySet
+    for {
+      (sentence, parse1) <- parses
+      stat <- statistics
+      if bankKeys.contains(sentence)
+    } {
+      val parse2 = bank(sentence)
+      stat.notify(Some(parse1), parse2)
+    }
+  }
 }
 
 /** A ParseStatistic accrues a particular statistic over (candidate parse, gold parse) pairs.
@@ -38,86 +72,10 @@ abstract class ParseStatistic {
 
   def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit
 
+  def result(): Double
+
   /** Display a report about the accumulated statistics to stdout. */
   def report(): Unit
-}
-
-/** UnlabeledBreadcrumbAccuracy stores the statistics necessary to compute Unlabeled
-  * Attachment Score (UAS), which is the percentage of correct breadcrumbs over a set
-  * of candidate parses.
-  */
-case object UnlabeledBreadcrumbAccuracy extends ParseStatistic {
-  var numCorrect = 0
-  var numLabeledCorrect = 0
-  var numTotal = 0
-  var numCorrectNoPunc = 0
-  var numLabeledCorrectNoPunc = 0
-  var numTotalNoPunc = 0
-  var numParses = 0
-
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
-    numParses += 1
-    numTotal += goldParse.breadcrumb.tail.size
-    candidateParse match {
-      case Some(candParse) =>
-        if (candParse.breadcrumb.size == goldParse.breadcrumb.size) {
-          // skip the first element because it is the nexus (hence it has no breadcrumb)
-          val zipped = candParse.breadcrumb.zipWithIndex.tail.zip(
-            goldParse.breadcrumb.tail
-          )
-          val nonPuncZipped = zipped filter {
-            case ((x, i), y) =>
-              goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
-          }
-          numCorrect += candParse.breadcrumb.tail.zip(goldParse.breadcrumb.tail) count
-            { case (x, y) => (x == y) }
-          numLabeledCorrect += candParse.breadcrumb.zipWithIndex.tail.zip(
-            goldParse.breadcrumb.tail
-          ) count {
-            case ((x, i), y) => (x == y) &&
-              candParse.arcLabelByEndNodes.getOrElse(Set(x, i), 'nomatch) ==
-              goldParse.arcLabelByEndNodes(Set(y, i))
-          }
-          numTotalNoPunc += nonPuncZipped.size
-          numCorrectNoPunc += nonPuncZipped count {
-            case ((x, _), y) => (x == y)
-          }
-          numLabeledCorrectNoPunc += nonPuncZipped count {
-            case ((x, i), y) => (x == y) &&
-              candParse.arcLabelByEndNodes.getOrElse(Set(x, i), 'nomatch) ==
-              goldParse.arcLabelByEndNodes(Set(y, i))
-          }
-        } else { // skip the parse if the tokenization is different
-          println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
-            s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
-          numParses -= 1
-          numTotal -= goldParse.breadcrumb.tail.size
-        }
-      case None =>
-        println(s"WARNING -- Failed parse")
-    }
-  }
-
-  override def report(): Unit = {
-    println("UAS: %d / %d = %2.2f%%".format(numCorrect, numTotal,
-      (100.0 * numCorrect) / numTotal))
-    println("UAS (no punc): %d / %d = %2.2f%%".format(numCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numCorrectNoPunc) / numTotalNoPunc))
-    println("LAS: %d / %d = %2.2f%%".format(numLabeledCorrect, numTotal,
-      (100.0 * numLabeledCorrect) / numTotal))
-    println("LAS (no punc): %d / %d = %2.2f%%".format(numLabeledCorrectNoPunc, numTotalNoPunc,
-      (100.0 * numLabeledCorrectNoPunc) / numTotalNoPunc))
-  }
-
-  override def reset(): Unit = {
-    numCorrect = 0
-    numLabeledCorrect = 0
-    numTotal = 0
-    numCorrectNoPunc = 0
-    numLabeledCorrectNoPunc = 0
-    numTotalNoPunc = 0
-    numParses = 0
-  }
 }
 
 /** CposAccuracy stores the statistics necessary to compute coarse-part-of-speech tagging
@@ -169,9 +127,13 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
     }
   }
 
+  override def result(): Double = {
+    (100.0 * numCorrect) / numTotal
+  }
+
   override def report(): Unit = {
     println("Cpos Tagging: %d / %d = %2.2f%%".format(numCorrect, numTotal,
-      (100.0 * numCorrect) / numTotal))
+      result()))
     if (verbose) {
       errorHistogram.toSeq sortBy {
         case (_, count) =>
@@ -195,18 +157,21 @@ trait ParseScore extends (PolytreeParse => Double) {
   def getRatio(candidateParse: PolytreeParse): (Int, Int)
 }
 
-case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
+case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean, useCrumbOnly: Boolean = false)
     extends ParseStatistic {
 
   var numCorrect = 0
   var numTotal = 0
   var numParses = 0
+  var accumulatedImpact = Map[Symbol, Int]()
+  var errorHistogram = Map[Symbol, Int]()
+  var labelHistogram = Map[Symbol, Int]()
 
   override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     numParses += 1
     val scoringFunction = PathAccuracyScore(
       InMemoryPolytreeParseSource(Seq(goldParse)),
-      ignorePunctuation, ignorePathLabels
+      ignorePunctuation, ignorePathLabels, useCrumbOnly
     )
     candidateParse map { parse =>
       scoringFunction.getRatio(parse)
@@ -214,25 +179,69 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
       case (correctIncrement, totalIncrement) =>
         numCorrect += correctIncrement
         numTotal += totalIncrement
-        println(s"Sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
-        println(s"  ${correctIncrement / totalIncrement.toFloat}")
+      //println(s"Sentence: ${goldParse.sentence.asWhitespaceSeparatedString}")
+      //println(s"  ${correctIncrement / totalIncrement.toFloat}")
     }
+
+    candidateParse map { parse =>
+      scoringFunction.getErrorAnalysis(parse)
+    } foreach { hist =>
+      errorHistogram = (errorHistogram.keySet ++ hist.keySet map { key =>
+        (key, errorHistogram.getOrElse(key, 0) + hist.getOrElse(key, 0))
+      }).toMap
+    }
+    candidateParse map { parse =>
+      scoringFunction.getImpactAnalysis(parse)
+    } foreach { hist =>
+      accumulatedImpact = (accumulatedImpact.keySet ++ hist.keySet map { key =>
+        (key, accumulatedImpact.getOrElse(key, 0) + hist.getOrElse(key, 0))
+      }).toMap
+    }
+    val newLabelHistogram: Map[Symbol, Int] = goldParse.breadcrumbArcLabel.tail map { arcLabel =>
+      arcLabel.toSymbol
+    } groupBy { x => x } mapValues { x => x.size }
+    labelHistogram = (labelHistogram.keySet ++ newLabelHistogram.keySet map { key =>
+      (key, labelHistogram.getOrElse(key, 0) + newLabelHistogram.getOrElse(key, 0))
+    }).toMap
+  }
+
+  override def result(): Double = {
+    (100.0 * numCorrect) / numTotal
   }
 
   override def report(): Unit = {
     val puncNote = Map(true -> "ignorePunc", false -> "full")
-    val labelNote = Map(true -> "unlabeled", false -> "labeled")
-    println(s"Path Accuracy (${labelNote(ignorePathLabels)}, ${puncNote(ignorePunctuation)}): " +
+    val metricName: String =
+      (if (ignorePathLabels) { "U" } else { "L" }) + (if (useCrumbOnly) { "AS" } else { "PA" })
+    println(s"$metricName (${puncNote(ignorePunctuation)}): " +
       s"%d / %d = %2.2f%%".format(numCorrect, numTotal,
-        (100.0 * numCorrect) / numTotal))
+        result()))
+    println("Errors:")
+    errorHistogram.toSeq sortBy { _._2 } foreach {
+      case (error, count) =>
+        println(s"  ${error.name}: $count / ${labelHistogram.getOrElse(error, 0)} = ${count * 1.0 / labelHistogram.getOrElse(error, 0)}")
+    }
+    println("Impact:")
+    accumulatedImpact.toSeq sortBy { _._2 } foreach {
+      case (error, count) =>
+        println(s"  ${error.name}: $count")
+    }
   }
 
   override def reset(): Unit = {
     numCorrect = 0
     numTotal = 0
     numParses = 0
+    accumulatedImpact = Map[Symbol, Int]()
+    errorHistogram = Map[Symbol, Int]()
+    labelHistogram = Map[Symbol, Int]()
   }
 }
+
+object UnlabeledAttachmentScore extends PathAccuracy(true, true, true)
+object LabeledAttachmentScore extends PathAccuracy(true, false, true)
+object UnlabeledPathAccuracy extends PathAccuracy(true, true, false)
+object LabeledPathAccuracy extends PathAccuracy(true, false, false)
 
 /** The PathAccuracyScore computes the percentage of a candidate parse's tokens that have a
   * completely correct breadcrumb path (i.e. if you follow a token's breadcrumbs to the nexus
@@ -241,8 +250,12 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean)
   */
 case class PathAccuracyScore(
     goldParseSource: PolytreeParseSource,
-    ignorePunctuation: Boolean, ignorePathLabels: Boolean
+    ignorePunctuation: Boolean, ignorePathLabels: Boolean, useCrumbOnly: Boolean
 ) extends ParseScore {
+
+  private val goldParses: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
+    (parse.sentence.asWhitespaceSeparatedString, parse)
+  }).toMap
 
   final def apply(candParse: PolytreeParse): Double = {
     val (numerator, denominator) = getRatio(candParse)
@@ -259,6 +272,77 @@ case class PathAccuracyScore(
     * @return the pair (num correct paths, num total paths)
     */
   def getRatio(candParse: PolytreeParse): (Int, Int) = {
+    getGoldParse(candParse) match {
+      case Some(goldParse) =>
+        val goldAndCandidatePaths = pairGoldAndCandidatePaths(candParse, goldParse)
+        val numCorrect: Int = goldAndCandidatePaths count {
+          case (token, goldPath, candidatePath) =>
+            comparePaths(token, candidatePath, goldPath, candParse, goldParse)
+        }
+        (numCorrect, goldAndCandidatePaths.size)
+      case None => (0, 0)
+    }
+  }
+
+  def getErrorAnalysis(candParse: PolytreeParse): Map[Symbol, Int] = {
+    getGoldParse(candParse) match {
+      case Some(goldParse) =>
+        val goldAndCandidatePaths = pairGoldAndCandidatePaths(candParse, goldParse)
+        val incorrectTokens: Iterable[Int] = goldAndCandidatePaths filter {
+          case (token, goldPath, candidatePath) =>
+            !comparePaths(token, candidatePath, goldPath, candParse, goldParse)
+        } map {
+          case (token, goldPath, candidatePath) =>
+            token
+        }
+        val result = (incorrectTokens map { tokIndex =>
+          goldParse.breadcrumbArcLabel(tokIndex).toSymbol
+        }) groupBy { x => x } mapValues { y => y.size }
+        result
+      case None => Map[Symbol, Int]()
+    }
+  }
+
+  def getImpactAnalysis(candParse: PolytreeParse): Map[Symbol, Int] = {
+    getGoldParse(candParse) match {
+      case Some(goldParse) =>
+        val goldAndCandidatePaths = pairGoldAndCandidatePaths(candParse, goldParse)
+        val goldAndCandidatePathMap = (goldAndCandidatePaths map {
+          case (tokIndex, goldPath, candPath) =>
+            (tokIndex, (goldPath, candPath))
+        }).toMap
+        val incorrectTokens: Iterable[Int] = goldAndCandidatePaths filter {
+          case (token, goldPath, candidatePath) =>
+            goldPath != candidatePath
+          //!comparePaths(token, candidatePath, goldPath, candParse, goldParse)
+        } map {
+          case (token, goldPath, candidatePath) =>
+            token
+        }
+        val lostTokens: Set[Int] = (incorrectTokens.toSet flatMap { tokIndex: Int =>
+          goldParse.getGretels(tokIndex)
+        }) ++ incorrectTokens.toSet filter { tokIndex: Int =>
+          goldAndCandidatePathMap.contains(tokIndex)
+        }
+        val blameTokens: Seq[Int] = lostTokens.toSeq map { lostToken =>
+          //println(goldAndCandidatePathMap)
+          val goldAndCandidatePaths = goldAndCandidatePathMap(lostToken)
+          findEarliestPathDifference(goldAndCandidatePaths._2 :+ lostToken, goldAndCandidatePaths._1 :+ lostToken).get
+        }
+        val result = (blameTokens map { tokIndex =>
+          goldParse.breadcrumbArcLabel(tokIndex).toSymbol
+        }) groupBy { x => x } mapValues { y => y.size }
+        result
+
+      //val result = (incorrectTokens map { tokIndex =>
+      //  (goldParse.breadcrumbArcLabel(tokIndex).toSymbol, 1 + goldParse.getGretels(tokIndex).size)
+      //}) groupBy { x => x._1 } mapValues { y => (y map { _._2}).sum}
+      //result
+      case None => Map[Symbol, Int]()
+    }
+  }
+
+  private def getGoldParse(candParse: PolytreeParse): Option[PolytreeParse] = {
     goldParses.get(candParse.sentence.asWhitespaceSeparatedString) match {
       case Some(goldParse) =>
         if (candParse.breadcrumb.size != goldParse.breadcrumb.size ||
@@ -266,38 +350,56 @@ case class PathAccuracyScore(
 
           println(s"WARNING -- Skipping parse: ${candParse.sentence.asWhitespaceSeparatedString}" +
             s" tokenized differently than gold: ${goldParse.sentence.asWhitespaceSeparatedString}")
-          (0, 0)
+          None
         } else {
-          // skip the first element because it is the nexus (hence it has no breadcrumb)
-          val zippedPaths = {
-            val zipped = candParse.paths.zipWithIndex.tail.zip(
-              goldParse.paths.tail
-            )
-            if (ignorePunctuation) {
-              zipped filter {
-                case ((x, i), y) =>
-                  goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
-              }
-            } else {
-              zipped
-            }
-          }
-          val numCorrect: Int = zippedPaths count {
-            case ((candidatePath, token), goldPath) =>
-              (candidatePath == goldPath) &&
-                (ignorePathLabels ||
-                  convertPathToArcLabels(candidatePath :+ token, candParse) ==
-                  convertPathToArcLabels(goldPath :+ token, goldParse))
-          }
-          (numCorrect, zippedPaths.size)
+          Some(goldParse)
         }
-      case None => (0, 0) // TODO: throw error?
+      case None => None
     }
   }
 
-  private val goldParses: Map[String, PolytreeParse] = (goldParseSource.parseIterator map { parse =>
-    (parse.sentence.asWhitespaceSeparatedString, parse)
-  }).toMap
+  private def pairGoldAndCandidatePaths(
+    candParse: PolytreeParse,
+    goldParse: PolytreeParse
+  ): Iterable[(Int, Seq[Int], Seq[Int])] = {
+
+    val zippedPaths = {
+      val zipped = candParse.paths.zipWithIndex.tail.zip(
+        goldParse.paths.tail
+      )
+      if (ignorePunctuation) {
+        zipped filter {
+          case ((x, i), y) =>
+            goldParse.tokens(i).getDeterministicProperty('cpos) != Symbol(".")
+        }
+      } else {
+        zipped
+      }
+    }
+    (zippedPaths map {
+      case ((candidatePath, token), goldPath) =>
+        (token, goldPath, candidatePath)
+    }).toIterable
+  }
+
+  private def comparePaths(token: Int, candidatePath: Seq[Int], goldPath: Seq[Int],
+    candidateParse: PolytreeParse, goldParse: PolytreeParse): Boolean = {
+    if (useCrumbOnly) {
+      (candidatePath.last == goldPath.last) &&
+        (ignorePathLabels ||
+          candidateParse.breadcrumbArcLabel(token) ==
+          goldParse.breadcrumbArcLabel(token))
+    } else {
+      (candidatePath == goldPath) &&
+        (ignorePathLabels ||
+          convertPathToArcLabels(candidatePath :+ token, candidateParse) ==
+          convertPathToArcLabels(goldPath :+ token, goldParse))
+    }
+  }
+
+  private def findEarliestPathDifference(candidatePath: Seq[Int], goldPath: Seq[Int]): Option[Int] = {
+    candidatePath.zip(goldPath) find { case (x, y) => x != y } map { z => z._2 }
+  }
 
   /** Converts a path in the parse tree to its arc labels. */
   private def convertPathToArcLabels(path: Seq[Int], parse: PolytreeParse): Seq[ArcLabel] = {
