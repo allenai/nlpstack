@@ -1,9 +1,7 @@
 package org.allenai.nlpstack.cli
 
 import org.allenai.nlpstack.core.Tokenizer
-import org.allenai.nlpstack.tokenize.FactorieTokenizer
-import org.allenai.nlpstack.tokenize.PennTokenizer
-import org.allenai.nlpstack.tokenize.WhitespaceTokenizer
+import org.allenai.nlpstack.tokenize._
 
 abstract class TokenizerMain extends LineProcessor("tokenizer") {
   def tokenizer: Tokenizer
@@ -21,4 +19,8 @@ object PennTokenizerMain extends TokenizerMain {
 
 object WhitespaceTokenizerMain extends TokenizerMain {
   val tokenizer = WhitespaceTokenizer
+}
+
+object StanfordTokenizerMain extends TokenizerMain {
+  val tokenizer = StanfordTokenizer
 }

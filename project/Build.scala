@@ -48,7 +48,7 @@ object NlpstackBuild extends Build {
           "https://github.com/allenai/nlpstack.git"
         )),
         conflictManager := ConflictManager.strict,
-        libraryDependencies ++= testingLibraries,
+        libraryDependencies ++= (testingLibraries ++ loggingDependencies),
         ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value,
         pomExtra :=
           <developers>
@@ -138,7 +138,7 @@ object NlpstackBuild extends Build {
     base = file("tools/tokenize"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-tokenize",
-      libraryDependencies ++= Seq(factorie, commonsIo % "test")
+      libraryDependencies ++= Seq(stanfordCoreNlp, factorie, commonsIo % "test")
     )
   ) dependsOn (core)
 
@@ -147,7 +147,11 @@ object NlpstackBuild extends Build {
     base = file("tools/segment"),
     settings = buildSettings ++ Seq(
       name := "nlpstack-segment",
-      libraryDependencies ++= Seq(factorie, commonsIo % "test")
+      libraryDependencies ++= Seq(
+        factorie,
+        stanfordCoreNlp,
+        commonsIo % "test"
+      )
     )
   ) dependsOn (core)
 

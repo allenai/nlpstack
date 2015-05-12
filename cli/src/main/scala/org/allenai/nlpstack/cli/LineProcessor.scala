@@ -26,6 +26,7 @@ abstract class LineProcessor(name: String) {
     port: Int = typesafeConfig.getInt(s"nlpstack.tools.$name.defaultPort"),
     outputFile: Option[File] = None,
     inputFile: Option[File] = None,
+    rawInput: Option[String] = None,
     parallel: Boolean = false
   )
 
@@ -43,6 +44,9 @@ abstract class LineProcessor(name: String) {
     opt[String]("output").action { (path: String, c: Config) =>
       c.copy(outputFile = Some(new File(path)))
     }.text("file to output to")
+    opt[String]("rawInput").action { (input: String, c: Config) =>
+      c.copy(rawInput = Some(input))
+    }.text("raw input to process")
 
     // execution config
     opt[Unit]("parallel").action { (_, c: Config) =>
@@ -74,9 +78,12 @@ abstract class LineProcessor(name: String) {
   def process(line: String): String
 
   def runCli(config: Config) {
-    val source = config.inputFile match {
-      case Some(file) => Source.fromFile(file)(Codec.UTF8)
-      case None => Source.fromInputStream(System.in)(Codec.UTF8)
+    val source = config.rawInput match {
+      case Some(input) => Source.fromString(input)
+      case None => config.inputFile match {
+        case Some(file) => Source.fromFile(file)(Codec.UTF8)
+        case None => Source.fromInputStream(System.in)(Codec.UTF8)
+      }
     }
 
     val writer = config.outputFile match {
@@ -92,6 +99,7 @@ abstract class LineProcessor(name: String) {
         writer.println(line)
         writer.println()
       }
+      writer.flush()
     }
 
     System.err.println(f"${duration.toUnit(SECONDS)}%1.2f s")

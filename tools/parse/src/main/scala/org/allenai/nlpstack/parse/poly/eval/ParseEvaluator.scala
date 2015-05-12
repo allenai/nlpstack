@@ -2,6 +2,8 @@ package org.allenai.nlpstack.parse.poly.eval
 
 import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, InMemoryPolytreeParseSource, PolytreeParseSource, PolytreeParse }
 
+import java.io._
+
 object ParseEvaluator {
 
   /** Collects statistics over a sequence of (candidate parse, gold parse) pairs.
@@ -17,7 +19,9 @@ object ParseEvaluator {
     */
   def evaluate(
     candidateParses: Iterator[Option[PolytreeParse]],
-    goldParses: Iterator[PolytreeParse], statistics: Seq[ParseStatistic]
+    goldParses: Iterator[PolytreeParse],
+    statistics: Seq[ParseStatistic],
+    diagnosticWriter: Option[PrintWriter] = None
   ) {
 
     for {
@@ -26,7 +30,7 @@ object ParseEvaluator {
     } stat.notify(candidateParse, goldParse)
     for {
       stat <- statistics
-    } stat.report()
+    } stat.report(diagnosticWriter)
   }
 
   def compareParseBanks(
@@ -75,7 +79,14 @@ abstract class ParseStatistic {
   def result(): Double
 
   /** Display a report about the accumulated statistics to stdout. */
-  def report(): Unit
+  def report(statWriter: Option[PrintWriter]): Unit
+
+  def logMessage(statWriter: Option[PrintWriter], message: String): Unit = {
+    statWriter match {
+      case Some(w) => w.println(message)
+      case None => println(message)
+    }
+  }
 }
 
 /** CposAccuracy stores the statistics necessary to compute coarse-part-of-speech tagging
@@ -131,7 +142,7 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
     (100.0 * numCorrect) / numTotal
   }
 
-  override def report(): Unit = {
+  override def report(statWriter: Option[PrintWriter]): Unit = {
     println("Cpos Tagging: %d / %d = %2.2f%%".format(numCorrect, numTotal,
       result()))
     if (verbose) {
@@ -140,7 +151,7 @@ case class CposAccuracy(verbose: Boolean = false) extends ParseStatistic {
           count
       } foreach {
         case ((candCpos, goldCpos), count) =>
-          println(s"  $count: ${goldCpos.name} ~~> ${candCpos.name}")
+          logMessage(statWriter, s"  $count: ${goldCpos.name} ~~> ${candCpos.name}")
       }
     }
   }
@@ -209,7 +220,7 @@ case class PathAccuracy(ignorePunctuation: Boolean, ignorePathLabels: Boolean, u
     (100.0 * numCorrect) / numTotal
   }
 
-  override def report(): Unit = {
+  override def report(statWriter: Option[PrintWriter]): Unit = {
     val puncNote = Map(true -> "ignorePunc", false -> "full")
     val metricName: String =
       (if (ignorePathLabels) { "U" } else { "L" }) + (if (useCrumbOnly) { "AS" } else { "PA" })
