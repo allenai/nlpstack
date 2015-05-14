@@ -91,12 +91,10 @@ object ParseFile {
       InMemoryPolytreeParseSource(
         parseTestSet(parser, parseSource).flatten.toSeq
       )
-    val goldParseBank =
-      ParseBank.createParseBankFromSource(parseSource)
-    val uas = ParseEvaluation.scoreParseSource(UnlabeledPathAccuracy(goldParseBank), candidateParses)
+    val goldParseBank = ParseBank.createParseBankFromSource(parseSource)
+    ParseEvaluation.performStandardEvaluation(candidateParses, goldParseBank)
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
     val numSentences = parseSource.parseIterator.size
-    println(s"UAS: $uas")
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
       numSentences, parsingDurationInSeconds,
       (1.0 * numSentences) / parsingDurationInSeconds

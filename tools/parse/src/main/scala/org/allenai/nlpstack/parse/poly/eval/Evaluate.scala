@@ -38,8 +38,6 @@ object Evaluate {
       ParseBank.createParseBankFromSource(
         InMemoryPolytreeParseSource(PolytreeParse.fromFile(config.goldFilename, fileFormat).toSeq)
       )
-
-    val uas = ParseEvaluation.scoreParseSource(UnlabeledPathAccuracy(goldParseBank), candidateParses)
-    println(s"UAS: $uas")
+    ParseEvaluation.performStandardEvaluation(candidateParses, goldParseBank)
   }
 }
