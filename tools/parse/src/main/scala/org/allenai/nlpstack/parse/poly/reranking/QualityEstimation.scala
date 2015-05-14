@@ -48,7 +48,7 @@ object QualityEstimation {
       ConllX(true, makePoly = true), clArgs.dataSource
     )
 
-    val scoringFunction = PathAccuracyScore(goldParseSource, true, false, useCrumbOnly = false)
+    val scoringFunction = LabeledPathAccuracy(ParseBank.createParseBankFromSource(goldParseSource))
 
     val rerankingFunctions = {
       val baselines: Map[String, RerankingFunction] = Map(

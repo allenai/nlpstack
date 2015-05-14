@@ -64,6 +64,7 @@ object ParseReranker {
     }
 
     println("Evaluating test set.")
+    /*
     reranker match {
       case weirdReranker: WeirdParseNodeRerankingFunction =>
         val stats: Seq[ParseStatistic] = Seq(WeirdnessAnalyzer(weirdReranker))
@@ -72,14 +73,16 @@ object ParseReranker {
           candidateParses.iterator, goldParseSource.parseIterator, stats, Some(diagnosticWriter)
         )
     }
+    */
     diagnosticWriter.close()
   }
 }
 
 /** A parse statistic that collects weirdness statistics for candidate parses.
   *
-  * @param rerankingFunction the weirdness reranking function
+  * param rerankingFunction the weirdness reranking function
   */
+/*
 case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     extends ParseStatistic {
 
@@ -159,3 +162,4 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     sentenceGoldParsesAndMistakes = Seq[(PolytreeParse, Set[String], Set[String])]()
   }
 }
+*/

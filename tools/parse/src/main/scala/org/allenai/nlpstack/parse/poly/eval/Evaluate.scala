@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser.{ PolytreeParse, ConllX, PolytreeParseFileFormat }
+import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
 private case class EvaluateConfig(candidateFilename: String = "", goldFilename: String = "")
@@ -29,16 +29,17 @@ object Evaluate {
     }
     val config: EvaluateConfig = optionParser.parse(args, EvaluateConfig()).get
     val fileFormat: PolytreeParseFileFormat = ConllX(true)
-    val candidateParses: Iterator[Option[PolytreeParse]] = {
-      PolytreeParse.fromFile(config.candidateFilename, fileFormat) map { Some(_) }
-    }
-    val goldParses: Iterator[PolytreeParse] = {
-      PolytreeParse.fromFile(config.goldFilename, fileFormat)
-    }
-    val stats: Seq[ParseStatistic] = Seq(PathAccuracy(false, false, true), PathAccuracy(false, false),
-      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true),
-      CposAccuracy(false))
+    val candidateParses =
+      InMemoryPolytreeParseSource(
+        (PolytreeParse.fromFile(config.candidateFilename, fileFormat) map { Some(_) }).flatten.toSeq
+      )
 
-    ParseEvaluator.evaluate(candidateParses, goldParses, stats)
+    val goldParseBank =
+      ParseBank.createParseBankFromSource(
+        InMemoryPolytreeParseSource(PolytreeParse.fromFile(config.goldFilename, fileFormat).toSeq)
+      )
+
+    val uas = ParseEvaluation.scoreParseSource(UnlabeledPathAccuracy(goldParseBank), candidateParses)
+    println(s"UAS: $uas")
   }
 }

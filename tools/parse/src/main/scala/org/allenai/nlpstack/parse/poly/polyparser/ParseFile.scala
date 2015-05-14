@@ -87,17 +87,16 @@ object ParseFile {
   def evaluateParserOnTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
     println("Parsing test set.")
     val startTime: Long = Platform.currentTime
-    val candidateParses = parseTestSet(parser, parseSource)
-    val stats: Seq[ParseStatistic] = Seq(
-      PathAccuracy(false, false, true),
-      PathAccuracy(false, false), PathAccuracy(false, true), PathAccuracy(true, false),
-      PathAccuracy(true, true),
-      CposAccuracy(false)
-    )
-    stats foreach { stat => stat.reset() }
-    ParseEvaluator.evaluate(candidateParses, parseSource.parseIterator, stats)
+    val candidateParses =
+      InMemoryPolytreeParseSource(
+        parseTestSet(parser, parseSource).flatten.toSeq
+      )
+    val goldParseBank =
+      ParseBank.createParseBankFromSource(parseSource)
+    val uas = ParseEvaluation.scoreParseSource(UnlabeledPathAccuracy(goldParseBank), candidateParses)
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
     val numSentences = parseSource.parseIterator.size
+    println(s"UAS: $uas")
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
       numSentences, parsingDurationInSeconds,
       (1.0 * numSentences) / parsingDurationInSeconds
@@ -140,10 +139,7 @@ object ParseFile {
     parser match {
       case rerankingParser: RerankingTransitionParser =>
         val oracleScore: ParseScore =
-          PathAccuracyScore(
-            parseSource,
-            ignorePunctuation = true, ignorePathLabels = false, useCrumbOnly = false
-          )
+          LabeledPathAccuracy(ParseBank.createParseBankFromSource(parseSource))
         val oracleRerankingFunction: RerankingFunction =
           ParseRerankingFunction(oracleScore)
         val oracleParserConfig = ParserConfiguration(
