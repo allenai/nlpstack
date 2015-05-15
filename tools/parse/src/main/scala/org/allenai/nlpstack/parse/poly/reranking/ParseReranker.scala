@@ -1,14 +1,11 @@
 package org.allenai.nlpstack.parse.poly.reranking
 
-import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.polyparser._
 
 import java.io._
 
 import scopt.OptionParser
-
-import scala.compat.Platform
 
 case class ParseRerankerCommandLine(
   parserFilename: String = "",
@@ -64,14 +61,16 @@ object ParseReranker {
     }
 
     println("Evaluating test set.")
+
     reranker match {
       case weirdReranker: WeirdParseNodeRerankingFunction =>
-        val stats: Seq[ParseStatistic] = Seq(WeirdnessAnalyzer(weirdReranker))
-        stats foreach { stat => stat.reset() }
-        ParseEvaluator.evaluate(
-          candidateParses.iterator, goldParseSource.parseIterator, stats, Some(diagnosticWriter)
-        )
+        val analyzer = WeirdnessAnalyzer(weirdReranker)
+        for {
+          (candidateParse, goldParse) <- candidateParses.iterator.zip(goldParseSource.parseIterator)
+        } analyzer.notify(candidateParse, goldParse)
+        analyzer.report(Some(diagnosticWriter))
     }
+
     diagnosticWriter.close()
   }
 }
@@ -80,12 +79,15 @@ object ParseReranker {
   *
   * @param rerankingFunction the weirdness reranking function
   */
-case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
-    extends ParseStatistic {
+case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction) {
 
   var sentenceGoldParsesAndMistakes = Seq[(PolytreeParse, Set[String], Set[String])]()
 
-  override def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
+  def reset(): Unit = {
+    sentenceGoldParsesAndMistakes = Seq[(PolytreeParse, Set[String], Set[String])]()
+  }
+
+  def notify(candidateParse: Option[PolytreeParse], goldParse: PolytreeParse): Unit = {
     candidateParse map { candParse =>
       val weirdGoldNodes = rerankingFunction.getNodesWithOutcome(goldParse, 1)
       val notWeirdCandidateNodes = rerankingFunction.getNodesWithOutcome(candParse, 0)
@@ -123,7 +125,13 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
     }
   }
 
-  override def report(diagnosticWriter: Option[PrintWriter]): Unit = {
+  def report(diagnosticWriter: Option[PrintWriter]): Unit = {
+    def logMessage(statWriter: Option[PrintWriter], message: String): Unit = {
+      statWriter match {
+        case Some(w) => w.println(message)
+        case None => println(message)
+      }
+    }
     sentenceGoldParsesAndMistakes foreach {
       case (goldParse, falsePositiveMessages, trueNegativeMessages) =>
         logMessage(diagnosticWriter, "")
@@ -150,8 +158,5 @@ case class WeirdnessAnalyzer(rerankingFunction: WeirdParseNodeRerankingFunction)
         }
     }
   }
-
-  override def reset(): Unit = {
-    sentenceGoldParsesAndMistakes = Seq[(PolytreeParse, Set[String], Set[String])]()
-  }
 }
+
