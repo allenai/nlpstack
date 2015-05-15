@@ -472,10 +472,19 @@ object PolytreeParse {
             },
           finePos =
             if (useGoldPosTags && row(iFinePos) != "_") {
+              WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
+            } else if (useGoldPosTags && row(iCoarsePos) != "_") {
+              Some(row(iCoarsePos))
+            } else {
+              None
+            }
+        /*
+            if (useGoldPosTags && row(iFinePos) != "_") {
               Some(row(iFinePos))
             } else {
               None
             }
+            */
         )
       })).toVector
       )

@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import org.allenai.nlpstack.parse.poly.core.{ TaggedSentence, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ WordClusters, TaggedSentence, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm.{ StateTransition, Sculpture, State }
 import org.allenai.nlpstack.parse.poly.polyparser.{ StateRef }
 
@@ -19,7 +19,12 @@ case class PostaggerState(
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
-      Some(TaggedSentence(sentence, existingTags mapValues { tag => Set(tag) }))
+      Some(TaggedSentence(sentence, existingTags mapValues { tag =>
+        Set(
+          tag
+        //Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tag.name, "X"))
+        )
+      }))
     } else {
       None
     }

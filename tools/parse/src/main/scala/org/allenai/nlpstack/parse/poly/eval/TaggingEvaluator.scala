@@ -45,7 +45,7 @@ case class CposSentAccuracy(verbose: Boolean = false) extends EvaluationStatisti
     numCorrect +=
       Range(1, gold.sentence.tokens.size) count { tokIndex =>
         val goldTag: Set[Symbol] = gold.tags(tokIndex)
-        require(goldTag.size == 1, s"Gold tagged sentence should only have one gold tag: $gold")
+        require(goldTag.size == 1, s"Gold tagged sentence should only have one gold tag for ${gold.sentence.tokens(tokIndex)}: $gold")
         val candidateTags = cand.tags(tokIndex)
         if (!candidateTags.contains(goldTag.head)) {
           println(s"Wrong tags for ${cand.sentence.tokens(tokIndex).word.name}: $candidateTags; Should be: ${goldTag.head}; ${cand.sentence.asWhitespaceSeparatedString}")

@@ -65,8 +65,8 @@ case class NLPStackPostagger(baseTagger: Postagger) extends PolyPostagger {
     val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, baseTagger)
     val tagMap = (taggedTokens.zipWithIndex map {
       case (tok, tokIndex) =>
-        (tokIndex + 1, Set(Symbol(tok.postag)))
-      //Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, "X"))))
+        (tokIndex + 1, //Set(Symbol(tok.postag)))
+          Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, "X"))))
     }).toMap
     Some(TaggedSentence(sentence, tagMap))
   }
@@ -122,7 +122,7 @@ object SimplePostagger {
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getProperty('pos))
+          (index, tok.getProperty('cpos))
       }).toMap
       )
     }
