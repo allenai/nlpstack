@@ -53,14 +53,13 @@ object OracleReranker {
       ConllX(true), config.dataSource
     )
 
-    val oracleScore: ParseScore = PathAccuracyScore(
-      goldParseSource,
-      ignorePunctuation = true, ignorePathLabels = false
-    )
+    val oracleScore: ParseScore =
+      LabeledPathAccuracy(ParseBank.createParseBankFromSource(goldParseSource))
+
     val reranker: Reranker =
       new Reranker(ParseRerankingFunction(oracleScore))
     val candidateParses =
-      for {
+      (for {
         parsePool <- parsePoolSource.poolIterator
       } yield {
         val candidate: Option[Sculpture] = reranker(parsePool.toNbestList)
@@ -68,10 +67,9 @@ object OracleReranker {
           case Some(parse: PolytreeParse) => Some(parse)
           case _ => None
         }
-      }
-    val stats: Seq[ParseStatistic] = Seq(UnlabeledBreadcrumbAccuracy, PathAccuracy(false, false),
-      PathAccuracy(false, true), PathAccuracy(true, false), PathAccuracy(true, true))
-    stats foreach { stat => stat.reset() }
-    ParseEvaluator.evaluate(candidateParses, goldParseSource.parseIterator, stats)
+      }).flatten.toSeq
+
+    ParseEvaluation.performStandardEvaluation(InMemoryPolytreeParseSource(candidateParses),
+      ParseBank.createParseBankFromSource(goldParseSource))
   }
 }

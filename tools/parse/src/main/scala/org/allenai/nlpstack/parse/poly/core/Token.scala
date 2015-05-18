@@ -24,6 +24,16 @@ case class Token(word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map()) {
   def updateProperties(moreProperties: Map[Symbol, Set[Symbol]]): Token = {
     Token(word, properties ++ moreProperties)
   }
+
+  /** Returns true if this token is considered punctuation.
+    *
+    * Note that "." is the Google coarse part-of-speech tag for all punctuation.
+    *
+    * @return true if this token is considered punctuation
+    */
+  def isPunctuation: Boolean = {
+    getDeterministicProperty('cpos) == Symbol(".")
+  }
 }
 
 object Token {
