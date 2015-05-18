@@ -50,7 +50,7 @@ abstract class PathAccuracyScore(
     * @return the pair (num correct paths, num total paths)
     */
   def getRatio(candParse: PolytreeParse): (Int, Int) = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val validTokens = Range(1, goldParse.tokens.size) filter { tokIndex =>
           !ignorePunctuation ||
@@ -198,7 +198,7 @@ case class PostagAccuracy(goldParseBank: ParseBank)
   override val name = "Cpos accuracy"
 
   def getRatio(candParse: PolytreeParse): (Int, Int) = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val numCorrect =
           candParse.tokens.tail.zip(goldParse.tokens.tail) count {

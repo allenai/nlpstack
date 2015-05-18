@@ -23,7 +23,7 @@ case class MisattachmentAnalyzer(
 ) extends ParseAnalyzer {
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val validTokens = Range(1, goldParse.tokens.size) filter { tokIndex =>
           !goldParse.tokens(tokIndex).isPunctuation
@@ -66,7 +66,7 @@ case class MisattachmentAnalyzer(
 case class LostTokensAnalyzer(goldParseBank: ParseBank) extends ParseAnalyzer {
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val validTokens = Range(1, goldParse.tokens.size) filter { tokIndex =>
           !goldParse.tokens(tokIndex).isPunctuation
@@ -102,7 +102,7 @@ case class CposErrorAnalyzer(goldParseBank: ParseBank) extends ParseAnalyzer {
   override val name: String = "CPOS ERROR FREQUENCY"
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         var errorHistogram = Map[String, Double]()
         candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
