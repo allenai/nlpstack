@@ -6,8 +6,7 @@ import org.allenai.nlpstack.segment.{ StanfordSegmenter, ChalkSentenceSegmenter,
 abstract class SegmenterMain
     extends LineProcessor("segmenter") {
   def sentencer: Segmenter
-  override def process(line: String) =
-    sentencer(line).mkString("\n")
+  override def process(line: String) = sentencer(line).map(_.text).mkString("\n")
 }
 
 object FactorieSegmenterMain extends SegmenterMain {
