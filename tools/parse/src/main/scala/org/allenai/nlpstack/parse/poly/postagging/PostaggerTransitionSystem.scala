@@ -105,7 +105,7 @@ class PostaggerGuidedCostFunction(
         require(!taggerState.isFinal, "Cannot advance a final state.")
         val nextToTag = taggerState.nextTokenToTag.get
         require(taggedSentence.tags.contains(nextToTag), s"Missing gold tag for token $nextToTag.")
-        Map(TagToken(taggedSentence.tags(nextToTag).head) -> 0)
+        Map(AssignTag(taggedSentence.tags(nextToTag).head) -> 0)
     }
     result
   }

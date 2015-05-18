@@ -3,12 +3,10 @@ package org.allenai.nlpstack.parse.poly.postagging
 import java.io._
 
 import org.allenai.common.Resource
-import org.allenai.nlpstack.core.Postagger
 import org.allenai.nlpstack.parse.poly.core._
-import org.allenai.nlpstack.parse.poly.eval.{ UnlabeledBreadcrumbAccuracy, TaggingEvaluator, CposSentAccuracy, EvaluationStatistic }
+import org.allenai.nlpstack.parse.poly.eval.{ TaggingEvaluator, CposSentAccuracy, EvaluationStatistic }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.polyparser._
-import org.allenai.nlpstack.postag.{ StanfordPostagger, defaultPostagger }
 import reming.CompactPrinter
 import reming.DefaultJsonProtocol._
 
@@ -16,61 +14,6 @@ import scala.compat.Platform
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
-
-trait PolyPostagger {
-  def tag(
-    sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()
-  ): Option[TaggedSentence]
-}
-
-sealed trait PolyPostaggerInitializer
-
-case object FactoriePostaggerInitializer extends PolyPostaggerInitializer
-case object StanfordPostaggerInitializer extends PolyPostaggerInitializer
-case class SimplePostaggerInitializer(configFile: String) extends PolyPostaggerInitializer
-
-object PolyPostaggerInitializer {
-  private implicit val factorieInitFormat = jsonFormat0(() => FactoriePostaggerInitializer)
-  private implicit val stanfordInitFormat = jsonFormat0(() => StanfordPostaggerInitializer)
-  private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
-
-  implicit val postaggerInitJsonFormat = parentFormat[PolyPostaggerInitializer](
-    childFormat[FactoriePostaggerInitializer.type, PolyPostaggerInitializer],
-    childFormat[StanfordPostaggerInitializer.type, PolyPostaggerInitializer],
-    childFormat[SimplePostaggerInitializer, PolyPostaggerInitializer]
-  )
-}
-
-object PolyPostagger {
-
-  def initializePostagger(initializer: PolyPostaggerInitializer): PolyPostagger = {
-    initializer match {
-      case FactoriePostaggerInitializer =>
-        NLPStackPostagger(defaultPostagger)
-      case StanfordPostaggerInitializer =>
-        NLPStackPostagger(new StanfordPostagger())
-      case SimplePostaggerInitializer(configFile) =>
-        SimplePostagger.load(configFile)
-    }
-  }
-}
-
-case class NLPStackPostagger(baseTagger: Postagger) extends PolyPostagger {
-  def tag(
-    sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()
-  ): Option[TaggedSentence] = {
-
-    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, baseTagger)
-    val tagMap = (taggedTokens.zipWithIndex map {
-      case (tok, tokIndex) =>
-        (tokIndex + 1, //Set(Symbol(tok.postag)))
-          Set(Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tok.postag, "X"))))
-    }).toMap
-    Some(TaggedSentence(sentence, tagMap))
-  }
-}
 
 object SimplePostagger {
   def fullTaggingEvaluation(tagger: PolyPostagger, testFiles: String,
@@ -129,9 +72,10 @@ object SimplePostagger {
 
     TaggingEvaluator.evaluate(candidateTaggedSentences, goldTaggedSentences, stats)
     val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
+    val numParses = parseSource.parseIterator.size
     println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
-      UnlabeledBreadcrumbAccuracy.numParses, parsingDurationInSeconds,
-      (1.0 * UnlabeledBreadcrumbAccuracy.numParses) / parsingDurationInSeconds
+      numParses, parsingDurationInSeconds,
+      numParses.toDouble / parsingDurationInSeconds
     ))
   }
 
@@ -187,7 +131,7 @@ case class SimplePostagger(
         constraints.toSeq
       ) map { initState =>
         // Only do full reranking in the absence of constraints.
-        val nbestsizeMod = 5
+        val nbestsizeMod = 1
         if (constraints.isEmpty) {
           baseParser.find(initState, nbestsizeMod, constraints)
         } else {

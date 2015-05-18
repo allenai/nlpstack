@@ -20,10 +20,7 @@ case class PostaggerState(
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
       Some(TaggedSentence(sentence, existingTags mapValues { tag =>
-        Set(
-          tag
-        //Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tag.name, "X"))
-        )
+        Set(tag)
       }))
     } else {
       None
@@ -31,7 +28,7 @@ case class PostaggerState(
   }
 }
 
-case class TagToken(tag: Symbol) extends StateTransition {
+case class AssignTag(tag: Symbol) extends StateTransition {
 
   @transient override val name: String = s"Tag[${tag.name}]"
 

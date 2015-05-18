@@ -108,7 +108,6 @@ object PostaggerTraining {
     SimplePostagger.save(tagger, trainingConfig.outputPath)
 
     // evaluate postagger
-
     SimplePostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }

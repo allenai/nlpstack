@@ -79,7 +79,7 @@ object AdaptiveTraining {
       }
     }
     val taggers: Seq[SentenceTransform] =
-      Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer),
+      Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer(useCoarseTags = true)),
         LexicalPropertiesTagger, BrownClustersTagger(clusters))
 
 

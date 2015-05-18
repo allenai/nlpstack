@@ -5,7 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
-import org.allenai.nlpstack.parse.poly.postagging.FactoriePostaggerInitializer
+import org.allenai.nlpstack.parse.poly.postagging.{ SimplePostaggerInitializer, FactoriePostaggerInitializer }
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -117,9 +117,12 @@ object Training {
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer), LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++
-        googleUnigramPostagTransformOption
+      Seq(
+        PolyPostaggerSentenceTransform(SimplePostaggerInitializer("/Users/markhopkins/Projects/experiments/parsing/temp/interrog.tagger.json")), //FactoriePostaggerInitializer),
+        LexicalPropertiesTagger,
+        BrownClustersTagger(clusters)
+      ) //++ verbnetTaggerOption ++
+    //googleUnigramPostagTransformOption
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcEagerTransitionSystemFactory(taggers)
@@ -148,6 +151,6 @@ object Training {
     TransitionParser.save(parser, trainingConfig.outputPath)
 
     ParseFile.fullParseEvaluation(parser, trainingConfig.testPath, ConllX(true),
-      trainingConfig.dataSource, ParseFile.defaultOracleNbest)
+      trainingConfig.dataSource, 0)
   }
 }
