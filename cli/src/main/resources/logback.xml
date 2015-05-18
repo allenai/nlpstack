@@ -11,5 +11,5 @@
     <appender-ref ref="STDOUT" />
   </root>
   <logger name="org.apache.wire" level="WARN" additivity="false" />
-  <logger name="edu.stanford.nlp.process.PTBLexer" level="error" additivity="false" />
+  <logger name="edu.stanford.nlp.process.PTBLexer" level="ERROR" additivity="false" />
 </configuration>

@@ -25,11 +25,18 @@ object Dependencies extends CoreDependencies {
 
   val apache2 = "Apache 2.0 " -> url("http://www.opensource.org/licenses/bsd-3-clause")
 
-  val loggingDependencies = Seq(Logging.slf4jApi, Logging.logbackCore, Logging.logbackClassic)
+  val loggingDependencies = Seq(
+    Logging.slf4jApi,
+    Logging.logbackCore,
+    Logging.logbackClassic,
+    "org.slf4j" % "jcl-over-slf4j" % Logging.slf4jVersion,
+    "org.slf4j" % "log4j-over-slf4j" % Logging.slf4jVersion,
+    "org.slf4j" % "jul-to-slf4j" % Logging.slf4jVersion
+  )
 
   val jVerbnet = "edu.mit" % "jverbnet" % "1.2.0.1"
 
   val reming = "com.github.jkinkead" %% "reming-json" % "0.0.9"
 
-  val Overrides = Set("org.slf4j" % "log4j-over-slf4j" % "1.7.10")
+  val Overrides = loggingDependencies.toSet
 }
