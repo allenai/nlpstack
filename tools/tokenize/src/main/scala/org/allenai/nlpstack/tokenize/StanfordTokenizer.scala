@@ -1,12 +1,18 @@
 package org.allenai.nlpstack.tokenize
 
 import java.io.StringReader
+import org.slf4j.bridge.SLF4JBridgeHandler
+
 import scala.collection.{ mutable, JavaConverters }
 
 import edu.stanford.nlp.process.PTBTokenizer
 import org.allenai.nlpstack.core.{ Token, Tokenizer }
 
 object StanfordTokenizer extends Tokenizer {
+  // redirect stanford's logging
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
+
   var averageTokenLength = 6 // low estimates are better
   private val tokenizerFactory = PTBTokenizer.factory()
   tokenizerFactory.setOptions("untokenizable=allKeep")
