@@ -23,6 +23,26 @@ case class InMemoryPolytreeParseSource(
   }
 }
 
+object PolytreeParseSource {
+
+  /** Counts the number of tokens in a parse source (not including nexus tokens).
+    *
+    * @param parseSource the parse source
+    * @param excludePunctuation true if you don't want to count punctutation tokens (i.e. tokens
+    * whose .cpos property is ".")
+    * @return the total number of tokens in the parse source
+    */
+  def countTokens(parseSource: PolytreeParseSource, excludePunctuation: Boolean): Int = {
+    (parseSource.parseIterator map { parse =>
+      if (excludePunctuation) {
+        parse.tokens.tail count { tok => tok.getDeterministicProperty('cpos) != Symbol(".") }
+      } else {
+        parse.tokens.tail.size
+      }
+    }).sum
+  }
+}
+
 object InMemoryPolytreeParseSource {
 
   /** Create an InMemoryPolytreeParseSource from a filename and a file format.

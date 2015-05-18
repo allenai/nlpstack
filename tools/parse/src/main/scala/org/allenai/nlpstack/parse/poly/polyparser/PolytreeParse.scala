@@ -177,7 +177,7 @@ case class PolytreeParse(
           val label = arcLabelByEndNodes(Set(parent, child))
           s"${label}:${printToken(child)}"
       }).mkString(" ")
-      s"${printToken(parent)} -> $childrenStr"
+      s"{{${printToken(parent)} -> $childrenStr}}"
     }).getOrElse("")
   }
 
