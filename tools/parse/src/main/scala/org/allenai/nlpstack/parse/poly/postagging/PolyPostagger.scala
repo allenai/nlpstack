@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import org.allenai.nlpstack.parse.poly.core.{ SentenceSource, TaggedSentence, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ SentenceSource, Sentence }
 import org.allenai.nlpstack.parse.poly.eval.{ TaggingEvaluator, CposSentAccuracy, EvaluationStatistic }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import org.allenai.nlpstack.parse.poly.polyparser.{ FileBasedPolytreeParseSource, PolytreeParseSource, PolytreeParseFileFormat }

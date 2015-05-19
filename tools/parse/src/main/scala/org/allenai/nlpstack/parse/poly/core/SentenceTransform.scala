@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.parse.poly.postagging.{ PolyPostaggerInitializer, PolyPostagger }
+import org.allenai.nlpstack.parse.poly.postagging.{ TaggedSentence, PolyPostaggerInitializer, PolyPostagger }
 import org.allenai.nlpstack.core.{
   Token => NLPStackToken,
   Lemmatized,

@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
 import org.allenai.nlpstack.core.Postagger
-import org.allenai.nlpstack.parse.poly.core.{ WordClusters, SentenceTransform, TaggedSentence, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ WordClusters, SentenceTransform, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 
 /** Wrapper for a postagger from NLPStack.
@@ -11,7 +11,7 @@ import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
   */
 case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) extends PolyPostagger {
 
-  // TODO: currently no constraints are handled
+  // TODO: currently no constraints are considered
   override def tag(
     sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set()

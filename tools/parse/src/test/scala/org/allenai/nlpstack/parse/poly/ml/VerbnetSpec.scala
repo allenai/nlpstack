@@ -62,9 +62,7 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
     ))
     verbnetTagger.transform(postaggerTransform.transform(sentence1)) shouldBe
       Sentence(IndexedSeq(
-        Token('nexus, Map(
-          'lcase -> Set('nexus),
-          'cpos -> Set('nexus),
+        Token('nexxx, Map(
           'verbnetPrimaryFrames -> Set()
         )),
         Token('tigers, Map(

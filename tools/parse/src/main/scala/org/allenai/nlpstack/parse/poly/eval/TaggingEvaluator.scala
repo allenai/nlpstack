@@ -1,7 +1,8 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.core.{ TaggedSentence, Sentence }
+import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, PolytreeParseSource, InMemoryPolytreeParseSource, PolytreeParse }
+import org.allenai.nlpstack.parse.poly.postagging.TaggedSentence
 
 object TaggingEvaluator {
 

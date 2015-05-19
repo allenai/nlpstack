@@ -5,26 +5,25 @@ import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
 import org.allenai.nlpstack.parse.poly.polyparser._
 
-case class PostaggerTransitionSystemFactory(
-    taggers: Seq[SentenceTransform]
-) extends TransitionSystemFactory {
-
-  override def buildTransitionSystem(
-    marbleBlock: MarbleBlock,
-    constraints: Set[TransitionConstraint]
-  ): TransitionSystem = {
-    new PostaggerTransitionSystem(marbleBlock, taggers)
-  }
-}
-
 /** A simple finite-state transition system for POS-tagging a sentence.
   *
-  * In the initial state has all tok
+  * In the initial state, all tokens are untagged.
+  * In any intermediate state, the first K tokens are tagged, and the last N-K tokens are untagged.
+  * A final state has all tokens tagged.
   *
-  * @param marbleBlock
-  * @param taggers
+  * There is only one transition operator, called AssignTag(TAG). When applied to an
+  * intermediate state, this transition operator assigns the tag TAG to the
+  * K+1th token.
+  *
+  * @param marbleBlock the untagged sentence (must be an instance of either
+  * org.allenai.nlpstack.parse.poly.polyparser.PolytreeParse or
+  * org.allenai.nlpstack.parse.poly.core.Sentence)
+  * @param taggers sentence transformations to use for features
   */
-class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceTransform]) extends TransitionSystem {
+class PostaggerTransitionSystem(
+    marbleBlock: MarbleBlock,
+    taggers: Seq[SentenceTransform]
+) extends TransitionSystem {
 
   @transient val sentence: Sentence =
     marbleBlock match {
@@ -103,6 +102,41 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
   ))
 }
 
+/** A state of the PostaggerTransitionSystem (see above).
+  *
+  * @param nextTokenToTag indicates the next token that needs tagging
+  * (None if all tokens are tagged)
+  * @param existingTags tags that have already been assigned
+  * @param sentence the sentence we want to tag
+  */
+case class PostaggerState(
+    nextTokenToTag: Option[Int],
+    existingTags: Map[Int, Symbol],
+    sentence: Sentence
+) extends State {
+
+  val isFinal: Boolean = {
+    nextTokenToTag match {
+      case Some(_) => false
+      case None => true
+    }
+  }
+
+  def asSculpture: Option[Sculpture] = {
+    if (isFinal) {
+      Some(TaggedSentence(sentence, existingTags mapValues { tag =>
+        Set(tag)
+      }))
+    } else {
+      None
+    }
+  }
+}
+
+/** The main transition operator of the PostaggerTransitionSystem (see above).
+  *
+  * @param tag the tag to assign to the next token
+  */
 case class AssignTag(tag: Symbol) extends StateTransition {
 
   @transient override val name: String = s"Tag[${tag.name}]"
@@ -130,6 +164,14 @@ case class AssignTag(tag: Symbol) extends StateTransition {
   }
 }
 
+/** The PostaggerGuidedCostFunction uses a gold tagged sentence to make deterministic decisions
+  * about which transition to apply in any given state. Since the decision is uniquely determined
+  * by the gold tagging, the returned map will have only a single mapping that assigns zero cost
+  * to the correct transition (all other transitions therefore have an implicit cost of infinity).
+  *
+  * @param taggedSentence the gold tagged sentence
+  * @param transitionSystem pointer to the transition system
+  */
 class PostaggerGuidedCostFunction(
     taggedSentence: TaggedSentence,
     override val transitionSystem: TransitionSystem
@@ -147,3 +189,18 @@ class PostaggerGuidedCostFunction(
   }
 }
 
+/** Creates a PostaggerTransitionSystem for a given untagged sentence.
+  *
+  * @param taggers sentence transformations to use for features
+  */
+case class PostaggerTransitionSystemFactory(
+    taggers: Seq[SentenceTransform]
+) extends TransitionSystemFactory {
+
+  override def buildTransitionSystem(
+    marbleBlock: MarbleBlock,
+    constraints: Set[TransitionConstraint]
+  ): TransitionSystem = {
+    new PostaggerTransitionSystem(marbleBlock, taggers)
+  }
+}

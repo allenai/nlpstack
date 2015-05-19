@@ -1,33 +1,19 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import org.allenai.nlpstack.parse.poly.core.{ TaggedSentence, Sentence }
-import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, State }
+import org.allenai.nlpstack.parse.poly.fsm.State
 import org.allenai.nlpstack.parse.poly.polyparser.StateRef
 
-case class PostaggerState(
-    nextTokenToTag: Option[Int],
-    existingTags: Map[Int, Symbol],
-    sentence: Sentence
-) extends State {
-
-  val isFinal: Boolean = {
-    nextTokenToTag match {
-      case Some(_) => false
-      case None => true
-    }
-  }
-
-  def asSculpture: Option[Sculpture] = {
-    if (isFinal) {
-      Some(TaggedSentence(sentence, existingTags mapValues { tag =>
-        Set(tag)
-      }))
-    } else {
-      None
-    }
-  }
-}
-
+/** A PostaggerStateRef allows you to figure out the token that corresponds to a particular
+  * aspect of a PostaggerState.
+  *
+  * For instance, we may want to know the token to the left of the next token to tag.
+  * Applying OffsetRef(-1) to the state will return the index of that token.
+  * More accurately, a sequence is returned, which will be empty if the StateRef refers
+  * to a non-existent element of the state.
+  *
+  * This set of classes is used primarily to facilitate feature creation (e.g. see
+  * StateRefFeature).
+  */
 abstract class PostaggerStateRef extends StateRef {
 
   override def apply(state: State): Seq[Int] = {
@@ -42,6 +28,12 @@ abstract class PostaggerStateRef extends StateRef {
   def applyToTaggerState(state: PostaggerState): Seq[Int]
 }
 
+/** The OffsetRef tells us the Kth token to the left or right of the current token (i.e. the next
+  * token to tag).
+  *
+  * @param offset +K means we want the Kth token to the right, -K means we want the Kth token
+  * to the left, 0 means we want the current token (i.e. the next token to tag)
+  */
 case class OffsetRef(offset: Int) extends PostaggerStateRef {
 
   override def applyToTaggerState(state: PostaggerState): Seq[Int] = {

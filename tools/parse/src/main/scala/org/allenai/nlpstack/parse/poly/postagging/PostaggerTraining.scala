@@ -52,13 +52,15 @@ object PostaggerTraining {
     }
     val trainingConfig: PostaggerTrainingCommandLine =
       optionParser.parse(args, PostaggerTrainingCommandLine()).get
-    val trainingSource: PolytreeParseSource =
-      MultiPolytreeParseSource(trainingConfig.trainingPath.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(
-          path,
-          ConllX(true), trainingConfig.dataSource
-        )
-      })
+    val trainingSource: TaggedSentenceSource =
+      ParseDerivedTaggedSentenceSource(
+        MultiPolytreeParseSource(trainingConfig.trainingPath.split(",") map { path =>
+          InMemoryPolytreeParseSource.getParseSource(
+            path,
+            ConllX(true), trainingConfig.dataSource
+          )
+        }), propertyName = 'pos
+      )
 
     // Read in taggers config file if specified. This will contain config info necessary to
     // initialize the required feature taggers (currently contais only Verbnet config).
@@ -93,7 +95,7 @@ object PostaggerTraining {
     println("Training tagger.")
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
-    val trainingVectorSource = new GoldTagsTrainingVectorSource(
+    val trainingVectorSource = new SculptureTrainingVectorSource(
       trainingSource,
       transitionSystemFactory, None
     )
@@ -114,27 +116,3 @@ object PostaggerTraining {
   }
 }
 
-case class GoldTagsTrainingVectorSource(
-  goldParses: PolytreeParseSource,
-  transitionSystemFactory: TransitionSystemFactory,
-  baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
-)
-    extends FSMTrainingVectorSource(transitionSystemFactory, baseCostFunctionFactory) {
-
-  def getVectorIterator: Iterator[FSMTrainingVector] = {
-    for {
-      goldSentence <- goldParses.sentenceIterator
-      taggedSentence = TaggedSentence(
-        goldSentence,
-        (goldSentence.tokens.zipWithIndex map {
-        case (tok, index) =>
-          (index, tok.getProperty('cpos))
-      }).toMap
-      )
-      vector <- generateVectors(taggedSentence)
-    } yield {
-      println(vector)
-      vector
-    }
-  }
-}

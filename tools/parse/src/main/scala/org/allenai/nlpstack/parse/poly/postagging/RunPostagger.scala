@@ -8,14 +8,28 @@ private case class RunPostaggerCommandLine(configFilename: String = "", testFile
 
 object RunPostagger {
 
+  /** Simple command-line for contrastive evaluation of POS taggers.
+    * format: OFF
+    *
+    * Usage: RunPostagger [options]
+    *
+    *   -c <file> | --config <file>
+    *         the file containing the JSON configuration for the tagger
+    *   -t <file> | --test <file>
+    *         the file containing the gold parses to compare against (in ConllX format, comma-separated filenames)
+    *   -d <file> | --datasource <file>
+    *         the location of the data ('datastore','local')
+    *
+    * format: ON
+    */
   def main(args: Array[String]) {
-    val optionParser = new OptionParser[RunPostaggerCommandLine]("PostagFile") {
+    val optionParser = new OptionParser[RunPostaggerCommandLine]("RunPostagger") {
       opt[String]('c', "config") required () valueName "<file>" action { (x, c) =>
         c.copy(configFilename = x)
-      } text "the file containing the JSON configuration for the parser"
-      opt[String]('t', "test") required () valueName ("<file>") action { (x, c) =>
+      } text "the file containing the JSON configuration for the tagger"
+      opt[String]('t', "test") required () valueName "<file>" action { (x, c) =>
         c.copy(testFilename = x)
-      } text ("the file containing the test parses to parse and compare against " +
+      } text ("the file containing the gold parses to compare against " +
         "(in ConllX format, comma-separated filenames)")
       opt[String]('d', "datasource") required () valueName "<file>" action { (x, c) =>
         c.copy(dataSource = x)
@@ -33,16 +47,20 @@ object RunPostagger {
     println("Evaluating Stanford tagger:")
     val stanTagger =
       PolyPostagger.initializePostagger(StanfordPostaggerInitializer(useCoarseTags = true))
-    PolyPostagger.fullTaggingEvaluation(stanTagger, config.testFilename, ConllX(true), config.dataSource, 0)
+    PolyPostagger.fullTaggingEvaluation(stanTagger, config.testFilename,
+      ConllX(useGoldPOSTags = true), config.dataSource, 0)
 
     println("Evaluating Factorie tagger:")
     val factorieTagger =
       PolyPostagger.initializePostagger(FactoriePostaggerInitializer(useCoarseTags = true))
-    PolyPostagger.fullTaggingEvaluation(factorieTagger, config.testFilename, ConllX(true), config.dataSource, 0)
+    PolyPostagger.fullTaggingEvaluation(factorieTagger, config.testFilename,
+      ConllX(useGoldPOSTags = true), config.dataSource, 0)
 
     println("Evaluating serialized tagger:")
-    val tagger: SimplePostagger = SimplePostagger.load(config.configFilename, overrideNbestSize = Some(1))
-    PolyPostagger.fullTaggingEvaluation(tagger, config.testFilename, ConllX(true), config.dataSource, 0)
+    val tagger: SimplePostagger =
+      SimplePostagger.load(config.configFilename, overrideNbestSize = Some(1))
+    PolyPostagger.fullTaggingEvaluation(tagger, config.testFilename,
+      ConllX(useGoldPOSTags = true), config.dataSource, 0)
   }
 }
 

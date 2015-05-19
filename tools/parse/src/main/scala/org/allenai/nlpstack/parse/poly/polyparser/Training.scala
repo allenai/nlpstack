@@ -133,7 +133,7 @@ object Training {
     println("Training parser.")
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
-    val trainingVectorSource = new GoldParseTrainingVectorSource(
+    val trainingVectorSource = new SculptureTrainingVectorSource(
       trainingSource,
       transitionSystemFactory, None
     )

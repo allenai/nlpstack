@@ -87,32 +87,6 @@ trait SentenceSource {
   def sentenceIterator: Iterator[Sentence]
 }
 
-/** A TaggedSentence is a sentence whose tokens are tagged with a set of symbols.
-  *
-  * @param sentence the unannotated sentence
-  * @param tags a map from token indices (according to sentence.tokens) to symbol sets
-  */
-case class TaggedSentence(sentence: Sentence, tags: Map[Int, Set[Symbol]]) extends Sculpture {
-  val marbleBlock: MarbleBlock = sentence
-
-  /** Adds the tags to the properties field of the sentence tokens.
-    *
-    * @param tagName the property name we want to give to the tags
-    * @return the original sentence, where the token properties are augmented with the tags
-    */
-  def addTagsToSentenceProperties(tagName: Symbol): Sentence = {
-    val tokensAndTags = Range(0, sentence.size) map { tokIndex =>
-      (sentence.tokens(tokIndex), tags.get(tokIndex))
-    }
-    Sentence(tokensAndTags map {
-      case (token, Some(tag)) =>
-        token.updateProperties(Map(tagName -> tag))
-      case (token, None) =>
-        token
-    })
-  }
-}
-
 /** An AnnotatedSentence is a sentence whose tokens are each annotated with a feature
   * vector.
   *

@@ -19,3 +19,7 @@ object Sculpture {
   private implicit val polytreeParseFormat = jsonFormat4(PolytreeParse.apply)
   implicit val sculptureJsonFormat = parentFormat[Sculpture](childFormat[PolytreeParse, Sculpture])
 }
+
+trait SculptureSource {
+  def sculptureIterator: Iterator[Sculpture]
+}
