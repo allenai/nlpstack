@@ -119,8 +119,8 @@ object Training {
     val taggers: Seq[SentenceTransform] =
       Seq(
         PolyPostaggerSentenceTransform(SwappablePostaggerInitializer(
-          "/Users/markhopkins/Projects/experiments/parsing/temp/qbank2.tagger.json",
-          useCoarseTags = false
+          "src/main/resources/omnibus.tagger.json",
+          useCoarseTags = true
         )),
         LexicalPropertiesTagger,
         BrownClustersTagger(clusters)
