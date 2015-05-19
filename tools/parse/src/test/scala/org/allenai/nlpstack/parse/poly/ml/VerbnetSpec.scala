@@ -4,11 +4,12 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.common.Logging
 import org.allenai.common.testkit.UnitSpec
 import org.allenai.datastore._
-import org.allenai.nlpstack.parse.poly.core.{ FactorieSentenceTagger, VerbnetTagger }
-import org.allenai.nlpstack.parse.poly.core.{ Token, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ PolyPostaggerSentenceTransform, VerbnetTagger, Token, Sentence }
 
 import com.typesafe.config.{ Config, ConfigFactory }
 import java.io.{ File, FileWriter, Writer }
+
+import org.allenai.nlpstack.parse.poly.postagging.FactoriePostaggerInitializer
 
 class VerbnetUtilSpec extends UnitSpec with Logging {
 
@@ -56,7 +57,10 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
 
   "Sentence.taggedWithVerbnetClasses" should "return the correct answer" in {
     val verbnetTagger = VerbnetTagger(verbnet)
-    verbnetTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
+    val postaggerTransform = PolyPostaggerSentenceTransform(FactoriePostaggerInitializer(
+      useCoarseTags = false
+    ))
+    verbnetTagger.transform(postaggerTransform.transform(sentence1)) shouldBe
       Sentence(IndexedSeq(
         Token('nexus, Map(
           'lcase -> Set('nexus),

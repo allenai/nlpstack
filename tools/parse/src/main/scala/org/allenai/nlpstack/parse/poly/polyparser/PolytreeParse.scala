@@ -471,6 +471,7 @@ object PolytreeParse {
               None
             },
           finePos =
+            /*
             if (useGoldPosTags && row(iFinePos) != "_") {
               WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
             } else if (useGoldPosTags && row(iCoarsePos) != "_") {
@@ -478,13 +479,13 @@ object PolytreeParse {
             } else {
               None
             }
-        /*
+            */
             if (useGoldPosTags && row(iFinePos) != "_") {
               Some(row(iFinePos))
             } else {
               None
             }
-            */
+
         )
       })).toVector
       )

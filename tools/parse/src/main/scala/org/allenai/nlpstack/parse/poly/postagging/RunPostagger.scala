@@ -1,9 +1,7 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
 import org.allenai.nlpstack.parse.poly.polyparser.ConllX
-import org.allenai.nlpstack.postag.StanfordPostagger
 import scopt.OptionParser
-import org.allenai.nlpstack.postag.defaultPostagger
 
 private case class RunPostaggerCommandLine(configFilename: String = "", testFilename: String = "",
   dataSource: String = "")
@@ -34,17 +32,17 @@ object RunPostagger {
 
     println("Evaluating Stanford tagger:")
     val stanTagger =
-      PolyPostagger.initializePostagger(StanfordPostaggerInitializer(useCoarseTags = true))
-    SimplePostagger.fullTaggingEvaluation(stanTagger, config.testFilename, ConllX(true), config.dataSource, 0)
+      PolyPostagger.initializePostagger(StanfordPostaggerInitializer(useCoarseTags = false))
+    PolyPostagger.fullTaggingEvaluation(stanTagger, config.testFilename, ConllX(true), config.dataSource, 0)
 
     println("Evaluating Factorie tagger:")
     val factorieTagger =
-      PolyPostagger.initializePostagger(FactoriePostaggerInitializer(useCoarseTags = true))
-    SimplePostagger.fullTaggingEvaluation(factorieTagger, config.testFilename, ConllX(true), config.dataSource, 0)
+      PolyPostagger.initializePostagger(FactoriePostaggerInitializer(useCoarseTags = false))
+    PolyPostagger.fullTaggingEvaluation(factorieTagger, config.testFilename, ConllX(true), config.dataSource, 0)
 
     println("Evaluating serialized tagger:")
-    val tagger: SimplePostagger = SimplePostagger.load(config.configFilename)
-    SimplePostagger.fullTaggingEvaluation(tagger, config.testFilename, ConllX(true), config.dataSource, 0)
+    val tagger: SimplePostagger = SimplePostagger.load(config.configFilename, overrideNbestSize = Some(1))
+    PolyPostagger.fullTaggingEvaluation(tagger, config.testFilename, ConllX(true), config.dataSource, 0)
   }
 }
 

@@ -9,13 +9,21 @@ case class PostaggerTransitionSystemFactory(
     taggers: Seq[SentenceTransform]
 ) extends TransitionSystemFactory {
 
-  def buildTransitionSystem(
+  override def buildTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
     new PostaggerTransitionSystem(marbleBlock, taggers)
   }
 }
+
+/** A simple finite-state transition system for POS-tagging a sentence.
+  *
+  * In the initial state has all tok
+  *
+  * @param marbleBlock
+  * @param taggers
+  */
 class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceTransform]) extends TransitionSystem {
 
   @transient val sentence: Sentence =
@@ -62,6 +70,7 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     val tokenFeatureTagger = new TokenFeatureTagger(Seq(
       TokenPositionFeature,
       TokenPropertyFeature('lexical),
+      TokenPropertyFeature('wiki),
       TokenPropertyFeature('posTagFreq1to5),
       TokenPropertyFeature('posTagFreq6to20),
       TokenPropertyFeature('posTagFreq21to50),
@@ -92,6 +101,33 @@ class PostaggerTransitionSystem(marbleBlock: MarbleBlock, taggers: Seq[SentenceT
     new OfflineTokenFeature(annotatedSentence, OffsetRef(-2))
   //new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)), TODO: add GuessedPOSTag
   ))
+}
+
+case class AssignTag(tag: Symbol) extends StateTransition {
+
+  @transient override val name: String = s"Tag[${tag.name}]"
+
+  override def apply(state: Option[State]): Option[State] = {
+    state filter {
+      case tpState: PostaggerState => true
+      case _ => false
+    } map {
+      case tpState: PostaggerState => advanceState(tpState)
+    }
+  }
+
+  private def advanceState(state: PostaggerState): PostaggerState = {
+    require(state.nextTokenToTag != None, s"Cannot advance a final state: $state")
+    val currentTokenToTag = state.nextTokenToTag.get
+    val nextTokenToTag =
+      if (currentTokenToTag + 1 < state.sentence.tokens.size) {
+        Some(currentTokenToTag + 1)
+      } else {
+        None
+      }
+    val revisedTags = state.existingTags.updated(currentTokenToTag, tag)
+    state.copy(nextTokenToTag = nextTokenToTag, existingTags = revisedTags)
+  }
 }
 
 class PostaggerGuidedCostFunction(

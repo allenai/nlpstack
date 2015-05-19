@@ -75,6 +75,11 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
 
 object Sentence {
   implicit val sentenceJsonFormat = jsonFormat1(Sentence.apply)
+
+  def initializeFromWhitespaceSeparatedString(rawString: String): Sentence = {
+    val tokens = rawString.split("\\s+") map { str => Token(Symbol(str)) }
+    Sentence(NexusToken +: tokens.toIndexedSeq)
+  }
 }
 
 /** A data source for Sentence objects. */

@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence, Util }
-import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
+import org.allenai.nlpstack.parse.poly.fsm.{ ClassifierBasedCostFunctionFactory, TransitionConstraint }
 import reming.{ CompactPrinter, JsonParser, LazyFormat }
 import reming.DefaultJsonProtocol._
 

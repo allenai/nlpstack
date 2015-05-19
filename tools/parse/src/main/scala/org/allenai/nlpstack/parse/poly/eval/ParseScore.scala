@@ -60,7 +60,7 @@ abstract class PathAccuracyScore(
           case token =>
             PathAccuracyScore.findEarliestPathDifference(
               token,
-              candParse, goldParse, useCrumbOnly, ignorePathLabels
+              candParse, goldParse, ignorePathLabels, useCrumbOnly
             ) == None
         }
         (numCorrect, validTokens.size)

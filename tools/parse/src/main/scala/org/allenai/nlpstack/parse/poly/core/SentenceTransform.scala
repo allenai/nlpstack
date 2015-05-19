@@ -8,12 +8,7 @@ import org.allenai.nlpstack.core.{
   Postagger,
   Tokenizer
 }
-import org.allenai.nlpstack.parse.poly.ml.{
-  BrownClusters,
-  DatastoreGoogleNGram,
-  GoogleUnigram,
-  Verbnet
-}
+import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.lemmatize._
 
@@ -50,13 +45,15 @@ object SentenceTransform {
   private implicit val verbnetTaggerFormat = jsonFormat1(VerbnetTagger.apply)
   private implicit val googleUnigramTaggerFormat =
     jsonFormat2(GoogleUnigramTagger.apply)
+  private implicit val wikiTaggerFormat = jsonFormat1(WikiSetTagger.apply)
 
   implicit val sentenceTransformJsonFormat = parentFormat[SentenceTransform](
     childFormat[LexicalPropertiesTagger.type, SentenceTransform],
     childFormat[PolyPostaggerSentenceTransform, SentenceTransform],
     childFormat[BrownClustersTagger, SentenceTransform],
     childFormat[VerbnetTagger, SentenceTransform],
-    childFormat[GoogleUnigramTagger, SentenceTransform]
+    childFormat[GoogleUnigramTagger, SentenceTransform],
+    childFormat[WikiSetTagger, SentenceTransform]
   )
 
   /** Given a Sentences, produce a seq of PostaggedTokens.
@@ -178,6 +175,27 @@ case class VerbnetTagger(verbnet: Verbnet) extends SentenceTransform {
       val tokVerbnetPrimaryFrames = verbnet.getVerbnetFramePrimaryNames(tokLemmaLC)
       tok.updateProperties(Map('verbnetPrimaryFrames -> tokVerbnetPrimaryFrames))
     })
+  }
+}
+
+case class WikiSetTagger(wikiset: WikiSet) extends SentenceTransform {
+
+  def transform(sentence: Sentence): Sentence = {
+    val ngrams: Set[(Int, Int)] = wikiset.identifyNgrams(sentence, 2)
+    val ngramBeginnings = ngrams map { _._1 }
+    val ngramEndings = ngrams map { _._2 }
+    val ngramInternals: Set[Int] = ngrams flatMap { case (start, finish) => Range(start + 1, finish) }
+
+    Sentence(NexusToken +:
+      (Range(1, sentence.tokens.size) map { tokIndex =>
+        sentence.tokens(tokIndex).updateProperties(Map(
+          'wiki -> Set(
+            if (ngramBeginnings.contains(tokIndex)) { Some('B) } else { None },
+            if (ngramEndings.contains(tokIndex)) { Some('E) } else { None },
+            if (ngramInternals.contains(tokIndex)) { Some('I) } else { None }
+          ).flatten
+        ))
+      }))
   }
 }
 

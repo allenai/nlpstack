@@ -59,6 +59,24 @@ object WordClusters {
       "CD" -> "NUM", "CD|RB" -> "X", "DT" -> "DET", "EX" -> "DET", "FW" -> "X", "HYPH" -> ".",
       "IN" -> "ADP", "IN|RP" -> "ADP", "JJ" -> "ADJ", "JJR" -> "ADJ", "JJRJR" -> "ADJ",
       "JJS" -> "ADJ", "JJ|RB" -> "ADJ", "JJ|VBG" -> "ADJ", "LS" -> "X", "MD" -> "VERB",
+      "NN" -> "NOUN", "NNP" -> "PROPER", "NNPS" -> "PROPER", "NFP" -> "NOUN",
+      "NNS" -> "NOUN", "NN|NNS" -> "NOUN", "NN|SYM" -> "NOUN",
+      "NN|VBG" -> "NOUN", "NP" -> "NOUN", "PDT" -> "DET", "POS" -> "PRT", "PRN" -> ".",
+      "PRP" -> "PRON", "PUNC" -> ".",
+      "PRP$" -> "PRON", "PRP|VBP" -> "PRON", "PRT" -> "PRT", "RB" -> "ADV", "RBR" -> "ADV",
+      "RBS" -> "ADV", "RB|RP" -> "ADV", "RB|VBG" -> "ADV", "RN" -> "X", "RP" -> "PRT",
+      "SYM" -> "X", "TO" -> "TO", "UH" -> "X", "VB" -> "VERB", "VBD" -> "VERB",
+      "VBD|VBN" -> "VERB", "VBG" -> "VERB", "VBG|NN" -> "VERB", "VBN" -> "VERB",
+      "VBP" -> "VERB", "VBP|TO" -> "VERB", "VBZ" -> "VERB", "VP" -> "VERB", "WDT" -> "DET",
+      "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
+  }
+  /* this is the original
+  val ptbToUniversalPosTag: Map[String, String] = {
+    Map("!" -> ".", "#" -> ".", "$" -> ".", "''" -> ".", "(" -> ".", ")" -> ".", "," -> ".",
+      "-LRB-" -> ".", "-RRB-" -> ".", "." -> ".", ":" -> ".", "?" -> ".", "CC" -> "CONJ",
+      "CD" -> "NUM", "CD|RB" -> "X", "DT" -> "DET", "EX" -> "DET", "FW" -> "X", "HYPH" -> ".",
+      "IN" -> "ADP", "IN|RP" -> "ADP", "JJ" -> "ADJ", "JJR" -> "ADJ", "JJRJR" -> "ADJ",
+      "JJS" -> "ADJ", "JJ|RB" -> "ADJ", "JJ|VBG" -> "ADJ", "LS" -> "X", "MD" -> "VERB",
       "NN" -> "NOUN", "NNP" -> "NOUN", "NNPS" -> "NOUN", "NFP" -> "NOUN",
       "NNS" -> "NOUN", "NN|NNS" -> "NOUN", "NN|SYM" -> "NOUN",
       "NN|VBG" -> "NOUN", "NP" -> "NOUN", "PDT" -> "DET", "POS" -> "PRT", "PRN" -> ".",
@@ -70,6 +88,7 @@ object WordClusters {
       "VBP" -> "VERB", "VBP|TO" -> "VERB", "VBZ" -> "VERB", "VP" -> "VERB", "WDT" -> "DET",
       "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
   }
+  */
 
   /** Given a list of strings, creates a histogram that maps the strings to their frequency in
     * the list.

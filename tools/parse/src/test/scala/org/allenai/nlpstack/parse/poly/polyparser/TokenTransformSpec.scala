@@ -29,10 +29,12 @@ object TokenTransformTestData {
       Set(2, 1) -> SingleSymbolArcLabel('nsubj), Set(3, 5) -> SingleSymbolArcLabel('det),
       Set(4, 5) -> SingleSymbolArcLabel('amod)),
     sentence =
-      Sentence(Vector(NexusToken, Token.create("we", "NN"), Token.create("saw", "VBD"),
-        Token.create("a", "DET"),
-        Token.create("white", "JJ"), Token.create("cat", "NN"), Token.create("with", "IN"),
-        Token.create("a", "DT"), Token.create("telescope", "NN")))
+      Sentence(Vector(NexusToken, Token.create("we", finePos = Some("NN")),
+        Token.create("saw", finePos = Some("VBD")),
+        Token.create("a", finePos = Some("DET")),
+        Token.create("white", finePos = Some("JJ")), Token.create("cat", finePos = Some("NN")),
+        Token.create("with", finePos = Some("IN")),
+        Token.create("a", finePos = Some("DT")), Token.create("telescope", finePos = Some("NN"))))
   )
 
   /** Bogus state to test IsBracketedTransform
@@ -46,14 +48,21 @@ object TokenTransformTestData {
     children = Map.empty,
     arcLabels = Map.empty,
     sentence =
-      Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
-        Token.create("help", "NN"),
-        Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("(", "-LRB-"),
-        Token.create("insects", "NNS"), Token.create("and", "CC"), Token.create("birds", "NNS"),
-        Token.create(")", "-RRB-"), Token.create("flowers", "NNS"),
-        Token.create("can", "MD"), Token.create("be", "VB"), Token.create("pollinated", "VBN"),
-        Token.create("(", "-LRB-"), Token.create("fertilized", "VBN"), Token.create(")", "-RRB-"),
-        Token.create(".", ".")))
+      Sentence(Vector(NexusToken, Token.create("with", finePos = Some("IN")),
+        Token.create("the", finePos = Some("DT")),
+        Token.create("help", finePos = Some("NN")),
+        Token.create("of", finePos = Some("IN")), Token.create("animals", finePos = Some("NNS")),
+        Token.create("(", finePos = Some("-LRB-")),
+        Token.create("insects", finePos = Some("NNS")),
+        Token.create("and", finePos = Some("CC")),
+        Token.create("birds", finePos = Some("NNS")),
+        Token.create(")", finePos = Some("-RRB-")), Token.create("flowers", finePos = Some("NNS")),
+        Token.create("can", finePos = Some("MD")),
+        Token.create("be", finePos = Some("VB")), Token.create("pollinated", finePos = Some("VBN")),
+        Token.create("(", finePos = Some("-LRB-")),
+        Token.create("fertilized", finePos = Some("VBN")),
+        Token.create(")", finePos = Some("-RRB-")),
+        Token.create(".", finePos = Some("."))))
   )
 
   /** Bogus state to test IsBracketedTransform
@@ -67,13 +76,19 @@ object TokenTransformTestData {
     children = Map.empty,
     arcLabels = Map.empty,
     sentence =
-      Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
-        Token.create("help", "NN"),
-        Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("(", "-LRB-"),
-        Token.create("(", "-LRB-"), Token.create("insects", "NNS"), Token.create(")", "-RRB-"),
-        Token.create("and", "CC"), Token.create("birds", "NNS"), Token.create(")", "-RRB-"),
-        Token.create("flowers", "NNS"), Token.create("can", "MD"), Token.create("be", "VB"),
-        Token.create("pollinated", "VBN")))
+      Sentence(Vector(NexusToken, Token.create("with", finePos = Some("IN")),
+        Token.create("the", finePos = Some("DT")),
+        Token.create("help", finePos = Some("NN")),
+        Token.create("of", finePos = Some("IN")), Token.create("animals", finePos = Some("NNS")),
+        Token.create("(", finePos = Some("-LRB-")),
+        Token.create("(", finePos = Some("-LRB-")),
+        Token.create("insects", finePos = Some("NNS")),
+        Token.create(")", finePos = Some("-RRB-")),
+        Token.create("and", finePos = Some("CC")),
+        Token.create("birds", finePos = Some("NNS")), Token.create(")", finePos = Some("-RRB-")),
+        Token.create("flowers", finePos = Some("NNS")), Token.create("can", finePos = Some("MD")),
+        Token.create("be", finePos = Some("VB")),
+        Token.create("pollinated", finePos = Some("VBN"))))
   )
 
   /** Bogus state to test IsBracketedTransform
@@ -87,14 +102,19 @@ object TokenTransformTestData {
     children = Map.empty,
     arcLabels = Map.empty,
     sentence =
-      Sentence(Vector(NexusToken, Token.create("with", "IN"), Token.create("the", "DT"),
-        Token.create("help", "NN"),
-        Token.create("of", "IN"), Token.create("animals", "NNS"), Token.create("insects", "NNS"),
-        Token.create("and", "CC"),
-        Token.create("birds", "NNS"), Token.create(")", "-RRB-"), Token.create("flowers", "NNS"),
-        Token.create("can", "MD"), Token.create("be", "VB"),
-        Token.create("pollinated", "VBN"), Token.create("(", "-LRB-"), Token.create("fertilized", "VBN"),
-        Token.create(".", ".")))
+      Sentence(Vector(NexusToken, Token.create("with", finePos = Some("IN")),
+        Token.create("the", finePos = Some("DT")),
+        Token.create("help", finePos = Some("NN")),
+        Token.create("of", finePos = Some("IN")), Token.create("animals", finePos = Some("NNS")),
+        Token.create("insects", finePos = Some("NNS")),
+        Token.create("and", finePos = Some("CC")),
+        Token.create("birds", finePos = Some("NNS")), Token.create(")", finePos = Some("-RRB-")),
+        Token.create("flowers", finePos = Some("NNS")),
+        Token.create("can", finePos = Some("MD")), Token.create("be", finePos = Some("VB")),
+        Token.create("pollinated", finePos = Some("VBN")),
+        Token.create("(", finePos = Some("-LRB-")),
+        Token.create("fertilized", finePos = Some("VBN")),
+        Token.create(".", finePos = Some("."))))
   )
 }
 /*

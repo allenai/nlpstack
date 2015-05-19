@@ -1,8 +1,8 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import org.allenai.nlpstack.parse.poly.core.{ WordClusters, TaggedSentence, Sentence }
+import org.allenai.nlpstack.parse.poly.core.{ TaggedSentence, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm.{ StateTransition, Sculpture, State }
-import org.allenai.nlpstack.parse.poly.polyparser.{ StateRef }
+import org.allenai.nlpstack.parse.poly.polyparser.StateRef
 
 case class PostaggerState(
     nextTokenToTag: Option[Int],
@@ -25,33 +25,6 @@ case class PostaggerState(
     } else {
       None
     }
-  }
-}
-
-case class AssignTag(tag: Symbol) extends StateTransition {
-
-  @transient override val name: String = s"Tag[${tag.name}]"
-
-  override def apply(state: Option[State]): Option[State] = {
-    state filter {
-      case tpState: PostaggerState => true
-      case _ => false
-    } map {
-      case tpState: PostaggerState => advanceState(tpState)
-    }
-  }
-
-  private def advanceState(state: PostaggerState): PostaggerState = {
-    require(state.nextTokenToTag != None, s"Cannot advance a final state: $state")
-    val currentTokenToTag = state.nextTokenToTag.get
-    val nextTokenToTag =
-      if (currentTokenToTag + 1 < state.sentence.tokens.size) {
-        Some(currentTokenToTag + 1)
-      } else {
-        None
-      }
-    val revisedTags = state.existingTags.updated(currentTokenToTag, tag)
-    state.copy(nextTokenToTag = nextTokenToTag, existingTags = revisedTags)
   }
 }
 

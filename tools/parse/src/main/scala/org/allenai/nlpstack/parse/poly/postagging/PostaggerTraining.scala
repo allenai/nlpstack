@@ -8,7 +8,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ DatastoreGoogleNGram, GoogleNGram, Verbnet, BrownClusters }
+import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
@@ -84,7 +84,8 @@ object PostaggerTraining {
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms
+      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms ++
+        Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
 
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)
@@ -102,13 +103,13 @@ object PostaggerTraining {
           trainingVectorSource, None)
       trainer.costFunctionFactory
     }
-    val tagger = SimplePostagger(parsingCostFunctionFactory, BaseCostRerankingFunction, 5)
+    val tagger = SimplePostagger(parsingCostFunctionFactory, nbestSize = 5)
 
     // save postagger
     SimplePostagger.save(tagger, trainingConfig.outputPath)
 
     // evaluate postagger
-    SimplePostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
+    PolyPostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }
 }
@@ -132,7 +133,7 @@ case class GoldTagsTrainingVectorSource(
       )
       vector <- generateVectors(taggedSentence)
     } yield {
-      //println(vector)
+      println(vector)
       vector
     }
   }

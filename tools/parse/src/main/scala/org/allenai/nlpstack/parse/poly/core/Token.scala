@@ -48,7 +48,7 @@ object Token {
     }
   }
 
-  def create(word: String, coarsePos: Option[String], finePos: Option[String]): Token = {
+  def create(word: String, coarsePos: Option[String] = None, finePos: Option[String] = None): Token = {
     Token(Symbol(word), createDefaultProperties(word, coarsePos, finePos))
   }
 
