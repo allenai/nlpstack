@@ -84,8 +84,8 @@ object PostaggerTraining {
     }
 
     val taggers: Seq[SentenceTransform] =
-      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms ++
-        Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
+      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms //++
+    //Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
 
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)
@@ -128,7 +128,7 @@ case class GoldTagsTrainingVectorSource(
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getProperty('pos))
+          (index, tok.getProperty('cpos))
       }).toMap
       )
       vector <- generateVectors(taggedSentence)

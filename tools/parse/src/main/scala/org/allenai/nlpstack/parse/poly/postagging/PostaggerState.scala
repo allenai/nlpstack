@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
 import org.allenai.nlpstack.parse.poly.core.{ TaggedSentence, Sentence }
-import org.allenai.nlpstack.parse.poly.fsm.{ StateTransition, Sculpture, State }
+import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, State }
 import org.allenai.nlpstack.parse.poly.polyparser.StateRef
 
 case class PostaggerState(

@@ -32,12 +32,12 @@ object RunPostagger {
 
     println("Evaluating Stanford tagger:")
     val stanTagger =
-      PolyPostagger.initializePostagger(StanfordPostaggerInitializer(useCoarseTags = false))
+      PolyPostagger.initializePostagger(StanfordPostaggerInitializer(useCoarseTags = true))
     PolyPostagger.fullTaggingEvaluation(stanTagger, config.testFilename, ConllX(true), config.dataSource, 0)
 
     println("Evaluating Factorie tagger:")
     val factorieTagger =
-      PolyPostagger.initializePostagger(FactoriePostaggerInitializer(useCoarseTags = false))
+      PolyPostagger.initializePostagger(FactoriePostaggerInitializer(useCoarseTags = true))
     PolyPostagger.fullTaggingEvaluation(factorieTagger, config.testFilename, ConllX(true), config.dataSource, 0)
 
     println("Evaluating serialized tagger:")

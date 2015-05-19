@@ -5,7 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
-import org.allenai.nlpstack.parse.poly.postagging.{ ExperimentPostaggerInitializer, StanfordPostaggerInitializer, SimplePostaggerInitializer, FactoriePostaggerInitializer }
+import org.allenai.nlpstack.parse.poly.postagging.{ SwappablePostaggerInitializer, StanfordPostaggerInitializer, SimplePostaggerInitializer, FactoriePostaggerInitializer }
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -118,10 +118,7 @@ object Training {
 
     val taggers: Seq[SentenceTransform] =
       Seq(
-        //PolyPostaggerSentenceTransform(SimplePostaggerInitializer("/Users/markhopkins/Projects/experiments/parsing/temp/qbank2.tagger.json")), //FactoriePostaggerInitializer),
-        //PolyPostaggerSentenceTransform(FactoriePostaggerInitializer(false)),
-        //PolyPostaggerSentenceTransform(StanfordPostaggerInitializer(false)),
-        PolyPostaggerSentenceTransform(ExperimentPostaggerInitializer(
+        PolyPostaggerSentenceTransform(SwappablePostaggerInitializer(
           "/Users/markhopkins/Projects/experiments/parsing/temp/qbank2.tagger.json",
           useCoarseTags = false
         )),

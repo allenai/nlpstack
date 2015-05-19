@@ -42,7 +42,7 @@ object PolyPostagger {
         NLPStackPostagger(new StanfordPostagger(), useCoarseTags)
       case SimplePostaggerInitializer(configFile) =>
         SimplePostagger.load(configFile)
-      case ExperimentPostaggerInitializer(configFile, useCoarseTags) =>
+      case SwappablePostaggerInitializer(configFile, useCoarseTags) =>
         //NLPStackPostagger(new StanfordPostagger(), useCoarseTags)
         NLPStackPostagger(defaultPostagger, useCoarseTags)
     }
@@ -97,7 +97,7 @@ object PolyPostagger {
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>
-          (index, tok.getProperty('pos))
+          (index, tok.getProperty('cpos))
       }).toMap
       )
     }
@@ -134,19 +134,19 @@ case class StanfordPostaggerInitializer(useCoarseTags: Boolean) extends PolyPost
   */
 case class SimplePostaggerInitializer(configFile: String) extends PolyPostaggerInitializer
 
-case class ExperimentPostaggerInitializer(configFile: String, useCoarseTags: Boolean)
+case class SwappablePostaggerInitializer(configFile: String, useCoarseTags: Boolean)
   extends PolyPostaggerInitializer
 
 object PolyPostaggerInitializer {
   private implicit val factorieInitFormat = jsonFormat1(FactoriePostaggerInitializer.apply)
   private implicit val stanfordInitFormat = jsonFormat1(StanfordPostaggerInitializer.apply)
   private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
-  private implicit val experimentInitFormat = jsonFormat2(ExperimentPostaggerInitializer.apply)
+  private implicit val experimentInitFormat = jsonFormat2(SwappablePostaggerInitializer.apply)
 
   implicit val postaggerInitJsonFormat = parentFormat[PolyPostaggerInitializer](
     childFormat[FactoriePostaggerInitializer, PolyPostaggerInitializer],
     childFormat[StanfordPostaggerInitializer, PolyPostaggerInitializer],
     childFormat[SimplePostaggerInitializer, PolyPostaggerInitializer],
-    childFormat[ExperimentPostaggerInitializer, PolyPostaggerInitializer]
+    childFormat[SwappablePostaggerInitializer, PolyPostaggerInitializer]
   )
 }
