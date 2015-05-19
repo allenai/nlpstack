@@ -1,6 +1,12 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.polyparser._
+import org.allenai.nlpstack.parse.poly.polyparser.{
+  PolytreeParse,
+  PolytreeParseSource,
+  PolytreeParseFileFormat,
+  ConllX,
+  FileBasedPolytreeParseSource
+}
 
 /** A ParseBank maps string-representations of sentences to a unique parse.
   *
@@ -15,7 +21,7 @@ case class ParseBank(underlyingMap: Map[String, PolytreeParse]) {
     * @param candParse the parse, for which we want to find a corresponding banked parse
     * @return the corresponding banked parse, if it exists
     */
-  def askForGoldParse(candParse: PolytreeParse): Option[PolytreeParse] = {
+  def askForCorrespondingGoldParse(candParse: PolytreeParse): Option[PolytreeParse] = {
     underlyingMap.get(candParse.sentence.asWhitespaceSeparatedString) match {
       case Some(goldParse) =>
         if ((candParse.tokens map { tok => tok.word }) != (goldParse.tokens map { tok => tok.word })) {

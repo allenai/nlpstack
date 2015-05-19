@@ -6,10 +6,15 @@ import edu.stanford.nlp.ling.CoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation
 import edu.stanford.nlp.pipeline.{ Annotation, StanfordCoreNLP }
 import org.allenai.nlpstack.core.{ Segment, Segmenter }
+import org.slf4j.bridge.SLF4JBridgeHandler
 
 import scala.collection.JavaConverters._
 
 object StanfordSegmenter extends Segmenter {
+  // redirect stanford's logging
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
+
   /* This is a bit unfortunate. In Stanford, you tokenize first, and then
    * segment. In nlpstack, it's the other way around. We solve the problem by
    * tokenizing twice, once here to get the sentences, and then again in

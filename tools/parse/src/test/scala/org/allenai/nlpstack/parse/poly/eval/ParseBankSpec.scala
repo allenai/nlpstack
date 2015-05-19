@@ -128,29 +128,29 @@ class ParseBankSpec extends UnitSpec {
     val bank = ParseBank.createParseBankFromSource(
       InMemoryPolytreeParseSource(Seq(parse1, parse2))
     )
-    bank.askForGoldParse(parse1) shouldBe Some(parse1)
+    bank.askForCorrespondingGoldParse(parse1) shouldBe Some(parse1)
   }
 
   it should "return None if the requested parse is missing" in {
     val bank = ParseBank.createParseBankFromSource(
       InMemoryPolytreeParseSource(Seq(parse2))
     )
-    bank.askForGoldParse(parse1) shouldBe None
+    bank.askForCorrespondingGoldParse(parse1) shouldBe None
   }
 
   it should "return None if the requested parse has a different tokenization" in {
     val bank = ParseBank.createParseBankFromSource(
       InMemoryPolytreeParseSource(Seq(parse1, parse2))
     )
-    bank.askForGoldParse(parse1b) shouldBe None
+    bank.askForCorrespondingGoldParse(parse1b) shouldBe None
   }
 
   "Calling ParseBank.createParseBankFromSource" should "prefer later parses" in {
     val bank = ParseBank.createParseBankFromSource(
       InMemoryPolytreeParseSource(Seq(parse1, parse2, parse1b))
     )
-    bank.askForGoldParse(parse1b) shouldBe Some(parse1b)
-    bank.askForGoldParse(parse1) shouldBe None
+    bank.askForCorrespondingGoldParse(parse1b) shouldBe Some(parse1b)
+    bank.askForCorrespondingGoldParse(parse1) shouldBe None
   }
 
 }

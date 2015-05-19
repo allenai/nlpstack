@@ -23,10 +23,10 @@ case class MisattachmentAnalyzer(
 ) extends ParseAnalyzer {
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val validTokens = Range(1, goldParse.tokens.size) filter { tokIndex =>
-          goldParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
+          !goldParse.tokens(tokIndex).isPunctuation
         }
         val incorrectTokens = validTokens filter {
           case token =>
@@ -45,18 +45,31 @@ case class MisattachmentAnalyzer(
   override val name: String = "MISATTACHMENT FREQUENCY"
 }
 
-/** The LostTokensAnalyzer tallies lost tokens (i.e. tokens with a different root path in the
-  * gold parse) according to the gold breadcrumb arc label of their earliest misattached ancestor.
+/** The LostTokensAnalyzer tallies lost tokens (i.e. tokens with a different breadcrumb path in the
+  * gold parse) according to the breadcrumb arc label of their highest misattached ancestor in the
+  * gold parse.
+  *
+  * Example: In the gold parse, suppose the breadcrumb path of token "red" is
+  *
+  * --ROOT--> ate --PREP--> with --POBJ--> chopsticks --AMOD--> red
+  *
+  * but in the candidate parse, the breadcrumb path of token "chopsticks" is
+  *
+  * --ROOT--> ate --DOBJ--> pasta --PREP--> with --POBJ--> meatballs --AMOD--> red
+  *
+  * then the highest misattached ancestor of "red" in the gold parse is "with" (attached to "pasta"
+  * instead of "ate"). The arc label of "with" is "PREP" in the gold parse. So the loss of token
+  * "red" is attributed to a "PREP" attachment error.
   *
   * @param goldParseBank a bank containing the gold parses
   */
 case class LostTokensAnalyzer(goldParseBank: ParseBank) extends ParseAnalyzer {
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         val validTokens = Range(1, goldParse.tokens.size) filter { tokIndex =>
-          goldParse.tokens(tokIndex).getDeterministicProperty('cpos) != Symbol(".")
+          !goldParse.tokens(tokIndex).isPunctuation
         }
         val lostTokens = validTokens filter {
           case token =>
@@ -89,7 +102,7 @@ case class CposErrorAnalyzer(goldParseBank: ParseBank) extends ParseAnalyzer {
   override val name: String = "CPOS ERROR FREQUENCY"
 
   def apply(candParse: PolytreeParse): Map[String, Double] = {
-    goldParseBank.askForGoldParse(candParse) match {
+    goldParseBank.askForCorrespondingGoldParse(candParse) match {
       case Some(goldParse) =>
         var errorHistogram = Map[String, Double]()
         candParse.tokens.tail.zip(goldParse.tokens.tail) filter {
