@@ -6,16 +6,10 @@ import org.allenai.common.Config.EnhancedConfig
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
-import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
-
-import scala.compat.Platform
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
-import scala.language.postfixOps
 
 private case class PostaggerTrainingCommandLine(
   taggersConfigPath: Option[String] = None,
