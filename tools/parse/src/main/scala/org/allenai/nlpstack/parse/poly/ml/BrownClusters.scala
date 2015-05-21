@@ -1,5 +1,7 @@
 package org.allenai.nlpstack.parse.poly.ml
 
+import org.allenai.nlpstack.parse.poly.core.Token
+import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TokenTagger }
 import reming.DefaultJsonProtocol._
 
 import scala.io.Source
@@ -76,5 +78,21 @@ object BrownClusters {
             })
       }
     BrownClusters(wordsToEncodings.toSeq)
+  }
+}
+
+/** The BrownClustersTagger tags the tokens of a sentence with their Brown clusters. */
+case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends TokenTagger {
+
+  def tag(token: Token): Set[TokenTag] = {
+    val tokStr = token.word.name.toLowerCase
+    (for {
+      (cluster, clusterId) <- clusters.zipWithIndex
+    } yield {
+      Seq(TokenTag(
+        Symbol(s"brown$clusterId"),
+        cluster.getMostSpecificCluster(Symbol(tokStr))
+      ))
+    }).flatten.toSet
   }
 }

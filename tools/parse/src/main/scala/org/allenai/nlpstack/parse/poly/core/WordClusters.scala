@@ -59,24 +59,6 @@ object WordClusters {
       "CD" -> "NUM", "CD|RB" -> "X", "DT" -> "DET", "EX" -> "DET", "FW" -> "X", "HYPH" -> ".",
       "IN" -> "ADP", "IN|RP" -> "ADP", "JJ" -> "ADJ", "JJR" -> "ADJ", "JJRJR" -> "ADJ",
       "JJS" -> "ADJ", "JJ|RB" -> "ADJ", "JJ|VBG" -> "ADJ", "LS" -> "X", "MD" -> "VERB",
-      "NN" -> "NOUN", "NNP" -> "PROPER", "NNPS" -> "PROPER", "NFP" -> "NOUN",
-      "NNS" -> "NOUN", "NN|NNS" -> "NOUN", "NN|SYM" -> "NOUN",
-      "NN|VBG" -> "NOUN", "NP" -> "NOUN", "PDT" -> "DET", "POS" -> "PRT", "PRN" -> ".",
-      "PRP" -> "PRON", "PUNC" -> ".",
-      "PRP$" -> "PRON", "PRP|VBP" -> "PRON", "PRT" -> "PRT", "RB" -> "ADV", "RBR" -> "ADV",
-      "RBS" -> "ADV", "RB|RP" -> "ADV", "RB|VBG" -> "ADV", "RN" -> "X", "RP" -> "PRT",
-      "SYM" -> "X", "TO" -> "TO", "UH" -> "X", "VB" -> "VERB", "VBD" -> "VERB",
-      "VBD|VBN" -> "VERB", "VBG" -> "VERB", "VBG|NN" -> "VERB", "VBN" -> "VERB",
-      "VBP" -> "VERB", "VBP|TO" -> "VERB", "VBZ" -> "VERB", "VP" -> "VERB", "WDT" -> "DET",
-      "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
-  }
-  /* this is the original
-  val ptbToUniversalPosTag: Map[String, String] = {
-    Map("!" -> ".", "#" -> ".", "$" -> ".", "''" -> ".", "(" -> ".", ")" -> ".", "," -> ".",
-      "-LRB-" -> ".", "-RRB-" -> ".", "." -> ".", ":" -> ".", "?" -> ".", "CC" -> "CONJ",
-      "CD" -> "NUM", "CD|RB" -> "X", "DT" -> "DET", "EX" -> "DET", "FW" -> "X", "HYPH" -> ".",
-      "IN" -> "ADP", "IN|RP" -> "ADP", "JJ" -> "ADJ", "JJR" -> "ADJ", "JJRJR" -> "ADJ",
-      "JJS" -> "ADJ", "JJ|RB" -> "ADJ", "JJ|VBG" -> "ADJ", "LS" -> "X", "MD" -> "VERB",
       "NN" -> "NOUN", "NNP" -> "NOUN", "NNPS" -> "NOUN", "NFP" -> "NOUN",
       "NNS" -> "NOUN", "NN|NNS" -> "NOUN", "NN|SYM" -> "NOUN",
       "NN|VBG" -> "NOUN", "NP" -> "NOUN", "PDT" -> "DET", "POS" -> "PRT", "PRN" -> ".",
@@ -88,7 +70,6 @@ object WordClusters {
       "VBP" -> "VERB", "VBP|TO" -> "VERB", "VBZ" -> "VERB", "VP" -> "VERB", "WDT" -> "DET",
       "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
   }
-  */
 
   /** Given a list of strings, creates a histogram that maps the strings to their frequency in
     * the list.
@@ -96,8 +77,8 @@ object WordClusters {
     * @param words the strings that we want to count
     * @return a mapping from strings to their frequency in the argument list
     */
-  def wordFrequencies(words: List[String]): Map[String, Int] = {
-    words.groupBy(x => x) map { case (str, vals) => (str, vals.size) }
+  def wordFrequencies(words: Iterator[String]): Map[String, Int] = {
+    words.toSeq.groupBy(x => x) map { case (str, vals) => (str, vals.size) }
   }
 
   /** Given a list of strings and a minimum threshold `qualifyingCount`, returns the set of
@@ -107,7 +88,17 @@ object WordClusters {
     * @param qualifyingCount the minimum frequency of words to include in the return value
     * @return the set of strings that appear at least `qualifyingCount` times in `words`
     */
-  def harvestFrequentWords(words: List[String], qualifyingCount: Int): Set[String] = {
+  def harvestFrequentWords(words: Iterator[String], qualifyingCount: Int): Set[String] = {
     (wordFrequencies(words) filter { case (word, freq) => freq >= qualifyingCount }).keys.toSet
+  }
+
+  def harvestFrequentWordsFromSentenceSource(sentenceSource: SentenceSource, qualifyingCount: Int): Set[String] = {
+    val wordIterator: Iterator[String] =
+      sentenceSource.sentenceIterator flatMap { sent =>
+        sent.tokens map { tok =>
+          tok.word.name
+        }
+      }
+    harvestFrequentWords(wordIterator, qualifyingCount)
   }
 }

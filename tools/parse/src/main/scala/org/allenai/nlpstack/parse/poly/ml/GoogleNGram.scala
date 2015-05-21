@@ -5,7 +5,8 @@ import org.allenai.nlpstack.core.PostaggedToken
 
 import java.io._
 
-import org.allenai.nlpstack.parse.poly.core.WordClusters
+import org.allenai.nlpstack.parse.poly.core._
+import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TokenTagger }
 import reming.DefaultJsonProtocol._
 
 import scala.io._
@@ -180,5 +181,45 @@ object GoogleUnigram {
     } else {
       "Freq96to100"
     }
+  }
+}
+
+case class GoogleUnigramTagger(
+  googleNgram: DatastoreGoogleNGram,
+  tagType: GoogleUnigramTagType
+) extends TokenTagger {
+
+  override def tag(tok: Token): Set[TokenTag] = {
+
+    val tagFreqMap: Map[String, Double] = tagType match {
+      case GoogleUnigramPos =>
+        GoogleUnigram.getNormalizedTagDistribution(
+          tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff, coarsen = false
+        )
+      case GoogleUnigramCpos =>
+        GoogleUnigram.getNormalizedTagDistribution(
+          tok.word.name, googleNgram.ngramMap, googleNgram.frequencyCutoff, coarsen = true
+        )
+    }
+    // Create feature for each dependency label based on the normalized frequency
+    // bucket it lies in.
+    val frequencyFeatureMap: Set[TokenTag] = for {
+      tag <- tagFreqMap.keySet
+    } yield {
+      val normalizedFrequency = tagFreqMap(tag)
+      val freqBucket =
+        tagType.name + GoogleUnigram.getFrequencyBucketForFeature(normalizedFrequency)
+      TokenTag(Symbol(freqBucket), Symbol(tag))
+    }
+    val bestTagMapping: Set[TokenTag] =
+      if (tagFreqMap.nonEmpty) {
+        val mostLikelyTag = (tagFreqMap maxBy {
+          _._2
+        })._1
+        Set(TokenTag(Symbol(s"${tagType.name}MostLikely"), Symbol(mostLikelyTag)))
+      } else {
+        Set()
+      }
+    frequencyFeatureMap ++ bestTagMapping
   }
 }

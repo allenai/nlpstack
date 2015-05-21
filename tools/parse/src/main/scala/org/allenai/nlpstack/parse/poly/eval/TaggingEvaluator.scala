@@ -2,13 +2,13 @@ package org.allenai.nlpstack.parse.poly.eval
 
 import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, PolytreeParseSource, InMemoryPolytreeParseSource, PolytreeParse }
-import org.allenai.nlpstack.parse.poly.postagging.TaggedSentence
+import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, SentenceTagging }
 
 object TaggingEvaluator {
 
   def evaluate(
-    candidates: Iterator[TaggedSentence],
-    golds: Iterator[TaggedSentence], statistics: Seq[EvaluationStatistic]
+    candidates: Iterator[SentenceTagging],
+    golds: Iterator[SentenceTagging], statistics: Seq[EvaluationStatistic]
   ) {
 
     for {
@@ -27,7 +27,7 @@ object TaggingEvaluator {
 abstract class EvaluationStatistic {
   def reset(): Unit = {}
 
-  def notify(candidate: TaggedSentence, gold: TaggedSentence): Unit
+  def notify(candidate: SentenceTagging, gold: SentenceTagging): Unit
 
   /** Display a report about the accumulated statistics to stdout. */
   def report(): Unit
@@ -39,19 +39,19 @@ case class CposSentAccuracy(verbose: Boolean = false) extends EvaluationStatisti
   var numParses = 0
   var numGuesses = 0
 
-  override def notify(cand: TaggedSentence, gold: TaggedSentence): Unit = {
+  override def notify(cand: SentenceTagging, gold: SentenceTagging): Unit = {
     numParses += 1
     numTotal += gold.sentence.tokens.tail.size
     // skip the first element because it is the nexus (hence it has no part-of-speech)
     numCorrect +=
       Range(1, gold.sentence.tokens.size) count { tokIndex =>
-        val goldTag: Set[Symbol] = gold.tags(tokIndex)
+        val goldTag: Set[TokenTag] = gold.tags(tokIndex)
         require(goldTag.size == 1, s"Gold tagged sentence should only have one gold tag for ${gold.sentence.tokens(tokIndex)}: $gold")
         val candidateTags = cand.tags(tokIndex)
         if (!candidateTags.contains(goldTag.head)) {
           println(s"Wrong tags for ${cand.sentence.tokens(tokIndex).word.name}: " +
-            s"${candidateTags map { tag => tag.name }}; Should be: " +
-            s"${goldTag.head.name}; ${cand.sentence.asWhitespaceSeparatedString}")
+            s"${candidateTags map { tag => tag.value }}; Should be: " +
+            s"${goldTag.head.value}; ${cand.sentence.asWhitespaceSeparatedString}")
         }
         candidateTags.contains(goldTag.head)
       }

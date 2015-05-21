@@ -9,11 +9,19 @@ import scala.io.Source
 
 case class WikiSet(filename: String) {
 
+  private def getFilteredWikiEntries: Iterator[String] = {
+    Source.fromFile(new File(filename)).getLines() filter { line =>
+      val filteredTokens = line.split("_") filter { token =>
+        token.size > 0 && !(token.head == '(' && token.last == ')')
+      }
+      filteredTokens.size > 1
+    }
+  }
+
   @transient val baseSet = {
-    val wikiLines = Source.fromFile(new File(filename)).getLines()
-    val bloom = new BloomFilter[String](0.05, 11000000)
+    val bloom = new BloomFilter[String](0.05, 10000000)
     var counter = 0
-    wikiLines foreach { line =>
+    getFilteredWikiEntries foreach { line =>
       bloom.add(line.toLowerCase)
       counter += 1
       if (counter % 10000 == 0) {
@@ -24,18 +32,17 @@ case class WikiSet(filename: String) {
   }
 
   @transient val prefixes = {
-    val wikiLines = Source.fromFile(new File(filename)).getLines()
-    val bloom = new BloomFilter[String](0.10, 50000000)
+    val bloom = new BloomFilter[String](0.10, 21000000)
     var counter = 0
-    wikiLines foreach { line =>
+    getFilteredWikiEntries foreach { line =>
       val ngram = line.split("_")
       val prefixes = Range(1, ngram.size) map { prefixSize => ngram.take(prefixSize) }
       prefixes foreach { prefix =>
         bloom.add(encodeWords(prefix))
+        counter += 1
       }
-      counter += 1
       if (counter % 10000 == 0) {
-        println(s"Prefixes: Added line $counter")
+        println(s"Prefixes: Added prefix $counter")
       }
     }
     bloom
@@ -75,5 +82,4 @@ case class WikiSet(filename: String) {
 
 object WikiSet {
   implicit val jsFormat = jsonFormat1(WikiSet.apply)
-
 }

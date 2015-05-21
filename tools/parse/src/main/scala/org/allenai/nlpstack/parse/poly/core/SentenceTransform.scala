@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.parse.poly.postagging.{ TaggedSentence, PolyPostaggerInitializer, PolyPostagger }
+import org.allenai.nlpstack.parse.poly.postagging.{ PolyPostagger }
 import org.allenai.nlpstack.core.{
   Token => NLPStackToken,
   Lemmatized,
@@ -34,9 +34,11 @@ object GoogleUnigramTagType {
   )
 }
 
+/*
 trait SentenceTransform {
   def transform(sentence: Sentence): Sentence
 }
+
 
 object SentenceTransform {
   private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTagger)
@@ -46,6 +48,7 @@ object SentenceTransform {
   private implicit val googleUnigramTaggerFormat =
     jsonFormat2(GoogleUnigramTagger.apply)
   private implicit val wikiTaggerFormat = jsonFormat1(WikiSetTagger.apply)
+  private implicit val keywordTaggerFormat = jsonFormat1(KeywordTagger.apply)
 
   implicit val sentenceTransformJsonFormat = parentFormat[SentenceTransform](
     childFormat[LexicalPropertiesTagger.type, SentenceTransform],
@@ -53,19 +56,25 @@ object SentenceTransform {
     childFormat[BrownClustersTagger, SentenceTransform],
     childFormat[VerbnetTagger, SentenceTransform],
     childFormat[GoogleUnigramTagger, SentenceTransform],
-    childFormat[WikiSetTagger, SentenceTransform]
+    childFormat[WikiSetTagger, SentenceTransform],
+    childFormat[KeywordTagger, SentenceTransform]
   )
+*/
 
-  /** Given a Sentences, produce a seq of PostaggedTokens.
+object SentenceTransform {
+  /** Given a Sentence, produce a seq of PostaggedTokens.
     */
-  def getPostaggedTokens(sentence: Sentence, posTagger: Postagger): IndexedSeq[PostaggedToken] = {
+  def getPostaggedTokens(sentence: Sentence, posTagger: Postagger): Map[Int, PostaggedToken] = {
     val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
     val nlpStackTokens: IndexedSeq[NLPStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
-    posTagger.postagTokenized(nlpStackTokens).toIndexedSeq
+    (posTagger.postagTokenized(nlpStackTokens).zipWithIndex map {
+      case (taggedTok, index) =>
+        (index + 1, taggedTok)
+    }).toMap
   }
 }
-
+/*
 /** The PolyPostaggerSentenceTransform tags an input sentence with automatic part-of-speech tags
   * from a tagger implementing the PolyPostagger interface.
   *
@@ -127,6 +136,24 @@ case object LexicalPropertiesTagger extends SentenceTransform {
     })
   }
 }
+
+case class KeywordTagger(keywords: Set[String]) extends SentenceTransform {
+
+  def transform(sentence: Sentence): Sentence = {
+    Sentence(sentence.tokens map { tok =>
+      val tokStr = tok.word.name.toLowerCase
+      if(keywords.contains(tokStr)) {
+        tok.updateProperties(Map(
+          'keyword -> Set(Symbol(tokStr))
+        ))
+      } else {
+        tok
+      }
+    })
+  }
+}
+
+
 
 /** The BrownClustersTagger tags the tokens of a sentence with their Brown clusters. */
 case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends SentenceTransform {
@@ -243,3 +270,4 @@ case class GoogleUnigramTagger(
     }))
   }
 }
+*/

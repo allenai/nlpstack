@@ -76,7 +76,7 @@ case class Verbnet(groupName: String, artifactName: String, version: Int) {
     // the fram name "NP V PP.result". Then strip the part following a dot, if it exists, from
     // each of the constituents. For e.g., "PP.result" becomes "PP", so the entire frame name
     // will become "NP V PP". Then replace whitespaces with dashes, to get "NP-V-PP".
-    val frames = (for {
+    val result = (for {
       verbFrame <- verbFrames
     } yield {
       val primaryName = verbFrame.getPrimaryType.getID
@@ -93,7 +93,9 @@ case class Verbnet(groupName: String, artifactName: String, version: Int) {
       }
       modConstituents.mkString("-")
     }).map(x => Symbol(x)).toSet
-    frames
+    result filter { frame =>
+      Verbnet.commonPrimaryFrames.contains(frame)
+    }
   }
 
   /* Returns the set of secondary names for all frames within all classes
@@ -102,9 +104,12 @@ case class Verbnet(groupName: String, artifactName: String, version: Int) {
   def getVerbnetFrameSecondaryNames(verb: String): Set[Symbol] = {
     // Get frames
     val verbFrames = getVerbnetFrames(verb)
-    verbFrames.map(_.getSecondaryType).filter(secondaryType => secondaryType != null).map(
+    val result = verbFrames.map(_.getSecondaryType).filter(secondaryType => secondaryType != null).map(
       secondaryType => Symbol(secondaryType.getID.replaceAll("""\s+""", "-"))
     )
+    result filter { frame =>
+      Verbnet.commonSecondaryFrames.contains(frame)
+    }
   }
 }
 
@@ -112,6 +117,14 @@ object Verbnet {
 
   implicit val jsonFormat = jsonFormat3(Verbnet.apply)
 
+  val commonPrimaryFrames: Set[Symbol] = (Seq(
+    "NP-V-NP-NP",
+    "NP-V-that-S",
+    "NP-V",
+    "NP-V-PP",
+    "NP-V-NP"
+  ) map { Symbol(_) }).toSet
+  /*
   val commonPrimaryFrames: Set[Symbol] = (Seq(
     "NP V NP ADJP",
     "NP V for NP S_INF",
@@ -167,7 +180,17 @@ object Verbnet {
     "NP V PP.attribute",
     "NP V NP"
   ) map { Symbol(_) }).toSet
+  */
 
+  val commonSecondaryFrames: Set[Symbol] = (Seq(
+    "Expletive-there-Subject",
+    "Intransitive",
+    "Basic-Intransitive",
+    "Transitive",
+    "Basic-Transitive"
+  ) map { Symbol(_) }).toSet
+
+  /*
   val commonSecondaryFrames: Set[Symbol] = (Seq(
     "P-WH-TO-INF",
     "NP-ADVP-PRED",
@@ -270,4 +293,6 @@ object Verbnet {
     "PP-PRED-RSin-PP",
     "NP-PP"
   ) map { Symbol(_) }).toSet
+  */
+
 }

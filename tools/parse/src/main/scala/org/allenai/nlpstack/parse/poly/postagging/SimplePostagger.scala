@@ -16,13 +16,13 @@ import reming.DefaultJsonProtocol._
 case class SimplePostagger(
     costFunctionFactory: StateCostFunctionFactory,
     nbestSize: Int
-) extends PolyPostagger {
+) extends SentenceTagger {
 
   override def tag(
-    sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()
-  ): Option[TaggedSentence] = {
+    sentence: Sentence
+  ): SentenceTagging = {
 
+    val constraints = Set[TransitionConstraint]() // no constraints are permitted here
     val costFunction =
       costFunctionFactory.buildCostFunction(sentence, constraints)
     val baseParser = new NbestSearch(costFunction)
@@ -32,19 +32,21 @@ case class SimplePostagger(
       ) map { initState =>
         baseParser.find(initState, nbestSize, constraints)
       }
-    val bestCandidates: Option[Seq[TaggedSentence]] = nbestList map { nbList =>
+    val bestCandidates: Option[Seq[SentenceTagging]] = nbestList map { nbList =>
       (nbList.scoredSculptures flatMap {
-        case (taggedSent: TaggedSentence, _) =>
+        case (taggedSent: SentenceTagging, _) =>
           Some(taggedSent)
         case _ =>
           None
       }).toSeq
     }
     // merge all "good" tags into a single tagged sentence, then return
-    bestCandidates map { bestCands =>
-      TaggedSentence(
-        bestCands.head.sentence,
-        (bestCands flatMap { candidate =>
+    SentenceTagging(
+      sentence,
+      if (bestCandidates == None) {
+        Map[Int, Set[TokenTag]]()
+      } else {
+        (bestCandidates.get flatMap { candidate =>
           candidate.tags.toSeq
         }) groupBy {
           case (tokenIndex, _) =>
@@ -56,8 +58,8 @@ case class SimplePostagger(
                 tagset
             }).flatten.toSet
         }
-      )
-    }
+      }
+    )
   }
 }
 

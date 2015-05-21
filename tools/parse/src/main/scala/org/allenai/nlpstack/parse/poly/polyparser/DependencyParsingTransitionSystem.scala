@@ -3,11 +3,10 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.nlpstack.parse.poly.core.{
   AnnotatedSentence,
   Sentence,
-  SentenceTransform,
   WordClusters
 }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
+import org.allenai.nlpstack.parse.poly.postagging.SentenceTagger
 
 /** A struct contains the "modes" of a typical transition parser.
   *
@@ -40,7 +39,7 @@ case class DependencyParsingArcLabel(stanLabel: Symbol, cpos: Symbol) extends Ar
 abstract class DependencyParsingTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint],
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTagger]
 ) extends TransitionSystem {
 
   @transient
@@ -55,41 +54,48 @@ abstract class DependencyParsingTransitionSystem(
     }
 
   val annotatedSentence: AnnotatedSentence = {
-    val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
+    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
+    TokenFeatureAnnotator.annotate(sentence, tagging)
 
-    // override factorie tags with requested tags
-    val requestedCposConstraints: Map[Int, RequestedCpos] =
-      (constraints flatMap { constraint: TransitionConstraint =>
-        constraint match {
-          case cposConstraint: RequestedCpos => Some(cposConstraint)
-          case _ => None
-        }
-      } map { constraint =>
-        (constraint.tokenIndex, constraint)
-      }).toMap
-    val overriddenSentence: Sentence = Sentence(
-      Range(0, taggedSentence.tokens.size) map { i =>
-        requestedCposConstraints.get(i)
-      } zip taggedSentence.tokens map {
-        case (maybeConstraint, tok) =>
-          maybeConstraint match {
-            case Some(constraint) =>
-              tok.updateProperties(Map(
-                'autoCpos -> Set(constraint.cpos),
-                'autoPos -> Set()
-              ))
-            case None => tok
+    /*
+    val annotatedSentence: AnnotatedSentence = {
+      val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
+
+      // override factorie tags with requested tags
+      val requestedCposConstraints: Map[Int, RequestedCpos] =
+        (constraints flatMap { constraint: TransitionConstraint =>
+          constraint match {
+            case cposConstraint: RequestedCpos => Some(cposConstraint)
+            case _ => None
           }
-      }
-    )
-    val tokenFeatureTagger = new TokenFeatureTagger(Seq(
-      TokenPositionFeature,
-      //TokenPropertyFeature('autoCpos),
-      TokenPropertyFeature('autoPos),
-      TokenPropertyFeature('brown0),
-      KeywordFeature(DependencyParsingTransitionSystem.keywords)
-    ))
-    tokenFeatureTagger.tag(overriddenSentence)
+        } map { constraint =>
+          (constraint.tokenIndex, constraint)
+        }).toMap
+      val overriddenSentence: Sentence = Sentence(
+        Range(0, taggedSentence.tokens.size) map { i =>
+          requestedCposConstraints.get(i)
+        } zip taggedSentence.tokens map {
+          case (maybeConstraint, tok) =>
+            maybeConstraint match {
+              case Some(constraint) =>
+                tok.updateProperties(Map(
+                  'autoCpos -> Set(constraint.cpos),
+                  'autoPos -> Set()
+                ))
+              case None => tok
+            }
+        }
+      )
+      val tokenFeatureTagger = new TokenFeatureTagger(Seq(
+        TokenPositionFeature,
+        //TokenPropertyFeature('autoCpos),
+        TokenPropertyFeature('autoPos),
+        TokenPropertyFeature('brown0),
+        KeywordFeature(DependencyParsingTransitionSystem.keywords)
+      ))
+      tokenFeatureTagger.tag(overriddenSentence)
+    }
+    */
   }
 
   val labelingFeature =

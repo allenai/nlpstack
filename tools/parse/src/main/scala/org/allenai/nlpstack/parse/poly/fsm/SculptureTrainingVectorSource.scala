@@ -28,7 +28,7 @@ case class SculptureTrainingVectorSource(
       taggedSentence <- sculptureSource.sculptureIterator
       vector <- generateVectors(taggedSentence)
     } yield {
-      //println(vector)
+      println(vector)
       vector
     }
   }

@@ -5,7 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
-import org.allenai.nlpstack.parse.poly.postagging.{ SwappablePostaggerInitializer, StanfordPostaggerInitializer, SimplePostaggerInitializer, FactoriePostaggerInitializer }
+import org.allenai.nlpstack.parse.poly.postagging._
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -72,11 +72,6 @@ object Training {
         )
       })
 
-    // Read in taggers config file if specified. This will contain config info necessary to
-    // initialize the required feature taggers (currently contais only Verbnet config).
-    val taggersConfigOption =
-      trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
-
     val clusters: Seq[BrownClusters] = trainingConfig.clustersPath match {
       case Some(clustersPath) => clustersPath.split(",") map { path =>
         BrownClusters.fromLiangFormat(path)
@@ -84,51 +79,20 @@ object Training {
       case _ => Seq.empty[BrownClusters]
     }
 
-    val verbnetTaggerOption: Option[VerbnetTagger] = for {
-      taggersConfig <- taggersConfigOption
-      verbnetConfig <- taggersConfig.get[Config]("verbnet")
-      groupName <- verbnetConfig.get[String]("group")
-      artifactName <- verbnetConfig.get[String]("name")
-      version <- verbnetConfig.get[Int]("version")
-    } yield {
-      VerbnetTagger(new Verbnet(groupName, artifactName, version))
-    }
+    val keywords = WordClusters.keyWords map { _.toString }
 
-    val googleUnigramPostagTransformOption = (for {
-      taggersConfig <- taggersConfigOption
-      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
-      groupName <- googleUnigramConfig.get[String]("group")
-      artifactName <- googleUnigramConfig.get[String]("name")
-      version <- googleUnigramConfig.get[Int]("version")
-      features <- googleUnigramConfig.get[Seq[String]]("features")
-      if (!features.isEmpty)
-    } yield {
-      val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-      val googUnigramPosTagTagger = if (features.contains("posTag")) {
-        Some(GoogleUnigramTagger(googleNgram, GoogleUnigramPos))
-      } else {
-        None
-      }
-
-      googUnigramPosTagTagger
-    }) match {
-      case Some(googleUnigramTaggersTuple) => googleUnigramTaggersTuple
-      case _ => None
-    }
-
-    val taggers: Seq[SentenceTransform] =
+    val taggers: Seq[SentenceTaggerInitializer] =
       Seq(
-        PolyPostaggerSentenceTransform(SwappablePostaggerInitializer(
-          "src/main/resources/omnibus.tagger.json",
-          useCoarseTags = true
-        )),
-        LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)
-      ) //++ verbnetTaggerOption ++
-    //googleUnigramPostagTransformOption
+        LexicalPropertiesTaggerInitializer,
+        KeywordTaggerInitializer(keywords),
+        BrownClustersTaggerInitializer(clusters),
+        FactoriePostaggerInitializer(useCoarseTags = true),
+        StanfordPostaggerInitializer(useCoarseTags = true),
+        VerbnetTaggerInitializer
+      )
 
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcEagerTransitionSystemFactory(taggers)
+      ArcHybridTransitionSystemFactory(taggers)
 
     println("Training parser.")
     val classifierTrainer: ProbabilisticClassifierTrainer =

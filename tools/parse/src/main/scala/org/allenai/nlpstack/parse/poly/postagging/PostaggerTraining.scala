@@ -1,13 +1,8 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import java.io.File
-
-import org.allenai.common.Config.EnhancedConfig
-import com.typesafe.config.{ Config, ConfigFactory }
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
@@ -53,53 +48,10 @@ object PostaggerTraining {
             path,
             ConllX(true), trainingConfig.dataSource
           )
-        }), propertyName = 'pos
+        }), propertyName = 'cpos
       )
 
-    // Read in taggers config file if specified. This will contain config info necessary to
-    // initialize the required feature taggers (currently contais only Verbnet config).
-    val taggersConfigOption =
-      trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
-
-    val maybeGoogleNgrams: Option[DatastoreGoogleNGram] = for {
-      taggersConfig <- taggersConfigOption
-      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
-      groupName <- googleUnigramConfig.get[String]("group")
-      artifactName <- googleUnigramConfig.get[String]("name")
-      version <- googleUnigramConfig.get[Int]("version")
-    } yield {
-      new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-    }
-    val googleNgramTransforms: Seq[SentenceTransform] = maybeGoogleNgrams match {
-      case Some(googleNgrams) =>
-        Seq(GoogleUnigramCpos, GoogleUnigramPos) map { tagType =>
-          GoogleUnigramTagger(googleNgrams, tagType)
-        }
-      case None =>
-        Seq()
-    }
-
-    val taggers: Seq[SentenceTransform] =
-      Seq(LexicalPropertiesTagger) ++ googleNgramTransforms //++
-    //Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
-
-    val transitionSystemFactory: TransitionSystemFactory =
-      PostaggerTransitionSystemFactory(taggers)
-
-    println("Training tagger.")
-    val classifierTrainer: ProbabilisticClassifierTrainer =
-      new OmnibusTrainer()
-    val trainingVectorSource = new SculptureTrainingVectorSource(
-      trainingSource,
-      transitionSystemFactory, None
-    )
-    val parsingCostFunctionFactory: StateCostFunctionFactory = {
-      val trainer =
-        new DTCostFunctionTrainer(classifierTrainer, transitionSystemFactory,
-          trainingVectorSource, None)
-      trainer.costFunctionFactory
-    }
-    val tagger = SimplePostagger(parsingCostFunctionFactory, nbestSize = 5)
+    val tagger = performStandardTraining(trainingSource, Some("factorie"))
 
     // save postagger
     SimplePostagger.save(tagger, trainingConfig.outputPath)
@@ -107,6 +59,57 @@ object PostaggerTraining {
     // evaluate postagger
     PolyPostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
+  }
+
+  def performStandardTraining(
+    trainingSource: TaggedSentenceSource,
+    baseTagger: Option[String]
+  ): SimplePostagger = {
+
+    val keywords = //(WordClusters.keyWords map { _.toString }) ++
+      WordClusters.harvestFrequentWordsFromSentenceSource(trainingSource, 3)
+
+    val taggers: Seq[SentenceTaggerInitializer] =
+      Seq(
+        LexicalPropertiesTaggerInitializer,
+        KeywordTaggerInitializer(keywords),
+        GoogleUnigramTaggerInitializer(GoogleUnigramCpos),
+        GoogleUnigramTaggerInitializer(GoogleUnigramPos),
+        WikiSetTaggerInitializer
+      )
+    //Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
+
+    val transitionSystemFactory: TransitionSystemFactory =
+      PostaggerTransitionSystemFactory(taggers)
+
+    val baseCostFunctionFactory: Option[StateCostFunctionFactory] =
+      None
+    /*
+      baseTagger map { taggerStr =>
+        new ExistingTaggerCostFunctionFactory(
+          taggerStr match {
+            case "stanford" => StanfordPostaggerInitializer(useCoarseTags = true)
+            case "factorie" => FactoriePostaggerInitializer(useCoarseTags = true)
+          },
+          PostaggerTransitionSystemFactory(taggers)
+        )
+      }
+      */
+
+    println("Training tagger.")
+    val classifierTrainer: ProbabilisticClassifierTrainer =
+      new OmnibusTrainer()
+    val trainingVectorSource = new SculptureTrainingVectorSource(
+      trainingSource,
+      transitionSystemFactory, baseCostFunctionFactory
+    )
+    val parsingCostFunctionFactory: StateCostFunctionFactory = {
+      val trainer =
+        new DTCostFunctionTrainer(classifierTrainer, transitionSystemFactory,
+          trainingVectorSource, baseCostFunctionFactory)
+      trainer.costFunctionFactory
+    }
+    SimplePostagger(parsingCostFunctionFactory, nbestSize = 3)
   }
 }
 

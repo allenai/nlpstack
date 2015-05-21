@@ -3,19 +3,23 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, Token }
 import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
+import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, SentenceTagging }
 
 import reming.LazyFormat
 import reming.DefaultJsonProtocol._
 
-class TokenFeatureTagger(tokenFeatures: Seq[TokenFeature]) {
+object TokenFeatureAnnotator {
 
-  def tag(sentence: Sentence): AnnotatedSentence = {
+  def annotate(sentence: Sentence, tagging: SentenceTagging): AnnotatedSentence = {
     AnnotatedSentence(
       sentence,
       Range(0, sentence.size) map { tokenIndex =>
-        FeatureVector(tokenFeatures flatMap { feature =>
-          feature(sentence, tokenIndex)
-        })
+        FeatureVector(
+          tagging.tags.getOrElse(tokenIndex, Set[TokenTag]()).toSeq
+            map { tag =>
+              FeatureName(Seq(tag.name, tag.value)) -> 1.0
+            }
+        )
       }
     )
   }

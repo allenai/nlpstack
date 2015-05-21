@@ -131,9 +131,12 @@ object StateCostFunctionFactory {
   implicit object StateCostFunctionFactoryFormat extends LazyFormat[StateCostFunctionFactory] {
     private implicit val classifierBasedCostFunctionFactoryFormat =
       jsonFormat4(ClassifierBasedCostFunctionFactory.apply)
+    //private implicit val existingTaggerCostFunctionFactoryFormat =
+    //  jsonFormat2(ExistingTaggerCostFunctionFactory.apply)
 
     override val delegate = parentFormat[StateCostFunctionFactory](
-      childFormat[ClassifierBasedCostFunctionFactory, StateCostFunctionFactory]
+      childFormat[ClassifierBasedCostFunctionFactory, StateCostFunctionFactory] //,
+    //childFormat[ExistingTaggerCostFunctionFactory, StateCostFunctionFactory]
     )
   }
 }

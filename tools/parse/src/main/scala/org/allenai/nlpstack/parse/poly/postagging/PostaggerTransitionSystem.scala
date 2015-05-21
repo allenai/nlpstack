@@ -22,7 +22,7 @@ import org.allenai.nlpstack.parse.poly.polyparser._
   */
 class PostaggerTransitionSystem(
     marbleBlock: MarbleBlock,
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTagger]
 ) extends TransitionSystem {
 
   @transient val sentence: Sentence =
@@ -59,33 +59,16 @@ class PostaggerTransitionSystem(
 
   def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
-      case sentence: TaggedSentence =>
+      case sentence: SentenceTagging =>
         Some(new PostaggerGuidedCostFunction(sentence, this))
       case _ => None
     }
 
   private val annotatedSentence: AnnotatedSentence = {
-    val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
-    val tokenFeatureTagger = new TokenFeatureTagger(Seq(
-      TokenPositionFeature,
-      TokenPropertyFeature('lexical),
-      TokenPropertyFeature('wiki),
-      TokenPropertyFeature('posTagFreq1to5),
-      TokenPropertyFeature('posTagFreq6to20),
-      TokenPropertyFeature('posTagFreq21to50),
-      TokenPropertyFeature('posTagFreq51to95),
-      TokenPropertyFeature('posTagFreq96to100),
-      TokenPropertyFeature('posTagMostLikely),
-      TokenPropertyFeature('cposTagFreq1to5),
-      TokenPropertyFeature('cposTagFreq6to20),
-      TokenPropertyFeature('cposTagFreq21to50),
-      TokenPropertyFeature('cposTagFreq51to95),
-      TokenPropertyFeature('cposTagFreq96to100),
-      TokenPropertyFeature('cposTagMostLikely),
-      SuffixFeature(WordClusters.suffixes.toSeq),
-      KeywordFeature(DependencyParsingTransitionSystem.keywords)
-    ))
-    tokenFeatureTagger.tag(taggedSentence)
+    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
+    //TokenPositionFeature
+    //SuffixFeature(WordClusters.suffixes.toSeq)
+    TokenFeatureAnnotator.annotate(sentence, tagging)
   }
 
   override def computeFeature(state: State): FeatureVector = {
@@ -98,7 +81,7 @@ class PostaggerTransitionSystem(
     new OfflineTokenFeature(annotatedSentence, OffsetRef(2)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(-1)),
     new OfflineTokenFeature(annotatedSentence, OffsetRef(-2))
-  //new TokenTransformFeature(StackRef(0), Set(GuessedArcLabel, GuessedCpos)), TODO: add GuessedPOSTag
+  //TODO: add GuessedPOSTag
   ))
 }
 
@@ -124,9 +107,10 @@ case class PostaggerState(
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
-      Some(TaggedSentence(sentence, existingTags mapValues { tag =>
-        Set(tag)
-      }))
+      Some(SentenceTagging(
+        sentence,
+        existingTags mapValues { tag => Set(TokenTag('autoCpos, tag)) }
+      ))
     } else {
       None
     }
@@ -173,7 +157,7 @@ case class AssignTag(tag: Symbol) extends StateTransition {
   * @param transitionSystem pointer to the transition system
   */
 class PostaggerGuidedCostFunction(
-    taggedSentence: TaggedSentence,
+    taggedSentence: SentenceTagging,
     override val transitionSystem: TransitionSystem
 ) extends StateCostFunction {
 
@@ -183,7 +167,7 @@ class PostaggerGuidedCostFunction(
         require(!taggerState.isFinal, "Cannot advance a final state.")
         val nextToTag = taggerState.nextTokenToTag.get
         require(taggedSentence.tags.contains(nextToTag), s"Missing gold tag for token $nextToTag.")
-        Map(AssignTag(taggedSentence.tags(nextToTag).head) -> 0)
+        Map(AssignTag(taggedSentence.tags(nextToTag).head.value) -> 0)
     }
     result
   }
@@ -194,13 +178,13 @@ class PostaggerGuidedCostFunction(
   * @param taggers sentence transformations to use for features
   */
 case class PostaggerTransitionSystemFactory(
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTaggerInitializer]
 ) extends TransitionSystemFactory {
 
   override def buildTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
-    new PostaggerTransitionSystem(marbleBlock, taggers)
+    new PostaggerTransitionSystem(marbleBlock, taggers map { tagger => SentenceTagger.initialize(tagger) })
   }
 }
