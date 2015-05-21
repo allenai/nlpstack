@@ -3,6 +3,7 @@ package org.allenai.nlpstack.parse.poly.ml
 import java.io.File
 
 import org.allenai.nlpstack.parse.poly.core.Sentence
+import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTagger, TokenTag, SentenceTagging }
 import reming.DefaultJsonProtocol._
 import scala.collection.immutable.HashSet
 import scala.io.Source
@@ -82,4 +83,28 @@ case class WikiSet(filename: String) {
 
 object WikiSet {
   implicit val jsFormat = jsonFormat1(WikiSet.apply)
+}
+
+case class WikiSetTagger(wikiset: WikiSet) extends SentenceTagger {
+
+  override def tag(sentence: Sentence): SentenceTagging = {
+    val ngrams: Set[(Int, Int)] = wikiset.identifyNgrams(sentence, 2)
+    val ngramBeginnings = ngrams map { _._1 }
+    val ngramEndings = ngrams map { _._2 }
+    val ngramInternals: Set[Int] = ngrams flatMap { case (start, finish) => Range(start + 1, finish) }
+
+    SentenceTagging(
+      sentence,
+      (Range(1, sentence.tokens.size) map { tokIndex =>
+      (
+        tokIndex,
+        Set(
+          if (ngramBeginnings.contains(tokIndex)) { Some(TokenTag('wiki, 'B)) } else { None },
+          if (ngramEndings.contains(tokIndex)) { Some(TokenTag('wiki, 'E)) } else { None },
+          if (ngramInternals.contains(tokIndex)) { Some(TokenTag('wiki, 'I)) } else { None }
+        ).flatten
+      )
+    }).toMap
+    )
+  }
 }

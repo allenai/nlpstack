@@ -4,6 +4,8 @@ import org.allenai.datastore._
 
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
+import org.allenai.nlpstack.parse.poly.core.Sentence
+import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTagger, TokenTag, NLPStackLemmatizer, SentenceTagging }
 import reming.DefaultJsonProtocol._
 
 import java.net._
@@ -295,4 +297,21 @@ object Verbnet {
   ) map { Symbol(_) }).toSet
   */
 
+}
+
+case class VerbnetTagger(verbnet: Verbnet) extends SentenceTagger {
+  override def tag(sentence: Sentence): SentenceTagging = {
+    val lemmatized = NLPStackLemmatizer.tag(sentence)
+    SentenceTagging(
+      sentence,
+      lemmatized.tags mapValues {
+        case tags =>
+          val tokLemmaLC = tags.head.value.name
+          val tokVerbnetFrames: Set[Symbol] = verbnet.getVerbnetFramePrimaryNames(tokLemmaLC)
+          tokVerbnetFrames map { frame =>
+            TokenTag('verbnetFrame, frame)
+          }
+      }
+    )
+  }
 }
