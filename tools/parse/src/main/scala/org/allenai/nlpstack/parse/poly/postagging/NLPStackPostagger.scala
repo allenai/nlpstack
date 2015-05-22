@@ -15,10 +15,10 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
 
   override def tag(
     sentence: Sentence
-  ): SentenceTagging = {
+  ): TaggedSentence = {
 
     val taggedTokens: Map[Int, PostaggedToken] =
-      SentenceTransform.getPostaggedTokens(sentence, baseTagger)
+      Util.getPostaggedTokens(sentence, baseTagger)
     val tagMap: Map[Int, Set[TokenTag]] = taggedTokens mapValues { taggedToken =>
       Set(
         if (useCoarseTags) {
@@ -31,7 +31,7 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
         }
       )
     }
-    SentenceTagging(sentence, tagMap)
+    TaggedSentence(sentence, tagMap)
   }
 }
 
@@ -40,13 +40,13 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
   */
 case object NLPStackLemmatizer extends SentenceTagger {
 
-  override def tag(sentence: Sentence): SentenceTagging = {
-    val taggedTokens = SentenceTransform.getPostaggedTokens(sentence, defaultPostagger)
+  override def tag(sentence: Sentence): TaggedSentence = {
+    val taggedTokens = Util.getPostaggedTokens(sentence, defaultPostagger)
     val lemmaMap: Map[Int, Set[TokenTag]] =
       taggedTokens mapValues { tagged =>
         val lemmatized = Lemmatized[PostaggedToken](tagged, MorphaStemmer.lemmatize(tagged.string, tagged.postag))
         Set(TokenTag('autoLemma, Symbol(lemmatized.lemma)))
       }
-    SentenceTagging(sentence, lemmaMap)
+    TaggedSentence(sentence, lemmaMap)
   }
 }

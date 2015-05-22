@@ -1,25 +1,16 @@
 package org.allenai.nlpstack.parse.poly.postagging
 
-import org.allenai.common.Config.EnhancedConfig
-import com.typesafe.config.{ Config, ConfigFactory }
-
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ SculptureSource, Sculpture }
-import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParseSource
-import org.allenai.nlpstack.postag._
 
-import java.io.File
-
-import reming.DefaultJsonProtocol._
-
-case class SentenceTagging(sentence: Sentence, tags: Map[Int, Set[TokenTag]]) extends Sculpture {
+case class TaggedSentence(sentence: Sentence, tags: Map[Int, Set[TokenTag]]) extends Sculpture {
   override val marbleBlock = sentence
 }
 
 /** A data source for TaggedSentence objects. */
 trait TaggedSentenceSource extends SculptureSource with SentenceSource {
-  def taggedSentenceIterator: Iterator[SentenceTagging]
+  def taggedSentenceIterator: Iterator[TaggedSentence]
 
   override def sculptureIterator: Iterator[Sculpture] = taggedSentenceIterator
 
@@ -40,11 +31,11 @@ case class ParseDerivedTaggedSentenceSource(
     propertyName: Symbol
 ) extends TaggedSentenceSource {
 
-  override def taggedSentenceIterator: Iterator[SentenceTagging] = {
+  override def taggedSentenceIterator: Iterator[TaggedSentence] = {
     for {
       sentence <- parseSource.sentenceIterator
     } yield {
-      SentenceTagging(
+      TaggedSentence(
         sentence,
         (sentence.tokens.zipWithIndex map {
         case (tok, index) =>

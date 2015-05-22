@@ -2,13 +2,13 @@ package org.allenai.nlpstack.parse.poly.eval
 
 import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.polyparser.{ ArcLabel, PolytreeParseSource, InMemoryPolytreeParseSource, PolytreeParse }
-import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, SentenceTagging }
+import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TaggedSentence }
 
 object TaggingEvaluator {
 
   def evaluate(
-    candidates: Iterator[SentenceTagging],
-    golds: Iterator[SentenceTagging], statistics: Seq[EvaluationStatistic]
+    candidates: Iterator[TaggedSentence],
+    golds: Iterator[TaggedSentence], statistics: Seq[EvaluationStatistic]
   ) {
 
     for {
@@ -27,7 +27,7 @@ object TaggingEvaluator {
 abstract class EvaluationStatistic {
   def reset(): Unit = {}
 
-  def notify(candidate: SentenceTagging, gold: SentenceTagging): Unit
+  def notify(candidate: TaggedSentence, gold: TaggedSentence): Unit
 
   /** Display a report about the accumulated statistics to stdout. */
   def report(): Unit
@@ -39,7 +39,7 @@ case class CposSentAccuracy(verbose: Boolean = false) extends EvaluationStatisti
   var numParses = 0
   var numGuesses = 0
 
-  override def notify(cand: SentenceTagging, gold: SentenceTagging): Unit = {
+  override def notify(cand: TaggedSentence, gold: TaggedSentence): Unit = {
     numParses += 1
     numTotal += gold.sentence.tokens.tail.size
     // skip the first element because it is the nexus (hence it has no part-of-speech)

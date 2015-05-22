@@ -184,6 +184,27 @@ object GoogleUnigram {
   }
 }
 
+sealed trait GoogleUnigramTagType {
+  val name: String
+}
+case object GoogleUnigramPos extends GoogleUnigramTagType {
+  val name: String = "posTag"
+}
+case object GoogleUnigramCpos extends GoogleUnigramTagType {
+  val name: String = "cposTag"
+}
+
+object GoogleUnigramTagType {
+  private implicit val googleUnigramPosFormat = jsonFormat0(() => GoogleUnigramPos)
+  private implicit val googleUnigramCposFormat = jsonFormat0(() => GoogleUnigramCpos)
+
+  implicit val unigramTagTypeJsonFormat = parentFormat[GoogleUnigramTagType](
+    childFormat[GoogleUnigramPos.type, GoogleUnigramTagType],
+    childFormat[GoogleUnigramCpos.type, GoogleUnigramTagType]
+  )
+}
+
+
 case class GoogleUnigramTagger(
   googleNgram: DatastoreGoogleNGram,
   tagType: GoogleUnigramTagType

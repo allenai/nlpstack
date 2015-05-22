@@ -87,8 +87,8 @@ object Training {
         KeywordTaggerInitializer(keywords),
         BrownClustersTaggerInitializer(clusters),
         FactoriePostaggerInitializer(useCoarseTags = true),
-        StanfordPostaggerInitializer(useCoarseTags = true),
-        VerbnetTaggerInitializer
+        StanfordPostaggerInitializer(useCoarseTags = true)
+      //VerbnetTaggerInitializer
       )
 
     val transitionSystemFactory: TransitionSystemFactory =

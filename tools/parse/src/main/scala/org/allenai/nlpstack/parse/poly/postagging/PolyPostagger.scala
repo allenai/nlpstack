@@ -34,16 +34,16 @@ object PolyPostagger {
   def tagTestSet(
     tagger: SentenceTagger,
     sentenceSource: SentenceSource
-  ): Iterator[SentenceTagging] = {
+  ): Iterator[TaggedSentence] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    val taggingTasks: Iterator[Future[SentenceTagging]] =
+    val taggingTasks: Iterator[Future[TaggedSentence]] =
       for {
         sentence <- sentenceSource.sentenceIterator
       } yield Future {
         tagger.tag(sentence)
       }
-    val futureTagged: Future[Iterator[SentenceTagging]] = Future.sequence(taggingTasks)
+    val futureTagged: Future[Iterator[TaggedSentence]] = Future.sequence(taggingTasks)
     Await.result(futureTagged, 2 days)
   }
 
@@ -59,7 +59,7 @@ object PolyPostagger {
     val goldTaggedSentences = for {
       goldSentence <- parseSource.sentenceIterator
     } yield {
-      SentenceTagging(
+      TaggedSentence(
         goldSentence,
         (goldSentence.tokens.zipWithIndex map {
         case (tok, index) =>

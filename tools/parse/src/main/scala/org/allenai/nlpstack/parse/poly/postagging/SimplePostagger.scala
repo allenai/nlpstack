@@ -20,7 +20,7 @@ case class SimplePostagger(
 
   override def tag(
     sentence: Sentence
-  ): SentenceTagging = {
+  ): TaggedSentence = {
 
     val constraints = Set[TransitionConstraint]() // no constraints are permitted here
     val costFunction =
@@ -32,16 +32,16 @@ case class SimplePostagger(
       ) map { initState =>
         baseParser.find(initState, nbestSize, constraints)
       }
-    val bestCandidates: Option[Seq[SentenceTagging]] = nbestList map { nbList =>
+    val bestCandidates: Option[Seq[TaggedSentence]] = nbestList map { nbList =>
       (nbList.scoredSculptures flatMap {
-        case (taggedSent: SentenceTagging, _) =>
+        case (taggedSent: TaggedSentence, _) =>
           Some(taggedSent)
         case _ =>
           None
       }).toSeq
     }
     // merge all "good" tags into a single tagged sentence, then return
-    SentenceTagging(
+    TaggedSentence(
       sentence,
       if (bestCandidates == None) {
         Map[Int, Set[TokenTag]]()

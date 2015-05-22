@@ -3,6 +3,7 @@ package org.allenai.nlpstack.parse.poly.postagging
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
 import org.allenai.nlpstack.parse.poly.fsm._
+import org.allenai.nlpstack.parse.poly.ml.{ GoogleUnigramCpos, GoogleUnigramPos }
 import org.allenai.nlpstack.parse.poly.polyparser._
 import scopt.OptionParser
 
@@ -77,7 +78,6 @@ object PostaggerTraining {
         GoogleUnigramTaggerInitializer(GoogleUnigramPos),
         WikiSetTaggerInitializer
       )
-    //Seq(WikiSetTagger(WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")))
 
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)

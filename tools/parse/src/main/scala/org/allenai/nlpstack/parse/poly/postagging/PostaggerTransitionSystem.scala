@@ -59,7 +59,7 @@ class PostaggerTransitionSystem(
 
   def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
-      case sentence: SentenceTagging =>
+      case sentence: TaggedSentence =>
         Some(new PostaggerGuidedCostFunction(sentence, this))
       case _ => None
     }
@@ -107,7 +107,7 @@ case class PostaggerState(
 
   def asSculpture: Option[Sculpture] = {
     if (isFinal) {
-      Some(SentenceTagging(
+      Some(TaggedSentence(
         sentence,
         existingTags mapValues { tag => Set(TokenTag('autoCpos, tag)) }
       ))
@@ -157,7 +157,7 @@ case class AssignTag(tag: Symbol) extends StateTransition {
   * @param transitionSystem pointer to the transition system
   */
 class PostaggerGuidedCostFunction(
-    taggedSentence: SentenceTagging,
+    taggedSentence: TaggedSentence,
     override val transitionSystem: TransitionSystem
 ) extends StateCostFunction {
 

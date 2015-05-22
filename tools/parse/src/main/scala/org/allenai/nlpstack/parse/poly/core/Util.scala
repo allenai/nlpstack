@@ -1,6 +1,12 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.Resource
+import org.allenai.nlpstack.core.{
+  Token => NLPStackToken,
+  PostaggedToken,
+  Postagger,
+  Tokenizer
+}
 import reming.{ JsonFormat, JsonParser }
 
 import java.io.{ File, InputStream, PushbackInputStream }
@@ -38,5 +44,15 @@ object Util {
       }
 
     JsonParser.read[T](new BufferedSource(uncompressedStream))
+  }
+
+  def getPostaggedTokens(sentence: Sentence, posTagger: Postagger): Map[Int, PostaggedToken] = {
+    val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
+    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+      Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
+    (posTagger.postagTokenized(nlpStackTokens).zipWithIndex map {
+      case (taggedTok, index) =>
+        (index + 1, taggedTok)
+    }).toMap
   }
 }

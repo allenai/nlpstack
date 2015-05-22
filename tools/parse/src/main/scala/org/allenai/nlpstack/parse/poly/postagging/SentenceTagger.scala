@@ -3,14 +3,14 @@ package org.allenai.nlpstack.parse.poly.postagging
 import java.io.File
 import org.allenai.common.Config.EnhancedConfig
 import com.typesafe.config.{ Config, ConfigFactory }
-import org.allenai.nlpstack.parse.poly.core.{ GoogleUnigramTagType, Sentence }
+import org.allenai.nlpstack.parse.poly.core.Sentence
 import org.allenai.nlpstack.parse.poly.ml._
 import org.allenai.nlpstack.postag.{ FactoriePostagger, StanfordPostagger }
 import reming.DefaultJsonProtocol._
 
 trait SentenceTagger {
   // TODO: currently no constraints are considered
-  def tag(sentence: Sentence): SentenceTagging
+  def tag(sentence: Sentence): TaggedSentence
 }
 
 object SentenceTagger {
@@ -74,17 +74,29 @@ object SentenceTagger {
     }
   }
 
-  def tagWithMultipleTaggers(sentence: Sentence, taggers: Seq[SentenceTagger]): SentenceTagging = {
+  def tagWithMultipleTaggers(sentence: Sentence, taggers: Seq[SentenceTagger]): TaggedSentence = {
     val taggings = taggers map { tagger =>
       tagger.tag(sentence)
     }
-    SentenceTagging(
+    TaggedSentence(
       sentence,
       (Range(0, sentence.tokens.size) map { tokIndex =>
-      (tokIndex, taggings.toSet flatMap { tagging: SentenceTagging =>
+      (tokIndex, taggings.toSet flatMap { tagging: TaggedSentence =>
         tagging.tags.getOrElse(tokIndex, Set())
       })
     }).toMap
+    )
+  }
+}
+
+case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends SentenceTagger {
+
+  override def tag(sentence: Sentence): TaggedSentence = {
+    TaggedSentence(
+      sentence,
+      (sentence.tokens.zipWithIndex map { _.swap }).toMap mapValues { tok =>
+        tokenTagger.tag(tok)
+      }
     )
   }
 }
@@ -139,17 +151,5 @@ object SentenceTaggerInitializer {
     childFormat[WikiSetTaggerInitializer.type, SentenceTaggerInitializer],
     childFormat[VerbnetTaggerInitializer.type, SentenceTaggerInitializer]
   )
-}
-
-case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends SentenceTagger {
-
-  override def tag(sentence: Sentence): SentenceTagging = {
-    SentenceTagging(
-      sentence,
-      (sentence.tokens.zipWithIndex map { _.swap }).toMap mapValues { tok =>
-        tokenTagger.tag(tok)
-      }
-    )
-  }
 }
 
