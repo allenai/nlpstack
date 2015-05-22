@@ -61,6 +61,8 @@ object SentenceTagger {
         SimplePostagger.load(configFile)
       case LexicalPropertiesTaggerInitializer =>
         IndependentTokenSentenceTagger(LexicalPropertiesTagger)
+      case TokenPositionTaggerInitializer =>
+        TokenPositionTagger
       case BrownClustersTaggerInitializer(clusters) =>
         IndependentTokenSentenceTagger(BrownClustersTagger(clusters))
       case KeywordTaggerInitializer(keywords) =>
@@ -101,6 +103,35 @@ case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends Sent
   }
 }
 
+case object TokenPositionTagger extends SentenceTagger {
+
+  private val featureName = 'place
+  private val hasNexusSymbol = 'nexus
+  private val hasFirstSymbol = 'first
+  private val hasSecondSymbol = 'second
+  private val hasSecondLastSymbol = 'secondLast
+  private val hasLastSymbol = 'last
+
+  override def tag(sentence: Sentence): TaggedSentence = {
+    TaggedSentence(
+      sentence,
+      (Range(0, sentence.tokens.size) map {
+      case tokenIndex =>
+        (
+          tokenIndex,
+          Set(
+            if (tokenIndex == 0) Some(TokenTag(featureName, hasNexusSymbol)) else None,
+            if (tokenIndex == 1) Some(TokenTag(featureName, hasFirstSymbol)) else None,
+            if (tokenIndex == 2) Some(TokenTag(featureName, hasSecondSymbol)) else None,
+            if (tokenIndex == sentence.size - 2) Some(TokenTag(featureName, hasSecondLastSymbol)) else None,
+            if (tokenIndex == sentence.size - 1) Some(TokenTag(featureName, hasLastSymbol)) else None
+          ).flatten
+        )
+    }).toMap
+    )
+  }
+}
+
 /** Recipe for initializing a part-of-speech tagger. */
 sealed trait SentenceTaggerInitializer
 
@@ -123,6 +154,7 @@ case class StanfordPostaggerInitializer(useCoarseTags: Boolean) extends Sentence
 case class SimplePostaggerInitializer(configFile: String) extends SentenceTaggerInitializer
 
 case object LexicalPropertiesTaggerInitializer extends SentenceTaggerInitializer
+case object TokenPositionTaggerInitializer extends SentenceTaggerInitializer
 case class BrownClustersTaggerInitializer(clusters: Seq[BrownClusters]) extends SentenceTaggerInitializer
 case class KeywordTaggerInitializer(keywords: Set[String]) extends SentenceTaggerInitializer
 case class GoogleUnigramTaggerInitializer(tagType: GoogleUnigramTagType) extends SentenceTaggerInitializer
@@ -134,6 +166,7 @@ object SentenceTaggerInitializer {
   private implicit val stanfordInitFormat = jsonFormat1(StanfordPostaggerInitializer.apply)
   private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
   private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTaggerInitializer)
+  private implicit val tokenPositionTaggerFormat = jsonFormat0(() => TokenPositionTaggerInitializer)
   private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTaggerInitializer.apply)
   private implicit val keywordTaggerFormat = jsonFormat1(KeywordTaggerInitializer.apply)
   private implicit val googleUnigramTaggerFormat = jsonFormat1(GoogleUnigramTaggerInitializer.apply)
@@ -145,6 +178,7 @@ object SentenceTaggerInitializer {
     childFormat[StanfordPostaggerInitializer, SentenceTaggerInitializer],
     childFormat[SimplePostaggerInitializer, SentenceTaggerInitializer],
     childFormat[LexicalPropertiesTaggerInitializer.type, SentenceTaggerInitializer],
+    childFormat[TokenPositionTaggerInitializer.type, SentenceTaggerInitializer],
     childFormat[BrownClustersTaggerInitializer, SentenceTaggerInitializer],
     childFormat[KeywordTaggerInitializer, SentenceTaggerInitializer],
     childFormat[GoogleUnigramTaggerInitializer, SentenceTaggerInitializer],

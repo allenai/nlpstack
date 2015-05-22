@@ -89,43 +89,35 @@ object AdaptiveTraining {
         Seq[BrownClusters]()
       }
     }
-    //val taggers: Seq[SentenceTransform] =
-    //  Seq(PolyPostaggerSentenceTransform(FactoriePostaggerInitializer(useCoarseTags = true)),
-    //    LexicalPropertiesTagger, BrownClustersTagger(clusters))
-    val keywords = WordClusters.keyWords map { _.toString }
+    val keywords = (WordClusters.keyWords map { _.toString })// ++
+      //WordClusters.harvestFrequentWordsFromSentenceSource(trainingSource, 3)
+    //val keywords = WordClusters.keyWords map { _.toString }
     val taggers: Seq[SentenceTaggerInitializer] =
       Seq(
-        LexicalPropertiesTaggerInitializer,
+        //LexicalPropertiesTaggerInitializer,
+        TokenPositionTaggerInitializer,
         KeywordTaggerInitializer(keywords),
-        BrownClustersTaggerInitializer(clusters)
+        BrownClustersTaggerInitializer(clusters),
+        FactoriePostaggerInitializer(useCoarseTags = true),
+        StanfordPostaggerInitializer(useCoarseTags = true)
       )
 
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcEagerTransitionSystemFactory(taggers)
+      ArcHybridTransitionSystemFactory(taggers)
 
     println("Training parser.")
-    val adaptedPostagger = PostaggerTraining.performStandardTraining(
-      ParseDerivedTaggedSentenceSource(trainingSource, 'cpos), Some("factorie"))
-    SimplePostagger.save(adaptedPostagger, "src/main/resources/adapted")
+    //val adaptedPostagger = PostaggerTraining.performStandardTraining(
+    //  ParseDerivedTaggedSentenceSource(trainingSource, 'cpos), Some("factorie"))
+    //SimplePostagger.save(adaptedPostagger, "src/main/resources/adapted")
 
-    /*
+
     val baseCostFunctionFactory: Option[StateCostFunctionFactory] =
       TransitionParser.load(config.baseModelPath) match {
         case rerankingParser: RerankingTransitionParser =>
-          rerankingParser.config.parsingCostFunctionFactory match {
-            case cfact: ClassifierBasedCostFunctionFactory =>
-              val revisedTransitionFactory = cfact.transitionSystemFactory match {
-                case aeFact: ArcEagerTransitionSystemFactory =>
-                  aeFact.copy(taggers = aeFact.taggers.tail :+ PolyPostaggerSentenceTransform(SimplePostaggerInitializer("src/main/resources/adapted.tagger.json")))
-              }
-              Some(cfact.copy(transitionSystemFactory = revisedTransitionFactory))
-          }
-          //Some(rerankingParser.config.parsingCostFunctionFactory)
+          Some(rerankingParser.config.parsingCostFunctionFactory)
         case _ => None
       }
     require(baseCostFunctionFactory != None)
-    */
-    val baseCostFunctionFactory = None
 
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
