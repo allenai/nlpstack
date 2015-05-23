@@ -88,7 +88,9 @@ object Training {
         KeywordTaggerInitializer(keywords),
         BrownClustersTaggerInitializer(clusters),
         FactoriePostaggerInitializer(useCoarseTags = true),
-        StanfordPostaggerInitializer(useCoarseTags = true)
+        StanfordPostaggerInitializer(useCoarseTags = true),
+        FactoriePostaggerInitializer(useCoarseTags = false),
+        StanfordPostaggerInitializer(useCoarseTags = false)
       //VerbnetTaggerInitializer
       )
 
