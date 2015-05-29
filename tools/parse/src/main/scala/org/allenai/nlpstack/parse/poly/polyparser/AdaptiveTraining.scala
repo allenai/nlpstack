@@ -89,7 +89,7 @@ object AdaptiveTraining {
         Seq[BrownClusters]()
       }
     }
-    val keywords = (WordClusters.keyWords map { _.toString })// ++
+    val keywords = (WordClusters.keyWords map { _.toString }) //++
       //WordClusters.harvestFrequentWordsFromSentenceSource(trainingSource, 3)
     //val keywords = WordClusters.keyWords map { _.toString }
     val taggers: Seq[SentenceTaggerInitializer] =
