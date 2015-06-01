@@ -19,21 +19,16 @@ class OpenNlpChunker extends Chunker {
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
 
-  //Open NLP runs into random nullPointerExceptions. The following is a workaround that reduces the
-  // probability
-  // of running into errors
+  //Open NLP runs into random NullPointerExceptions. The following is a workaround that reduces the
+  // probability of running into errors
   def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
-    var tries = 3
-    while(tries > 0){
-      tries -= 1
-      val ret = try{
-        chunkPostaggedOriginal(tokens)
-      } catch{
-        case e: Throwable => null
-      }
-      if(ret != null)  return ret
+    def helper(tries: Int): Seq[ChunkedToken] = try {
+      if (tries == 0) throw java.lang.NullPointerException
+      else chunkPostaggedOriginal(tokens)
+    } catch {
+      case e: Throwable => helper(tries - 1)
     }
-    return tokens.map{case a: PostaggedToken => ChunkedToken.apply(a,"ERROR")}
+    helper(3)
   }
 }
 
