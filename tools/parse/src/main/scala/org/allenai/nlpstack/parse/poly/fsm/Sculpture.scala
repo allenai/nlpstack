@@ -20,6 +20,9 @@ object Sculpture {
   implicit val sculptureJsonFormat = parentFormat[Sculpture](childFormat[PolytreeParse, Sculpture])
 }
 
+/** An interface for a Sculpture data source. */
 trait SculptureSource {
+
+  /** Returns a use-once iterator over all sculptures in the data source. */
   def sculptureIterator: Iterator[Sculpture]
 }

@@ -4,8 +4,7 @@ import org.allenai.datastore._
 
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
-import org.allenai.nlpstack.parse.poly.core.Sentence
-import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTagger, TokenTag, NLPStackLemmatizer, TaggedSentence }
+import org.allenai.nlpstack.parse.poly.core._
 import reming.DefaultJsonProtocol._
 
 import java.net._
@@ -301,7 +300,7 @@ object Verbnet {
 
 case class VerbnetTagger(verbnet: Verbnet) extends SentenceTagger {
   override def tag(sentence: Sentence): TaggedSentence = {
-    val lemmatized = NLPStackLemmatizer.tag(sentence)
+    val lemmatized = FactorieLemmatizer.tag(sentence)
     TaggedSentence(
       sentence,
       lemmatized.tags mapValues {

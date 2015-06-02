@@ -302,37 +302,6 @@ case class PolytreeParse(
     digraph.toPositionTree(rootNode)
   }
 
-  /*
-  @transient
-  lazy val relativeCposMap: Map[Int, ((Boolean, Symbol), Int)] = {
-    relativeCposMapHelper(depthFirstPreorder, Map())
-  }
-
-  @tailrec
-  private def relativeCposMapHelper(
-    nodesToProcess: Iterable[Int],
-    result: Map[Int, ((Boolean, Symbol), Int)]
-  ): Map[Int, ((Boolean, Symbol), Int)] = {
-
-    nodesToProcess.headOption match {
-      case None => result
-      case Some(nodeIndex) =>
-        val myGretels: Vector[Int] = gretels.getOrElse(nodeIndex, Vector[Int]())
-        val myGretelLabels = myGretels map { gretel =>
-          (gretel < nodeIndex, tokens(gretel).getDeterministicProperty('cpos))
-        }
-        val myGretelLabelFreq = myGretelLabels.zipWithIndex map {
-          case (gretelLabel, index) =>
-            myGretelLabels.take(index).count(_ == gretelLabel)
-        }
-        relativeCposMapHelper(
-          nodesToProcess.tail,
-          result ++ (myGretels zip (myGretelLabels zip myGretelLabelFreq)).toMap
-        )
-    }
-  }
-  */
-
   override def toString: String = {
     (Range(0, tokens.size) map { tokenIndex => printFamily(tokenIndex) }).mkString(" ")
   }
@@ -394,11 +363,9 @@ object PolytreeParse {
 
     val writer = new PrintWriter(new File(outputFilename))
     try {
-      parses foreach { optParse =>
-        optParse match {
-          case Some(parse) => writer.println(parse.asConllX + "\n")
-          case None => writer.println("FAIL\n")
-        }
+      parses foreach {
+        case Some(parse) => writer.println(parse.asConllX + "\n")
+        case None => writer.println("FAIL\n")
       }
     } finally {
       writer.close()
@@ -471,15 +438,6 @@ object PolytreeParse {
               None
             },
           finePos =
-            /*
-            if (useGoldPosTags && row(iFinePos) != "_") {
-              WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
-            } else if (useGoldPosTags && row(iCoarsePos) != "_") {
-              Some(row(iCoarsePos))
-            } else {
-              None
-            }
-            */
             if (useGoldPosTags && row(iFinePos) != "_") {
               Some(row(iFinePos))
             } else {

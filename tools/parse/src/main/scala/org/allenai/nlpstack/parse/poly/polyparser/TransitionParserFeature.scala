@@ -15,7 +15,7 @@ import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
   * @param stateRef the StateRef that refers to our desired token
   * @param tokenTransforms the transformation we want to perform on our desired token
   */
-case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Set[TokenTransform])
+case class TokenTransformFeature(stateRef: StateRef, tokenTransforms: Set[TokenTransform])
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
@@ -31,19 +31,16 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
   override def toString(): String = s"tokenTransformFeature.${stateRef.name}"
 }
 
-case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, val stateRef: StateRef)
+case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, stateRef: StateRef)
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
-    //state match {
-    //case tpState: TransitionParserState =>
     FeatureVector(
       for {
         tokenIndex <- stateRef(state).toSeq
         origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
-      } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
+      } yield FeatureName(stateRef.name +: origFeatureVectorMapping._1.symbols) -> 1.0
     )
-    //}
   }
 
   override def toString(): String = s"offlineTokenFeature.${stateRef.name}"

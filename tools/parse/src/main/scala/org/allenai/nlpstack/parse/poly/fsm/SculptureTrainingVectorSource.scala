@@ -12,12 +12,12 @@ package org.allenai.nlpstack.parse.poly.fsm
   * taskIdentifier(state2), then their respective feature vectors (i.e. feature(state) and
   * feature(state2)) will be used to train different classifiers.
   *
-  * @param sculptureSource the data source for the training sculptures
+  * @param trainingSculptures the data source for the training sculptures
   * @param transitionSystemFactory the transition system factory to use (for generating states)
   * @param baseCostFunctionFactory a trained cost function factory to adapt (optional)
   */
 case class SculptureTrainingVectorSource(
-  sculptureSource: SculptureSource,
+  trainingSculptures: SculptureSource,
   transitionSystemFactory: TransitionSystemFactory,
   baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
 )
@@ -25,11 +25,8 @@ case class SculptureTrainingVectorSource(
 
   def getVectorIterator: Iterator[FSMTrainingVector] = {
     for {
-      taggedSentence <- sculptureSource.sculptureIterator
+      taggedSentence <- trainingSculptures.sculptureIterator
       vector <- generateVectors(taggedSentence)
-    } yield {
-      //println(vector)
-      vector
-    }
+    } yield vector
   }
 }

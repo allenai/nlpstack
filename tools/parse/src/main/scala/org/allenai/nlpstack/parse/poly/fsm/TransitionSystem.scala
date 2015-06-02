@@ -7,7 +7,7 @@ import org.allenai.nlpstack.parse.poly.polyparser.{
   ArcHybridTransitionSystem,
   ArcHybridTransitionSystemFactory
 }
-import org.allenai.nlpstack.parse.poly.postagging.PostaggerTransitionSystemFactory
+import org.allenai.nlpstack.parse.poly.polytagger.PostaggerTransitionSystemFactory
 
 import reming.DefaultJsonProtocol._
 

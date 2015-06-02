@@ -2,8 +2,7 @@ package org.allenai.nlpstack.parse.poly.ml
 
 import java.io.File
 
-import org.allenai.nlpstack.parse.poly.core.Sentence
-import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTagger, TokenTag, TaggedSentence }
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTagger, TokenTag, TaggedSentence, Sentence }
 import reming.DefaultJsonProtocol._
 import scala.collection.immutable.HashSet
 import scala.io.Source

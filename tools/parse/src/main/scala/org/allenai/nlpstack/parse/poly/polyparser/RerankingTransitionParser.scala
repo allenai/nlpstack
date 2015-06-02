@@ -8,7 +8,7 @@ import org.allenai.nlpstack.parse.poly.fsm._
   *
   * @param config configuration object for the parser
   */
-case class RerankingTransitionParser(val config: ParserConfiguration) extends TransitionParser {
+case class RerankingTransitionParser(config: ParserConfiguration) extends TransitionParser {
 
   @transient val reranker: Reranker = new Reranker(config.rerankingFunction)
 
@@ -39,12 +39,6 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
     }
     candidate match {
       case Some((parse: PolytreeParse, cost)) =>
-
-        //val mappedParse = parse.copy(sentence = Sentence(
-        //  FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
-        //    tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
-        //  }
-        //))
         Some((parse, cost))
       case _ => None
     }
@@ -55,36 +49,5 @@ case class RerankingTransitionParser(val config: ParserConfiguration) extends Tr
   ): Option[PolytreeParse] = {
 
     parseWithScore(sentence, constraints) map { case (parse, _) => parse }
-    /*
-    val parsingCostFunction =
-      config.parsingCostFunctionFactory.buildCostFunction(sentence, constraints)
-    val baseParser = new NbestSearch(parsingCostFunction)
-    val nbestList: Option[NbestList] =
-      parsingCostFunction.transitionSystem.initialState(
-        constraints.toSeq
-      ) map { initState =>
-        // Only do full reranking in the absence of constraints.
-        if (constraints.isEmpty) {
-          baseParser.find(initState, config.parsingNbestSize, constraints)
-        } else {
-          baseParser.find(initState, 1, constraints)
-        }
-      }
-    val mappedNbestList: Option[NbestList] = nbestList map { x =>
-      NbestList(x.scoredSculptures)
-    }
-    val candidate: Option[Sculpture] = mappedNbestList flatMap { nbList => reranker(nbList) }
-    candidate match {
-      case Some(parse: PolytreeParse) =>
-
-        val mappedParse = parse.copy(sentence = Sentence(
-          FactorieSentenceTagger.transform(parse.sentence).tokens map { tok =>
-            tok.updateProperties(Map('cpos -> Set(tok.getDeterministicProperty('autoCpos))))
-          }
-        ))
-        Some(mappedParse)
-      case _ => None
-    }
-    */
   }
 }

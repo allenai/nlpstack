@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.parse.poly.postagging
+package org.allenai.nlpstack.parse.poly.polytagger
 
 import org.allenai.nlpstack.parse.poly.fsm.State
 import org.allenai.nlpstack.parse.poly.polyparser.StateRef

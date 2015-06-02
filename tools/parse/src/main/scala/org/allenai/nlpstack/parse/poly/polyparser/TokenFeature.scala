@@ -1,9 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, Token }
+import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
 import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
-import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TaggedSentence }
 
 import reming.LazyFormat
 import reming.DefaultJsonProtocol._

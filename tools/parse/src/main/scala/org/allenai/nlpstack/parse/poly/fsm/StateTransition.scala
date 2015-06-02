@@ -1,7 +1,7 @@
 package org.allenai.nlpstack.parse.poly.fsm
 
 import org.allenai.nlpstack.parse.poly.polyparser._
-import org.allenai.nlpstack.parse.poly.postagging.AssignTag
+import org.allenai.nlpstack.parse.poly.polytagger.AssignTag
 import reming.DefaultJsonProtocol._
 
 abstract class StateTransition extends (Option[State] => Option[State]) {

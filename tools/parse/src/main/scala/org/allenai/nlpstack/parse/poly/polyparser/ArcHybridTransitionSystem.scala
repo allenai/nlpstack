@@ -1,9 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.Sentence
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTaggerInitializer, SentenceTagger, Sentence }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.FeatureVector
-import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTaggerInitializer, SentenceTagger }
 
 /** Factory object for ArcHybridTransitionSystems.
   *

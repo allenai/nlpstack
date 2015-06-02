@@ -1,13 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{
-  AnnotatedSentence,
-  Sentence,
-  WordClusters
-}
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTaggerInitializer, SentenceTagger, Sentence, WordClusters }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
-import org.allenai.nlpstack.parse.poly.postagging.{ SentenceTaggerInitializer, SentenceTagger }
+import org.allenai.nlpstack.parse.poly.ml.FeatureVector
 
 /** Factory object for ArcEagerTransitionSystems.
   *

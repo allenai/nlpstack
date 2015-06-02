@@ -1,4 +1,4 @@
-package org.allenai.nlpstack.parse.poly.postagging
+package org.allenai.nlpstack.parse.poly.polytagger
 
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
@@ -58,7 +58,7 @@ object PostaggerTraining {
     SimplePostagger.save(tagger, trainingConfig.outputPath)
 
     // evaluate postagger
-    PolyPostagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
+    SentenceTagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }
 
@@ -67,7 +67,7 @@ object PostaggerTraining {
     baseTagger: Option[String]
   ): SimplePostagger = {
 
-    val keywords = //(WordClusters.keyWords map { _.toString }) ++
+    val keywords = (WordClusters.keyWords map { _.toString() }) ++
       WordClusters.harvestFrequentWordsFromSentenceSource(trainingSource, 3)
 
     val taggers: Seq[SentenceTaggerInitializer] =
@@ -82,19 +82,7 @@ object PostaggerTraining {
     val transitionSystemFactory: TransitionSystemFactory =
       PostaggerTransitionSystemFactory(taggers)
 
-    val baseCostFunctionFactory: Option[StateCostFunctionFactory] =
-      None
-    /*
-      baseTagger map { taggerStr =>
-        new ExistingTaggerCostFunctionFactory(
-          taggerStr match {
-            case "stanford" => StanfordPostaggerInitializer(useCoarseTags = true)
-            case "factorie" => FactoriePostaggerInitializer(useCoarseTags = true)
-          },
-          PostaggerTransitionSystemFactory(taggers)
-        )
-      }
-      */
+    val baseCostFunctionFactory: Option[StateCostFunctionFactory] = None
 
     println("Training tagger.")
     val classifierTrainer: ProbabilisticClassifierTrainer =

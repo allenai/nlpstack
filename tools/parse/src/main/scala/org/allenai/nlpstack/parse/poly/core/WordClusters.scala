@@ -71,8 +71,8 @@ object WordClusters {
       "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
   }
 
-  /** Given a list of strings, creates a histogram that maps the strings to their frequency in
-    * the list.
+  /** Given an iterator over strings, creates a histogram that maps the strings to
+    * their frequency in the list.
     *
     * @param words the strings that we want to count
     * @return a mapping from strings to their frequency in the argument list
@@ -92,7 +92,18 @@ object WordClusters {
     (wordFrequencies(words) filter { case (word, freq) => freq >= qualifyingCount }).keys.toSet
   }
 
-  def harvestFrequentWordsFromSentenceSource(sentenceSource: SentenceSource, qualifyingCount: Int): Set[String] = {
+  /** Given a SentenceSource and a minimum threshold `qualifyingCount`, returns the set of
+    * strings that appear as token words at least `qualifyingCount` times.
+    *
+    * @param sentenceSource the source of Sentence objects
+    * @param qualifyingCount the minimum frequency of words to include in the return value
+    * @return the set of strings that appear at least `qualifyingCount` times as tokens
+    */
+  def harvestFrequentWordsFromSentenceSource(
+    sentenceSource: SentenceSource,
+    qualifyingCount: Int
+  ): Set[String] = {
+
     val wordIterator: Iterator[String] =
       sentenceSource.sentenceIterator flatMap { sent =>
         sent.tokens map { tok =>

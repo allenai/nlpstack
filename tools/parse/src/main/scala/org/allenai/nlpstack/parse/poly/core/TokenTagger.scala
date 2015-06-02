@@ -1,6 +1,4 @@
-package org.allenai.nlpstack.parse.poly.postagging
-
-import org.allenai.nlpstack.parse.poly.core.Token
+package org.allenai.nlpstack.parse.poly.core
 
 case class TokenTag(name: Symbol, value: Symbol)
 

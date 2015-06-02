@@ -6,7 +6,6 @@ import org.allenai.nlpstack.core.PostaggedToken
 import java.io._
 
 import org.allenai.nlpstack.parse.poly.core._
-import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TokenTagger }
 import reming.DefaultJsonProtocol._
 
 import scala.io._

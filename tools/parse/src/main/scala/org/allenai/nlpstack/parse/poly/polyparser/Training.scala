@@ -5,7 +5,7 @@ import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
-import org.allenai.nlpstack.parse.poly.postagging._
+import org.allenai.nlpstack.parse.poly.polytagger._
 import scopt.OptionParser
 
 import com.typesafe.config.{ Config, ConfigFactory }

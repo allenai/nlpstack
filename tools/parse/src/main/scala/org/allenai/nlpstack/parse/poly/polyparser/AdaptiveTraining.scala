@@ -7,7 +7,7 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
 }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
-import org.allenai.nlpstack.parse.poly.postagging._
+import org.allenai.nlpstack.parse.poly.polytagger._
 import scopt.OptionParser
 
 private case class AdaptiveTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
@@ -70,16 +70,6 @@ object AdaptiveTraining {
         )
       })
 
-    /*
-    val testSource: PolytreeParseSource =
-      MultiPolytreeParseSource(config.testPath.split(",") map { path =>
-        InMemoryPolytreeParseSource.getParseSource(
-          path,
-          ConllX(true), config.dataSource
-        )
-      })
-    */
-
     val clusters: Seq[BrownClusters] = {
       if (config.clustersPath != "") {
         config.clustersPath.split(",") map { path =>
@@ -89,12 +79,9 @@ object AdaptiveTraining {
         Seq[BrownClusters]()
       }
     }
-    val keywords = (WordClusters.keyWords map { _.toString }) //++
-      //WordClusters.harvestFrequentWordsFromSentenceSource(trainingSource, 3)
-    //val keywords = WordClusters.keyWords map { _.toString }
+    val keywords = WordClusters.keyWords map { _.toString }
     val taggers: Seq[SentenceTaggerInitializer] =
       Seq(
-        //LexicalPropertiesTaggerInitializer,
         TokenPositionTaggerInitializer,
         KeywordTaggerInitializer(keywords),
         BrownClustersTaggerInitializer(clusters),
@@ -106,11 +93,6 @@ object AdaptiveTraining {
       ArcHybridTransitionSystemFactory(taggers)
 
     println("Training parser.")
-    //val adaptedPostagger = PostaggerTraining.performStandardTraining(
-    //  ParseDerivedTaggedSentenceSource(trainingSource, 'cpos), Some("factorie"))
-    //SimplePostagger.save(adaptedPostagger, "src/main/resources/adapted")
-
-
     val baseCostFunctionFactory: Option[StateCostFunctionFactory] =
       TransitionParser.load(config.baseModelPath) match {
         case rerankingParser: RerankingTransitionParser =>

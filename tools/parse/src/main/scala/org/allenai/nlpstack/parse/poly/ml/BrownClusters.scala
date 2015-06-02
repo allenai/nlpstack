@@ -1,20 +1,19 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import org.allenai.nlpstack.parse.poly.core.Token
-import org.allenai.nlpstack.parse.poly.postagging.{ TokenTag, TokenTagger }
+import org.allenai.nlpstack.parse.poly.core.{ TokenTag, TokenTagger, Token }
 import reming.DefaultJsonProtocol._
 
 import scala.io.Source
 
-case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {
-  require(!(clusters flatMap { cluster => cluster._2 }).toSet.contains(0))
+case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
+  require(!(allClusters flatMap { cluster => cluster._2 }).toSet.contains(0))
 
   @transient
   private val unkCluster = Symbol("0")
 
   @transient
   private val clusterMap: Map[Symbol, Seq[Int]] =
-    clusters.toMap mapValues { clusters => clusters.sorted }
+    allClusters.toMap mapValues { clusters => clusters.sorted }
 
   @transient
   private val mostSpecificClusterMap: Map[Symbol, Symbol] =

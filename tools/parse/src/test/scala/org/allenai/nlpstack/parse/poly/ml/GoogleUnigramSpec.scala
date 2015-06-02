@@ -1,16 +1,11 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import org.allenai.common.Config.EnhancedConfig
+import com.typesafe.config.ConfigFactory
 import org.allenai.common.Logging
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.datastore._
-import org.allenai.nlpstack.core.PostaggedToken
-import org.allenai.nlpstack.parse.poly.postagging.{ FactoriePostaggerInitializer, NLPStackPostagger }
 import org.allenai.nlpstack.postag._
 import org.allenai.nlpstack.parse.poly.core._
-
-import com.typesafe.config.{ Config, ConfigFactory }
-import java.io.{ File, FileWriter, Writer }
+import java.io.File
 
 class GoogleNGramSpec extends UnitSpec with Logging {
 
@@ -34,7 +29,7 @@ class GoogleNGramSpec extends UnitSpec with Logging {
     IndexedSeq(NexusToken, Token('isolate))
   )
 
-  val taggedTokens = SentenceTransform.getPostaggedTokens(sentence1, defaultPostagger)
+  val taggedTokens = Util.getPostaggedTokens(sentence1, defaultPostagger)
 
   "GoogleNgram.ngramMap" should
     "return the correct syntactic ngrams and associated frequencies for a given word" in {

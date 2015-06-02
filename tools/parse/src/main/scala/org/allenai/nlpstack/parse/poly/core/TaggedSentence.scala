@@ -1,7 +1,6 @@
-package org.allenai.nlpstack.parse.poly.postagging
+package org.allenai.nlpstack.parse.poly.core
 
-import org.allenai.nlpstack.parse.poly.core._
-import org.allenai.nlpstack.parse.poly.fsm.{ SculptureSource, Sculpture }
+import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, SculptureSource }
 import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParseSource
 
 case class TaggedSentence(sentence: Sentence, tags: Map[Int, Set[TokenTag]]) extends Sculpture {

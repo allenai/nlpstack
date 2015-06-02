@@ -1,5 +1,6 @@
-package org.allenai.nlpstack.parse.poly.postagging
+package org.allenai.nlpstack.parse.poly.polytagger
 
+import org.allenai.nlpstack.parse.poly.core.{ StanfordPostaggerInitializer, FactoriePostaggerInitializer, SentenceTagger }
 import org.allenai.nlpstack.parse.poly.polyparser.ConllX
 import scopt.OptionParser
 
@@ -47,19 +48,19 @@ object RunPostagger {
     println("Evaluating Stanford tagger:")
     val stanTagger =
       SentenceTagger.initialize(StanfordPostaggerInitializer(useCoarseTags = true))
-    PolyPostagger.fullTaggingEvaluation(stanTagger, config.testFilename,
+    SentenceTagger.fullTaggingEvaluation(stanTagger, config.testFilename,
       ConllX(useGoldPOSTags = true), config.dataSource, 0)
 
     println("Evaluating Factorie tagger:")
     val factorieTagger =
       SentenceTagger.initialize(FactoriePostaggerInitializer(useCoarseTags = true))
-    PolyPostagger.fullTaggingEvaluation(factorieTagger, config.testFilename,
+    SentenceTagger.fullTaggingEvaluation(factorieTagger, config.testFilename,
       ConllX(useGoldPOSTags = true), config.dataSource, 0)
 
     println("Evaluating serialized tagger:")
     val tagger: SimplePostagger =
       SimplePostagger.load(config.configFilename, overrideNbestSize = Some(1))
-    PolyPostagger.fullTaggingEvaluation(tagger, config.testFilename,
+    SentenceTagger.fullTaggingEvaluation(tagger, config.testFilename,
       ConllX(useGoldPOSTags = true), config.dataSource, 0)
   }
 }
