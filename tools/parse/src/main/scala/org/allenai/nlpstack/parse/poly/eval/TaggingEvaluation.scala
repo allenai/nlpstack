@@ -1,6 +1,57 @@
 package org.allenai.nlpstack.parse.poly.eval
 
-import org.allenai.nlpstack.parse.poly.core.{ TokenTag, TaggedSentenceSource, TaggedSentence }
+import org.allenai.nlpstack.parse.poly.core._
+import org.allenai.nlpstack.parse.poly.polyparser.{ FileBasedPolytreeParseSource, PolytreeParseSource, PolytreeParseFileFormat }
+
+import scala.compat.Platform
+
+object TaggingEvaluation {
+
+  def fullTaggingEvaluation(
+    tagger: SentenceTagger,
+    testFiles: String,
+    testFileFormat: PolytreeParseFileFormat,
+    dataSource: String,
+    oracleNbestSize: Int
+  ): Unit = {
+
+    val testSources: Map[String, PolytreeParseSource] =
+      (testFiles.split(",") map { path =>
+        (path, FileBasedPolytreeParseSource.getParseSource(
+          path,
+          testFileFormat, dataSource
+        ))
+      }).toMap
+    for ((sourcePath, testSource) <- testSources) {
+      println(s"Checking tagging accuracy on test set $sourcePath.")
+      evaluateTaggerOnTestSet(tagger, DerivedTaggedSentenceSource(testSource, Token.coarsePos))
+    }
+  }
+
+  def evaluateTaggerOnTestSet(
+    tagger: SentenceTagger,
+    goldSentenceSource: TaggedSentenceSource
+  ): Unit = {
+
+    println("Tagging test set.")
+    val startTime: Long = Platform.currentTime
+    val candidateTaggedSentences: Iterator[TaggedSentence] =
+      SentenceTagger.tagSentenceSource(tagger, goldSentenceSource)
+    val scoringFunction = PostagAccuracyScore(goldSentenceSource)
+
+    val overallRatio = (candidateTaggedSentences map { candidateSent =>
+      scoringFunction.getRatio(candidateSent)
+    }) reduce { (x, y) => (x._1 + y._1, x._2 + y._2) }
+    val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
+    val numParses = goldSentenceSource.sentenceIterator.size
+    println(s"Accuracy: ${overallRatio._1 / overallRatio._2}")
+    println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
+      numParses, parsingDurationInSeconds,
+      numParses.toDouble / parsingDurationInSeconds
+    ))
+  }
+
+}
 
 /** A TaggedSentenceScore maps a tagged sentence to a score. */
 abstract class TaggedSentenceScore extends (TaggedSentence => Double) {

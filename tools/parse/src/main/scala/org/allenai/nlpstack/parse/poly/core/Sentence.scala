@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
-import org.allenai.nlpstack.parse.poly.ml.FeatureVector
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
 import reming.DefaultJsonProtocol._
 
@@ -92,18 +92,5 @@ object Sentence {
 /** A data source for Sentence objects. */
 trait SentenceSource {
   def sentenceIterator: Iterator[Sentence]
-}
-
-/** An AnnotatedSentence is a sentence whose tokens are each annotated with a feature
-  * vector.
-  *
-  * @param sentence the unannotated sentence
-  * @param annotation an indexed sequence, of which the nth element is the feature vector for
-  * the nth token of the sentence
-  */
-case class AnnotatedSentence(sentence: Sentence, annotation: IndexedSeq[FeatureVector])
-
-object AnnotatedSentence {
-  implicit val annotatedSentenceJsonFormat = jsonFormat2(AnnotatedSentence.apply)
 }
 

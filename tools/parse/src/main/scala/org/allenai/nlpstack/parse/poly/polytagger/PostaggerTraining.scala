@@ -2,6 +2,7 @@ package org.allenai.nlpstack.parse.poly.polytagger
 
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{ OmnibusTrainer, ProbabilisticClassifierTrainer }
+import org.allenai.nlpstack.parse.poly.eval.TaggingEvaluation
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.{ GoogleUnigramCpos, GoogleUnigramPos }
 import org.allenai.nlpstack.parse.poly.polyparser._
@@ -17,6 +18,25 @@ private case class PostaggerTrainingCommandLine(
 
 object PostaggerTraining {
 
+  /** Command-line for training a SimplePostagger.
+    * format: OFF
+    *
+    * Usage: PostaggerTrainer [options]
+    *
+    * -t <file> | --train <file>
+    *     the path to the training files (in ConllX format, comma-separated filenames)
+    * -n <file> | --feature-taggers-config <file>
+    *     the path to a config file containing information for the required taggers.
+    * -o <file> | --output <file>
+    *     where to direct the output files
+    * -x <file> | --test <file>
+    *     the path to the test file (in ConllX format)
+    * -d <file> | --datasource <file>
+    *     the location of the data ('datastore','local')
+    *
+    * format: ON
+    * @param args see above
+    */
   def main(args: Array[String]) {
     val optionParser = new OptionParser[PostaggerTrainingCommandLine]("PostaggerTrainer") {
       opt[String]('t', "train") required () valueName "<file>" action
@@ -24,8 +44,7 @@ object PostaggerTraining {
           "(in ConllX format, comma-separated filenames)")
       opt[String]('n', "feature-taggers-config") valueName "<file>" action
         { (x, c) => c.copy(taggersConfigPath = Some(x)) } text ("the path to a config file" +
-          "containing config information required for the required taggers. Currently contains" +
-          "datastore location info to access Verbnet resources for the Verbnet tagger.")
+          " containing config information for the required taggers.")
       opt[String]('o', "output") required () valueName "<file>" action
         { (x, c) => c.copy(outputPath = x) } text "where to direct the output files"
       opt[String]('x', "test") required () valueName "<file>" action
@@ -43,7 +62,7 @@ object PostaggerTraining {
     val trainingConfig: PostaggerTrainingCommandLine =
       optionParser.parse(args, PostaggerTrainingCommandLine()).get
     val trainingSource: TaggedSentenceSource =
-      ParseDerivedTaggedSentenceSource(
+      DerivedTaggedSentenceSource(
         MultiPolytreeParseSource(trainingConfig.trainingPath.split(",") map { path =>
           InMemoryPolytreeParseSource.getParseSource(
             path,
@@ -52,19 +71,18 @@ object PostaggerTraining {
         }), propertyName = 'cpos
       )
 
-    val tagger = performStandardTraining(trainingSource, Some("factorie"))
+    val tagger = performStandardTraining(trainingSource)
 
     // save postagger
     SimplePostagger.save(tagger, trainingConfig.outputPath)
 
     // evaluate postagger
-    SentenceTagger.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
+    TaggingEvaluation.fullTaggingEvaluation(tagger, trainingConfig.testPath, ConllX(true),
       trainingConfig.dataSource, ParseFile.defaultOracleNbest)
   }
 
   def performStandardTraining(
-    trainingSource: TaggedSentenceSource,
-    baseTagger: Option[String]
+    trainingSource: TaggedSentenceSource
   ): SimplePostagger = {
 
     val keywords = (WordClusters.keyWords map { _.toString() }) ++

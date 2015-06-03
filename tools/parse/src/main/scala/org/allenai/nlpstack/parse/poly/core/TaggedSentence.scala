@@ -1,8 +1,15 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, SculptureSource }
-import org.allenai.nlpstack.parse.poly.polyparser.PolytreeParseSource
 
+/** A TaggedSentence is a sentence accompanied by a map that assigns tags to its tokens.
+  *
+  * Specifically, the `tags` field maps each token index to a set of TokenTag objects corresponding
+  * to that token.
+  *
+  * @param sentence the untagged sentence
+  * @param tags maps each token index to a set of TokenTag objects
+  */
 case class TaggedSentence(sentence: Sentence, tags: Map[Int, Set[TokenTag]]) extends Sculpture {
   override val marbleBlock = sentence
 }
@@ -18,21 +25,21 @@ trait TaggedSentenceSource extends SculptureSource with SentenceSource {
   }
 }
 
-/** A TaggedSentenceSource derived from a PolytreeParseSource.
+/** A TaggedSentenceSource derived from a SentenceSource.
   *
   * Tokens are tagged with a specified property from their `properties` field.
   *
-  * @param parseSource the parse source to derive the tagged sentences from
+  * @param sentenceSource the sentence source to derive the tagged sentences from
   * @param propertyName the token property to use as the "tag"
   */
-case class ParseDerivedTaggedSentenceSource(
-    parseSource: PolytreeParseSource,
+case class DerivedTaggedSentenceSource(
+    sentenceSource: SentenceSource,
     propertyName: Symbol
 ) extends TaggedSentenceSource {
 
   override def taggedSentenceIterator: Iterator[TaggedSentence] = {
     for {
-      sentence <- parseSource.sentenceIterator
+      sentence <- sentenceSource.sentenceIterator
     } yield {
       TaggedSentence(
         sentence,

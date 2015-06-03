@@ -10,7 +10,6 @@ import reming.DefaultJsonProtocol._
 abstract class StateFeature extends (State => FeatureVector)
 
 object StateFeature {
-  private implicit val previousLinkDirectionFormat = jsonFormat0(() => PreviousLinkDirection)
   private implicit val tokenTransformFeatureFormat = jsonFormat2(TokenTransformFeature.apply)
   private implicit val offlineTokenFeatureFormat = jsonFormat2(OfflineTokenFeature.apply)
   private implicit val tokenCardinalityFeatureFormat = jsonFormat1(TokenCardinalityFeature.apply)
@@ -19,7 +18,6 @@ object StateFeature {
     private implicit val featureUnionFormat = jsonFormat1(FeatureUnion.apply)
 
     override val delegate = parentFormat[StateFeature](
-      childFormat[PreviousLinkDirection.type, StateFeature],
       childFormat[TokenTransformFeature, StateFeature],
       childFormat[OfflineTokenFeature, StateFeature],
       childFormat[TokenCardinalityFeature, StateFeature],

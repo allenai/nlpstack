@@ -16,6 +16,7 @@ import org.allenai.nlpstack.parse.poly.polyparser.StateRef
   */
 abstract class PostaggerStateRef extends StateRef {
 
+  // Checks that the state is a PostaggerState, otherwise returns an empty sequence.
   override def apply(state: State): Seq[Int] = {
     state match {
       case taggerState: PostaggerState =>
@@ -25,7 +26,8 @@ abstract class PostaggerStateRef extends StateRef {
     }
   }
 
-  def applyToTaggerState(state: PostaggerState): Seq[Int]
+  /** Does the main work of the .apply function. Must be implemented by subclasses. */
+  protected def applyToTaggerState(state: PostaggerState): Seq[Int]
 }
 
 /** The OffsetRef tells us the Kth token to the left or right of the current token (i.e. the next

@@ -25,7 +25,7 @@ class PostaggerTransitionSystem(
     taggers: Seq[SentenceTagger]
 ) extends TransitionSystem {
 
-  @transient val sentence: Sentence =
+  @transient private val sentence: Sentence =
     marbleBlock match {
       case parse: PolytreeParse =>
         parse.sentence
@@ -33,9 +33,9 @@ class PostaggerTransitionSystem(
         sentence
     }
 
-  val taskIdentifier: TaskIdentifier = SimpleTaskIdentifier("tagging")
+  override val taskIdentifier: TaskIdentifier = SimpleTaskIdentifier("tagging")
 
-  def initialState(constraints: Seq[TransitionConstraint]): Option[State] = {
+  override def initialState(constraints: Seq[TransitionConstraint]): Option[State] = {
     Some(PostaggerState(
       nextTokenToTag =
       if (sentence.tokens.size > 1) {
@@ -48,16 +48,16 @@ class PostaggerTransitionSystem(
     ))
   }
 
-  def toSculpture(state: State): Option[Sculpture] = state.asSculpture
+  override def toSculpture(state: State): Option[Sculpture] = state.asSculpture
 
-  def interpretConstraint(
+  override def interpretConstraint(
     constraint: TransitionConstraint
   ): ((State, StateTransition) => Boolean) = {
 
     new TrivialConstraintInterpretation
   }
 
-  def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
+  override def guidedCostFunction(goldObj: Sculpture): Option[StateCostFunction] =
     goldObj match {
       case sentence: TaggedSentence =>
         Some(new PostaggerGuidedCostFunction(sentence, this))
@@ -66,9 +66,7 @@ class PostaggerTransitionSystem(
 
   private val annotatedSentence: AnnotatedSentence = {
     val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
-    //TokenPositionFeature
-    //SuffixFeature(WordClusters.suffixes.toSeq)
-    TokenFeatureAnnotator.annotate(sentence, tagging)
+    AnnotatedSentence.annotate(tagging)
   }
 
   override def computeFeature(state: State): FeatureVector = {

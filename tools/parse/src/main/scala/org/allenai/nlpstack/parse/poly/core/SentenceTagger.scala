@@ -6,19 +6,20 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken, Postagger }
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
-import org.allenai.nlpstack.parse.poly.eval.PostagAccuracyScore
 import org.allenai.nlpstack.parse.poly.ml._
-import org.allenai.nlpstack.parse.poly.polyparser.{ FileBasedPolytreeParseSource, PolytreeParseSource, PolytreeParseFileFormat }
 import org.allenai.nlpstack.parse.poly.polytagger.SimplePostagger
 import org.allenai.nlpstack.postag._
 import reming.DefaultJsonProtocol._
 
-import scala.compat.Platform
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-/** Recipe for initializing a sentence tagger. */
+/** Recipe for initializing a sentence tagger.
+  *
+  * When providing a new implementation of the SentenceTagger interface, please provide an
+  * associated SentenceTaggerInitializer here so that it can be used.
+  */
 sealed trait SentenceTaggerInitializer
 
 /** Initializes a default Factorie part-of-speech tagger.
@@ -73,8 +74,11 @@ object SentenceTaggerInitializer {
   )
 }
 
+/** An interface for any module that takes a Sentence object as input
+  * and outputs a TaggedSentence object.
+  */
 trait SentenceTagger {
-  // TODO: currently no constraints are considered
+  // TODO: extend to handle constraints on tagging
   def tag(sentence: Sentence): TaggedSentence
 }
 
@@ -109,9 +113,9 @@ object SentenceTagger {
     }
   }
 
-  private lazy val wikiSet = new WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")
+  //private lazy val wikiSet = new WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")
 
-  /** Initializes a part-of-speech tagger.
+  /** Initializes a sentence tagger from a SentenceTaggerInitializer recipe.
     *
     * @param initializer the initialization recipe
     * @return the initialized tagger
@@ -134,13 +138,20 @@ object SentenceTagger {
         IndependentTokenSentenceTagger(KeywordTagger(keywords))
       case GoogleUnigramTaggerInitializer(tagType) =>
         IndependentTokenSentenceTagger(GoogleUnigramTagger(googleNgrams.get, tagType))
-      case WikiSetTaggerInitializer =>
-        WikiSetTagger(wikiSet)
+      //case WikiSetTaggerInitializer =>
+      //  WikiSetTagger(wikiSet)
       case VerbnetTaggerInitializer =>
         VerbnetTagger(verbnet.get)
     }
   }
 
+  /** Applies a sequence of sentence taggers to a sentence, tagging each token with the union
+    * of their tags.
+    *
+    * @param sentence the sentence we want to tag
+    * @param taggers the taggers we want to apply
+    * @return a tagged sentence
+    */
   def tagWithMultipleTaggers(sentence: Sentence, taggers: Seq[SentenceTagger]): TaggedSentence = {
     val taggings = taggers map { tagger =>
       tagger.tag(sentence)
@@ -155,24 +166,15 @@ object SentenceTagger {
     )
   }
 
-  def fullTaggingEvaluation(tagger: SentenceTagger, testFiles: String,
-    testFileFormat: PolytreeParseFileFormat, dataSource: String,
-    oracleNbestSize: Int): Unit = {
-
-    val testSources: Map[String, PolytreeParseSource] =
-      (testFiles.split(",") map { path =>
-        (path, FileBasedPolytreeParseSource.getParseSource(
-          path,
-          testFileFormat, dataSource
-        ))
-      }).toMap
-    for ((sourcePath, testSource) <- testSources) {
-      println(s"Checking tagging accuracy on test set $sourcePath.")
-      evaluateTaggerOnTestSet(tagger, ParseDerivedTaggedSentenceSource(testSource, Token.coarsePos))
-    }
-  }
-
-  def tagTestSet(
+  /** Tags all sentences from a given sentence source.
+    *
+    * Note that this function is multithreaded.
+    *
+    * @param tagger the tagger to apply
+    * @param sentenceSource the sentence source
+    * @return an iterator over the resulting tagged sentences
+    */
+  def tagSentenceSource(
     tagger: SentenceTagger,
     sentenceSource: SentenceSource
   ): Iterator[TaggedSentence] = {
@@ -187,26 +189,12 @@ object SentenceTagger {
     val futureTagged: Future[Iterator[TaggedSentence]] = Future.sequence(taggingTasks)
     Await.result(futureTagged, 2 days)
   }
-
-  def evaluateTaggerOnTestSet(tagger: SentenceTagger, goldSentenceSource: TaggedSentenceSource): Unit = {
-    println("Tagging test set.")
-    val startTime: Long = Platform.currentTime
-    val candidateTaggedSentences: Iterator[TaggedSentence] = tagTestSet(tagger, goldSentenceSource)
-    val scoringFunction = PostagAccuracyScore(goldSentenceSource)
-
-    val overallRatio = (candidateTaggedSentences map { candidateSent =>
-      scoringFunction.getRatio(candidateSent)
-    }) reduce { (x, y) => (x._1 + y._1, x._2 + y._2) }
-    val parsingDurationInSeconds: Double = (Platform.currentTime - startTime) / 1000.0
-    val numParses = goldSentenceSource.sentenceIterator.size
-    println(s"Accuracy: ${overallRatio._1 / overallRatio._2}")
-    println("Parsed %d sentences in %.1f seconds, an average of %.1f sentences per second.".format(
-      numParses, parsingDurationInSeconds,
-      numParses.toDouble / parsingDurationInSeconds
-    ))
-  }
 }
 
+/** A SentenceTagger that assumes tokens can be independently tagged.
+  *
+  * @param tokenTagger the token tagger to apply to each token of the sentence
+  */
 case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends SentenceTagger {
 
   override def tag(sentence: Sentence): TaggedSentence = {
@@ -219,6 +207,9 @@ case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends Sent
   }
 }
 
+/** A SentenceTagger that tags tokens at key positions in the sentence (specifically the
+  * first, second, second-last, last, and nexus tokens).
+  */
 case object TokenPositionTagger extends SentenceTagger {
 
   private val featureName = 'place

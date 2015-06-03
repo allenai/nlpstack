@@ -1,7 +1,6 @@
 package org.allenai.nlpstack.parse.poly.ml
 
 import org.allenai.datastore._
-import org.allenai.nlpstack.core.PostaggedToken
 
 import java.io._
 
@@ -203,7 +202,11 @@ object GoogleUnigramTagType {
   )
 }
 
-
+/** A SentenceTagger that tags tokens with unigram features from Google N-grams.
+  *
+  * @param googleNgram the Google N-grams resource
+  * @param tagType the Google N-grams tag type you want to create features for
+  */
 case class GoogleUnigramTagger(
   googleNgram: DatastoreGoogleNGram,
   tagType: GoogleUnigramTagType
