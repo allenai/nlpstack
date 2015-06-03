@@ -45,7 +45,6 @@ case object TokenPositionTaggerInitializer extends SentenceTaggerInitializer
 case class BrownClustersTaggerInitializer(clusters: Seq[BrownClusters]) extends SentenceTaggerInitializer
 case class KeywordTaggerInitializer(keywords: Set[String]) extends SentenceTaggerInitializer
 case class GoogleUnigramTaggerInitializer(tagType: GoogleUnigramTagType) extends SentenceTaggerInitializer
-case object WikiSetTaggerInitializer extends SentenceTaggerInitializer
 case object VerbnetTaggerInitializer extends SentenceTaggerInitializer
 
 object SentenceTaggerInitializer {
@@ -57,7 +56,6 @@ object SentenceTaggerInitializer {
   private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTaggerInitializer.apply)
   private implicit val keywordTaggerFormat = jsonFormat1(KeywordTaggerInitializer.apply)
   private implicit val googleUnigramTaggerFormat = jsonFormat1(GoogleUnigramTaggerInitializer.apply)
-  private implicit val wikiSetTaggerFormat = jsonFormat0(() => WikiSetTaggerInitializer)
   private implicit val verbnetTaggerFormat = jsonFormat0(() => VerbnetTaggerInitializer)
 
   implicit val taggerInitJsonFormat = parentFormat[SentenceTaggerInitializer](
@@ -69,7 +67,6 @@ object SentenceTaggerInitializer {
     childFormat[BrownClustersTaggerInitializer, SentenceTaggerInitializer],
     childFormat[KeywordTaggerInitializer, SentenceTaggerInitializer],
     childFormat[GoogleUnigramTaggerInitializer, SentenceTaggerInitializer],
-    childFormat[WikiSetTaggerInitializer.type, SentenceTaggerInitializer],
     childFormat[VerbnetTaggerInitializer.type, SentenceTaggerInitializer]
   )
 }
@@ -113,8 +110,6 @@ object SentenceTagger {
     }
   }
 
-  //private lazy val wikiSet = new WikiSet("/Users/markhopkins/Projects/data/monolingual/enwiki-latest-all-titles-in-ns0")
-
   /** Initializes a sentence tagger from a SentenceTaggerInitializer recipe.
     *
     * @param initializer the initialization recipe
@@ -138,8 +133,6 @@ object SentenceTagger {
         IndependentTokenSentenceTagger(KeywordTagger(keywords))
       case GoogleUnigramTaggerInitializer(tagType) =>
         IndependentTokenSentenceTagger(GoogleUnigramTagger(googleNgrams.get, tagType))
-      //case WikiSetTaggerInitializer =>
-      //  WikiSetTagger(wikiSet)
       case VerbnetTaggerInitializer =>
         VerbnetTagger(verbnet.get)
     }
