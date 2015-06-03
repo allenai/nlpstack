@@ -38,7 +38,7 @@ class PolytreeParserSpec extends UnitSpec {
         |prep(is-3, like-4)
         |det(pancake-6, a-5)
         |pobj(like-4, pancake-6)
-        |prep(is-3, with-7)
+        |prep(pancake-6, with-7)
         |det(trap-10, a-8)
         |nn(trap-10, syrup-9)
         |pobj(with-7, trap-10)

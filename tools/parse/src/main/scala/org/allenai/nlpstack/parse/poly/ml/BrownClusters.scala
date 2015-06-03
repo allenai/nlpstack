@@ -5,9 +5,9 @@ import reming.DefaultJsonProtocol._
 
 import scala.io.Source
 
-case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
+case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {
   require(
-    !(allClusters flatMap { cluster => cluster._2 }).toSet.contains(0),
+    !(clusters flatMap { cluster => cluster._2 }).toSet.contains(0),
     s"You've pre-assigned cluster 0 to a word. This cluster is reserved."
   )
 
@@ -24,8 +24,8 @@ case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
   def getAllClusters(word: Symbol): Seq[Symbol] = {
     clusterMap.get(word) match {
       case None => Seq(unkCluster)
-      case Some(clusters) if clusters.isEmpty => Seq(unkCluster)
-      case Some(clusters) => clusters map { cluster => Symbol(cluster.toString) }
+      case Some(clusterz) if clusterz.isEmpty => Seq(unkCluster)
+      case Some(clusterz) => clusterz map { cluster => Symbol(cluster.toString) }
     }
   }
 
@@ -34,7 +34,7 @@ case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
 
   @transient
   private val clusterMap: Map[Symbol, Seq[Int]] =
-    allClusters.toMap mapValues { clusters => clusters.sorted }
+    clusters.toMap mapValues { clusters => clusters.sorted }
 
   @transient
   private val mostSpecificClusterMap: Map[Symbol, Symbol] =
