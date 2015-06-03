@@ -93,8 +93,7 @@ object PostaggerTraining {
         LexicalPropertiesTaggerInitializer,
         KeywordTaggerInitializer(keywords),
         GoogleUnigramTaggerInitializer(GoogleUnigramCpos),
-        GoogleUnigramTaggerInitializer(GoogleUnigramPos),
-        WikiSetTaggerInitializer
+        GoogleUnigramTaggerInitializer(GoogleUnigramPos)
       )
 
     val transitionSystemFactory: TransitionSystemFactory =
