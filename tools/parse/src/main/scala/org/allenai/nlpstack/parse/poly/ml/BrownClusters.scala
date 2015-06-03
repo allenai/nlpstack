@@ -6,18 +6,10 @@ import reming.DefaultJsonProtocol._
 import scala.io.Source
 
 case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
-  require(!(allClusters flatMap { cluster => cluster._2 }).toSet.contains(0))
-
-  @transient
-  private val unkCluster = Symbol("0")
-
-  @transient
-  private val clusterMap: Map[Symbol, Seq[Int]] =
-    allClusters.toMap mapValues { clusters => clusters.sorted }
-
-  @transient
-  private val mostSpecificClusterMap: Map[Symbol, Symbol] =
-    clusterMap mapValues { clusters => Symbol(clusters.last.toString) }
+  require(
+    !(allClusters flatMap { cluster => cluster._2 }).toSet.contains(0),
+    s"You've pre-assigned cluster 0 to a word. This cluster is reserved."
+  )
 
   def getMostSpecificCluster(word: Symbol): Symbol = {
     mostSpecificClusterMap.getOrElse(word, unkCluster)
@@ -36,11 +28,35 @@ case class BrownClusters(allClusters: Iterable[(Symbol, Seq[Int])]) {
       case Some(clusters) => clusters map { cluster => Symbol(cluster.toString) }
     }
   }
+
+  @transient
+  private val unkCluster = Symbol("0")
+
+  @transient
+  private val clusterMap: Map[Symbol, Seq[Int]] =
+    allClusters.toMap mapValues { clusters => clusters.sorted }
+
+  @transient
+  private val mostSpecificClusterMap: Map[Symbol, Symbol] =
+    clusterMap mapValues { clusters => Symbol(clusters.last.toString) }
+
 }
 
 object BrownClusters {
   implicit val brownClustersFormat = jsonFormat1(BrownClusters.apply)
 
+  /** Reads a trained set of Brown clusters from a file in Percy Liang's format.
+    *
+    * Each line of this file corresponds to a token, and has three tab-separated fields:
+    *
+    * CLUSTER <tab> TOKEN <tab> COUNT
+    *
+    * where CLUSTER is the bitstring representation of TOKEN's cluster, and COUNT is the token's
+    * count in the source corpus (from which the Brown clusters were trained)
+    *
+    * @param filename name of file in Liang format
+    * @return a BrownClusters object
+    */
   def fromLiangFormat(filename: String): BrownClusters = {
     val fileContents: Map[String, (String, Int)] =
       (Source.fromFile(filename).getLines map { line =>
@@ -53,6 +69,14 @@ object BrownClusters {
     fromStringMap(wordsToBitstrings, wordsToFrequency)
   }
 
+  /** Initializes a BrownClusters object from two maps, one that maps words to their Brown cluster
+    * (bitstring representation), another that maps words to their frequency in the source corpus
+    * (from which the Brown clusters were trained).
+    *
+    * @param wordsToBitstrings maps words to the bitstring representation of their Brown cluster
+    * @param wordsToFrequency maps words to their frequency in the source corpus
+    * @return a BrownClusters object
+    */
   def fromStringMap(
     wordsToBitstrings: Map[String, String],
     wordsToFrequency: Map[String, Int]
