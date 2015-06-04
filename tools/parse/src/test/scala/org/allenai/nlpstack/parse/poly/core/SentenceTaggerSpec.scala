@@ -34,9 +34,8 @@ case object ToyTagger extends SentenceTagger {
 class SentenceTaggerSpec extends UnitSpec {
   // scalastyle:off
 
-  private val keywordTagger = SentenceTagger.initialize(
-    KeywordTaggerInitializer(Set("apple", "blueberry", "cherry"))
-  )
+  private val keywordTagger =
+    KeywordTaggerInitializer(Set("apple", "blueberry", "cherry")).initialize()
 
   "tagWithMultipleTaggers" should "give the correct tags" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("apple and blueberry pie")
@@ -50,7 +49,7 @@ class SentenceTaggerSpec extends UnitSpec {
       )
   }
 
-  private val tokenPositionTagger = SentenceTagger.initialize(TokenPositionTaggerInitializer)
+  private val tokenPositionTagger = TokenPositionTaggerInitializer.initialize()
 
   "TokenPositionTagger" should "give the correct tags" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("apple and a blueberry pie")
@@ -72,6 +71,15 @@ class SentenceTaggerSpec extends UnitSpec {
         0 -> Set(TokenTag('place, 'nexus)),
         1 -> Set(TokenTag('place, 'first), TokenTag('place, 'secondLast)),
         2 -> Set(TokenTag('place, 'second), TokenTag('place, 'last))
+      )
+  }
+
+  it should "correctly handle very short sentences" in {
+    val sent = Sentence.initializeFromWhitespaceSeparatedString("pie")
+    SentenceTagger.tagWithMultipleTaggers(sent, Seq(tokenPositionTagger)).tags shouldBe
+      Map(
+        0 -> Set(TokenTag('place, 'nexus), TokenTag('place, 'secondLast)),
+        1 -> Set(TokenTag('place, 'first), TokenTag('place, 'last))
       )
   }
 }

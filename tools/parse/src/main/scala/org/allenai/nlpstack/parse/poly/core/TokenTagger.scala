@@ -48,23 +48,21 @@ case object LexicalPropertiesTagger extends TokenTagger {
       case Some(x) if Character.isUpperCase(x) => Some('firstCap)
       case _ => None
     }
-    val existsCapital = tokStr match {
-      case tokStr: String if tokStr exists {
-        Character.isUpperCase
-      } => Some('existsCap)
-      case _ => None
+    val existsCapital = tokStr find {
+      Character.isUpperCase
+    } map {
+      _ => 'existsCap
     }
-    val allCaps = tokStr match {
-      case tokStr: String if tokStr forall {
-        Character.isUpperCase
-      } => Some('allCaps)
-      case _ => None
-    }
-    val existsNumber = tokStr match {
-      case tokStr: String if tokStr exists {
-        Character.isDigit
-      } => Some('existsNum)
-      case _ => None
+    val allCaps =
+      if (tokStr forall { Character.isUpperCase }) {
+        Some('allCaps)
+      } else {
+        None
+      }
+    val existsNumber = tokStr find {
+      Character.isDigit
+    } map {
+      _ => 'existsNum
     }
     (Seq(firstLetterCapital, existsCapital, allCaps, existsNumber) map { maybeFeat =>
       maybeFeat map { feat =>

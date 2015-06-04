@@ -48,13 +48,13 @@ object RunPostagger {
 
     println("Evaluating Stanford tagger:")
     val stanTagger =
-      SentenceTagger.initialize(StanfordPostaggerInitializer(useCoarseTags = true))
+      StanfordPostaggerInitializer(useCoarseTags = true).initialize()
     TaggingEvaluation.fullTaggingEvaluation(stanTagger, config.testFilename,
       ConllX(useGoldPOSTags = true), config.dataSource, 0)
 
     println("Evaluating Factorie tagger:")
     val factorieTagger =
-      SentenceTagger.initialize(FactoriePostaggerInitializer(useCoarseTags = true))
+      FactoriePostaggerInitializer(useCoarseTags = true).initialize()
     TaggingEvaluation.fullTaggingEvaluation(factorieTagger, config.testFilename,
       ConllX(useGoldPOSTags = true), config.dataSource, 0)
 

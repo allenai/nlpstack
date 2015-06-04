@@ -49,7 +49,7 @@ case class Token(word: Symbol, properties: Map[Symbol, Set[Symbol]] = Map()) {
     * @return a token for which the specified property is mapped to the specified value
     */
   def updateProperty(propertyKey: Symbol, propertyValue: Set[Symbol]): Token = {
-    Token(word, properties ++ Map(propertyKey -> propertyValue))
+    Token(word, properties + (propertyKey -> propertyValue))
   }
 
   /** Extends the value of the specified property to include a new symbol.
@@ -88,14 +88,13 @@ object Token {
     def createDefaultProperties(word: String, goldCpos: Option[String],
       goldPos: Option[String]): Map[Symbol, Set[Symbol]] = {
 
-      val propertyMap = Map[Symbol, Set[Symbol]]()
-      val revisedMap = goldCpos match {
-        case Some(cpos) => propertyMap.updated(Token.coarsePos, Set(Symbol(cpos)))
-        case None => propertyMap
+      val propertyMap = goldCpos match {
+        case Some(cpos) => Map(Token.coarsePos -> Set(Symbol(cpos)))
+        case None => Map[Symbol, Set[Symbol]]()
       }
       goldPos match {
-        case Some(pos) => revisedMap.updated(Token.finePos, Set(Symbol(pos)))
-        case None => revisedMap
+        case Some(pos) => propertyMap.updated(Token.finePos, Set(Symbol(pos)))
+        case None => propertyMap
       }
     }
     Token(Symbol(word), createDefaultProperties(word, coarsePos, finePos))

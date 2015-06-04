@@ -18,7 +18,7 @@ case class ArcHybridTransitionSystemFactory(
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
     new ArcHybridTransitionSystem(
-      marbleBlock, constraints, taggers map { tagger => SentenceTagger.initialize(tagger) }
+      marbleBlock, constraints, taggers map { tagger => tagger.initialize() }
     )
   }
 }

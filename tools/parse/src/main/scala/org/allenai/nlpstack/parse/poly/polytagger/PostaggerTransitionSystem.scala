@@ -183,6 +183,6 @@ case class PostaggerTransitionSystemFactory(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
-    new PostaggerTransitionSystem(marbleBlock, taggers map { tagger => SentenceTagger.initialize(tagger) })
+    new PostaggerTransitionSystem(marbleBlock, taggers map { tagger => tagger.initialize() })
   }
 }

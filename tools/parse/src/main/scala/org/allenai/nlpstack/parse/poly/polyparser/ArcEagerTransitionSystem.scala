@@ -17,7 +17,7 @@ case class ArcEagerTransitionSystemFactory(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
-    new ArcEagerTransitionSystem(marbleBlock, constraints, taggers map { tagger => SentenceTagger.initialize(tagger) })
+    new ArcEagerTransitionSystem(marbleBlock, constraints, taggers map { tagger => tagger.initialize() })
   }
 }
 

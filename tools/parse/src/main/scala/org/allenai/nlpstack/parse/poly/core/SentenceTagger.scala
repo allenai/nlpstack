@@ -20,32 +20,109 @@ import scala.language.postfixOps
   * When providing a new implementation of the SentenceTagger interface, please provide an
   * associated SentenceTaggerInitializer here so that it can be used.
   */
-sealed trait SentenceTaggerInitializer
+sealed trait SentenceTaggerInitializer {
+  def initialize(): SentenceTagger
+}
 
 /** Initializes a default Factorie part-of-speech tagger.
   *
   * @param useCoarseTags set to true if you want the tagger to output Google coarse POS tags
   */
-case class FactoriePostaggerInitializer(useCoarseTags: Boolean) extends SentenceTaggerInitializer
+case class FactoriePostaggerInitializer(useCoarseTags: Boolean) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    NLPStackPostagger(FactoriePostaggerInitializer.factorieTagger, useCoarseTags)
+  }
+}
+
+object FactoriePostaggerInitializer {
+  lazy val factorieTagger = new FactoriePostagger()
+}
 
 /** Initializes a default Stanford part-of-speech tagger.
   *
   * @param useCoarseTags set to true if you want the tagger to output Google coarse POS tags
   */
-case class StanfordPostaggerInitializer(useCoarseTags: Boolean) extends SentenceTaggerInitializer
+case class StanfordPostaggerInitializer(useCoarseTags: Boolean) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    NLPStackPostagger(StanfordPostaggerInitializer.stanfordTagger, useCoarseTags)
+  }
+}
+
+object StanfordPostaggerInitializer {
+  lazy val stanfordTagger = new StanfordPostagger()
+}
 
 /** Initializes a SimplePostagger.
   *
   * @param configFile filename containing the JSON configuration
   */
-case class SimplePostaggerInitializer(configFile: String) extends SentenceTaggerInitializer
+case class SimplePostaggerInitializer(configFile: String) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = SimplePostagger.load(configFile)
+}
 
-case object LexicalPropertiesTaggerInitializer extends SentenceTaggerInitializer
-case object TokenPositionTaggerInitializer extends SentenceTaggerInitializer
-case class BrownClustersTaggerInitializer(clusters: Seq[BrownClusters]) extends SentenceTaggerInitializer
-case class KeywordTaggerInitializer(keywords: Set[String]) extends SentenceTaggerInitializer
-case class GoogleUnigramTaggerInitializer(tagType: GoogleUnigramTagType) extends SentenceTaggerInitializer
-case object VerbnetTaggerInitializer extends SentenceTaggerInitializer
+case object LexicalPropertiesTaggerInitializer extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    IndependentTokenSentenceTagger(LexicalPropertiesTagger)
+  }
+}
+
+case object TokenPositionTaggerInitializer extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = TokenPositionTagger
+}
+
+case class BrownClustersTaggerInitializer(clusters: Seq[BrownClusters]) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    IndependentTokenSentenceTagger(BrownClustersTagger(clusters))
+  }
+}
+
+case class KeywordTaggerInitializer(keywords: Set[String]) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    IndependentTokenSentenceTagger(KeywordTagger(keywords))
+  }
+}
+
+case class GoogleUnigramTaggerInitializer(tagType: GoogleUnigramTagType) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    IndependentTokenSentenceTagger(GoogleUnigramTagger(
+      GoogleUnigramTaggerInitializer.googleNgrams.get, tagType
+    ))
+  }
+}
+
+object GoogleUnigramTaggerInitializer {
+  lazy val googleNgrams: Option[DatastoreGoogleNGram] = {
+    val taggersConfig =
+      ConfigFactory.parseFile(new File(SentenceTagger.taggersConfigFile))
+    for {
+      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
+      groupName <- googleUnigramConfig.get[String]("group")
+      artifactName <- googleUnigramConfig.get[String]("name")
+      version <- googleUnigramConfig.get[Int]("version")
+    } yield {
+      new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
+    }
+  }
+}
+
+case object VerbnetTaggerInitializer extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = {
+    VerbnetTagger(verbnet.get)
+  }
+
+  private lazy val verbnet: Option[Verbnet] = {
+    val taggersConfig =
+      ConfigFactory.parseFile(new File(SentenceTagger.taggersConfigFile))
+    for {
+      verbnetConfig <- taggersConfig.get[Config]("verbnet")
+      groupName <- verbnetConfig.get[String]("group")
+      artifactName <- verbnetConfig.get[String]("name")
+      version <- verbnetConfig.get[Int]("version")
+    } yield {
+      new Verbnet(groupName, artifactName, version)
+    }
+  }
+}
 
 object SentenceTaggerInitializer {
   private implicit val factorieInitFormat = jsonFormat1(FactoriePostaggerInitializer.apply)
@@ -82,61 +159,6 @@ trait SentenceTagger {
 object SentenceTagger {
 
   val taggersConfigFile = "src/main/resources/featuretaggers.config"
-
-  private lazy val stanfordTagger = new StanfordPostagger()
-  private lazy val factorieTagger = new FactoriePostagger()
-  private lazy val googleNgrams: Option[DatastoreGoogleNGram] = {
-    val taggersConfig =
-      ConfigFactory.parseFile(new File(taggersConfigFile))
-    for {
-      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
-      groupName <- googleUnigramConfig.get[String]("group")
-      artifactName <- googleUnigramConfig.get[String]("name")
-      version <- googleUnigramConfig.get[Int]("version")
-    } yield {
-      new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-    }
-  }
-  private lazy val verbnet: Option[Verbnet] = {
-    val taggersConfig =
-      ConfigFactory.parseFile(new File(taggersConfigFile))
-    for {
-      verbnetConfig <- taggersConfig.get[Config]("verbnet")
-      groupName <- verbnetConfig.get[String]("group")
-      artifactName <- verbnetConfig.get[String]("name")
-      version <- verbnetConfig.get[Int]("version")
-    } yield {
-      new Verbnet(groupName, artifactName, version)
-    }
-  }
-
-  /** Initializes a sentence tagger from a SentenceTaggerInitializer recipe.
-    *
-    * @param initializer the initialization recipe
-    * @return the initialized tagger
-    */
-  def initialize(initializer: SentenceTaggerInitializer): SentenceTagger = {
-    initializer match {
-      case FactoriePostaggerInitializer(useCoarseTags) =>
-        NLPStackPostagger(factorieTagger, useCoarseTags)
-      case StanfordPostaggerInitializer(useCoarseTags) =>
-        NLPStackPostagger(stanfordTagger, useCoarseTags)
-      case SimplePostaggerInitializer(configFile) =>
-        SimplePostagger.load(configFile)
-      case LexicalPropertiesTaggerInitializer =>
-        IndependentTokenSentenceTagger(LexicalPropertiesTagger)
-      case TokenPositionTaggerInitializer =>
-        TokenPositionTagger
-      case BrownClustersTaggerInitializer(clusters) =>
-        IndependentTokenSentenceTagger(BrownClustersTagger(clusters))
-      case KeywordTaggerInitializer(keywords) =>
-        IndependentTokenSentenceTagger(KeywordTagger(keywords))
-      case GoogleUnigramTaggerInitializer(tagType) =>
-        IndependentTokenSentenceTagger(GoogleUnigramTagger(googleNgrams.get, tagType))
-      case VerbnetTaggerInitializer =>
-        VerbnetTagger(verbnet.get)
-    }
-  }
 
   /** Applies a sequence of sentence taggers to a sentence, tagging each token with the union
     * of their tags.
@@ -213,22 +235,20 @@ case object TokenPositionTagger extends SentenceTagger {
   private val hasLastSymbol = 'last
 
   override def tag(sentence: Sentence): TaggedSentence = {
-    TaggedSentence(
-      sentence,
-      (Range(0, sentence.tokens.size) map {
-      case tokenIndex =>
-        (
-          tokenIndex,
-          Set(
-            if (tokenIndex == 0) Some(TokenTag(featureName, hasNexusSymbol)) else None,
-            if (tokenIndex == 1) Some(TokenTag(featureName, hasFirstSymbol)) else None,
-            if (tokenIndex == 2) Some(TokenTag(featureName, hasSecondSymbol)) else None,
-            if (tokenIndex == sentence.size - 2) Some(TokenTag(featureName, hasSecondLastSymbol)) else None,
-            if (tokenIndex == sentence.size - 1) Some(TokenTag(featureName, hasLastSymbol)) else None
-          ).flatten
-        )
-    }).toMap
+    var tags = Map[Int, Set[TokenTag]]()
+    tags = tags.updated(0, Set(TokenTag(featureName, hasNexusSymbol)))
+    tags = tags.updated(1, Set(TokenTag(featureName, hasFirstSymbol)))
+    tags = tags.updated(2, Set(TokenTag(featureName, hasSecondSymbol)))
+    tags = tags.updated(
+      sentence.size - 1,
+      tags.getOrElse(sentence.size - 1, Set[TokenTag]()) + TokenTag(featureName, hasLastSymbol)
     )
+    tags = tags.updated(
+      sentence.size - 2,
+      tags.getOrElse(sentence.size - 2, Set[TokenTag]()) + TokenTag(featureName, hasSecondLastSymbol)
+    )
+    val finalTags = tags filterKeys { tokIndex => tokIndex >= 0 && tokIndex < sentence.size }
+    TaggedSentence(sentence, finalTags)
   }
 }
 

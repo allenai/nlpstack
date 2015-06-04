@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.Resource
 import org.allenai.nlpstack.core.{
-  Token => NLPStackToken,
+  Token => NlpStackToken,
   PostaggedToken,
   Postagger,
   Tokenizer
@@ -54,7 +54,7 @@ object Util {
     */
   def getPostaggedTokens(sentence: Sentence, posTagger: Postagger): Map[Int, PostaggedToken] = {
     val words: IndexedSeq[String] = sentence.tokens.tail map { tok => tok.word.name }
-    val nlpStackTokens: IndexedSeq[NLPStackToken] =
+    val nlpStackTokens: IndexedSeq[NlpStackToken] =
       Tokenizer.computeOffsets(words, words.mkString).toIndexedSeq
     (posTagger.postagTokenized(nlpStackTokens).zipWithIndex map {
       case (taggedTok, index) =>

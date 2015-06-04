@@ -84,9 +84,11 @@ object Sentence {
     * @return the corresponding Sentence object
     */
   def initializeFromWhitespaceSeparatedString(rawString: String): Sentence = {
-    val tokens = rawString.trim.split("\\s+") map { str => Token(Symbol(str)) }
-    Sentence(NexusToken +: tokens.toIndexedSeq)
+    val tokens = whitespaceRegex.split(rawString.trim) map { str => Token(Symbol(str)) }
+    Sentence((NexusToken +: tokens).toIndexedSeq)
   }
+  private val whitespaceRegex = """\s+""".r
+
 }
 
 /** A data source for Sentence objects. */

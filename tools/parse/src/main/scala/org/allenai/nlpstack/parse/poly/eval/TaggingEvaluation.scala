@@ -15,13 +15,14 @@ object TaggingEvaluation {
     oracleNbestSize: Int
   ): Unit = {
 
-    val testSources: Map[String, PolytreeParseSource] =
-      (testFiles.split(",") map { path =>
+    val testSources: Map[String, PolytreeParseSource] = {
+      testFiles.split(",") map { path =>
         (path, FileBasedPolytreeParseSource.getParseSource(
           path,
           testFileFormat, dataSource
         ))
-      }).toMap
+      }
+    }.toMap
     for ((sourcePath, testSource) <- testSources) {
       println(s"Checking tagging accuracy on test set $sourcePath.")
       evaluateTaggerOnTestSet(tagger, DerivedTaggedSentenceSource(testSource, Token.coarsePos))
@@ -61,7 +62,7 @@ abstract class TaggedSentenceScore extends (TaggedSentence => Double) {
     if (denominator == 0) {
       0.0
     } else {
-      numerator.toFloat / denominator
+      numerator.toDouble / denominator
     }
   }
 
