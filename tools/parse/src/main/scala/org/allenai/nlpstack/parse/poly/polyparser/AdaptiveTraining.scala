@@ -7,7 +7,6 @@ import org.allenai.nlpstack.parse.poly.decisiontree.{
 }
 import org.allenai.nlpstack.parse.poly.fsm._
 import org.allenai.nlpstack.parse.poly.ml.BrownClusters
-import org.allenai.nlpstack.parse.poly.polytagger._
 import scopt.OptionParser
 
 private case class AdaptiveTrainingConfig(baseModelPath: String = "", clustersPath: String = "",
