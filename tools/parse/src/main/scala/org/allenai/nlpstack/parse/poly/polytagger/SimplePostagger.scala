@@ -8,6 +8,14 @@ import org.allenai.nlpstack.parse.poly.fsm._
 import reming.CompactPrinter
 import reming.DefaultJsonProtocol._
 
+/** Initializes a SimplePostagger.
+  *
+  * @param configFile filename containing the JSON configuration
+  */
+case class SimplePostaggerInitializer(configFile: String) extends SentenceTaggerInitializer {
+  override def initialize(): SentenceTagger = SimplePostagger.load(configFile)
+}
+
 /** A part-of-speech tagger based on the org.allenai.nlpstack.parse.poly.fsm package.
   *
   * @param costFunctionFactory for each sentence, builds a cost function over FSM transitions

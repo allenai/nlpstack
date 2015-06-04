@@ -7,7 +7,6 @@ import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken, Postagger }
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
 import org.allenai.nlpstack.parse.poly.ml._
-import org.allenai.nlpstack.parse.poly.polytagger.SimplePostagger
 import org.allenai.nlpstack.postag._
 import reming.DefaultJsonProtocol._
 
@@ -20,7 +19,7 @@ import scala.language.postfixOps
   * When providing a new implementation of the SentenceTagger interface, please provide an
   * associated SentenceTaggerInitializer here so that it can be used.
   */
-sealed trait SentenceTaggerInitializer {
+trait SentenceTaggerInitializer {
   def initialize(): SentenceTagger
 }
 
@@ -50,14 +49,6 @@ case class StanfordPostaggerInitializer(useCoarseTags: Boolean) extends Sentence
 
 object StanfordPostaggerInitializer {
   lazy val stanfordTagger = new StanfordPostagger()
-}
-
-/** Initializes a SimplePostagger.
-  *
-  * @param configFile filename containing the JSON configuration
-  */
-case class SimplePostaggerInitializer(configFile: String) extends SentenceTaggerInitializer {
-  override def initialize(): SentenceTagger = SimplePostagger.load(configFile)
 }
 
 case object LexicalPropertiesTaggerInitializer extends SentenceTaggerInitializer {
@@ -127,7 +118,7 @@ case object VerbnetTaggerInitializer extends SentenceTaggerInitializer {
 object SentenceTaggerInitializer {
   private implicit val factorieInitFormat = jsonFormat1(FactoriePostaggerInitializer.apply)
   private implicit val stanfordInitFormat = jsonFormat1(StanfordPostaggerInitializer.apply)
-  private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
+  //private implicit val simpleInitFormat = jsonFormat1(SimplePostaggerInitializer.apply)
   private implicit val lexicalPropertiesTaggerFormat = jsonFormat0(() => LexicalPropertiesTaggerInitializer)
   private implicit val tokenPositionTaggerFormat = jsonFormat0(() => TokenPositionTaggerInitializer)
   private implicit val brownClustersTaggerFormat = jsonFormat1(BrownClustersTaggerInitializer.apply)
@@ -138,7 +129,7 @@ object SentenceTaggerInitializer {
   implicit val taggerInitJsonFormat = parentFormat[SentenceTaggerInitializer](
     childFormat[FactoriePostaggerInitializer, SentenceTaggerInitializer],
     childFormat[StanfordPostaggerInitializer, SentenceTaggerInitializer],
-    childFormat[SimplePostaggerInitializer, SentenceTaggerInitializer],
+    //childFormat[SimplePostaggerInitializer, SentenceTaggerInitializer],
     childFormat[LexicalPropertiesTaggerInitializer.type, SentenceTaggerInitializer],
     childFormat[TokenPositionTaggerInitializer.type, SentenceTaggerInitializer],
     childFormat[BrownClustersTaggerInitializer, SentenceTaggerInitializer],
