@@ -1,15 +1,10 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
-import org.allenai.nlpstack.parse.poly.polytagger._
+import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
-
-import com.typesafe.config.{ Config, ConfigFactory }
-import java.io.{ File, FileWriter, Writer }
 
 private case class ParserTrainingConfig(
   clustersPath: Option[String] = None,
