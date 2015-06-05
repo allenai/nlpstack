@@ -11,7 +11,7 @@ class OpenNlpChunker extends Chunker {
     override protected def initialValue(): ChunkerME = new ChunkerME(OpenNlpChunker.model)
   }
 
-  def chunkPostaggedOriginal(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
+  def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
     // OpenNLP uses : as the postag for hyphens, but we use HYPH, so we change it back before
     // sending it to the chunker.
     val fixedTokens = tokens.map { t =>
@@ -22,8 +22,6 @@ class OpenNlpChunker extends Chunker {
       .toArray)
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
-
-  def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = chunkPostaggedOriginal(tokens)
 }
 
 object OpenNlpChunker {
