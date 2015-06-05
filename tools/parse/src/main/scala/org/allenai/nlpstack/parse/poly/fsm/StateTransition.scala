@@ -31,6 +31,7 @@ object StateTransition {
   private implicit val hybridRightArcFormat = jsonFormat1(ArcHybridRightArc.apply)
   private implicit val leftLabelArcFormat = jsonFormat1(LabelLeftArc.apply)
   private implicit val rightLabelArcFormat = jsonFormat1(LabelRightArc.apply)
+  //private implicit val tagTokenFormat = jsonFormat1(AssignTag.apply)
 
   implicit val stateTransitionJsonFormat = parentFormat[StateTransition](
     childFormat[ArcEagerShift.type, StateTransition]("Sh"),
@@ -41,6 +42,7 @@ object StateTransition {
     childFormat[ArcEagerRightArc, StateTransition]("Rt"),
     childFormat[ArcHybridLeftArc, StateTransition]("HyLt"),
     childFormat[ArcHybridRightArc, StateTransition]("HyRt"),
+    //childFormat[AssignTag, StateTransition]("Tag"),
     childFormat[LabelLeftArc, StateTransition]("LtLbl"),
     childFormat[LabelRightArc, StateTransition]("RtLbl")
   )

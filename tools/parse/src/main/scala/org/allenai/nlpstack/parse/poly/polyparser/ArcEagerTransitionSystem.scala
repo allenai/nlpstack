@@ -1,13 +1,8 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{
-  AnnotatedSentence,
-  Sentence,
-  SentenceTransform,
-  WordClusters
-}
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTaggerInitializer, SentenceTagger, Sentence, WordClusters }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
+import org.allenai.nlpstack.parse.poly.ml.FeatureVector
 
 /** Factory object for ArcEagerTransitionSystems.
   *
@@ -15,14 +10,14 @@ import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, BrownClusters }
   * want to part-of-speech-tag the tokens.
   */
 case class ArcEagerTransitionSystemFactory(
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTaggerInitializer]
 ) extends TransitionSystemFactory {
 
   def buildTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint]
   ): TransitionSystem = {
-    new ArcEagerTransitionSystem(marbleBlock, constraints, taggers)
+    new ArcEagerTransitionSystem(marbleBlock, constraints, taggers map { tagger => tagger.initialize() })
   }
 }
 
@@ -69,7 +64,7 @@ object ArcEagerTaskIdentifier extends TaskIdentifier {
 case class ArcEagerTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint],
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTagger]
 ) extends DependencyParsingTransitionSystem(marbleBlock, constraints, taggers) {
 
   @transient

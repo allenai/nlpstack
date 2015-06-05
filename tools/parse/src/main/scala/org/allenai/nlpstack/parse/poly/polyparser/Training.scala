@@ -1,14 +1,10 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree._
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.{ BrownClusters, DatastoreGoogleNGram, Verbnet }
+import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 import scopt.OptionParser
-
-import com.typesafe.config.{ Config, ConfigFactory }
-import java.io.{ File, FileWriter, Writer }
 
 private case class ParserTrainingConfig(
   clustersPath: Option[String] = None,
@@ -71,11 +67,6 @@ object Training {
         )
       })
 
-    // Read in taggers config file if specified. This will contain config info necessary to
-    // initialize the required feature taggers (currently contais only Verbnet config).
-    val taggersConfigOption =
-      trainingConfig.taggersConfigPath map (x => ConfigFactory.parseFile(new File(x)))
-
     val clusters: Seq[BrownClusters] = trainingConfig.clustersPath match {
       case Some(clustersPath) => clustersPath.split(",") map { path =>
         BrownClusters.fromLiangFormat(path)
@@ -83,54 +74,28 @@ object Training {
       case _ => Seq.empty[BrownClusters]
     }
 
-    val verbnetTaggerOption: Option[VerbnetTagger] = for {
-      taggersConfig <- taggersConfigOption
-      verbnetConfig <- taggersConfig.get[Config]("verbnet")
-      groupName <- verbnetConfig.get[String]("group")
-      artifactName <- verbnetConfig.get[String]("name")
-      version <- verbnetConfig.get[Int]("version")
-    } yield {
-      VerbnetTagger(new Verbnet(groupName, artifactName, version))
-    }
+    val keywords = WordClusters.keyWords map { _.toString }
 
-    val (googleUnigramDepLabelTransformOption, googleUnigramPostagTransformOption) = (for {
-      taggersConfig <- taggersConfigOption
-      googleUnigramConfig <- taggersConfig.get[Config]("googleUnigram")
-      groupName <- googleUnigramConfig.get[String]("group")
-      artifactName <- googleUnigramConfig.get[String]("name")
-      version <- googleUnigramConfig.get[Int]("version")
-      features <- googleUnigramConfig.get[Seq[String]]("features")
-      if (!features.isEmpty)
-    } yield {
-      val googleNgram = new DatastoreGoogleNGram(groupName, artifactName, version, 1000)
-      val googUnigramDepLabelTagger = if (features.contains("depLabel")) {
-        Some(GoogleUnigramDepLabelTagger(googleNgram))
-      } else {
-        None
-      }
-      val googUnigramPosTagTagger = if (features.contains("posTag")) {
-        Some(GoogleUnigramPostagTagger(googleNgram))
-      } else {
-        None
-      }
-      (googUnigramDepLabelTagger, googUnigramPosTagTagger)
-    }) match {
-      case Some(googleUnigramTaggersTuple) => googleUnigramTaggersTuple
-      case _ => (None, None)
-    }
-
-    val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger,
-        BrownClustersTagger(clusters)) ++ verbnetTaggerOption ++
-        googleUnigramPostagTransformOption ++ googleUnigramDepLabelTransformOption
+    val taggers: Seq[SentenceTaggerInitializer] =
+      Seq(
+        //LexicalPropertiesTaggerInitializer,
+        TokenPositionTaggerInitializer,
+        KeywordTaggerInitializer(keywords),
+        BrownClustersTaggerInitializer(clusters),
+        FactoriePostaggerInitializer(useCoarseTags = true),
+        StanfordPostaggerInitializer(useCoarseTags = true),
+        FactoriePostaggerInitializer(useCoarseTags = false),
+        StanfordPostaggerInitializer(useCoarseTags = false)
+      //VerbnetTaggerInitializer
+      )
 
     val transitionSystemFactory: TransitionSystemFactory =
-      ArcEagerTransitionSystemFactory(taggers)
+      ArcHybridTransitionSystemFactory(taggers)
 
     println("Training parser.")
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
-    val trainingVectorSource = new GoldParseTrainingVectorSource(
+    val trainingVectorSource = new SculptureTrainingVectorSource(
       trainingSource,
       transitionSystemFactory, None
     )
@@ -151,6 +116,6 @@ object Training {
     TransitionParser.save(parser, trainingConfig.outputPath)
 
     ParseFile.fullParseEvaluation(parser, trainingConfig.testPath, ConllX(true),
-      trainingConfig.dataSource, ParseFile.defaultOracleNbest)
+      trainingConfig.dataSource, 0)
   }
 }

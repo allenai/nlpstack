@@ -1,22 +1,15 @@
 package org.allenai.nlpstack.parse.poly.ml
 
+import org.allenai.nlpstack.parse.poly.core.{ TokenTag, TokenTagger, Token }
 import reming.DefaultJsonProtocol._
 
 import scala.io.Source
 
 case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {
-  require(!(clusters flatMap { cluster => cluster._2 }).toSet.contains(0))
-
-  @transient
-  private val unkCluster = Symbol("0")
-
-  @transient
-  private val clusterMap: Map[Symbol, Seq[Int]] =
-    clusters.toMap mapValues { clusters => clusters.sorted }
-
-  @transient
-  private val mostSpecificClusterMap: Map[Symbol, Symbol] =
-    clusterMap mapValues { clusters => Symbol(clusters.last.toString) }
+  require(
+    !(clusters flatMap { cluster => cluster._2 }).toSet.contains(0),
+    s"You've pre-assigned cluster 0 to a word. This cluster is reserved."
+  )
 
   def getMostSpecificCluster(word: Symbol): Symbol = {
     mostSpecificClusterMap.getOrElse(word, unkCluster)
@@ -31,15 +24,39 @@ case class BrownClusters(clusters: Iterable[(Symbol, Seq[Int])]) {
   def getAllClusters(word: Symbol): Seq[Symbol] = {
     clusterMap.get(word) match {
       case None => Seq(unkCluster)
-      case Some(clusters) if clusters.isEmpty => Seq(unkCluster)
-      case Some(clusters) => clusters map { cluster => Symbol(cluster.toString) }
+      case Some(clusterz) if clusterz.isEmpty => Seq(unkCluster)
+      case Some(clusterz) => clusterz map { cluster => Symbol(cluster.toString) }
     }
   }
+
+  @transient
+  private val unkCluster = Symbol("0")
+
+  @transient
+  private val clusterMap: Map[Symbol, Seq[Int]] =
+    clusters.toMap mapValues { clusters => clusters.sorted }
+
+  @transient
+  private val mostSpecificClusterMap: Map[Symbol, Symbol] =
+    clusterMap mapValues { clusters => Symbol(clusters.last.toString) }
+
 }
 
 object BrownClusters {
   implicit val brownClustersFormat = jsonFormat1(BrownClusters.apply)
 
+  /** Reads a trained set of Brown clusters from a file in Percy Liang's format.
+    *
+    * Each line of this file corresponds to a token, and has three tab-separated fields:
+    *
+    * CLUSTER <tab> TOKEN <tab> COUNT
+    *
+    * where CLUSTER is the bitstring representation of TOKEN's cluster, and COUNT is the token's
+    * count in the source corpus (from which the Brown clusters were trained)
+    *
+    * @param filename name of file in Liang format
+    * @return a BrownClusters object
+    */
   def fromLiangFormat(filename: String): BrownClusters = {
     val fileContents: Map[String, (String, Int)] =
       (Source.fromFile(filename).getLines map { line =>
@@ -52,6 +69,14 @@ object BrownClusters {
     fromStringMap(wordsToBitstrings, wordsToFrequency)
   }
 
+  /** Initializes a BrownClusters object from two maps, one that maps words to their Brown cluster
+    * (bitstring representation), another that maps words to their frequency in the source corpus
+    * (from which the Brown clusters were trained).
+    *
+    * @param wordsToBitstrings maps words to the bitstring representation of their Brown cluster
+    * @param wordsToFrequency maps words to their frequency in the source corpus
+    * @return a BrownClusters object
+    */
   def fromStringMap(
     wordsToBitstrings: Map[String, String],
     wordsToFrequency: Map[String, Int]
@@ -76,5 +101,21 @@ object BrownClusters {
             })
       }
     BrownClusters(wordsToEncodings.toSeq)
+  }
+}
+
+/** The BrownClustersTagger tags the tokens of a sentence with their Brown clusters. */
+case class BrownClustersTagger(clusters: Seq[BrownClusters]) extends TokenTagger {
+
+  def tag(token: Token): Set[TokenTag] = {
+    val tokStr = token.word.name.toLowerCase
+    (for {
+      (cluster, clusterId) <- clusters.zipWithIndex
+    } yield {
+      Seq(TokenTag(
+        Symbol(s"brown$clusterId"),
+        cluster.getMostSpecificCluster(Symbol(tokStr))
+      ))
+    }).flatten.toSet
   }
 }

@@ -1,11 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.core.PostaggedToken
-import org.allenai.nlpstack.core.{ Token => NLPStackToken }
-import org.allenai.nlpstack.core.Tokenizer
 import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.fsm.{ Sculpture, MarbleBlock }
-import org.allenai.nlpstack.postag.defaultPostagger
 
 import reming.DefaultJsonProtocol._
 
@@ -306,37 +302,6 @@ case class PolytreeParse(
     digraph.toPositionTree(rootNode)
   }
 
-  /*
-  @transient
-  lazy val relativeCposMap: Map[Int, ((Boolean, Symbol), Int)] = {
-    relativeCposMapHelper(depthFirstPreorder, Map())
-  }
-
-  @tailrec
-  private def relativeCposMapHelper(
-    nodesToProcess: Iterable[Int],
-    result: Map[Int, ((Boolean, Symbol), Int)]
-  ): Map[Int, ((Boolean, Symbol), Int)] = {
-
-    nodesToProcess.headOption match {
-      case None => result
-      case Some(nodeIndex) =>
-        val myGretels: Vector[Int] = gretels.getOrElse(nodeIndex, Vector[Int]())
-        val myGretelLabels = myGretels map { gretel =>
-          (gretel < nodeIndex, tokens(gretel).getDeterministicProperty('cpos))
-        }
-        val myGretelLabelFreq = myGretelLabels.zipWithIndex map {
-          case (gretelLabel, index) =>
-            myGretelLabels.take(index).count(_ == gretelLabel)
-        }
-        relativeCposMapHelper(
-          nodesToProcess.tail,
-          result ++ (myGretels zip (myGretelLabels zip myGretelLabelFreq)).toMap
-        )
-    }
-  }
-  */
-
   override def toString: String = {
     (Range(0, tokens.size) map { tokenIndex => printFamily(tokenIndex) }).mkString(" ")
   }
@@ -398,11 +363,9 @@ object PolytreeParse {
 
     val writer = new PrintWriter(new File(outputFilename))
     try {
-      parses foreach { optParse =>
-        optParse match {
-          case Some(parse) => writer.println(parse.asConllX + "\n")
-          case None => writer.println("FAIL\n")
-        }
+      parses foreach {
+        case Some(parse) => writer.println(parse.asConllX + "\n")
+        case None => writer.println("FAIL\n")
       }
     } finally {
       writer.close()
@@ -462,21 +425,25 @@ object PolytreeParse {
     val sentence =
       Sentence(
         (NexusToken +: (rows map { row =>
-        Token(
-          Symbol(row(1)),
-          Token.createProperties(
-            row(1),
-            goldCpos =
-              // if there's a gold fine POS tag, use that to create the coarse POS tag
-              // otherwise, use the coarse POS tag, if available
-              if (useGoldPosTags && row(iFinePos) != "_") {
-                WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
-              } else if (useGoldPosTags && row(iCoarsePos) != "_") {
-                Some(row(iCoarsePos))
-              } else {
-                None
-              }
-          )
+        Token.create(
+          row(1),
+          coarsePos =
+            // if there's a gold fine POS tag, use that to create the coarse POS tag
+            // otherwise, use the coarse POS tag, if available
+            if (useGoldPosTags && row(iFinePos) != "_") {
+              WordClusters.ptbToUniversalPosTag.get(row(iFinePos))
+            } else if (useGoldPosTags && row(iCoarsePos) != "_") {
+              Some(row(iCoarsePos))
+            } else {
+              None
+            },
+          finePos =
+            if (useGoldPosTags && row(iFinePos) != "_") {
+              Some(row(iFinePos))
+            } else {
+              None
+            }
+
         )
       })).toVector
       )

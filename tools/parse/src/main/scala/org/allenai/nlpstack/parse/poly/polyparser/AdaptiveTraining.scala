@@ -1,11 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{
-  BrownClustersTagger,
-  LexicalPropertiesTagger,
-  FactorieSentenceTagger,
-  SentenceTransform
-}
+import org.allenai.nlpstack.parse.poly.core._
 import org.allenai.nlpstack.parse.poly.decisiontree.{
   OmnibusTrainer,
   ProbabilisticClassifierTrainer
@@ -73,6 +68,7 @@ object AdaptiveTraining {
           ConllX(true), config.dataSource
         )
       })
+
     val clusters: Seq[BrownClusters] = {
       if (config.clustersPath != "") {
         config.clustersPath.split(",") map { path =>
@@ -82,8 +78,15 @@ object AdaptiveTraining {
         Seq[BrownClusters]()
       }
     }
-    val taggers: Seq[SentenceTransform] =
-      Seq(FactorieSentenceTagger, LexicalPropertiesTagger, BrownClustersTagger(clusters))
+    val keywords = WordClusters.keyWords map { _.toString }
+    val taggers: Seq[SentenceTaggerInitializer] =
+      Seq(
+        TokenPositionTaggerInitializer,
+        KeywordTaggerInitializer(keywords),
+        BrownClustersTaggerInitializer(clusters),
+        FactoriePostaggerInitializer(useCoarseTags = true),
+        StanfordPostaggerInitializer(useCoarseTags = true)
+      )
 
     val transitionSystemFactory: TransitionSystemFactory =
       ArcHybridTransitionSystemFactory(taggers)
@@ -95,13 +98,16 @@ object AdaptiveTraining {
           Some(rerankingParser.config.parsingCostFunctionFactory)
         case _ => None
       }
+    require(baseCostFunctionFactory != None)
 
     val classifierTrainer: ProbabilisticClassifierTrainer =
       new OmnibusTrainer()
-    val trainingVectorSource = new GoldParseTrainingVectorSource(
+    val trainingVectorSource = new SculptureTrainingVectorSource(
       trainingSource,
       transitionSystemFactory, baseCostFunctionFactory
     )
+
+
     val parsingCostFunctionFactory: StateCostFunctionFactory = {
       val trainer =
         new DTCostFunctionTrainer(classifierTrainer, transitionSystemFactory,

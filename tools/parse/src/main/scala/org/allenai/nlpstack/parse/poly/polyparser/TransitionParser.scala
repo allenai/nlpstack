@@ -3,12 +3,10 @@ package org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.common.Resource
 import org.allenai.nlpstack.parse.poly.core.{ Token, NexusToken, Sentence, Util }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
-import reming.{ CompactPrinter, JsonParser, LazyFormat }
+import reming.{ CompactPrinter, LazyFormat }
 import reming.DefaultJsonProtocol._
 
 import java.io.{ BufferedWriter, InputStream, File, FileWriter, PrintWriter }
-
-import scala.io.BufferedSource
 
 /** A TransitionParser implements a parsing algorithm for a transition-based parser. */
 abstract class TransitionParser {

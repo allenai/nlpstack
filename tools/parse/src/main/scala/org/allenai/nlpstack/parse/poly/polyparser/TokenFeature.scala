@@ -1,25 +1,10 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{ AnnotatedSentence, Sentence, Token }
-import org.allenai.nlpstack.parse.poly.fsm.{ State, StateFeature }
-import org.allenai.nlpstack.parse.poly.ml.{ FeatureVector, FeatureName }
+import org.allenai.nlpstack.parse.poly.core._
+import org.allenai.nlpstack.parse.poly.ml.FeatureName
 
 import reming.LazyFormat
 import reming.DefaultJsonProtocol._
-
-class TokenFeatureTagger(tokenFeatures: Seq[TokenFeature]) {
-
-  def tag(sentence: Sentence): AnnotatedSentence = {
-    AnnotatedSentence(
-      sentence,
-      Range(0, sentence.size) map { tokenIndex =>
-        FeatureVector(tokenFeatures flatMap { feature =>
-          feature(sentence, tokenIndex)
-        })
-      }
-    )
-  }
-}
 
 sealed abstract class TokenFeature extends ((Sentence, Int) => Seq[(FeatureName, Double)]) {
 

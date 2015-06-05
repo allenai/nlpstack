@@ -1,13 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.{
-  AnnotatedSentence,
-  Sentence,
-  SentenceTransform,
-  WordClusters
-}
+import org.allenai.nlpstack.parse.poly.core.{ SentenceTagger, AnnotatedSentence, Sentence, WordClusters }
 import org.allenai.nlpstack.parse.poly.fsm._
-import org.allenai.nlpstack.parse.poly.ml.BrownClusters
 
 /** A struct contains the "modes" of a typical transition parser.
   *
@@ -40,7 +34,7 @@ case class DependencyParsingArcLabel(stanLabel: Symbol, cpos: Symbol) extends Ar
 abstract class DependencyParsingTransitionSystem(
     marbleBlock: MarbleBlock,
     constraints: Set[TransitionConstraint],
-    taggers: Seq[SentenceTransform]
+    taggers: Seq[SentenceTagger]
 ) extends TransitionSystem {
 
   @transient
@@ -55,52 +49,9 @@ abstract class DependencyParsingTransitionSystem(
     }
 
   val annotatedSentence: AnnotatedSentence = {
-    val taggedSentence = taggers.foldLeft(sentence)((sent, tagger) => tagger.transform(sent))
-
-    // override factorie tags with requested tags
-    val requestedCposConstraints: Map[Int, RequestedCpos] =
-      (constraints flatMap { constraint: TransitionConstraint =>
-        constraint match {
-          case cposConstraint: RequestedCpos => Some(cposConstraint)
-          case _ => None
-        }
-      } map { constraint =>
-        (constraint.tokenIndex, constraint)
-      }).toMap
-    val overriddenSentence: Sentence = Sentence(
-      Range(0, taggedSentence.tokens.size) map { i =>
-        requestedCposConstraints.get(i)
-      } zip taggedSentence.tokens map {
-        case (maybeConstraint, tok) =>
-          maybeConstraint match {
-            case Some(constraint) =>
-              tok.updateProperties(Map(
-                'autoCpos -> Set(constraint.cpos),
-                'autoPos -> Set()
-              ))
-            case None => tok
-          }
-      }
-    )
-    val tokenFeatureTagger = new TokenFeatureTagger(Seq(
-      TokenPositionFeature,
-      TokenPropertyFeature('autoCpos),
-      TokenPropertyFeature('autoPos),
-      TokenPropertyFeature('brown0),
-      TokenPropertyFeature('verbnetPrimaryFrames),
-      TokenPropertyFeature('depLabelFreq1to5),
-      TokenPropertyFeature('depLabelFreq6to20),
-      TokenPropertyFeature('depLabelFreq21to50),
-      TokenPropertyFeature('depLabelFreq51to95),
-      TokenPropertyFeature('depLabelFreq96to100),
-      TokenPropertyFeature('posTagFreq1to5),
-      TokenPropertyFeature('posTagFreq6to20),
-      TokenPropertyFeature('posTagFreq21to50),
-      TokenPropertyFeature('posTagFreq51to95),
-      TokenPropertyFeature('posTagFreq96to100),
-      KeywordFeature(DependencyParsingTransitionSystem.keywords)
-    ))
-    tokenFeatureTagger.tag(overriddenSentence)
+    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
+    AnnotatedSentence.annotate(tagging)
+    // TODO: re-enable postag override from constraints
   }
 
   val labelingFeature =

@@ -2,7 +2,7 @@ package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.immutable.Interval
 import org.allenai.nlpstack.parse.poly.fsm.MarbleBlock
-import org.allenai.nlpstack.parse.poly.ml.FeatureVector
+import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
 
 import reming.DefaultJsonProtocol._
 
@@ -63,7 +63,7 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
     // (bottom of stack) to the end of the sentence.
     var unmatchedParenIx = -1
     while (parenStack.length > 0) {
-      unmatchedParenIx = parenStack.pop
+      unmatchedParenIx = parenStack.pop()
     }
     if (unmatchedParenIx > -1) {
       parenIntervals = parenIntervals + Interval.closed(unmatchedParenIx, tokens.size - 1)
@@ -75,23 +75,24 @@ case class Sentence(tokens: IndexedSeq[Token]) extends MarbleBlock {
 
 object Sentence {
   implicit val sentenceJsonFormat = jsonFormat1(Sentence.apply)
+
+  /** Initializes a Sentence object from a string, by splitting on whitespace to create tokens.
+    *
+    * Note that the zeroth token of the initialized sentence will be a NexusToken.
+    *
+    * @param rawString the input string
+    * @return the corresponding Sentence object
+    */
+  def initializeFromWhitespaceSeparatedString(rawString: String): Sentence = {
+    val tokens = whitespaceRegex.split(rawString.trim) map { str => Token(Symbol(str)) }
+    Sentence((NexusToken +: tokens).toIndexedSeq)
+  }
+  private val whitespaceRegex = """\s+""".r
+
 }
 
 /** A data source for Sentence objects. */
 trait SentenceSource {
   def sentenceIterator: Iterator[Sentence]
-}
-
-/** An AnnotatedSentence is a sentence whose tokens are each annotated with a feature
-  * vector.
-  *
-  * @param sentence the unannotated sentence
-  * @param annotation an indexed sequence, of which the nth element is the feature vector for
-  * the nth token of the sentence
-  */
-case class AnnotatedSentence(sentence: Sentence, annotation: IndexedSeq[FeatureVector])
-
-object AnnotatedSentence {
-  implicit val annotatedSentenceJsonFormat = jsonFormat2(AnnotatedSentence.apply)
 }
 

@@ -15,7 +15,7 @@ import org.allenai.nlpstack.parse.poly.ml.{ FeatureName, FeatureVector }
   * @param stateRef the StateRef that refers to our desired token
   * @param tokenTransforms the transformation we want to perform on our desired token
   */
-case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Set[TokenTransform])
+case class TokenTransformFeature(stateRef: StateRef, tokenTransforms: Set[TokenTransform])
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
@@ -31,69 +31,43 @@ case class TokenTransformFeature(val stateRef: StateRef, val tokenTransforms: Se
   override def toString(): String = s"tokenTransformFeature.${stateRef.name}"
 }
 
-case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, val stateRef: StateRef)
+/** An OfflineTokenFeature creates a StateFeature from an AnnotatedSentence and a StateRef.
+  *
+  * Essentially it simply takes the pre-annotated features from the token referenced by
+  * the StateRef (see definitions of AnnotatedSentence and StateRef for details).
+  *
+  * For instance, suppose we want the pre-annotated feature corresponding to
+  * the word at the top of the stack. We can achieve this with
+  * OfflineTokenFeature(annotatedSentence, StackRef(0)).
+  *
+  * @param annotatedSentence a sentence whose tokens are annotated with features
+  * @param stateRef the StateRef that refers to our desired token(s)
+  */
+case class OfflineTokenFeature(annotatedSentence: AnnotatedSentence, stateRef: StateRef)
     extends StateFeature {
 
   override def apply(state: State): FeatureVector = {
-    state match {
-      case tpState: TransitionParserState =>
-        FeatureVector(
-          for {
-            tokenIndex <- stateRef(tpState).toSeq
-            origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
-          } yield FeatureName(stateRef.name +: (origFeatureVectorMapping._1).symbols) -> 1.0
-        )
-    }
+    FeatureVector(
+      for {
+        tokenIndex <- stateRef(state).toSeq
+        origFeatureVectorMapping <- annotatedSentence.annotation(tokenIndex).values
+      } yield FeatureName(stateRef.name +: origFeatureVectorMapping._1.symbols) -> 1.0
+    )
   }
 
   override def toString(): String = s"offlineTokenFeature.${stateRef.name}"
 }
 
-/** The TokenLinkFeature makes a feature for every arc label between any pair of tokens from two
-  * token sets.
+/** An TokenCardinalityFeature creates a FeatureVector with features for the cardinality of the
+  * the set of tokens referenced by a StateRef.
   *
-  * @param stateRef1 the first token set
-  * @param stateRef2 the second token set
+  * For instance, suppose we want a feature that tells us the number of children of the node
+  * on top of the stack. We can achieve this with
+  * TokenCardinalityFeature(Seq(TransitiveRef(StackRef(0), Seq(TokenGretels))))
+  *
+  * @param stateRefs the StateRefs that we want to know the cardinalities of
   */
-case class TokenLinkFeature(stateRef1: StateRef, stateRef2: StateRef)
-    extends StateFeature {
-
-  override def apply(state: State): FeatureVector = {
-    state match {
-      case tpState: TransitionParserState =>
-        FeatureVector(
-          for {
-            tokenIndex1 <- stateRef1(tpState).toSeq
-            tokenIndex2 <- stateRef2(tpState).toSeq
-            arcLabel <- tpState.arcLabels.get(Set(tokenIndex1, tokenIndex2))
-          } yield {
-            FeatureName(Seq(stateRef1.name, Symbol("to"),
-              stateRef2.name, Symbol("label"), arcLabel.toSymbol)) -> 1.0
-          }
-        )
-    }
-  }
-
-  override def toString(): String = s"tokenLinkFeature.${stateRef1.name}.${stateRef2.name}"
-}
-
-case object PreviousLinkDirection extends StateFeature {
-  override def apply(state: State): FeatureVector = {
-    state match {
-      case tpState: TransitionParserState =>
-        tpState.previousLink match {
-          case Some((crumb, gretel)) => FeatureVector(
-            Seq(FeatureName(List('prevLink, Symbol((crumb < gretel).toString))) -> 1.0)
-          )
-          case None => FeatureVector(Seq())
-        }
-    }
-  }
-
-  override def toString(): String = s"prevLink"
-}
-
-case class TokenCardinalityFeature(val stateRefs: Seq[StateRef])
+case class TokenCardinalityFeature(stateRefs: Seq[StateRef])
     extends StateFeature {
 
   @transient val featureName = 'card

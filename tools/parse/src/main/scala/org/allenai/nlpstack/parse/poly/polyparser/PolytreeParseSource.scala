@@ -4,10 +4,13 @@ import java.nio.file.Paths
 
 import org.allenai.datastore.Datastore
 import org.allenai.nlpstack.parse.poly.core.{ Sentence, SentenceSource }
+import org.allenai.nlpstack.parse.poly.fsm.{ SculptureSource, Sculpture }
 
 /** A data source for PolytreeParse objects. */
-trait PolytreeParseSource extends SentenceSource {
+trait PolytreeParseSource extends SentenceSource with SculptureSource {
   def parseIterator: Iterator[PolytreeParse]
+
+  override def sculptureIterator: Iterator[Sculpture] = parseIterator
 }
 
 case class InMemoryPolytreeParseSource(

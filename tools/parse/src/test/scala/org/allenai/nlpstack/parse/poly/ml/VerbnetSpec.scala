@@ -1,26 +1,20 @@
 package org.allenai.nlpstack.parse.poly.ml
 
-import org.allenai.common.Config.EnhancedConfig
 import org.allenai.common.Logging
 import org.allenai.common.testkit.UnitSpec
-import org.allenai.datastore._
-import org.allenai.nlpstack.parse.poly.core.{ FactorieSentenceTagger, VerbnetTagger }
-import org.allenai.nlpstack.parse.poly.core.{ Token, Sentence }
 
-import com.typesafe.config.{ Config, ConfigFactory }
-import java.io.{ File, FileWriter, Writer }
+import com.typesafe.config.ConfigFactory
+import java.io.File
 
-class VerbnetUtilSpec extends UnitSpec with Logging {
+import org.allenai.nlpstack.parse.poly.core.SentenceTagger
 
-  val taggersConfigPath = "src/main/resources/featuretaggers.config"
+class VerbnetSpec extends UnitSpec with Logging {
 
-  val taggersConfig = ConfigFactory.parseFile(new File(taggersConfigPath))
-
+  val taggersConfig = ConfigFactory.parseFile(new File(SentenceTagger.taggersConfigFile))
   val verbnetConfig = taggersConfig.getConfig("verbnet")
   val groupName = verbnetConfig.getString("group")
   val artifactName = verbnetConfig.getString("name")
   val version = verbnetConfig.getInt("version")
-
   val verbnet = new Verbnet(groupName, artifactName, version)
 
   "VerbnetUtil.getVerbnetClasses" should
@@ -50,62 +44,4 @@ class VerbnetUtilSpec extends UnitSpec with Logging {
       verbnet.getVerbnetClassNames("apple") shouldBe Set()
     }
 
-  val sentence1 = Sentence(
-    IndexedSeq(Token('the), Token('tigers), Token('roar), Token('and), Token('run))
-  )
-
-  "Sentence.taggedWithVerbnetClasses" should "return the correct answer" in {
-    val verbnetTagger = VerbnetTagger(verbnet)
-    verbnetTagger.transform(FactorieSentenceTagger.transform(sentence1)) shouldBe
-      Sentence(IndexedSeq(
-        Token('nexus, Map(
-          'lcase -> Set('nexus),
-          'cpos -> Set('nexus),
-          'verbnetPrimaryFrames -> Set()
-        )),
-        Token('tigers, Map(
-          'autoPos -> Set('NNS),
-          'autoCpos -> Set('NOUN),
-          'factorieLemma -> Set('tiger),
-          'verbnetPrimaryFrames -> Set()
-        )),
-        Token('roar, Map(
-          'autoPos -> Set('NN),
-          'autoCpos -> Set('NOUN),
-          'factorieLemma -> Set('roar),
-          'verbnetPrimaryFrames ->
-            Set(
-              Symbol("NP-V-PP"), Symbol("NP-V-PP-how-S_INF"),
-              Symbol("NP-V-S_INF"), Symbol("NP-V-NP-PP"), Symbol("NP-V-PP"),
-              Symbol("PP-V-NP"), Symbol("NP-V-NP"), Symbol("NP-V-PP-S_INF"),
-              Symbol("NP-V-S-Quote"), Symbol("It-V-PP"), Symbol("NP-V-that-S"),
-              Symbol("NP-V-PP-that-S"), Symbol("NP-V"), Symbol("NP-V-PP"),
-              Symbol("NP-V-PP"), Symbol("NP-V-PP"),
-              Symbol("NP-V-PP-S-Quote"), Symbol("There-V-NP-PP"), Symbol("It-V"),
-              Symbol("NP-V-how-S_INF"), Symbol("It-V-NP"), Symbol("There-V-PP-NP"),
-              Symbol("NP-V-NP")
-            )
-        )),
-        Token('and, Map(
-          'autoPos -> Set('CC),
-          'autoCpos -> Set('CONJ),
-          'factorieLemma -> Set('and),
-          'verbnetPrimaryFrames -> Set()
-        )),
-        Token('run, Map(
-          'autoPos -> Set('VB),
-          'autoCpos -> Set('VERB),
-          'factorieLemma -> Set('run),
-          'verbnetPrimaryFrames ->
-            Set(
-              Symbol("NP-V-PP"), Symbol("NP-V-NP-PP-PP"),
-              Symbol("PP-V-NP"), Symbol("NP-V-NP-PP"),
-              Symbol("NP-V-NP-PP"), Symbol("NP-V-NP-PP-PP"),
-              Symbol("NP-V-NP-NP"), Symbol("There-V-NP-PP"),
-              Symbol("PP-V-PP"), Symbol("NP-V-NP-PP"),
-              Symbol("There-V-PP-NP"), Symbol("NP-V-NP")
-            )
-        ))
-      ))
-  }
 }

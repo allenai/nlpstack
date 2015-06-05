@@ -32,3 +32,11 @@ object TransitionConstraint {
   * if the transition is inapplicable.
   */
 trait ConstraintInterpretation extends ((State, StateTransition) => Boolean)
+
+/** The TrivialConstraintInterpretation returns false for any state/transition pair.
+  *
+  * This means that transitions are always considered applicable.
+  */
+class TrivialConstraintInterpretation extends ConstraintInterpretation {
+  def apply(state: State, transition: StateTransition): Boolean = false
+}
