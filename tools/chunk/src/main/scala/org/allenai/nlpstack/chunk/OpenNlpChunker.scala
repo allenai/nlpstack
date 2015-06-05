@@ -6,7 +6,10 @@ import org.allenai.nlpstack.core.{ ChunkedToken, Chunker, PostaggedToken }
 import opennlp.tools.chunker.{ ChunkerME, ChunkerModel }
 
 class OpenNlpChunker extends Chunker {
-  private val chunker = new ChunkerME(OpenNlpChunker.model)
+  //Added ThreadLocal to prevent concurrency issues
+  private final val chunker: ThreadLocal[ChunkerME] = new ThreadLocal[ChunkerME]() {
+    override protected def initialValue(): ChunkerME = new ChunkerME(OpenNlpChunker.model)
+  }
 
   def chunkPostagged(tokens: Seq[PostaggedToken]): Seq[ChunkedToken] = {
     // OpenNLP uses : as the postag for hyphens, but we use HYPH, so we change it back before
@@ -15,7 +18,8 @@ class OpenNlpChunker extends Chunker {
       if (t.string == "-") PostaggedToken(t, ":") else t
     }
 
-    val chunks = chunker.chunk(tokens.map(_.string).toArray, fixedTokens.map(_.postag).toArray)
+    val chunks = chunker.get().chunk(tokens.map(_.string).toArray, fixedTokens.map(_.postag)
+      .toArray)
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
 }
