@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.core._
+import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.postag.defaultPostagger
 
@@ -41,8 +42,18 @@ object Parser {
     * @param text the untokenized sentence
     * @return a parse for the argument sentence
     */
-  def parseUntokenizedSentence(parser: TransitionParser, text: String): Option[PolytreeParse] = {
-    parser.parse(Sentence(tokenizeSentence(text).toIndexedSeq))
+  def parseUntokenizedSentence(parser: TransitionParser, text: String): Option[BankerParse] = {
+    parser.parse(Sentence(tokenizeSentence(text).toIndexedSeq)) map { parse => parse.asBankerParse }
+  }
+
+  def parseWithConstraints(
+    parser: TransitionParser,
+    sentence: Sentence,
+    constraints: Set[TransitionConstraint]
+  ): Option[BankerParse] = {
+
+    println(s"parseWithConstraints: $constraints")
+    parser.parse(sentence, constraints) map { parse => parse.asBankerParse }
   }
 
   /** Tokenizes (and tags) an untokenized sentence.

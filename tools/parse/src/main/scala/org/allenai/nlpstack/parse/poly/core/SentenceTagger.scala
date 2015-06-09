@@ -6,7 +6,9 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import org.allenai.common.Config.EnhancedConfig
 import org.allenai.nlpstack.core.{ Lemmatized, PostaggedToken, Postagger }
 import org.allenai.nlpstack.lemmatize.MorphaStemmer
+import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import org.allenai.nlpstack.parse.poly.ml._
+import org.allenai.nlpstack.parse.poly.polyparser.RequestedCpos
 import org.allenai.nlpstack.postag._
 import reming.DefaultJsonProtocol._
 
@@ -143,8 +145,7 @@ object SentenceTaggerInitializer {
   * and outputs a TaggedSentence object.
   */
 trait SentenceTagger {
-  // TODO: extend to handle constraints on tagging
-  def tag(sentence: Sentence): TaggedSentence
+  def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence
 }
 
 object SentenceTagger {
@@ -158,9 +159,10 @@ object SentenceTagger {
     * @param taggers the taggers we want to apply
     * @return a tagged sentence
     */
-  def tagWithMultipleTaggers(sentence: Sentence, taggers: Seq[SentenceTagger]): TaggedSentence = {
+  def tagWithMultipleTaggers(sentence: Sentence, constraints: Set[TransitionConstraint],
+    taggers: Seq[SentenceTagger]): TaggedSentence = {
     val taggings = taggers map { tagger =>
-      tagger.tag(sentence)
+      tagger.tag(sentence, constraints)
     }
     TaggedSentence(
       sentence,
@@ -190,7 +192,7 @@ object SentenceTagger {
       for {
         sentence <- sentenceSource.sentenceIterator
       } yield Future {
-        tagger.tag(sentence)
+        tagger.tag(sentence, Set())
       }
     val futureTagged: Future[Iterator[TaggedSentence]] = Future.sequence(taggingTasks)
     Await.result(futureTagged, 2 days)
@@ -203,7 +205,7 @@ object SentenceTagger {
   */
 case class IndependentTokenSentenceTagger(tokenTagger: TokenTagger) extends SentenceTagger {
 
-  override def tag(sentence: Sentence): TaggedSentence = {
+  override def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence = {
     TaggedSentence(
       sentence,
       (sentence.tokens.zipWithIndex map { _.swap }).toMap mapValues { tok =>
@@ -225,7 +227,7 @@ case object TokenPositionTagger extends SentenceTagger {
   private val hasSecondLastSymbol = 'secondLast
   private val hasLastSymbol = 'last
 
-  override def tag(sentence: Sentence): TaggedSentence = {
+  override def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence = {
     var tags = Map[Int, Set[TokenTag]]()
     tags = tags.updated(0, Set(TokenTag(featureName, hasNexusSymbol)))
     tags = tags.updated(1, Set(TokenTag(featureName, hasFirstSymbol)))
@@ -251,22 +253,42 @@ case object TokenPositionTagger extends SentenceTagger {
 case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) extends SentenceTagger {
 
   override def tag(
-    sentence: Sentence
+    sentence: Sentence, constraints: Set[TransitionConstraint]
   ): TaggedSentence = {
 
+    val tokenToRequestedCpos: Map[Int, Symbol] = {
+      constraints map {
+        case RequestedCpos(tokenIndex, cpos) =>
+          (tokenIndex, cpos)
+        case _ =>
+          (-1, 'dummy)
+      } filter {
+        case (tokenIndex, cpos) =>
+          tokenIndex >= 0
+      }
+    }.toMap
     val taggedTokens: Map[Int, PostaggedToken] =
       Util.getPostaggedTokens(sentence, baseTagger)
-    val tagMap: Map[Int, Set[TokenTag]] = taggedTokens mapValues { tagged =>
-      Set(
-        if (useCoarseTags) {
-          TokenTag(
-            'autoCpos,
-            Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X"))
-          )
-        } else {
-          TokenTag('autoPos, Symbol(tagged.postag))
-        }
-      )
+    val tagMap: Map[Int, Set[TokenTag]] = taggedTokens map {
+      case (tokenIndex, tagged) =>
+        (tokenIndex,
+          if (!useCoarseTags && tokenToRequestedCpos.contains(tokenIndex)) {
+            Set[TokenTag]()
+          } else {
+            Set(
+              if (useCoarseTags) {
+                TokenTag(
+                  'autoCpos,
+                  tokenToRequestedCpos.getOrElse(
+                    tokenIndex,
+                    Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X"))
+                  )
+                )
+              } else {
+                TokenTag('autoPos, Symbol(tagged.postag))
+              }
+            )
+          })
     }
     TaggedSentence(sentence, tagMap)
   }
@@ -277,7 +299,7 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
   */
 case object FactorieLemmatizer extends SentenceTagger {
 
-  override def tag(sentence: Sentence): TaggedSentence = {
+  override def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence = {
     val taggedTokens = Util.getPostaggedTokens(sentence, defaultPostagger)
     val lemmaMap: Map[Int, Set[TokenTag]] =
       taggedTokens mapValues { tagged =>

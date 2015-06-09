@@ -49,7 +49,7 @@ abstract class DependencyParsingTransitionSystem(
     }
 
   val annotatedSentence: AnnotatedSentence = {
-    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
+    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, constraints, taggers)
     AnnotatedSentence.annotate(tagging)
     // TODO: re-enable postag override from constraints
   }

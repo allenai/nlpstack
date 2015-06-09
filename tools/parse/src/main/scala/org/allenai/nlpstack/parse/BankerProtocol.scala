@@ -3,13 +3,7 @@ package org.allenai.nlpstack.parse
 import org.allenai.common.json._
 import org.allenai.nlpstack.parse.poly.core.{ Sentence, Token }
 import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
-import org.allenai.nlpstack.parse.poly.polyparser.{
-  ForbiddenArcLabel,
-  ForbiddenEdge,
-  PolytreeParse,
-  RequestedCpos,
-  RequestedArc
-}
+import org.allenai.nlpstack.parse.poly.polyparser._
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -18,7 +12,6 @@ import spray.json.DefaultJsonProtocol._
   * reming (or allow the banker UI to stay on spray-json).
   * The banker UI uses TransitionConstraint and PolytreeParse in its models.
   */
-/*
 object BankerProtocol {
   // TransitionConstraint format.
   implicit val forbiddenEdgeFormat =
@@ -56,6 +49,6 @@ object BankerProtocol {
   // PolytreeParse
   implicit val tokenFormat = jsonFormat2(Token.apply)
   implicit val sentenceFormat = jsonFormat1(Sentence.apply)
-  implicit val polytreeParseFormat = jsonFormat4(PolytreeParse.apply)
+  implicit val bankerParseFormat = jsonFormat4(BankerParse.apply)
 }
-*/
+

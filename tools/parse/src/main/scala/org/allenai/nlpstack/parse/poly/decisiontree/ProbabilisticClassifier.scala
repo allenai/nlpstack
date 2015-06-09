@@ -86,6 +86,12 @@ object ProbabilisticClassifier {
       (key, m1.getOrElse(key, 0) + m2.getOrElse(key, 0))
     }).toMap
   }
+
+  def addFloatMaps(m1: Map[Int, Float], m2: Map[Int, Float]): Map[Int, Float] = {
+    ((m1.keys ++ m2.keys).toSet map { key: Int =>
+      (key, m1.getOrElse(key, 0f) + m2.getOrElse(key, 0f))
+    }).toMap
+  }
 }
 
 trait ProbabilisticClassifierTrainer extends (FeatureVectorSource => ProbabilisticClassifier)

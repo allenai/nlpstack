@@ -45,16 +45,27 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     featureVector: FeatureVector
   ): (OutcomeDistribution, Option[Justification]) = {
 
-    val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
-      decisionTree.classify(featureVector)
+    val decisionTreeHistograms: Seq[Map[Int, Float]] = decisionTrees map { decisionTree =>
+      decisionTree.outcomeDistribution(featureVector)._1.dist
     }
-    val outcomeHistogram = decisionTreeOutputs map {
-      _._1
-    } groupBy { x =>
-      x
-    } mapValues { v =>
-      v.size
+    val outcomeHistogram = decisionTreeHistograms reduce {
+      (hist1: Map[Int, Float], hist2: Map[Int, Float]) =>
+        ((hist1.keySet ++ hist2.keySet) map { key =>
+          (key, hist1.getOrElse(key, 0f) + hist2.getOrElse(key, 0f))
+        }).toMap
     }
+
+    /*
+    //val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
+    //  decisionTree.classify(featureVector)
+    //}
+    //val outcomeHistogram = decisionTreeOutputs map {
+    //  _._1
+    //} groupBy { x =>
+    //  x
+    //} mapValues { v =>
+    //  v.size
+    //}
     val (bestOutcome, _) = outcomeHistogram maxBy { case (_, numVotes) => numVotes }
     val majorityJustifications: Seq[(Int, Justification)] =
       (decisionTreeOutputs.zipWithIndex filter {
@@ -84,7 +95,8 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
         }
         Some(RandomForestJustification(this, mostConvincingTree, mostConvincingNode))
       }
-    (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), justification)
+    */
+    (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), None)
   }
 
   /** The set of all features found in at least one decision tree of the collection. */
@@ -101,7 +113,7 @@ object RandomForest {
     * @param histogram maps each (integral valued) outcome to its count
     * @return the normalized histogram
     */
-  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Float] = {
+  def normalizeHistogram(histogram: Map[Int, Float]): Map[Int, Float] = {
     val normalizer: Float = histogram.values.sum
     require(normalizer > 0d)
     histogram mapValues { _ / normalizer }

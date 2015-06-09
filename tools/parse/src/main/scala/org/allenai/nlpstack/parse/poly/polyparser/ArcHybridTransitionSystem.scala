@@ -102,6 +102,8 @@ case class ArcHybridTransitionSystem(
       case requestedArc: RequestedArc => ArcHybridRequestedArcInterpretation(requestedArc)
       case forbiddenArcLabel: ForbiddenArcLabel =>
         ArcHybridForbiddenArcLabelInterpretation(forbiddenArcLabel)
+      case requestedCpos: RequestedCpos =>
+        ArcHybridRequestedCposInterpretation(requestedCpos)
       case _ => TransitionSystem.trivialConstraint
     }
   }
@@ -302,6 +304,12 @@ case class ArcHybridRequestedArcInterpretation(
 
   private val arcTokens: Set[Int] = Set(requestedArc.token1, requestedArc.token2)
 
+  private def getArcLabelSymbol(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(stanLabel, _) => stanLabel
+    }
+  }
+
   def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
     transition match {
       case ArcHybridLeftArc(_) =>
@@ -332,7 +340,7 @@ case class ArcHybridRequestedArcInterpretation(
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
         ) match {
             case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-              Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+              Set(crumb, gretel) == arcTokens && (getArcLabelSymbol(arcLabel) != reqLabel)
             case _ => false
           }
       case LabelRightArc(arcLabel) =>
@@ -341,7 +349,7 @@ case class ArcHybridRequestedArcInterpretation(
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
         ) match {
             case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-              Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+              Set(crumb, gretel) == arcTokens && getArcLabelSymbol(arcLabel) != reqLabel
             case _ => false
           }
       case _ => false
@@ -361,18 +369,53 @@ case class ArcHybridForbiddenArcLabelInterpretation(
 
   private val arcTokens: Set[Int] = Set(forbiddenArcLabel.token1, forbiddenArcLabel.token2)
 
+  private def getArcLabelSymbol(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(stanLabel, _) => stanLabel
+    }
+  }
+
   def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
     transition match {
       case LabelLeftArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
-            Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel
+            Set(crumb, gretel) == arcTokens && (getArcLabelSymbol(arcLabel) == forbiddenArcLabel.arcLabel)
           case _ => false
         }
       case LabelRightArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
-            Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel
+            Set(crumb, gretel) == arcTokens && (getArcLabelSymbol(arcLabel) == forbiddenArcLabel.arcLabel)
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+}
+
+case class ArcHybridRequestedCposInterpretation(
+    requestedCpos: RequestedCpos
+) extends ParsingConstraintInterpretation {
+
+  private def getArcLabelCpos(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(_, cpos) => cpos
+    }
+  }
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
+    transition match {
+      case LabelLeftArc(arcLabel) =>
+        PreviousLinkGretelRef(state).headOption match {
+          case Some(gretel) =>
+            gretel == requestedCpos.tokenIndex && (getArcLabelCpos(arcLabel) != requestedCpos.cpos)
+          case _ => false
+        }
+      case LabelRightArc(arcLabel) =>
+        PreviousLinkGretelRef(state).headOption match {
+          case Some(gretel) =>
+            gretel == requestedCpos.tokenIndex && (getArcLabelCpos(arcLabel) != requestedCpos.cpos)
           case _ => false
         }
       case _ => false

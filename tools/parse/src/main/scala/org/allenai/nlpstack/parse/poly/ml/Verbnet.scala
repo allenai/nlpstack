@@ -5,6 +5,7 @@ import org.allenai.datastore._
 import edu.mit.jverbnet.data._
 import edu.mit.jverbnet.index._
 import org.allenai.nlpstack.parse.poly.core._
+import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import reming.DefaultJsonProtocol._
 
 import scala.collection.JavaConverters._
@@ -124,8 +125,8 @@ case class VerbnetTagger(
 
   val taggerName = 'verbnetFrame
 
-  override def tag(sentence: Sentence): TaggedSentence = {
-    val lemmatized = FactorieLemmatizer.tag(sentence)
+  override def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence = {
+    val lemmatized = FactorieLemmatizer.tag(sentence, constraints)
     TaggedSentence(
       sentence,
       lemmatized.tags mapValues {

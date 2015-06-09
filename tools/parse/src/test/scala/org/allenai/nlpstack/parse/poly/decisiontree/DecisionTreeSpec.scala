@@ -43,8 +43,9 @@ class DecisionTreeSpec extends UnitSpec {
     decisionTree1.allFeatures shouldBe Set(20, 35)
   }
 
-  "DecisionTree.outcomeDistribution" should "get node 3's add-one smoothed distribution" in {
+  "DecisionTree.outcomeDistribution" should "get node 3's smoothed distribution" in {
     val fv = SparseVector(outcome = None, numFeatures = 100, trueFeatures = Set(34, 20))
-    decisionTree1.outcomeDistribution(fv)._1.dist shouldBe Map(0 -> 0.75, 1 -> 0.25)
+    (math floor decisionTree1.outcomeDistribution(fv)._1.dist(0) * 1000) / 1000 shouldBe 0.755
+    (math floor decisionTree1.outcomeDistribution(fv)._1.dist(1) * 1000) / 1000 shouldBe 0.244
   }
 }

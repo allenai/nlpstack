@@ -203,13 +203,13 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
   "The ForbiddenArcLabel's interpretation" should "return true for a mislabeled left arc" in {
     val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation1 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, SingleSymbolArcLabel('DET)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'DET))
     val interpretation2 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, SingleSymbolArcLabel('DET)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 3, 'DET))
     val interpretation3 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, SingleSymbolArcLabel('DET)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(0, 2, 'DET))
     val interpretation4 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, SingleSymbolArcLabel('POBJ)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(1, 2, 'POBJ))
     val state = StateTransition.applyTransitionSequence(
       transitionSystem.initialState(Seq()).get,
       List(
@@ -217,41 +217,41 @@ class ArcHybridTransitionSystemSpec extends UnitSpec {
         ArcHybridLeftArc()
       )
     )
-    interpretation1(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe true
-    interpretation2(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
-    interpretation3(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
-    interpretation4(state.get, LabelLeftArc(SingleSymbolArcLabel('DET))) shouldBe false
+    interpretation1(state.get, LabelLeftArc(DependencyParsingArcLabel('DET, 'DT))) shouldBe true
+    interpretation2(state.get, LabelLeftArc(DependencyParsingArcLabel('DET, 'DT))) shouldBe false
+    interpretation3(state.get, LabelLeftArc(DependencyParsingArcLabel('DET, 'DT))) shouldBe false
+    interpretation4(state.get, LabelLeftArc(DependencyParsingArcLabel('DET, 'DT))) shouldBe false
   }
 
   it should "return true for a mislabeled right arc" in {
     val transitionSystem = ArcHybridTransitionSystem(parse1.sentence, Set(), Seq())
     val interpretation1 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, SingleSymbolArcLabel('POBJ)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'POBJ))
     val interpretation2 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, SingleSymbolArcLabel('POBJ)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 3, 'POBJ))
     val interpretation3 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, SingleSymbolArcLabel('POBJ)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(3, 5, 'POBJ))
     val interpretation4 =
-      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, SingleSymbolArcLabel('DET)))
+      ArcHybridForbiddenArcLabelInterpretation(ForbiddenArcLabel(4, 5, 'DET))
     val state = StateTransition.applyTransitionSequence(
       transitionSystem.initialState(Seq()).get,
       List(
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc(SingleSymbolArcLabel('DET)),
+        LabelLeftArc(DependencyParsingArcLabel('DET, 'DT)),
         ArcHybridShift,
         ArcHybridLeftArc(),
-        LabelLeftArc(SingleSymbolArcLabel('NSUBJ)),
+        LabelLeftArc(DependencyParsingArcLabel('NSUBJ, 'NN)),
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridShift,
         ArcHybridRightArc()
       )
     )
-    interpretation1(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe true
-    interpretation2(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
-    interpretation3(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
-    interpretation4(state.get, LabelRightArc(SingleSymbolArcLabel('POBJ))) shouldBe false
+    interpretation1(state.get, LabelRightArc(DependencyParsingArcLabel('POBJ, 'DT))) shouldBe true
+    interpretation2(state.get, LabelRightArc(DependencyParsingArcLabel('POBJ, 'DT))) shouldBe false
+    interpretation3(state.get, LabelRightArc(DependencyParsingArcLabel('POBJ, 'DT))) shouldBe false
+    interpretation4(state.get, LabelRightArc(DependencyParsingArcLabel('POBJ, 'DT))) shouldBe false
   }
 }
 

@@ -232,6 +232,17 @@ case class PolytreeParse(
   }
 
   @transient
+  lazy val asBankerParse: BankerParse = {
+    BankerParse(sentence, breadcrumb, children,
+      arclabels map { labelset =>
+        labelset map {
+          case (index, label) =>
+            (index, label.toSymbol)
+        }
+      })
+  }
+
+  @transient
   lazy val asConllX: String = {
     val lines: Vector[String] = breadcrumb.zipWithIndex.tail map {
       case indexedCrumb => {
@@ -493,4 +504,24 @@ object PolytreeParse {
     'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'TMOD, 'VMOD) map SingleSymbolArcLabel.apply)
 
   implicit val jsFormat = jsonFormat4(PolytreeParse.apply)
+}
+
+case class BankerParse(
+    sentence: Sentence,
+    breadcrumb: Vector[Int],
+    children: Vector[Set[Int]],
+    arclabels: Vector[Set[(Int, Symbol)]]
+) {
+
+  def toPolytreeParse: PolytreeParse = {
+    PolytreeParse(sentence, breadcrumb, children,
+      arclabels map { labelset =>
+        val result: Set[(Int, ArcLabel)] = labelset map {
+          case (index, label) =>
+            (index, SingleSymbolArcLabel(label))
+        }
+        result
+      })
+  }
+
 }
