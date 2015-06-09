@@ -15,7 +15,7 @@ case class RerankingTransitionParser(config: ParserConfiguration) extends Transi
   def parseWithScore(
     sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set(),
-    doFastApproximation: Boolean = true
+    doFastApproximation: Boolean = false
   ): Option[(PolytreeParse, Double)] = {
 
     val parsingCostFunction =
