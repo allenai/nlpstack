@@ -160,6 +160,26 @@ object DependencyParsingTransitionSystem {
     }
     )
   }
+
+  /** Since the DependencyParsingTransitionSystem does POS tagging and arc labeling simultaneously
+    * using a single compound label, this is a convenience function to retrieve the actual
+    * arc label's "label" component.
+    */
+  def getArcLabelSymbol(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(stanLabel, _) => stanLabel
+    }
+  }
+
+  /** Since the DependencyParsingTransitionSystem does POS tagging and arc labeling simultaneously
+    * using a single compound label, this is a convenience function to retrieve the actual
+    * arc label's coarse POS component.
+    */
+  def getArcLabelCpos(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(_, cpos) => cpos
+    }
+  }
 }
 
 /** The LabelLeftArc operator labels the most recently created left-facing arc. */

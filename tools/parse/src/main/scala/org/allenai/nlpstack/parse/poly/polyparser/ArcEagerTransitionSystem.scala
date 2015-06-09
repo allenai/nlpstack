@@ -321,7 +321,7 @@ case class ArcEagerRequestedArcInterpretation(
               PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
             ) match {
                 case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-                  Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+                  Set(crumb, gretel) == arcTokens && arcLabel.toSymbol != reqLabel
                 case _ => false
               }
           case LabelRightArc(arcLabel) =>
@@ -330,7 +330,7 @@ case class ArcEagerRequestedArcInterpretation(
               PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
             ) match {
                 case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-                  Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+                  Set(crumb, gretel) == arcTokens && arcLabel.toSymbol != reqLabel
                 case _ => false
               }
           case _ => false

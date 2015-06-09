@@ -180,9 +180,11 @@ case class DecisionTree(outcomes: Iterable[Int], child: IndexedSeq[Map[Int, Int]
   ): (OutcomeDistribution, Option[Justification]) = {
 
     val node = findDecisionPoint(featureVector)
-    val priorCounts = outcomeDistributionRoot //outcomes.toList.map(_ -> 1).toMap // add-one smoothing
+    val priorCounts = outcomeDistributionRoot // smooth using the prior outcome distribution
     val distribution = ProbabilisticClassifier.normalizeDistribution(
-      (ProbabilisticClassifier.addFloatMaps(outcomeHistograms(node) mapValues { x => x.toFloat }, priorCounts)).toSeq
+      ProbabilisticClassifier.addFloatMaps(
+      outcomeHistograms(node) mapValues { x => x.toFloat }, priorCounts
+    ).toSeq
     ).toMap
     (OutcomeDistribution(distribution), Some(DecisionTreeJustification(this, node)))
   }

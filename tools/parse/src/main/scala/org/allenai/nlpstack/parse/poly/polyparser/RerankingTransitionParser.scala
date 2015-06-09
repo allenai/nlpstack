@@ -48,12 +48,4 @@ case class RerankingTransitionParser(config: ParserConfiguration) extends Transi
 
     parseWithScore(sentence, constraints) map { case (parse, _) => parse }
   }
-
-  def parseForBanker(
-    sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()
-  ): Option[BankerParse] = {
-
-    parse(sentence, constraints) map { parse => parse.asBankerParse }
-  }
 }

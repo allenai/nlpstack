@@ -36,26 +36,6 @@ object Parser {
   private val tokenizer = defaultTokenizer
   private val postagger = defaultPostagger
 
-  /** Tokenizes, tags, and parses an untokenized sentence.
-    *
-    * @param parser the parser to use for parsing the sentence
-    * @param text the untokenized sentence
-    * @return a parse for the argument sentence
-    */
-  def parseUntokenizedSentence(parser: TransitionParser, text: String): Option[BankerParse] = {
-    parser.parse(Sentence(tokenizeSentence(text).toIndexedSeq)) map { parse => parse.asBankerParse }
-  }
-
-  def parseWithConstraints(
-    parser: TransitionParser,
-    sentence: Sentence,
-    constraints: Set[TransitionConstraint]
-  ): Option[BankerParse] = {
-
-    println(s"parseWithConstraints: $constraints")
-    parser.parse(sentence, constraints) map { parse => parse.asBankerParse }
-  }
-
   /** Tokenizes (and tags) an untokenized sentence.
     *
     * @param text the untokenized sentence

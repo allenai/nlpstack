@@ -257,14 +257,11 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
   ): TaggedSentence = {
 
     val tokenToRequestedCpos: Map[Int, Symbol] = {
-      constraints map {
+      constraints flatMap {
         case RequestedCpos(tokenIndex, cpos) =>
-          (tokenIndex, cpos)
+          Some((tokenIndex, cpos))
         case _ =>
-          (-1, 'dummy)
-      } filter {
-        case (tokenIndex, cpos) =>
-          tokenIndex >= 0
+          None
       }
     }.toMap
     val taggedTokens: Map[Int, PostaggedToken] =
@@ -272,22 +269,20 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
     val tagMap: Map[Int, Set[TokenTag]] = taggedTokens map {
       case (tokenIndex, tagged) =>
         (tokenIndex,
-          if (!useCoarseTags && tokenToRequestedCpos.contains(tokenIndex)) {
+          if (useCoarseTags) {
+            Set(
+              TokenTag(
+                'autoCpos,
+                tokenToRequestedCpos.getOrElse(
+                  tokenIndex,
+                  Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X"))
+                )
+              )
+            )
+          } else if (tokenToRequestedCpos.contains(tokenIndex)) {
             Set[TokenTag]()
           } else {
-            Set(
-              if (useCoarseTags) {
-                TokenTag(
-                  'autoCpos,
-                  tokenToRequestedCpos.getOrElse(
-                    tokenIndex,
-                    Symbol(WordClusters.ptbToUniversalPosTag.getOrElse(tagged.postag, "X"))
-                  )
-                )
-              } else {
-                TokenTag('autoPos, Symbol(tagged.postag))
-              }
-            )
+            Set(TokenTag('autoPos, Symbol(tagged.postag)))
           })
     }
     TaggedSentence(sentence, tagMap)

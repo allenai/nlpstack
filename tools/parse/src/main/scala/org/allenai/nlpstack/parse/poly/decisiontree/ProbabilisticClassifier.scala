@@ -18,6 +18,21 @@ case class OutcomeDistribution(dist: Map[Int, Float]) {
   }
 }
 
+object OutcomeDistribution {
+
+  /** Computes the unnormalized sum of the input distributions. */
+  def sum(distributions: Iterable[OutcomeDistribution]): OutcomeDistribution = {
+    val unnormalizedOutcomeDistribution: Map[Int, Float] =
+      distributions map { od => od.dist } reduce {
+        (hist1: Map[Int, Float], hist2: Map[Int, Float]) =>
+          ((hist1.keySet ++ hist2.keySet) map { key =>
+            (key, hist1.getOrElse(key, 0f) + hist2.getOrElse(key, 0f))
+          }).toMap
+      }
+    OutcomeDistribution(unnormalizedOutcomeDistribution)
+  }
+}
+
 trait ProbabilisticClassifier {
 
   /** Gets the probability distribution over outcomes.
