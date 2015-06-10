@@ -1,6 +1,6 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
-import org.allenai.nlpstack.parse.poly.core.SentenceSource
+import org.allenai.nlpstack.parse.poly.core.{ Sentence, SentenceSource }
 import org.allenai.nlpstack.parse.poly.eval._
 import org.allenai.nlpstack.parse.poly.fsm.RerankingFunction
 import org.allenai.nlpstack.parse.poly.reranking.ParseRerankingFunction
@@ -85,6 +85,11 @@ object ParseFile {
     * @param parseSource the parses we want to evaluate against
     */
   def evaluateParserOnTestSet(parser: TransitionParser, parseSource: PolytreeParseSource): Unit = {
+    println("Loading lazy data structures.")
+    parser.parse(Sentence.initializeFromWhitespaceSeparatedString("test sentence"))
+    parser.parse(Sentence.initializeFromWhitespaceSeparatedString(
+      "Another somewhat longer sentence of length greater than 2 , designed to fill caches ."
+    ))
     println("Parsing test set.")
     val startTime: Long = Platform.currentTime
     val candidateParses =

@@ -74,7 +74,7 @@ case class ArcHybridTransitionSystem(
   override val taskIdentifier: TaskIdentifier = ArcHybridTaskIdentifier
 
   override def computeFeature(state: State): FeatureVector = {
-    (taskIdentifier(state) map { ident => ident.filenameFriendlyName }) match {
+    taskIdentifier(state) map { ident => ident.filenameFriendlyName } match {
       case Some(x) if x.startsWith("dt-") => labelingFeature(state)
       case _ => defaultFeature(state)
     }
@@ -102,6 +102,8 @@ case class ArcHybridTransitionSystem(
       case requestedArc: RequestedArc => ArcHybridRequestedArcInterpretation(requestedArc)
       case forbiddenArcLabel: ForbiddenArcLabel =>
         ArcHybridForbiddenArcLabelInterpretation(forbiddenArcLabel)
+      case requestedCpos: RequestedCpos =>
+        ArcHybridRequestedCposInterpretation(requestedCpos)
       case _ => TransitionSystem.trivialConstraint
     }
   }
@@ -332,7 +334,8 @@ case class ArcHybridRequestedArcInterpretation(
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
         ) match {
             case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-              Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+              Set(crumb, gretel) == arcTokens &&
+              DependencyParsingTransitionSystem.getArcLabelSymbol(arcLabel) != reqLabel
             case _ => false
           }
       case LabelRightArc(arcLabel) =>
@@ -341,7 +344,8 @@ case class ArcHybridRequestedArcInterpretation(
           PreviousLinkGretelRef(state).headOption, requestedArc.arcLabel
         ) match {
             case (Some(crumb), Some(gretel), Some(reqLabel)) =>
-              Set(crumb, gretel) == arcTokens && arcLabel != reqLabel
+              Set(crumb, gretel) == arcTokens &&
+              DependencyParsingTransitionSystem.getArcLabelSymbol(arcLabel) != reqLabel
             case _ => false
           }
       case _ => false
@@ -366,13 +370,48 @@ case class ArcHybridForbiddenArcLabelInterpretation(
       case LabelLeftArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
-            Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel
+            Set(crumb, gretel) == arcTokens &&
+              (DependencyParsingTransitionSystem.getArcLabelSymbol(arcLabel) ==
+                forbiddenArcLabel.arcLabel)
           case _ => false
         }
       case LabelRightArc(arcLabel) =>
         (PreviousLinkCrumbRef(state).headOption, PreviousLinkGretelRef(state).headOption) match {
           case (Some(crumb), Some(gretel)) =>
-            Set(crumb, gretel) == arcTokens && arcLabel == forbiddenArcLabel.arcLabel
+            Set(crumb, gretel) == arcTokens &&
+              (DependencyParsingTransitionSystem.getArcLabelSymbol(arcLabel) ==
+                forbiddenArcLabel.arcLabel)
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+}
+
+/** The ArcHybridRequestedCposInterpretation handles RequestedCpos constraints for the
+  * arc hybrid system. In other words, it translates these constraints into a function that
+  * returns true for any (state, transition) pair that violates the constraint.
+  *
+  * @param requestedCpos coarse POS request to consider
+  */
+case class ArcHybridRequestedCposInterpretation(
+    requestedCpos: RequestedCpos
+) extends ParsingConstraintInterpretation {
+
+  def applyToParserState(state: TransitionParserState, transition: StateTransition): Boolean = {
+    transition match {
+      case LabelLeftArc(arcLabel) =>
+        PreviousLinkGretelRef(state).headOption match {
+          case Some(gretel) =>
+            gretel == requestedCpos.tokenIndex &&
+              (DependencyParsingTransitionSystem.getArcLabelCpos(arcLabel) != requestedCpos.cpos)
+          case _ => false
+        }
+      case LabelRightArc(arcLabel) =>
+        PreviousLinkGretelRef(state).headOption match {
+          case Some(gretel) =>
+            gretel == requestedCpos.tokenIndex &&
+              (DependencyParsingTransitionSystem.getArcLabelCpos(arcLabel) != requestedCpos.cpos)
           case _ => false
         }
       case _ => false

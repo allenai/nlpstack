@@ -35,8 +35,8 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
 
   require(decisionTrees.nonEmpty, "Cannot initialize a RandomForest with zero decision trees")
 
-  /** Each decision gets a single vote about the outcome. The produced distribution is the
-    * normalized histogram of the votes.
+  /** Each decision gets a vote (i.e. suggests a distribution) about the outcome. The produced
+    * distribution is the normalized sum of the votes.
     *
     * @param featureVector feature vector to find outcome distribution for
     * @return a probability distribution over outcomes
@@ -45,46 +45,16 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     featureVector: FeatureVector
   ): (OutcomeDistribution, Option[Justification]) = {
 
-    val decisionTreeOutputs: Seq[(Int, Option[Justification])] = decisionTrees map { decisionTree =>
-      decisionTree.classify(featureVector)
+    val decisionTreeDistributions = decisionTrees map { decisionTree =>
+      decisionTree.outcomeDistribution(featureVector)._1
     }
-    val outcomeHistogram = decisionTreeOutputs map {
-      _._1
-    } groupBy { x =>
-      x
-    } mapValues { v =>
-      v.size
-    }
-    val (bestOutcome, _) = outcomeHistogram maxBy { case (_, numVotes) => numVotes }
-    val majorityJustifications: Seq[(Int, Justification)] =
-      (decisionTreeOutputs.zipWithIndex filter {
-        case ((outcome, _), _) =>
-          outcome == bestOutcome
-      } map {
-        case ((_, maybeJustification), treeIndex) =>
-          maybeJustification map { justification =>
-            (treeIndex, justification)
-          }
-      }).flatten
-    val justification =
-      if (majorityJustifications.isEmpty) { // i.e. the underlying DT doesn't support justification
-        None
-      } else {
-        val (mostConvincingTree, mostConvincingJustification) =
-          majorityJustifications maxBy {
-            case (treeIndex, just) =>
-              just match {
-                case dtJust: DecisionTreeJustification =>
-                  decisionTrees(treeIndex).getNodeDivergenceScore(dtJust.node)
-              }
-          }
-        val mostConvincingNode = mostConvincingJustification match {
-          case dtJust: DecisionTreeJustification =>
-            dtJust.node
-        }
-        Some(RandomForestJustification(this, mostConvincingTree, mostConvincingNode))
-      }
-    (OutcomeDistribution(RandomForest.normalizeHistogram(outcomeHistogram)), justification)
+    val unnormalizedOutcomeDistribution = OutcomeDistribution.sum(decisionTreeDistributions)
+    val normalizedOutcomeDistribution = OutcomeDistribution(
+      ProbabilisticClassifier.normalizeDistribution(
+      unnormalizedOutcomeDistribution.dist.toSeq
+    ).toMap
+    )
+    (normalizedOutcomeDistribution, None)
   }
 
   /** The set of all features found in at least one decision tree of the collection. */
@@ -95,17 +65,6 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
 
 object RandomForest {
   implicit val rfFormat = jsonFormat2(RandomForest.apply)
-
-  /** Normalizes a histogram into a probability distribution.
-    *
-    * @param histogram maps each (integral valued) outcome to its count
-    * @return the normalized histogram
-    */
-  def normalizeHistogram(histogram: Map[Int, Int]): Map[Int, Float] = {
-    val normalizer: Float = histogram.values.sum
-    require(normalizer > 0d)
-    histogram mapValues { _ / normalizer }
-  }
 }
 
 /** A RandomForestTrainer trains a RandomForest from a set of feature vectors.

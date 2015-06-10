@@ -107,4 +107,4 @@ object Token {
 
 /** The NexusToken is the "zeroth" token of a sentence. */
 object NexusToken
-  extends Token('nexxx, Map[Symbol, Set[Symbol]]())
+  extends Token('nexxx, Map(Token.coarsePos -> Set('nexus), Token.finePos -> Set('nexus)))

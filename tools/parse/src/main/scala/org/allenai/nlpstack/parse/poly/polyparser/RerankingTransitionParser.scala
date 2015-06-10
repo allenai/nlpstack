@@ -14,7 +14,8 @@ case class RerankingTransitionParser(config: ParserConfiguration) extends Transi
 
   def parseWithScore(
     sentence: Sentence,
-    constraints: Set[TransitionConstraint] = Set()
+    constraints: Set[TransitionConstraint] = Set(),
+    doFastApproximation: Boolean = false
   ): Option[(PolytreeParse, Double)] = {
 
     val parsingCostFunction =
@@ -24,12 +25,9 @@ case class RerankingTransitionParser(config: ParserConfiguration) extends Transi
       parsingCostFunction.transitionSystem.initialState(
         constraints.toSeq
       ) map { initState =>
-        // Only do full reranking in the absence of constraints.
-        if (constraints.isEmpty) {
-          baseParser.find(initState, config.parsingNbestSize, constraints)
-        } else {
-          baseParser.find(initState, 1, constraints)
-        }
+        val nbestSize = // do full reranking only in the absence of constraints
+          if (doFastApproximation || constraints.nonEmpty) { 2 } else { config.parsingNbestSize }
+        baseParser.find(initState, nbestSize, constraints)
       }
     val mappedNbestList: Option[NbestList] = nbestList map { x =>
       NbestList(x.scoredSculptures)

@@ -49,7 +49,7 @@ abstract class DependencyParsingTransitionSystem(
     }
 
   val annotatedSentence: AnnotatedSentence = {
-    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, taggers)
+    val tagging = SentenceTagger.tagWithMultipleTaggers(sentence, constraints, taggers)
     AnnotatedSentence.annotate(tagging)
     // TODO: re-enable postag override from constraints
   }
@@ -159,6 +159,26 @@ object DependencyParsingTransitionSystem {
         }
     }
     )
+  }
+
+  /** Since the DependencyParsingTransitionSystem does POS tagging and arc labeling simultaneously
+    * using a single compound label, this is a convenience function to retrieve the actual
+    * arc label's "label" component.
+    */
+  def getArcLabelSymbol(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(stanLabel, _) => stanLabel
+    }
+  }
+
+  /** Since the DependencyParsingTransitionSystem does POS tagging and arc labeling simultaneously
+    * using a single compound label, this is a convenience function to retrieve the actual
+    * arc label's coarse POS component.
+    */
+  def getArcLabelCpos(arcLabel: ArcLabel): Symbol = {
+    arcLabel match {
+      case DependencyParsingArcLabel(_, cpos) => cpos
+    }
   }
 }
 

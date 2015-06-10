@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.core
 
 import org.allenai.common.testkit.UnitSpec
+import org.allenai.nlpstack.parse.poly.fsm.{ TransitionConstraint, TransitionClassifier }
 
 case object ToyTagger extends SentenceTagger {
 
@@ -11,7 +12,7 @@ case object ToyTagger extends SentenceTagger {
   private val hasSecondLastSymbol = 'secondLast
   private val hasLastSymbol = 'last
 
-  override def tag(sentence: Sentence): TaggedSentence = {
+  override def tag(sentence: Sentence, constraints: Set[TransitionConstraint]): TaggedSentence = {
     TaggedSentence(
       sentence,
       (Range(0, sentence.tokens.size) map {
@@ -39,7 +40,7 @@ class SentenceTaggerSpec extends UnitSpec {
 
   "tagWithMultipleTaggers" should "give the correct tags" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("apple and blueberry pie")
-    SentenceTagger.tagWithMultipleTaggers(sent, Seq(ToyTagger, keywordTagger)).tags shouldBe
+    SentenceTagger.tagWithMultipleTaggers(sent, Set(), Seq(ToyTagger, keywordTagger)).tags shouldBe
       Map(
         0 -> Set(TokenTag('place, 'nexus)),
         1 -> Set(TokenTag('place, 'first), TokenTag('keyword, 'apple)),
@@ -53,7 +54,7 @@ class SentenceTaggerSpec extends UnitSpec {
 
   "TokenPositionTagger" should "give the correct tags" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("apple and a blueberry pie")
-    SentenceTagger.tagWithMultipleTaggers(sent, Seq(tokenPositionTagger)).tags shouldBe
+    SentenceTagger.tagWithMultipleTaggers(sent, Set(), Seq(tokenPositionTagger)).tags shouldBe
       Map(
         0 -> Set(TokenTag('place, 'nexus)),
         1 -> Set(TokenTag('place, 'first)),
@@ -66,7 +67,7 @@ class SentenceTaggerSpec extends UnitSpec {
 
   it should "give multiple tags to the same token when a sentence is short" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("apple pie")
-    SentenceTagger.tagWithMultipleTaggers(sent, Seq(tokenPositionTagger)).tags shouldBe
+    SentenceTagger.tagWithMultipleTaggers(sent, Set(), Seq(tokenPositionTagger)).tags shouldBe
       Map(
         0 -> Set(TokenTag('place, 'nexus)),
         1 -> Set(TokenTag('place, 'first), TokenTag('place, 'secondLast)),
@@ -76,7 +77,7 @@ class SentenceTaggerSpec extends UnitSpec {
 
   it should "correctly handle very short sentences" in {
     val sent = Sentence.initializeFromWhitespaceSeparatedString("pie")
-    SentenceTagger.tagWithMultipleTaggers(sent, Seq(tokenPositionTagger)).tags shouldBe
+    SentenceTagger.tagWithMultipleTaggers(sent, Set(), Seq(tokenPositionTagger)).tags shouldBe
       Map(
         0 -> Set(TokenTag('place, 'nexus), TokenTag('place, 'secondLast)),
         1 -> Set(TokenTag('place, 'first), TokenTag('place, 'last))

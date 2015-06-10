@@ -1,6 +1,7 @@
 package org.allenai.nlpstack.parse.poly.polyparser
 
 import org.allenai.nlpstack.core._
+import org.allenai.nlpstack.parse.poly.fsm.TransitionConstraint
 import org.allenai.nlpstack.tokenize.defaultTokenizer
 import org.allenai.nlpstack.postag.defaultPostagger
 
@@ -34,16 +35,6 @@ object Parser {
 
   private val tokenizer = defaultTokenizer
   private val postagger = defaultPostagger
-
-  /** Tokenizes, tags, and parses an untokenized sentence.
-    *
-    * @param parser the parser to use for parsing the sentence
-    * @param text the untokenized sentence
-    * @return a parse for the argument sentence
-    */
-  def parseUntokenizedSentence(parser: TransitionParser, text: String): Option[PolytreeParse] = {
-    parser.parse(Sentence(tokenizeSentence(text).toIndexedSeq))
-  }
 
   /** Tokenizes (and tags) an untokenized sentence.
     *
