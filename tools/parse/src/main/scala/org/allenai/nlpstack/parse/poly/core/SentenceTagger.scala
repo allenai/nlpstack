@@ -192,7 +192,7 @@ object SentenceTagger {
       for {
         sentence <- sentenceSource.sentenceIterator
       } yield Future {
-        tagger.tag(sentence, Set())
+        tagger.tag(sentence, constraints = Set()) // this function does unconstrained tagging
       }
     val futureTagged: Future[Iterator[TaggedSentence]] = Future.sequence(taggingTasks)
     Await.result(futureTagged, 2 days)
@@ -270,6 +270,8 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
       case (tokenIndex, tagged) =>
         (tokenIndex,
           if (useCoarseTags) {
+            // if this is a coarse POS tagger, then we override the tagger with any
+            // requested coarse POS tags
             Set(
               TokenTag(
                 'autoCpos,
@@ -280,6 +282,9 @@ case class NLPStackPostagger(baseTagger: Postagger, useCoarseTags: Boolean) exte
               )
             )
           } else if (tokenToRequestedCpos.contains(tokenIndex)) {
+            // if a specific coarse POS is requested and this is a fine POS tagger,
+            // then we suppress the tagger's fine POS tag (since a requested coarse POS
+            // could map to a number of different fine POS, and we can't know which)
             Set[TokenTag]()
           } else {
             Set(TokenTag('autoPos, Symbol(tagged.postag)))

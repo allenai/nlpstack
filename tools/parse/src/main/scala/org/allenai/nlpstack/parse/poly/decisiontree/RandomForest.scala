@@ -49,11 +49,12 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
       decisionTree.outcomeDistribution(featureVector)._1
     }
     val unnormalizedOutcomeDistribution = OutcomeDistribution.sum(decisionTreeDistributions)
-    (OutcomeDistribution(
+    val normalizedOutcomeDistribution = OutcomeDistribution(
       ProbabilisticClassifier.normalizeDistribution(
       unnormalizedOutcomeDistribution.dist.toSeq
     ).toMap
-    ), None)
+    )
+    (normalizedOutcomeDistribution, None)
   }
 
   /** The set of all features found in at least one decision tree of the collection. */

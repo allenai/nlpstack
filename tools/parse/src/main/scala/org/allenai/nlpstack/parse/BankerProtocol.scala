@@ -109,16 +109,14 @@ case class BankerParse(
 ) {
 
   def toPolytreeParse: PolytreeParse = {
-    PolytreeParse(sentence, breadcrumb, children,
-      arclabels map { labelset =>
-        val result: Set[(Int, ArcLabel)] = labelset map {
-          case (index, label) =>
-            (index, SingleSymbolArcLabel(label))
-        }
-        result
-      })
+    val convertedArcLabels = arclabels map { labelset =>
+      val conversion: Set[(Int, ArcLabel)] = labelset map {
+        case (index, label) => (index, SingleSymbolArcLabel(label))
+      }
+      conversion
+    }
+    PolytreeParse(sentence, breadcrumb, children, convertedArcLabels)
   }
-
 }
 
 object BankerParse {
@@ -129,12 +127,12 @@ object BankerParse {
     * @return the analogous BankerParse
     */
   def fromPolytreeParse(parse: PolytreeParse): BankerParse = {
-    BankerParse(parse.sentence, parse.breadcrumb, parse.children,
-      parse.arclabels map { labelset =>
-        labelset map {
-          case (index, label) =>
-            (index, label.toSymbol)
-        }
-      })
+    val convertedArcLabels = parse.arclabels map { labelset =>
+      labelset map {
+        case (index, label) =>
+          (index, label.toSymbol)
+      }
+    }
+    BankerParse(parse.sentence, parse.breadcrumb, parse.children, convertedArcLabels)
   }
 }
