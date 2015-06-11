@@ -18,14 +18,7 @@ class OpenNlpChunker extends Chunker {
       if (t.string == "-") PostaggedToken(t, ":") else t
     }
 
-    val chunks = try {
-      chunker.get().chunk(tokens.map(_.string).toArray, fixedTokens.map(_.postag).toArray)
-    } catch {
-      case e: Throwable => (for {
-        token <- tokens
-        x = "Error"
-      } yield x).toArray
-    }
+    val chunks = chunker.get().chunk(tokens.map(_.string).toArray, fixedTokens.map(_.postag).toArray)
     (tokens zip chunks) map { case (token, chunk) => ChunkedToken(token, chunk) }
   }
 }
