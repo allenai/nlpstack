@@ -108,3 +108,12 @@ object Token {
 /** The NexusToken is the "zeroth" token of a sentence. */
 object NexusToken
   extends Token('nexxx, Map(Token.coarsePos -> Set('nexus), Token.finePos -> Set('nexus)))
+
+class VariableToken(val varIndex: Int)
+  extends Token(Symbol(s"var$varIndex"), Map())
+
+object VariableToken {
+
+  def unapply(price: VariableToken): Option[Int] = Some(price.varIndex)
+
+}

@@ -247,7 +247,7 @@ case class PolytreeParse(
             case x => x.name
           },
           "_", crumb,
-          arcLabelByEndNodes(Set(crumb, index)),
+          arcLabelByEndNodes.getOrElse(Set(crumb, index), "_"),
           "_", "_").mkString("\t")
       }
     }
@@ -316,6 +316,40 @@ object PolytreeParse {
         s"File format $x is not supported by PolytreeParse.fromFile"
       )
     }
+  }
+
+  /** A simple way to initialize a (singly-rooted) PolytreeParse.
+    *
+    * A token's children are automatically initialized to be equivalent to the token's gretels.
+    *
+    * @param tokens same as the PolytreeParse constructor parameter
+    * @param breadcrumb same as the PolytreeParse constructor parameter
+    * @param edgeLabels maps a set of token indices (the set should contain exactly two elements)
+    * to the label of the arc that connects them (regardless of directionality).
+    * @return the initialized PolytreeParse
+    */
+  def easyInitialize(
+    tokens: Seq[Token],
+    breadcrumb: IndexedSeq[Int],
+    edgeLabels: Map[Set[Int], ArcLabel]
+  ): PolytreeParse = {
+
+    val gretels: Map[Int, Set[Int]] = breadcrumb.zipWithIndex groupBy
+      { _._1 } mapValues { x => (x map { _._2 }).toSet }
+    val children: IndexedSeq[Set[Int]] = Range(0, breadcrumb.size).toSeq map { tokenIndex =>
+      gretels.getOrElse(tokenIndex, Set[Int]())
+    }
+    val neighbors: IndexedSeq[Set[Int]] = Range(0, breadcrumb.size).toSeq map { i =>
+      (children.lift(i) getOrElse Set[Int]()) + breadcrumb(i)
+    }
+    val arcLabels: IndexedSeq[Set[(Int, ArcLabel)]] = for {
+      (neighborSet, i) <- neighbors.zipWithIndex
+    } yield for {
+      neighbor <- neighborSet
+      if neighbor >= 0
+    } yield (neighbor, edgeLabels.getOrElse(Set(i, neighbor), NoArcLabel))
+    PolytreeParse(Sentence(tokens.toIndexedSeq), breadcrumb.toVector,
+      children.toVector, arcLabels.toVector)
   }
 
   /** Creates an Iterator over PolytreeParse objects from a CoNLL-X format file, which is a tab-
