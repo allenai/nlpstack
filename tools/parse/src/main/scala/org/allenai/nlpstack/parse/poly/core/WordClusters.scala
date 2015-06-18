@@ -25,7 +25,9 @@ object WordClusters {
   val puncWords = Set(".", ",", ":", "--", "?", "$", "-LRB-", "(", ")", "-RRB-", "'", ";", "``",
     "''", "%", "&") map { Symbol(_) }
 
-  val mathWords = Set("=", "+", "-", "/", "*", "^") map { Symbol(_) }
+  val mathWords = Set("=", "+", "-", "/", "*", "^", "degrees") map { Symbol(_) }
+  val shapeWords = Set("circle", "point", "square", "triangle", "angle", "arc", "rectangle",
+    "quadrilateral", "polygon") map { Symbol(_) }
 
   val commonWords = Set("$", "%", "&", "'", "'re", "'s", ",", "--", ".",
     "1", "1/2", "10", "1987", "1990", "2", "3/4", "30", "40", ":", ";", "``", "a", "about",
