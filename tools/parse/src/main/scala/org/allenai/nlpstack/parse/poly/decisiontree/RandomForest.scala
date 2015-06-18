@@ -35,23 +35,32 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
 
   require(decisionTrees.nonEmpty, "Cannot initialize a RandomForest with zero decision trees")
 
-  /** Each decision gets a vote (i.e. suggests a distribution) about the outcome. The produced
-    * distribution is the normalized sum of the votes.
-    *
-    * @param featureVector feature vector to find outcome distribution for
-    * @return a probability distribution over outcomes
-    */
-  override def outcomeDistribution(
+  def outcomeDistribution(
     featureVector: FeatureVector
   ): (OutcomeDistribution, Option[Justification]) = {
 
-    val decisionTreeDistributions = decisionTrees map { decisionTree =>
-      decisionTree.outcomeDistribution(featureVector)._1
+    // determines whether we've seen enough of one outcome to conclude that
+    // it's the majority outcome
+    def isConfidentEnoughAboutHistogram(histogram: Map[Int, Int]): Boolean = {
+      histogram.values.max > decisionTrees.size / 2
     }
-    val unnormalizedOutcomeDistribution = OutcomeDistribution.sum(decisionTreeDistributions)
+    var decisionTreeIndex = 0
+    var continueLoop: Boolean = true
+    var unnormalizedOutcomeDistribution = Map[Int, Int]()
+    while (decisionTreeIndex < decisionTrees.size && continueLoop) {
+      val nextDecisionTree = decisionTrees(decisionTreeIndex)
+      val outcome: (Int, Option[Justification]) = nextDecisionTree.classify(featureVector)
+      unnormalizedOutcomeDistribution =
+        unnormalizedOutcomeDistribution.updated(
+          outcome._1,
+          1 + unnormalizedOutcomeDistribution.getOrElse(outcome._1, 0)
+        )
+      continueLoop = !isConfidentEnoughAboutHistogram(unnormalizedOutcomeDistribution)
+      decisionTreeIndex += 1
+    }
     val normalizedOutcomeDistribution = OutcomeDistribution(
       ProbabilisticClassifier.normalizeDistribution(
-      unnormalizedOutcomeDistribution.dist.toSeq
+      (unnormalizedOutcomeDistribution mapValues { _.toFloat }).toSeq
     ).toMap
     )
     (normalizedOutcomeDistribution, None)
