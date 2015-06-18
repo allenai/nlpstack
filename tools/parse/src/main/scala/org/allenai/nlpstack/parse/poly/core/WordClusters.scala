@@ -25,9 +25,11 @@ object WordClusters {
   val puncWords = Set(".", ",", ":", "--", "?", "$", "-LRB-", "(", ")", "-RRB-", "'", ";", "``",
     "''", "%", "&") map { Symbol(_) }
 
-  val mathWords = Set("=", "+", "-", "/", "*", "^", "degrees") map { Symbol(_) }
+  val mathOperations = Set("=", "+", "-", "/", "*", "^", "equals", ">", "<") map { Symbol(_) }
+  val mathWords = Set("degrees", "radius", "diameter", "circumference", "area",
+    "perimeter") map { Symbol(_) }
   val shapeWords = Set("circle", "point", "square", "triangle", "angle", "arc", "rectangle",
-    "quadrilateral", "polygon") map { Symbol(_) }
+    "quadrilateral", "polygon", "trapezoid", "parallelogram", "sector") map { Symbol(_) }
 
   val commonWords = Set("$", "%", "&", "'", "'re", "'s", ",", "--", ".",
     "1", "1/2", "10", "1987", "1990", "2", "3/4", "30", "40", ":", ";", "``", "a", "about",
@@ -49,7 +51,7 @@ object WordClusters {
     "was", "we", "well", "were", "what", "where", "whether", "which", "while", "who", "will",
     "with", "year", "yesterday") map { Symbol(_) }
 
-  val keyWords = stopWords ++ puncWords ++ commonWords ++ mathWords
+  val keyWords = stopWords ++ puncWords ++ commonWords ++ mathOperations ++ mathWords ++ shapeWords
 
   /** Maps standard Penn Treebank-style part-of-speech tags into the Google's "universal" POS set:
     *
