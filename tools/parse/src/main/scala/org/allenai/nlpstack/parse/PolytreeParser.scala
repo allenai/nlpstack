@@ -15,7 +15,7 @@ import org.allenai.nlpstack.parse.poly.polyparser
   */
 class PolytreeParser(
     modelFile: String = "PolyParserModel.poly.json",
-    modelVersion: Int = 17, useLocalFile: Boolean = false
+    modelVersion: Int = 18, useLocalFile: Boolean = false
 ) extends DependencyParser with Datastores {
 
   val parser =
