@@ -45,16 +45,16 @@ case object LexicalPropertiesTagger extends TokenTagger {
   def tag(token: Token): Set[TokenTag] = {
     val tokStr = token.word.name
     val firstLetterCapital = tokStr.headOption match {
-      case Some(x) if Character.isUpperCase(x) => Some('firstCap)
+      case Some(x) if Character.isUpperCase(x) && Character.isAlphabetic(x) => Some('firstCap)
       case _ => None
     }
     val existsCapital = tokStr find {
-      Character.isUpperCase
+      { x => Character.isUpperCase(x) && Character.isAlphabetic(x) }
     } map {
       _ => 'existsCap
     }
     val allCaps =
-      if (tokStr forall { Character.isUpperCase }) {
+      if (tokStr forall { x => Character.isUpperCase(x) && Character.isAlphabetic(x) }) {
         Some('allCaps)
       } else {
         None
@@ -64,7 +64,18 @@ case object LexicalPropertiesTagger extends TokenTagger {
     } map {
       _ => 'existsNum
     }
-    (Seq(firstLetterCapital, existsCapital, allCaps, existsNumber) map { maybeFeat =>
+    def parseDouble(s: String) = try { Some(s.toDouble) } catch { case _: Throwable => None }
+    val looksLikeDouble = parseDouble(tokStr) map {
+      _ => 'looksLikeDouble
+    }
+    val looksLikeGeomLabel =
+      if (tokStr forall { x => Set('A', 'B', 'C', 'D', 'E', 'F').contains(x) }) {
+        Some('looksLikeGeo)
+      } else {
+        None
+      }
+    (Seq(firstLetterCapital, existsCapital, allCaps, existsNumber,
+      looksLikeDouble, looksLikeGeomLabel) map { maybeFeat =>
       maybeFeat map { feat =>
         TokenTag(taggerName, feat)
       }

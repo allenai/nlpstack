@@ -25,6 +25,12 @@ object WordClusters {
   val puncWords = Set(".", ",", ":", "--", "?", "$", "-LRB-", "(", ")", "-RRB-", "'", ";", "``",
     "''", "%", "&") map { Symbol(_) }
 
+  val mathOperations = Set("=", "+", "-", "/", "*", "^", "equals", ">", "<") map { Symbol(_) }
+  val mathWords = Set("degrees", "radius", "diameter", "circumference", "area",
+    "perimeter") map { Symbol(_) }
+  val shapeWords = Set("circle", "point", "square", "triangle", "angle", "arc", "rectangle",
+    "quadrilateral", "polygon", "trapezoid", "parallelogram", "sector") map { Symbol(_) }
+
   val commonWords = Set("$", "%", "&", "'", "'re", "'s", ",", "--", ".",
     "1", "1/2", "10", "1987", "1990", "2", "3/4", "30", "40", ":", ";", "``", "a", "about",
     "added", "after", "against", "ago", "all", "almost", "also", "among", "an", "and", "are",
@@ -45,7 +51,7 @@ object WordClusters {
     "was", "we", "well", "were", "what", "where", "whether", "which", "while", "who", "will",
     "with", "year", "yesterday") map { Symbol(_) }
 
-  val keyWords = stopWords ++ puncWords ++ commonWords
+  val keyWords = stopWords ++ puncWords ++ commonWords ++ mathOperations ++ mathWords ++ shapeWords
 
   /** Maps standard Penn Treebank-style part-of-speech tags into the Google's "universal" POS set:
     *
@@ -65,10 +71,13 @@ object WordClusters {
       "PRP" -> "PRON", "PUNC" -> ".",
       "PRP$" -> "PRON", "PRP|VBP" -> "PRON", "PRT" -> "PRT", "RB" -> "ADV", "RBR" -> "ADV",
       "RBS" -> "ADV", "RB|RP" -> "ADV", "RB|VBG" -> "ADV", "RN" -> "X", "RP" -> "PRT",
-      "SYM" -> "X", "TO" -> "PRT", "UH" -> "X", "VB" -> "VERB", "VBD" -> "VERB",
+      "TO" -> "PRT", "UH" -> "X", "VB" -> "VERB", "VBD" -> "VERB",
       "VBD|VBN" -> "VERB", "VBG" -> "VERB", "VBG|NN" -> "VERB", "VBN" -> "VERB",
       "VBP" -> "VERB", "VBP|TO" -> "VERB", "VBZ" -> "VERB", "VP" -> "VERB", "WDT" -> "DET",
-      "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".")
+      "WH" -> "X", "WP" -> "PRON", "WP$" -> "PRON", "WRB" -> "ADV", "``" -> ".",
+      "SYM" -> "SYM" // overriding original mapping "SYM" -> "X"
+      )
+
   }
 
   /** Given an iterator over strings, creates a histogram that maps the strings to

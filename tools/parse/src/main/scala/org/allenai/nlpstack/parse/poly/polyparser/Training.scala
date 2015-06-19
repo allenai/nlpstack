@@ -78,7 +78,7 @@ object Training {
 
     val taggers: Seq[SentenceTaggerInitializer] =
       Seq(
-        //LexicalPropertiesTaggerInitializer,
+        LexicalPropertiesTaggerInitializer,
         TokenPositionTaggerInitializer,
         KeywordTaggerInitializer(keywords),
         BrownClustersTaggerInitializer(clusters),
