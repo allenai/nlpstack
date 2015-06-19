@@ -49,7 +49,7 @@ abstract class TransitionParser {
   def possibleArcLabels: Set[Symbol] = {
     Set('ACOMP, 'ADVCL, 'ADVMOD, 'AMOD, 'APPOS,
       'AUX, 'AUXPASS, 'CC, 'CCOMP, 'CONJ, 'COP, 'CSUBJ, 'CSUBJPASS, 'DEP,
-      'DET, 'DISCOURSE, 'DOBJ, 'EXPL, 'GOESWITH, 'IOBJ, 'MARK, 'MWE, 'NEG,
+      'DET, 'DISCOURSE, 'DOBJ, 'EXPL, 'GOESWITH, 'IOBJ, 'MARK, 'MATHX, 'MWE, 'NEG,
       'NN, 'NPADVMOD, 'NSUBJ, 'NSUBJPASS, 'NUM, 'NUMBER, 'PARATAXIS, 'PCOMP, 'POBJ, 'POSS,
       'POSSESSIVE, 'PRECONJ, 'PREDET,
       'PREP, 'PRT, 'PUNCT, 'QUANTMOD, 'RCMOD, 'ROOT, 'TMOD, 'VMOD, 'XCOMP)
