@@ -68,14 +68,14 @@ case object LexicalPropertiesTagger extends TokenTagger {
     val looksLikeDouble = parseDouble(tokStr) map {
       _ => 'looksLikeDouble
     }
-    val looksLikeGeoLabel =
+    val looksLikeGeomLabel =
       if (tokStr forall { x => Set('A', 'B', 'C', 'D', 'E', 'F').contains(x) }) {
         Some('looksLikeGeo)
       } else {
         None
       }
     (Seq(firstLetterCapital, existsCapital, allCaps, existsNumber,
-      looksLikeDouble, looksLikeGeoLabel) map { maybeFeat =>
+      looksLikeDouble, looksLikeGeomLabel) map { maybeFeat =>
       maybeFeat map { feat =>
         TokenTag(taggerName, feat)
       }

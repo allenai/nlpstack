@@ -42,21 +42,19 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     // determines whether we've seen enough of one outcome to conclude that
     // it's the majority outcome
     def isConfidentEnoughAboutHistogram(histogram: Map[Int, Int]): Boolean = {
-      histogram.values.max > decisionTrees.size / 2
+      if (histogram.isEmpty) { false } else { histogram.values.max > decisionTrees.size / 2 }
     }
-    var decisionTreeIndex = 0
-    var continueLoop: Boolean = true
     var unnormalizedOutcomeDistribution = Map[Int, Int]()
-    while (decisionTreeIndex < decisionTrees.size && continueLoop) {
-      val nextDecisionTree = decisionTrees(decisionTreeIndex)
-      val outcome: (Int, Option[Justification]) = nextDecisionTree.classify(featureVector)
+    for {
+      decisionTree <- decisionTrees
+      if !isConfidentEnoughAboutHistogram(unnormalizedOutcomeDistribution)
+    } {
+      val outcome = decisionTree.classify(featureVector)
       unnormalizedOutcomeDistribution =
         unnormalizedOutcomeDistribution.updated(
           outcome._1,
           1 + unnormalizedOutcomeDistribution.getOrElse(outcome._1, 0)
         )
-      continueLoop = !isConfidentEnoughAboutHistogram(unnormalizedOutcomeDistribution)
-      decisionTreeIndex += 1
     }
     val normalizedOutcomeDistribution = OutcomeDistribution(
       ProbabilisticClassifier.normalizeDistribution(
