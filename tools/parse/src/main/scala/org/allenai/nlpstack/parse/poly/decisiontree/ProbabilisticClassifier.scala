@@ -16,6 +16,14 @@ case class OutcomeDistribution(dist: Map[Int, Float]) {
     val (bestOutcome, _) = dist maxBy { case (_, prob) => prob }
     bestOutcome
   }
+
+  /** Normalizes the outcome distribution.
+    *
+    * @return the normalized outcome distribution
+    */
+  def normalize(): OutcomeDistribution = {
+    OutcomeDistribution(ProbabilisticClassifier.normalizeDistribution(dist.toSeq).toMap)
+  }
 }
 
 object OutcomeDistribution {
