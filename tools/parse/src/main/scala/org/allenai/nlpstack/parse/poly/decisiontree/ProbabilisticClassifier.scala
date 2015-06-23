@@ -17,6 +17,10 @@ case class OutcomeDistribution(dist: Map[Int, Float]) {
     bestOutcome
   }
 
+  /** Normalizes the outcome distribution.
+    *
+    * @return the normalized outcome distribution
+    */
   def normalize(): OutcomeDistribution = {
     OutcomeDistribution(ProbabilisticClassifier.normalizeDistribution(dist.toSeq).toMap)
   }
