@@ -44,23 +44,23 @@ case class RandomForest(allOutcomes: Seq[Int], decisionTrees: Seq[DecisionTree])
     def isConfidentEnoughAboutHistogram(histogram: Map[Int, Int]): Boolean = {
       if (histogram.isEmpty) { false } else { histogram.values.max > decisionTrees.size / 2 }
     }
-    var unnormalizedOutcomeDistribution = Map[Int, Int]()
+    var bestOutcomeHistogram = Map[Int, Int]()
+    var outcomeDistributions = Seq[OutcomeDistribution]()
     for {
       decisionTree <- decisionTrees
-      if !isConfidentEnoughAboutHistogram(unnormalizedOutcomeDistribution)
+      if !isConfidentEnoughAboutHistogram(bestOutcomeHistogram)
     } {
-      val outcome = decisionTree.classify(featureVector)
-      unnormalizedOutcomeDistribution =
-        unnormalizedOutcomeDistribution.updated(
-          outcome._1,
-          1 + unnormalizedOutcomeDistribution.getOrElse(outcome._1, 0)
+      val (outcomeDistribution, _) = decisionTree.outcomeDistribution(featureVector)
+      outcomeDistributions = outcomeDistribution +: outcomeDistributions
+      val outcome = outcomeDistribution.mostProbableOutcome
+      bestOutcomeHistogram =
+        bestOutcomeHistogram.updated(
+          outcome,
+          1 + bestOutcomeHistogram.getOrElse(outcome, 0)
         )
     }
-    val normalizedOutcomeDistribution = OutcomeDistribution(
-      ProbabilisticClassifier.normalizeDistribution(
-      (unnormalizedOutcomeDistribution mapValues { _.toFloat }).toSeq
-    ).toMap
-    )
+
+    val normalizedOutcomeDistribution = OutcomeDistribution.sum(outcomeDistributions).normalize()
     (normalizedOutcomeDistribution, None)
   }
 
