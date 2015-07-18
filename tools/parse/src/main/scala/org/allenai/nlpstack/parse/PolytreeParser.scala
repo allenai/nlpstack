@@ -15,6 +15,7 @@ import org.allenai.nlpstack.parse.poly.polyparser.{ MultiPolytreeParseSource, Co
   * @param modelFile filename for the parser model
   * @param modelVersion version of the parser model
   * @param useLocalFile if false, then the model file is found on the datastore
+  * @param cacheFiles a sequence of CoNLL files containing "gold" parses to cache
   */
 class PolytreeParser(
     modelFile: String = "PolyParserModel.poly.json",

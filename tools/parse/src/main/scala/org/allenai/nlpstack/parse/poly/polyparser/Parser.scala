@@ -21,6 +21,13 @@ object Parser {
     TransitionParser.load(filename)
   }
 
+  /** Loads a parser from its configuration file. Also allows you to specify a set of
+    * "gold" parses to cache (the cache is checked before the base parser is utilized)
+    *
+    * @param filename the JSON configuration file or model prefix
+    * @param parsesToCache a sequence of "gold" parses to cache
+    * @return the initialized parser
+    */
   def loadParserWithCache(filename: String, parsesToCache: Iterator[PolytreeParse]): TransitionParser = {
     val fallbackParser = loadParser(filename)
     ParseCache(parsesToCache.toSeq, fallbackParser)
@@ -58,4 +65,3 @@ object Parser {
     })
   }
 }
-
