@@ -1,11 +1,14 @@
 package org.allenai.nlpstack.parse
 
+import java.io.File
+
 import org.allenai.datastore.Datastores
 import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
 import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.nlpstack.parse.poly.polyparser
+import org.allenai.nlpstack.parse.poly.polyparser.{ MultiPolytreeParseSource, ConllX, FileBasedPolytreeParseSource }
 
 /** Wrapper for the polyparser using the DependencyParser interface.
   *
@@ -15,17 +18,26 @@ import org.allenai.nlpstack.parse.poly.polyparser
   */
 class PolytreeParser(
     modelFile: String = "PolyParserModel.poly.json",
-    modelVersion: Int = 18, useLocalFile: Boolean = false
+    modelVersion: Int = 18, useLocalFile: Boolean = false,
+    cacheFiles: Iterable[File] = Seq[File]()
 ) extends DependencyParser with Datastores {
 
-  val parser =
-    polyparser.Parser.loadParser(
+  val parser = {
+    val parserConfig =
       if (useLocalFile) {
         modelFile
       } else {
         publicFile(modelFile, modelVersion).toString
       }
-    )
+    if (cacheFiles.isEmpty) {
+      polyparser.Parser.loadParser(parserConfig)
+    } else {
+      val cachedParses = MultiPolytreeParseSource(cacheFiles map { filename =>
+        FileBasedPolytreeParseSource(filename.toString, ConllX(true))
+      })
+      polyparser.Parser.loadParserWithCache(parserConfig, cachedParses.parseIterator)
+    }
+  }
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     // throw away postags

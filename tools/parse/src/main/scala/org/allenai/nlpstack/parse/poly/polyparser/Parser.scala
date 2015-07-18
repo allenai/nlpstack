@@ -12,10 +12,6 @@ import org.allenai.nlpstack.parse.poly.core.{ WordClusters, Sentence, NexusToken
 
 object Parser {
 
-  //def createDefaultParser(parserConfig: ParserConfiguration): TransitionParser = {
-  //  new RerankingTransitionParser(parserConfig)
-  //}
-
   /** Loads a parser from its file.
     *
     * @param filename the JSON configuration file or model prefix
@@ -23,6 +19,11 @@ object Parser {
     */
   def loadParser(filename: String): TransitionParser = {
     TransitionParser.load(filename)
+  }
+
+  def loadParserWithCache(filename: String, parsesToCache: Iterator[PolytreeParse]): TransitionParser = {
+    val fallbackParser = loadParser(filename)
+    ParseCache(parsesToCache.toSeq, fallbackParser)
   }
 
   /** Loads a parser from an InputStream of a models file
