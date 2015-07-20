@@ -12,6 +12,11 @@ import org.allenai.nlpstack.parse.poly.polyparser.{ MultiPolytreeParseSource, Co
 
 /** Wrapper for the polyparser using the DependencyParser interface.
   *
+  * This API allows you to optionally specify a set of files (in Conll-X format) containing
+  * "gold" parses. If such parses are specified, then the parser will populate a cache with these
+  * parses. Then whenever it is asked to parse a sentence, it will check this cache first, and
+  * only parse a sentence from scratch if there is a cache miss.
+  *
   * @param modelFile filename for the parser model
   * @param modelVersion version of the parser model
   * @param useLocalFile if false, then the model file is found on the datastore
