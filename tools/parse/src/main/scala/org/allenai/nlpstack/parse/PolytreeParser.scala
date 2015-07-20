@@ -1,31 +1,49 @@
 package org.allenai.nlpstack.parse
 
+import java.io.File
+
 import org.allenai.datastore.Datastores
 import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
 import org.allenai.nlpstack.core.PostaggedToken
 import org.allenai.nlpstack.parse.poly.polyparser
+import org.allenai.nlpstack.parse.poly.polyparser.{ MultiPolytreeParseSource, ConllX, FileBasedPolytreeParseSource }
 
 /** Wrapper for the polyparser using the DependencyParser interface.
+  *
+  * This API allows you to optionally specify a set of files (in Conll-X format) containing
+  * "gold" parses. If such parses are specified, then the parser will populate a cache with these
+  * parses. Then whenever it is asked to parse a sentence, it will check this cache first, and
+  * only parse a sentence from scratch if there is a cache miss.
   *
   * @param modelFile filename for the parser model
   * @param modelVersion version of the parser model
   * @param useLocalFile if false, then the model file is found on the datastore
+  * @param cacheFiles a sequence of CoNLL files containing "gold" parses to cache
   */
 class PolytreeParser(
     modelFile: String = "PolyParserModel.poly.json",
-    modelVersion: Int = 18, useLocalFile: Boolean = false
+    modelVersion: Int = 18, useLocalFile: Boolean = false,
+    cacheFiles: Iterable[File] = Seq[File]()
 ) extends DependencyParser with Datastores {
 
-  val parser =
-    polyparser.Parser.loadParser(
+  val parser = {
+    val parserConfig =
       if (useLocalFile) {
         modelFile
       } else {
         publicFile(modelFile, modelVersion).toString
       }
-    )
+    if (cacheFiles.isEmpty) {
+      polyparser.Parser.loadParser(parserConfig)
+    } else {
+      val cachedParses = MultiPolytreeParseSource(cacheFiles map { filename =>
+        FileBasedPolytreeParseSource(filename.toString, ConllX(true))
+      })
+      polyparser.Parser.loadParserWithCache(parserConfig, cachedParses.parseIterator)
+    }
+  }
 
   override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
     // throw away postags

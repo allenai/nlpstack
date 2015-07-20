@@ -43,32 +43,34 @@ object ParseCache {
           ConllX(true, makePoly = true), clArgs.dataSource
         )
       })
-    val goldParses: Iterator[(String, PolytreeParse)] = goldSource.parseIterator map { parse =>
-      (parse.sentence.asWhitespaceSeparatedString -> parse)
-    }
     val fallbackParser: TransitionParser = TransitionParser.load(clArgs.fallbackParserFilename)
-    val cachingParser = ParseCache(goldParses.toSeq, fallbackParser)
+    val cachingParser = ParseCache(goldSource.parseIterator.toSeq, fallbackParser)
     TransitionParser.save(cachingParser, clArgs.outputFilename)
   }
 }
 
 case class ParseCache(
-    cachedParses: Seq[(String, PolytreeParse)],
+    parsesToCache: Iterable[PolytreeParse],
     fallbackParser: TransitionParser
 ) extends TransitionParser {
 
-  @transient private val cachedParseMap = cachedParses.toMap
+  private def getSentenceKey(sentence: Sentence): String = {
+    sentence.asWhitespaceSeparatedString
+  }
+
+  @transient private val cachedParseMap: Map[String, PolytreeParse] =
+    (parsesToCache map { parse => (getSentenceKey(parse.sentence), parse) }).toMap
 
   override def parse(
     sentence: Sentence,
     constraints: Set[TransitionConstraint] = Set()
   ): Option[PolytreeParse] = {
 
-    cachedParseMap.get(sentence.asWhitespaceSeparatedString) match {
+    cachedParseMap.get(getSentenceKey(sentence)) match {
       case Some(parse) =>
         Some(parse)
       case None =>
-        println(s"**CACHE MISS**: ${sentence.asWhitespaceSeparatedString}")
+        println(s"**CACHE MISS**: ${getSentenceKey(sentence)}")
         fallbackParser.parse(sentence, constraints)
     }
   }

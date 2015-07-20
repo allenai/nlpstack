@@ -150,7 +150,12 @@ object ParseFile {
           oracleRerankingFunction, oracleNbestSize
         )
         val parser = RerankingTransitionParser(oracleParserConfig)
-        parseTestSet(parser, parseSource)
+        val candidateParses =
+          InMemoryPolytreeParseSource(
+            parseTestSet(parser, parseSource).flatten.toSeq
+          )
+        val goldParseBank = ParseBank.createParseBankFromSource(parseSource)
+        ParseEvaluation.performStandardEvaluation(candidateParses, goldParseBank)
       case _ =>
         println("Must use RerankingTransitionParser to do oracle parsing.")
     }
