@@ -7,6 +7,7 @@ import org.allenai.nlpstack.core.DependencyParser
 import org.allenai.nlpstack.core.graph.Graph
 import org.allenai.nlpstack.core.parse.graph.{ DependencyGraph, DependencyNode }
 import org.allenai.nlpstack.core.PostaggedToken
+import org.allenai.nlpstack.parse.poly
 import org.allenai.nlpstack.parse.poly.polyparser
 import org.allenai.nlpstack.parse.poly.polyparser.{ MultiPolytreeParseSource, ConllX, FileBasedPolytreeParseSource }
 
@@ -72,7 +73,7 @@ class PolytreeParser(
       s"Parser output for sentence '${tokens.mkString(" ")}' has multiple roots."
     )
     (DependencyGraph(nodes.toSet, edges.toSet), parseOption.get.sentence.tokens.tail map { x =>
-      x.getDeterministicProperty('cpos).name
+      x.getDeterministicProperty(poly.core.Token.coarsePos).name
     })
   }
 
