@@ -39,39 +39,45 @@ class PolytreeParser(
       polyparser.Parser.loadParser(parserConfig)
     } else {
       val cachedParses = MultiPolytreeParseSource(cacheFiles map { filename =>
-        FileBasedPolytreeParseSource(filename.toString, ConllX(true))
+        FileBasedPolytreeParseSource(filename.toString, ConllX(true, makePoly = true))
       })
       polyparser.Parser.loadParserWithCache(parserConfig, cachedParses.parseIterator)
     }
   }
 
-  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
-    // throw away postags
-    val parseOption = parser.parseStringSequence(tokens.map(t => t.string))
-
+  /** Do a simultaneously postagging and parsing using the PolytreeParser.
+    *
+    * @param tokens the words of the sentence you want to parse
+    * @return the parse tree and the POS tags of the sentence words
+    */
+  def postagAndParse(tokens: Seq[String]): (DependencyGraph, Seq[String]) = {
+    val parseOption = parser.parseStringSequence(tokens)
     val nodes = for (
       parse <- parseOption.toList;
       (token, index) <- parse.tokens.drop(1).zipWithIndex // dropping the nexus token
     ) yield {
       DependencyNode(index, token.word.name)
     }
-
     val edges = for (
       parse <- parseOption.toList;
-      ((arclabels, childIndices), parentIndex) <- (parse.arclabels zip parse.children).zipWithIndex;
-      if parentIndex > 0;
+      ((arclabels, childIndices), parentIndex) <- (parse.arclabels zip parse.children).zipWithIndex if parentIndex > 0;
       (childIndex, label) <- arclabels.filter(t => childIndices.contains(t._1))
     ) yield {
       new Graph.Edge(nodes(parentIndex - 1), nodes(childIndex - 1), label.toString.toLowerCase)
     }
-
     val nodesWithIncomingEdges = edges.map(_.dest).toSet
     val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
     require(
       nodesWithoutIncomingEdges.size <= 1,
-      s"Parser output for sentence '${tokens.map(_.string).mkString(" ")}' has multiple roots."
+      s"Parser output for sentence has multiple roots: $nodesWithoutIncomingEdges"
     )
+    (DependencyGraph(nodes.toSet, edges.toSet), parseOption.get.sentence.tokens.tail map { x =>
+      x.getDeterministicProperty('cpos).name
+    })
+  }
 
-    DependencyGraph(nodes.toSet, edges.toSet)
+  override def dependencyGraphPostagged(tokens: Seq[PostaggedToken]): DependencyGraph = {
+    val (result, _) = postagAndParse(tokens.map(t => t.string)) // throw away postags
+    result
   }
 }
