@@ -69,7 +69,7 @@ class PolytreeParser(
     val nodesWithoutIncomingEdges = nodes.toSet -- nodesWithIncomingEdges
     require(
       nodesWithoutIncomingEdges.size <= 1,
-      s"Parser output for sentence has multiple roots: $nodesWithoutIncomingEdges"
+      s"Parser output for sentence '${tokens.mkString(" ")}' has multiple roots."
     )
     (DependencyGraph(nodes.toSet, edges.toSet), parseOption.get.sentence.tokens.tail map { x =>
       x.getDeterministicProperty('cpos).name
