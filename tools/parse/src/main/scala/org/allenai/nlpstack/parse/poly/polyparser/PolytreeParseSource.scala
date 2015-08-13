@@ -107,23 +107,41 @@ object FileBasedPolytreeParseSource {
     * @param filename the name of the file containing the parses
     * @param fileFormat the file format of the parse file
     * @param dataSource where to look for the file ("datastore" for the AI2 datastore,
-    * "local" for the local drive)
+    * "local" for the local drive). Supports datastore parameters in the format
+    * "datastore/<group>/<name>/<version>", where any of <group>, <name>, <version> can
+    * be left empty and default to "org.allenai.corpora.parsing", "treebanks", respectively "1".
     * @return the constructed parse source
     */
   def getParseSource(filename: String, fileFormat: PolytreeParseFileFormat,
     dataSource: String = "local"): PolytreeParseSource = {
 
+    val datastoreRegex = "datastore/(.+?)/(.+?)/(.+?)".r
+    val defaultGroup = "org.allenai.corpora.parsing"
+    val defaultName = "treebanks"
+    val defaultVersion = "1"
     val parseFilename: String = dataSource match {
       case "datastore" =>
         val path: java.nio.file.Path =
           Datastore("private").directoryPath(
-            "org.allenai.corpora.parsing",
-            "treebanks",
-            1
+            defaultGroup,
+            defaultName,
+            defaultVersion.toInt
           )
         Paths.get(path.toString, filename).toString
-      case _ =>
+      case datastoreRegex(group, name, version) =>
+        def getOrElse(s: String, default: String) = {
+          Option(s).filter(_.nonEmpty).getOrElse(default)
+        }
+        val path: java.nio.file.Path =
+          Datastore("private").directoryPath(
+            getOrElse(group, defaultGroup),
+            getOrElse(name, defaultName),
+            getOrElse(version, defaultVersion).toInt
+          )
+        Paths.get(path.toString, filename).toString
+      case "local" =>
         filename
+      case _ => throw new Exception(s"bad dataSource: $dataSource")
     }
     FileBasedPolytreeParseSource(parseFilename, fileFormat)
   }
