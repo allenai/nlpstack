@@ -139,8 +139,9 @@ object FileBasedPolytreeParseSource {
             getOrElse(version, defaultVersion).toInt
           )
         Paths.get(path.toString, filename).toString
-      case _ =>
+      case "local" =>
         filename
+      case _ => throw new Exception(s"bad dataSource: $dataSource")
     }
     FileBasedPolytreeParseSource(parseFilename, fileFormat)
   }
