@@ -7,8 +7,7 @@ import spray.json._
   *
   * @param  string  the string of the token
   * @param  offset  the character offset of the token in the source sentence
-  * @param  postag  the PENN-style part-of-speech tag of the token
-  * @param  chunk   the chunk tag of the token in BIO format
+  * @param  postagSymbol  the PENN-style part-of-speech tag of the token
   */
 class PostaggedToken(
     val postagSymbol: Symbol,
@@ -48,15 +47,19 @@ class PostaggedToken(
   def isSuperlativeAdjective = postagSymbol == Symbol("JJS")
   def isAdjective = isPlainAdjective || isComparativeAdjective || isSuperlativeAdjective
 
-  def isPersonalPronoun = postagSymbol == Symbol("PRP")
-  def isPossessivePronoun = postagSymbol == Symbol("PRP$")
+  // These are the ones that don't conform
+  def isPersonalPronoun = postagSymbol == Symbol("PRP") // <-- PP
+  def isPossessivePronoun = postagSymbol == Symbol("PRP$") // <-- PP$
   def isPronoun = isPersonalPronoun || isPossessivePronoun
 
   def isPossessive = isPossessivePronoun || postagSymbol == Symbol("POS")
 
   def isDeterminer = postagSymbol == Symbol("DT")
   def isCardinalNumber = postagSymbol == Symbol("CD")
+  def isPlainAdverb = postag == Symbol("RB")
+  def isComparativeAdverb = postagSymbol == Symbol("RBR")
   def isSuperlativeAdverb = postagSymbol == Symbol("RBS")
+  def isAdverb = isPlainAdverb || isComparativeAdverb || isSuperlativeAdverb
   def isPunctuation = punctuation.contains(postag)
   def isSubordinatingConjunction = postagSymbol == Symbol("IN")
   def isCoordinatingConjunction = postagSymbol == Symbol("CC")
