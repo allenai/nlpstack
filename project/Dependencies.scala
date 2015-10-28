@@ -2,7 +2,7 @@ import sbt._
 import org.allenai.plugins.CoreDependencies
 
 object Dependencies extends CoreDependencies {
-  val datastore = "org.allenai" %% "datastore" % "2015.06.23-0"
+  val datastore = "org.allenai" %% "datastore" % "1.0.2"
 
   val commonsIo = "commons-io" % "commons-io" % "2.4"
 
