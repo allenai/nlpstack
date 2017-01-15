@@ -103,6 +103,7 @@ object NlpstackBuild extends Build {
     settings = buildSettings
   ) dependsOn (
       core,
+      headword,
       lemmatize,
       tokenize,
       postag,
@@ -184,6 +185,15 @@ object NlpstackBuild extends Build {
   // postag-models should be a transitive dependency from the postag project, but for some
   // reason it's not brought in if it's not specified again here.
   ) dependsOn (postag, core)
+
+  lazy val headword = Project(
+    id = "tools-headword",
+    base = file("tools/headword"),
+    settings = buildSettings ++ Seq(
+      name := "nlpstack-headword",
+      libraryDependencies ++= Seq(jwiWordnet)
+    )
+  ) dependsOn (postag, tokenize)
 
   lazy val parse = Project(
     id = "tools-parse",
