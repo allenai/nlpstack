@@ -17,5 +17,4 @@ class JwiToolsSpec extends UnitSpec {
       new JwiTools("foo/bar")
     }
   }
-  // TODO: Add more tests.
 }
