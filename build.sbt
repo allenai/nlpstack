@@ -5,6 +5,17 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl._
 import sbtrelease._
 import sbtrelease.ReleaseStateTransformations._
 
+val sonatypeUrl = "https://oss.sonatype.org"
+val sonatype = Some("Sonatype Releases" at s"${sonatypeUrl}/service/local/staging/deploy/maven2")
+
+val noPublishSettings = Seq(
+  // Don't publish a jar for the root project.
+  publishArtifact := false,
+  publishTo := Some("dummy" at "nowhere"),
+  publish := { },
+  publishLocal := { }
+)
+
 val buildSettings = Seq(
   javaOptions += s"-Dlogback.configurationFile=${file(".")}/conf/logback.xml",
   fork := true,
@@ -20,61 +31,29 @@ val buildSettings = Seq(
     url("https://github.com/allenai/nlpstack"),
       "https://github.com/allenai/nlpstack.git"
     )),
-    conflictManager := ConflictManager.strict,
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    pomExtra :=
-      <developers>
-        <developer>
-          <id>allenai-dev-role</id>
-            <name>Allen Institute for Artificial Intelligence</name>
-            <email>dev-role@allenai.org</email>
-          </developer>
-        </developers>,
-    dependencyOverrides ++= Set(
-      parserCombinators,
-      "commons-codec" % "commons-codec" % "1.9",
-      "com.typesafe" % "config" % "1.3.0",
-      "io.spray" % "spray-json_2.11" % "1.3.2",
-      "joda-time" % "joda-time" % "2.7",
-      "org.allenai.common" % "common-core_2.11" % "1.4.6",
-      "org.apache.commons" % "commons-compress" % "1.8",
-      "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.3",
-      "org.slf4j" % "log4j-over-slf4j" % Logging.slf4jVersion,
-      "org.parboiled" % "parboiled-core" % "1.1.7"
-   )
-  )
-
-releaseVersion := { ver =>
-  val snapshot = "(.*-ALLENAI-\\d+)-SNAPSHOT".r
-  ver match {
-    case snapshot(v) => v
-    case _ => versionFormatError
-  }
-}
- 
-releaseNextVersion := { ver =>
-  val release = "(.*-ALLENAI)-(\\d+)".r
-  // pattern matching on Int
-  object Int {
-    def unapply(s: String): Option[Int] = try {
-      Some(s.toInt)
-    } catch {
-      case _: java.lang.NumberFormatException => None
-    }
-  }
- 
-  ver match {
-    case release(prefix, Int(number)) => s"$prefix-${number+1}-SNAPSHOT"
-    case _ => versionFormatError
-  }
-}
-
-val noPublishSettings = Seq(
-  // Don't publish a jar for the root project.
-  publishArtifact := false,
-  publishTo := Some("dummy" at "nowhere"),
-  publish := { },
-  publishLocal := { }
+  conflictManager := ConflictManager.strict,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  pomExtra :=
+    <developers>
+      <developer>
+        <id>allenai-dev-role</id>
+          <name>Allen Institute for Artificial Intelligence</name>
+          <email>dev-role@allenai.org</email>
+        </developer>
+      </developers>,
+  dependencyOverrides ++= Set(
+    parserCombinators,
+    "commons-codec" % "commons-codec" % "1.9",
+    "com.typesafe" % "config" % "1.3.0",
+    "io.spray" % "spray-json_2.11" % "1.3.2",
+    "joda-time" % "joda-time" % "2.7",
+    "org.allenai.common" % "common-core_2.11" % "1.4.6",
+    "org.apache.commons" % "commons-compress" % "1.8",
+    "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.3",
+    "org.slf4j" % "log4j-over-slf4j" % Logging.slf4jVersion,
+    "org.parboiled" % "parboiled-core" % "1.1.7"
+   ),
+   publishTo := sonatype
 )
 
 lazy val root = Project(
