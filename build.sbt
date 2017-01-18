@@ -71,6 +71,7 @@ lazy val tools = Project(
   base = file("tools")
 ).settings(buildSettings ++ noPublishSettings)
  .aggregate(
+   headword,
    lemmatize,
    tokenize,
    postag,
