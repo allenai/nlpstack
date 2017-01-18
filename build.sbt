@@ -5,6 +5,17 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl._
 import sbtrelease._
 import sbtrelease.ReleaseStateTransformations._
 
+val sonatypeUrl = "https://oss.sonatype.org"
+val sonatype = Some("Sonatype Releases" at s"${sonatypeUrl}/service/local/staging/deploy/maven2")
+
+val noPublishSettings = Seq(
+  // Don't publish a jar for the root project.
+  publishArtifact := false,
+  publishTo := Some("dummy" at "nowhere"),
+  publish := { },
+  publishLocal := { }
+)
+
 val buildSettings = Seq(
   javaOptions += s"-Dlogback.configurationFile=${file(".")}/conf/logback.xml",
   fork := true,
@@ -42,15 +53,7 @@ val buildSettings = Seq(
     "org.slf4j" % "log4j-over-slf4j" % Logging.slf4jVersion,
     "org.parboiled" % "parboiled-core" % "1.1.7"
    ),
-  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}"  
-)
-
-val noPublishSettings = Seq(
-  // Don't publish a jar for the root project.
-  publishArtifact := false,
-  publishTo := Some("dummy" at "nowhere"),
-  publish := { },
-  publishLocal := { }
+   publishTo := sonatype
 )
 
 lazy val root = Project(
