@@ -4,7 +4,7 @@ name := "nlpstack-cli"
 
 libraryDependencies ++= Seq(
   scopt,
-  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-actor" % defaultAkkaVersion,
   sprayCan,
   sprayRouting,
   typesafeConfig)
