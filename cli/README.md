@@ -6,7 +6,7 @@ Command-line to run any of the CLIs:
 sbt "cli/runMain <mainClassName> --input <input-file-path> -- output <output-file-path>
 ```
 
-For e.g., to run the `Stanford POS Tagger`:
+For e.g., to run the Stanford POS Tagger:
 
 ```
 sbt "cli/runMain org.allenai.nlpstack.cli.StanfordPostaggerMain  --input /path/to/input.txt --output /path/to/output.txt"
@@ -57,7 +57,7 @@ Multiple main classes detected, select one to run:
 Enter number: 
 ```
 
-Note, for e.g., that this shows that there is also a Factorie POS Tagger. If you would like to run that, you can type 2 at the above prompt, and hit enter.
+Note, for e.g., that this shows that there is also a Factorie POS Tagger. If you would like to run that, you can type `2` at the above prompt, and hit enter.
 
 
 
