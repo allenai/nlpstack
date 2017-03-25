@@ -1,3 +1,5 @@
+# CLI Usage
+
 Command-line to run any of the CLIs:
 
 ```
@@ -7,7 +9,7 @@ sbt "cli/runMain <mainClassName> --input <input-file-path> -- output <output-fil
 For e.g., to run the `Stanford POS Tagger`:
 
 ```
-sbt "cli/runMain org.allenai.nlpstack.cli.StanfordPostaggerMain  --input /Users/sumithrab/nlpstack/posTaggerIp.txt --output /Users/sumithrab/nlpstack/posTaggerOp.txt"
+sbt "cli/runMain org.allenai.nlpstack.cli.StanfordPostaggerMain  --input /path/to/input.txt --output /path/to/output.txt"
 ```
 
 The input file is generally a text file with one sentence per line. To run a segmenter, you can give it any block of text.
@@ -16,7 +18,7 @@ The input file is generally a text file with one sentence per line. To run a seg
 You can also alternately do the following:
 
 ```
-sbt "cli/run --input /Users/sumithrab/nlpstack/posTaggerIp.txt --output /Users/sumithrab/nlpstack/posTaggerOp.txt"
+sbt "cli/run --input /path/to/input.txt --output /path/to/output.txt"
 ```
 
 which will show you all entry points under the `cli` subproject for you to choose from:
