@@ -1,5 +1,11 @@
 # CLI Usage
 
+To build:
+
+```
+sbt "cli/compile"
+```
+
 Command-line to run any of the CLIs:
 
 ```
