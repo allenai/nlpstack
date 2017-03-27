@@ -129,14 +129,14 @@ lazy val lemmatize = Project(
     name := "nlpstack-lemmatize",
     licenses ++= Seq(
       "Academic License (for original lex files)" -> url("http://www.informatics.sussex.ac.uk/research/groups/nlp/carroll/morph.tar.gz"),
-      "Apache 2.0 (for supplemental code)" -> url("http://www.opensource.org/licenses/bsd-3-clause")
+      "Apache 2.0 (for supplemental code)" -> url("http://apache.org/licenses/LICENSE-2.0.txt")
     ),
     libraryDependencies ++= Seq(
       allenAiTestkit,
       clear,
       "edu.washington.cs.knowitall" % "morpha-stemmer" % "1.0.5"
     )
-  )  
+  )
 ).dependsOn(core)
 
 lazy val tokenize = Project(
