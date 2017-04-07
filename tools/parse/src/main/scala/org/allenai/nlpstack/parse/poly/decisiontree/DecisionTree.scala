@@ -60,14 +60,12 @@ case class DecisionTreeJustification(decisionTree: DecisionTree, node: Int) exte
 
     // Helper Method to format output feature values.
     def setBeginMarker(featureVals: Seq[(String, Int)]): String = {
-      if (featureVals.size > 1) "{"
-      else ""
+      if (featureVals.size > 1) "{" else ""
     }
 
     // Helper Method to format output feature values.
     def setEndMarker(featureVals: Seq[(String, Int)]): String = {
-      if (featureVals.size > 1) "}"
-      else ""
+      if (featureVals.size > 1) "}" else ""
     }
 
     // Build the final explanation (string) by composing justification for each type of node.

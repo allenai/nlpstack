@@ -7,7 +7,7 @@ import org.allenai.nlpstack.core._
 import org.allenai.datastore.Datastore
 
 import java.net.URL
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class StanfordPostagger(
     val tagger: MaxentTagger
@@ -16,15 +16,14 @@ class StanfordPostagger(
   def this() = this(StanfordPostagger.loadDefaultModel())
 
   override def postagTokenized(tokens: Seq[Token]): Seq[PostaggedToken] = {
-    val postags = tagger.tagSentence(
-      tokens.map { token =>
-      val corelabel = new CoreLabel();
-      corelabel.setWord(token.string);
+    val labels = tokens.map { token =>
+      val corelabel = new CoreLabel()
+      corelabel.setWord(token.string)
       corelabel
-    }.toList
-    ).map(_.tag())
+    }
+    val postags = tagger.tagSentence(labels.asJava).asScala.map(_.tag())
 
-    (tokens zip postags) map {
+    (tokens zip postags).map {
       case (token, postag) =>
         PostaggedToken(token, postag)
     }

@@ -105,15 +105,17 @@ object ProbabilisticClassifier {
   }
 
   def addMaps(m1: Map[Int, Int], m2: Map[Int, Int]): Map[Int, Int] = {
-    ((m1.keys ++ m2.keys).toSet map { key: Int =>
-      (key, m1.getOrElse(key, 0) + m2.getOrElse(key, 0))
-    }).toMap
+    val (larger, smaller) = if (m1.size > m2.size) (m1, m2) else (m2, m1)
+    val commonKeys = larger.keySet & smaller.keySet
+    val added = commonKeys.map { key => key -> (larger(key) + smaller(key)) }
+    larger ++ smaller ++ added
   }
 
   def addFloatMaps(m1: Map[Int, Float], m2: Map[Int, Float]): Map[Int, Float] = {
-    ((m1.keys ++ m2.keys).toSet map { key: Int =>
-      (key, m1.getOrElse(key, 0f) + m2.getOrElse(key, 0f))
-    }).toMap
+    val (larger, smaller) = if (m1.size > m2.size) (m1, m2) else (m2, m1)
+    val commonKeys = larger.keySet & smaller.keySet
+    val added = commonKeys.map { key => key -> (larger(key) + smaller(key)) }
+    larger ++ smaller ++ added
   }
 }
 
